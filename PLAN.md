@@ -142,7 +142,7 @@ Wallet captures fill `amount_raw`, `merchant`, `name`, and `card`. Notification 
 - **Precedence:**
   1. A user merchant rule (`merchant_norm` mapped to a category) wins and skips Laya entirely.
   2. Otherwise use Laya's answer.
-  3. If confidence is below a threshold chosen on labelled real fixtures (0.6 is only a starting candidate), flag the transaction for review.
+  3. Use Laya's `answer_confidence` (chosen-label probability), not its entropy-based `confidence`, for any proposed review threshold. Validate the exact schema on labelled, held-out real transactions first; the M0 follow-up found high-confidence wrong answers under one structured-input variant. Until then, unrecognized merchants go to review.
 - Every correction the user makes in the UI becomes a merchant rule, so accuracy improves quickly without fine-tuning. Fine-tuning on the corrections is an optional later step.
 
 ## 5. Idempotency and deduplication

@@ -1,0 +1,2448 @@
+{
+  "laya_version": "0.3.21",
+  "torch_version": "2.14.0",
+  "model_path": "<local snapshot of checkpoint_repo at checkpoint_revision>",
+  "device": "mps",
+  "parameter_device": "mps:0",
+  "cases": [
+    {
+      "merchant": "PRESTO MOB/<REDACTED>",
+      "expected": "transport"
+    },
+    {
+      "merchant": "SQ *BLUE BOTTLE",
+      "expected": "dining"
+    },
+    {
+      "merchant": "LOBLAWS #1020",
+      "expected": "groceries"
+    },
+    {
+      "merchant": "UBER TRIP",
+      "expected": "transport"
+    },
+    {
+      "merchant": "UBER EATS",
+      "expected": "dining"
+    },
+    {
+      "merchant": "NETFLIX.COM",
+      "expected": "bills"
+    },
+    {
+      "merchant": "AMZN MKTP CA",
+      "expected": "shopping"
+    },
+    {
+      "merchant": "AIR CANADA",
+      "expected": "travel"
+    },
+    {
+      "merchant": "SEPHORA CANADA",
+      "expected": "personal_care"
+    },
+    {
+      "merchant": "STEAM GAMES",
+      "expected": "entertainment"
+    },
+    {
+      "merchant": "HYDRO ONE",
+      "expected": "bills"
+    },
+    {
+      "merchant": "DOLLARAMA #254",
+      "expected": "shopping"
+    }
+  ],
+  "questions": {
+    "original_10": {
+      "spend_category": {
+        "type": "choice",
+        "instructions": "Classify the merchant for a personal spending transaction. Choose the most likely spending category.",
+        "criteria": {
+          "groceries": "Food and household staples from supermarkets or grocery stores",
+          "dining": "Restaurants, cafés, takeaway food, and food delivery",
+          "transport": "Local transit, rideshare rides, parking, and fuel",
+          "shopping": "General retail goods, online marketplaces, and nonfood stores",
+          "bills": "Utilities, recurring subscriptions, telecom, and other bills",
+          "entertainment": "Games, movies, events, and recreation",
+          "health": "Medical care, pharmacies, and health products",
+          "travel": "Air travel, hotels, and trips",
+          "personal_care": "Beauty, grooming, cosmetics, and salons",
+          "other": "Spending that fits no listed category"
+        }
+      }
+    },
+    "original_10_reversed_options": {
+      "spend_category": {
+        "type": "choice",
+        "instructions": "Classify the merchant for a personal spending transaction. Choose the most likely spending category.",
+        "criteria": {
+          "other": "Spending that fits no listed category",
+          "personal_care": "Beauty, grooming, cosmetics, and salons",
+          "travel": "Air travel, hotels, and trips",
+          "health": "Medical care, pharmacies, and health products",
+          "entertainment": "Games, movies, events, and recreation",
+          "bills": "Utilities, recurring subscriptions, telecom, and other bills",
+          "shopping": "General retail goods, online marketplaces, and nonfood stores",
+          "transport": "Local transit, rideshare rides, parking, and fuel",
+          "dining": "Restaurants, cafés, takeaway food, and food delivery",
+          "groceries": "Food and household staples from supermarkets or grocery stores"
+        }
+      }
+    },
+    "original_9": {
+      "spend_category": {
+        "type": "choice",
+        "instructions": "Classify the merchant for a personal spending transaction. Choose the most likely spending category.",
+        "criteria": {
+          "groceries": "Food and household staples from supermarkets or grocery stores",
+          "dining": "Restaurants, cafés, takeaway food, and food delivery",
+          "transport": "Local transit, rideshare rides, parking, and fuel",
+          "shopping": "General retail goods, online marketplaces, and nonfood stores",
+          "bills": "Utilities, recurring subscriptions, telecom, and other bills",
+          "entertainment": "Games, movies, events, and recreation",
+          "health": "Medical care, pharmacies, and health products",
+          "travel": "Air travel, hotels, and trips",
+          "personal_care": "Beauty, grooming, cosmetics, and salons"
+        }
+      }
+    },
+    "short_descriptions_10": {
+      "spend_category": {
+        "type": "choice",
+        "instructions": "Which spending category best describes this merchant?",
+        "criteria": {
+          "groceries": "Supermarket or grocery store",
+          "dining": "Restaurant, cafe, takeaway, or prepared food delivery",
+          "transport": "Local transit, rideshare, parking, or fuel",
+          "shopping": "General retail or online marketplace",
+          "bills": "Recurring subscription, utility, or telecom bill",
+          "entertainment": "Games, movies, events, or recreation",
+          "health": "Medical care or pharmacy",
+          "travel": "Airline, hotel, or trip",
+          "personal_care": "Cosmetics, grooming, beauty, or salon",
+          "other": "None of these categories"
+        }
+      }
+    },
+    "coarse_4": {
+      "spend_category": {
+        "type": "choice",
+        "instructions": "Which broad spending group best describes this merchant?",
+        "criteria": {
+          "food": "Groceries, cafes, restaurants, or food delivery",
+          "mobility": "Transit, rides, fuel, airlines, or hotels",
+          "retail": "General shopping, cosmetics, grooming, or personal care goods",
+          "services": "Bills, subscriptions, medical care, games, or recreation"
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "name": "original_10_raw",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "SQ *BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "AMZN MKTP CA",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 3,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1283,
+          "answer_confidence": 0.3106,
+          "probabilities": {
+            "groceries": 0.0642,
+            "dining": 0.0316,
+            "transport": 0.0345,
+            "shopping": 0.1937,
+            "bills": 0.1349,
+            "entertainment": 0.073,
+            "health": 0.0448,
+            "travel": 0.0569,
+            "personal_care": 0.0557,
+            "other": 0.3106
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2038,
+          "answer_confidence": 0.37,
+          "probabilities": {
+            "groceries": 0.1464,
+            "dining": 0.0303,
+            "transport": 0.0184,
+            "shopping": 0.2148,
+            "bills": 0.0695,
+            "entertainment": 0.0279,
+            "health": 0.0394,
+            "travel": 0.0305,
+            "personal_care": 0.053,
+            "other": 0.37
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "bills",
+          "correct": false,
+          "confidence_entropy": 0.206,
+          "answer_confidence": 0.3559,
+          "probabilities": {
+            "groceries": 0.087,
+            "dining": 0.0235,
+            "transport": 0.0248,
+            "shopping": 0.1324,
+            "bills": 0.3559,
+            "entertainment": 0.0222,
+            "health": 0.0587,
+            "travel": 0.0271,
+            "personal_care": 0.0323,
+            "other": 0.2359
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1189,
+          "answer_confidence": 0.2475,
+          "probabilities": {
+            "groceries": 0.097,
+            "dining": 0.0382,
+            "transport": 0.1698,
+            "shopping": 0.1844,
+            "bills": 0.0686,
+            "entertainment": 0.0408,
+            "health": 0.0267,
+            "travel": 0.1121,
+            "personal_care": 0.0151,
+            "other": 0.2475
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1157,
+          "answer_confidence": 0.2773,
+          "probabilities": {
+            "groceries": 0.1244,
+            "dining": 0.0438,
+            "transport": 0.1101,
+            "shopping": 0.1961,
+            "bills": 0.0765,
+            "entertainment": 0.0584,
+            "health": 0.0334,
+            "travel": 0.0613,
+            "personal_care": 0.0187,
+            "other": 0.2773
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "entertainment",
+          "correct": false,
+          "confidence_entropy": 0.1406,
+          "answer_confidence": 0.2408,
+          "probabilities": {
+            "groceries": 0.1178,
+            "dining": 0.0282,
+            "transport": 0.0206,
+            "shopping": 0.1959,
+            "bills": 0.1027,
+            "entertainment": 0.2408,
+            "health": 0.0302,
+            "travel": 0.0366,
+            "personal_care": 0.029,
+            "other": 0.1982
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2234,
+          "answer_confidence": 0.4246,
+          "probabilities": {
+            "groceries": 0.0546,
+            "dining": 0.0561,
+            "transport": 0.0323,
+            "shopping": 0.2143,
+            "bills": 0.0782,
+            "entertainment": 0.0311,
+            "health": 0.0258,
+            "travel": 0.0517,
+            "personal_care": 0.0312,
+            "other": 0.4246
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "travel",
+          "correct": true,
+          "confidence_entropy": 0.169,
+          "answer_confidence": 0.2952,
+          "probabilities": {
+            "groceries": 0.0962,
+            "dining": 0.0344,
+            "transport": 0.0393,
+            "shopping": 0.1831,
+            "bills": 0.0686,
+            "entertainment": 0.0291,
+            "health": 0.023,
+            "travel": 0.2952,
+            "personal_care": 0.0175,
+            "other": 0.2136
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "personal_care",
+          "correct": true,
+          "confidence_entropy": 0.1369,
+          "answer_confidence": 0.261,
+          "probabilities": {
+            "groceries": 0.1208,
+            "dining": 0.0392,
+            "transport": 0.0195,
+            "shopping": 0.2068,
+            "bills": 0.0658,
+            "entertainment": 0.0194,
+            "health": 0.0794,
+            "travel": 0.0289,
+            "personal_care": 0.261,
+            "other": 0.1593
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.7084,
+          "answer_confidence": 0.8593,
+          "probabilities": {
+            "groceries": 0.0241,
+            "dining": 0.0084,
+            "transport": 0.0045,
+            "shopping": 0.041,
+            "bills": 0.0152,
+            "entertainment": 0.8593,
+            "health": 0.0042,
+            "travel": 0.0074,
+            "personal_care": 0.0045,
+            "other": 0.0314
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1108,
+          "answer_confidence": 0.2571,
+          "probabilities": {
+            "groceries": 0.1058,
+            "dining": 0.033,
+            "transport": 0.0262,
+            "shopping": 0.2279,
+            "bills": 0.1071,
+            "entertainment": 0.0657,
+            "health": 0.0672,
+            "travel": 0.0421,
+            "personal_care": 0.068,
+            "other": 0.2571
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1912,
+          "answer_confidence": 0.3215,
+          "probabilities": {
+            "groceries": 0.0956,
+            "dining": 0.0292,
+            "transport": 0.0295,
+            "shopping": 0.2471,
+            "bills": 0.1515,
+            "entertainment": 0.0309,
+            "health": 0.0303,
+            "travel": 0.0332,
+            "personal_care": 0.0312,
+            "other": 0.3215
+          }
+        }
+      ]
+    },
+    {
+      "name": "original_10_reversed_options",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "SQ *BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "AMZN MKTP CA",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 1,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1542,
+          "answer_confidence": 0.3058,
+          "probabilities": {
+            "other": 0.3058,
+            "personal_care": 0.0468,
+            "travel": 0.063,
+            "health": 0.0427,
+            "entertainment": 0.0492,
+            "bills": 0.0867,
+            "shopping": 0.2599,
+            "transport": 0.0207,
+            "dining": 0.0459,
+            "groceries": 0.0792
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.211,
+          "answer_confidence": 0.2993,
+          "probabilities": {
+            "other": 0.2993,
+            "personal_care": 0.0542,
+            "travel": 0.0369,
+            "health": 0.0258,
+            "entertainment": 0.0279,
+            "bills": 0.0491,
+            "shopping": 0.2652,
+            "transport": 0.0103,
+            "dining": 0.0336,
+            "groceries": 0.1977
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2018,
+          "answer_confidence": 0.321,
+          "probabilities": {
+            "other": 0.321,
+            "personal_care": 0.0302,
+            "travel": 0.0333,
+            "health": 0.0512,
+            "entertainment": 0.0265,
+            "bills": 0.0982,
+            "shopping": 0.2847,
+            "transport": 0.0163,
+            "dining": 0.0358,
+            "groceries": 0.1028
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1786,
+          "answer_confidence": 0.3498,
+          "probabilities": {
+            "other": 0.3498,
+            "personal_care": 0.038,
+            "travel": 0.1163,
+            "health": 0.0272,
+            "entertainment": 0.0361,
+            "bills": 0.0739,
+            "shopping": 0.2289,
+            "transport": 0.0617,
+            "dining": 0.0298,
+            "groceries": 0.0383
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1726,
+          "answer_confidence": 0.3334,
+          "probabilities": {
+            "other": 0.3334,
+            "personal_care": 0.043,
+            "travel": 0.0801,
+            "health": 0.0329,
+            "entertainment": 0.0528,
+            "bills": 0.0835,
+            "shopping": 0.2563,
+            "transport": 0.0268,
+            "dining": 0.0386,
+            "groceries": 0.0527
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1878,
+          "answer_confidence": 0.3315,
+          "probabilities": {
+            "other": 0.2602,
+            "personal_care": 0.0336,
+            "travel": 0.0655,
+            "health": 0.0264,
+            "entertainment": 0.0885,
+            "bills": 0.0943,
+            "shopping": 0.3315,
+            "transport": 0.0143,
+            "dining": 0.0321,
+            "groceries": 0.0537
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2265,
+          "answer_confidence": 0.3597,
+          "probabilities": {
+            "other": 0.3597,
+            "personal_care": 0.0316,
+            "travel": 0.042,
+            "health": 0.0236,
+            "entertainment": 0.0243,
+            "bills": 0.0816,
+            "shopping": 0.2866,
+            "transport": 0.0196,
+            "dining": 0.0482,
+            "groceries": 0.0827
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2492,
+          "answer_confidence": 0.4336,
+          "probabilities": {
+            "other": 0.4336,
+            "personal_care": 0.0221,
+            "travel": 0.1009,
+            "health": 0.0192,
+            "entertainment": 0.0315,
+            "bills": 0.0684,
+            "shopping": 0.2152,
+            "transport": 0.0185,
+            "dining": 0.0351,
+            "groceries": 0.0555
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1852,
+          "answer_confidence": 0.3443,
+          "probabilities": {
+            "other": 0.2216,
+            "personal_care": 0.0734,
+            "travel": 0.0368,
+            "health": 0.0464,
+            "entertainment": 0.0273,
+            "bills": 0.0714,
+            "shopping": 0.3443,
+            "transport": 0.0123,
+            "dining": 0.031,
+            "groceries": 0.1356
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.3837,
+          "answer_confidence": 0.5905,
+          "probabilities": {
+            "other": 0.1273,
+            "personal_care": 0.0137,
+            "travel": 0.0289,
+            "health": 0.009,
+            "entertainment": 0.5905,
+            "bills": 0.0346,
+            "shopping": 0.1197,
+            "transport": 0.0099,
+            "dining": 0.0303,
+            "groceries": 0.0362
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1858,
+          "answer_confidence": 0.3405,
+          "probabilities": {
+            "other": 0.3405,
+            "personal_care": 0.0364,
+            "travel": 0.0422,
+            "health": 0.0388,
+            "entertainment": 0.0616,
+            "bills": 0.0779,
+            "shopping": 0.2605,
+            "transport": 0.0174,
+            "dining": 0.0382,
+            "groceries": 0.0865
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.3411,
+          "answer_confidence": 0.4508,
+          "probabilities": {
+            "other": 0.4508,
+            "personal_care": 0.0166,
+            "travel": 0.0206,
+            "health": 0.0178,
+            "entertainment": 0.0223,
+            "bills": 0.0926,
+            "shopping": 0.3024,
+            "transport": 0.0112,
+            "dining": 0.0228,
+            "groceries": 0.043
+          }
+        }
+      ]
+    },
+    {
+      "name": "original_10_minimal_normalization",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "Amazon marketplace",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 4,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1283,
+          "answer_confidence": 0.3106,
+          "probabilities": {
+            "groceries": 0.0642,
+            "dining": 0.0316,
+            "transport": 0.0345,
+            "shopping": 0.1937,
+            "bills": 0.1349,
+            "entertainment": 0.073,
+            "health": 0.0448,
+            "travel": 0.0569,
+            "personal_care": 0.0557,
+            "other": 0.3106
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1598,
+          "answer_confidence": 0.2689,
+          "probabilities": {
+            "groceries": 0.1979,
+            "dining": 0.0336,
+            "transport": 0.0222,
+            "shopping": 0.2689,
+            "bills": 0.0777,
+            "entertainment": 0.0334,
+            "health": 0.0412,
+            "travel": 0.0352,
+            "personal_care": 0.0558,
+            "other": 0.2341
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "bills",
+          "correct": false,
+          "confidence_entropy": 0.206,
+          "answer_confidence": 0.3559,
+          "probabilities": {
+            "groceries": 0.087,
+            "dining": 0.0235,
+            "transport": 0.0248,
+            "shopping": 0.1324,
+            "bills": 0.3559,
+            "entertainment": 0.0222,
+            "health": 0.0587,
+            "travel": 0.0271,
+            "personal_care": 0.0323,
+            "other": 0.2359
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1189,
+          "answer_confidence": 0.2475,
+          "probabilities": {
+            "groceries": 0.097,
+            "dining": 0.0382,
+            "transport": 0.1698,
+            "shopping": 0.1844,
+            "bills": 0.0686,
+            "entertainment": 0.0408,
+            "health": 0.0267,
+            "travel": 0.1121,
+            "personal_care": 0.0151,
+            "other": 0.2475
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1157,
+          "answer_confidence": 0.2773,
+          "probabilities": {
+            "groceries": 0.1244,
+            "dining": 0.0438,
+            "transport": 0.1101,
+            "shopping": 0.1961,
+            "bills": 0.0765,
+            "entertainment": 0.0584,
+            "health": 0.0334,
+            "travel": 0.0613,
+            "personal_care": 0.0187,
+            "other": 0.2773
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "entertainment",
+          "correct": false,
+          "confidence_entropy": 0.1406,
+          "answer_confidence": 0.2408,
+          "probabilities": {
+            "groceries": 0.1178,
+            "dining": 0.0282,
+            "transport": 0.0206,
+            "shopping": 0.1959,
+            "bills": 0.1027,
+            "entertainment": 0.2408,
+            "health": 0.0302,
+            "travel": 0.0366,
+            "personal_care": 0.029,
+            "other": 0.1982
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "shopping",
+          "correct": true,
+          "confidence_entropy": 0.1784,
+          "answer_confidence": 0.2936,
+          "probabilities": {
+            "groceries": 0.1105,
+            "dining": 0.0278,
+            "transport": 0.0207,
+            "shopping": 0.2936,
+            "bills": 0.0642,
+            "entertainment": 0.1324,
+            "health": 0.0268,
+            "travel": 0.0359,
+            "personal_care": 0.0271,
+            "other": 0.261
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "travel",
+          "correct": true,
+          "confidence_entropy": 0.169,
+          "answer_confidence": 0.2952,
+          "probabilities": {
+            "groceries": 0.0962,
+            "dining": 0.0344,
+            "transport": 0.0393,
+            "shopping": 0.1831,
+            "bills": 0.0686,
+            "entertainment": 0.0291,
+            "health": 0.023,
+            "travel": 0.2952,
+            "personal_care": 0.0175,
+            "other": 0.2136
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "personal_care",
+          "correct": true,
+          "confidence_entropy": 0.1369,
+          "answer_confidence": 0.261,
+          "probabilities": {
+            "groceries": 0.1208,
+            "dining": 0.0392,
+            "transport": 0.0195,
+            "shopping": 0.2068,
+            "bills": 0.0658,
+            "entertainment": 0.0194,
+            "health": 0.0794,
+            "travel": 0.0289,
+            "personal_care": 0.261,
+            "other": 0.1593
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.7084,
+          "answer_confidence": 0.8593,
+          "probabilities": {
+            "groceries": 0.0241,
+            "dining": 0.0084,
+            "transport": 0.0045,
+            "shopping": 0.041,
+            "bills": 0.0152,
+            "entertainment": 0.8593,
+            "health": 0.0042,
+            "travel": 0.0074,
+            "personal_care": 0.0045,
+            "other": 0.0314
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1108,
+          "answer_confidence": 0.2571,
+          "probabilities": {
+            "groceries": 0.1058,
+            "dining": 0.033,
+            "transport": 0.0262,
+            "shopping": 0.2279,
+            "bills": 0.1071,
+            "entertainment": 0.0657,
+            "health": 0.0672,
+            "travel": 0.0421,
+            "personal_care": 0.068,
+            "other": 0.2571
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1912,
+          "answer_confidence": 0.3215,
+          "probabilities": {
+            "groceries": 0.0956,
+            "dining": 0.0292,
+            "transport": 0.0295,
+            "shopping": 0.2471,
+            "bills": 0.1515,
+            "entertainment": 0.0309,
+            "health": 0.0303,
+            "travel": 0.0332,
+            "personal_care": 0.0312,
+            "other": 0.3215
+          }
+        }
+      ]
+    },
+    {
+      "name": "original_9_raw",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "SQ *BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "AMZN MKTP CA",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 4,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1142,
+          "answer_confidence": 0.3549,
+          "probabilities": {
+            "groceries": 0.1346,
+            "dining": 0.05,
+            "transport": 0.0463,
+            "shopping": 0.3549,
+            "bills": 0.0951,
+            "entertainment": 0.0673,
+            "health": 0.0772,
+            "travel": 0.0551,
+            "personal_care": 0.1197
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1659,
+          "answer_confidence": 0.3395,
+          "probabilities": {
+            "groceries": 0.2138,
+            "dining": 0.038,
+            "transport": 0.0232,
+            "shopping": 0.3395,
+            "bills": 0.0605,
+            "entertainment": 0.05,
+            "health": 0.0727,
+            "travel": 0.0336,
+            "personal_care": 0.1685
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1409,
+          "answer_confidence": 0.3104,
+          "probabilities": {
+            "groceries": 0.1835,
+            "dining": 0.0382,
+            "transport": 0.0372,
+            "shopping": 0.3104,
+            "bills": 0.1811,
+            "entertainment": 0.033,
+            "health": 0.1212,
+            "travel": 0.0381,
+            "personal_care": 0.0574
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1129,
+          "answer_confidence": 0.2633,
+          "probabilities": {
+            "groceries": 0.1867,
+            "dining": 0.0452,
+            "transport": 0.1615,
+            "shopping": 0.2633,
+            "bills": 0.075,
+            "entertainment": 0.0494,
+            "health": 0.0394,
+            "travel": 0.155,
+            "personal_care": 0.0244
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1198,
+          "answer_confidence": 0.2954,
+          "probabilities": {
+            "groceries": 0.2291,
+            "dining": 0.053,
+            "transport": 0.1279,
+            "shopping": 0.2954,
+            "bills": 0.0861,
+            "entertainment": 0.0582,
+            "health": 0.0489,
+            "travel": 0.0719,
+            "personal_care": 0.0295
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1965,
+          "answer_confidence": 0.4102,
+          "probabilities": {
+            "groceries": 0.1504,
+            "dining": 0.041,
+            "transport": 0.0292,
+            "shopping": 0.4102,
+            "bills": 0.0923,
+            "entertainment": 0.1672,
+            "health": 0.0336,
+            "travel": 0.0321,
+            "personal_care": 0.0439
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "shopping",
+          "correct": true,
+          "confidence_entropy": 0.1052,
+          "answer_confidence": 0.3412,
+          "probabilities": {
+            "groceries": 0.1512,
+            "dining": 0.0759,
+            "transport": 0.0664,
+            "shopping": 0.3412,
+            "bills": 0.106,
+            "entertainment": 0.052,
+            "health": 0.0437,
+            "travel": 0.0861,
+            "personal_care": 0.0775
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1258,
+          "answer_confidence": 0.3232,
+          "probabilities": {
+            "groceries": 0.2134,
+            "dining": 0.0461,
+            "transport": 0.0465,
+            "shopping": 0.3232,
+            "bills": 0.0903,
+            "entertainment": 0.0545,
+            "health": 0.0518,
+            "travel": 0.1199,
+            "personal_care": 0.0544
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "personal_care",
+          "correct": true,
+          "confidence_entropy": 0.1941,
+          "answer_confidence": 0.3135,
+          "probabilities": {
+            "groceries": 0.2227,
+            "dining": 0.0327,
+            "transport": 0.0231,
+            "shopping": 0.2252,
+            "bills": 0.0568,
+            "entertainment": 0.0218,
+            "health": 0.0804,
+            "travel": 0.0239,
+            "personal_care": 0.3135
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.3667,
+          "answer_confidence": 0.5819,
+          "probabilities": {
+            "groceries": 0.1221,
+            "dining": 0.0283,
+            "transport": 0.0174,
+            "shopping": 0.1508,
+            "bills": 0.0384,
+            "entertainment": 0.5819,
+            "health": 0.0199,
+            "travel": 0.022,
+            "personal_care": 0.0191
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1517,
+          "answer_confidence": 0.3729,
+          "probabilities": {
+            "groceries": 0.1184,
+            "dining": 0.0343,
+            "transport": 0.0267,
+            "shopping": 0.3729,
+            "bills": 0.0773,
+            "entertainment": 0.0632,
+            "health": 0.1195,
+            "travel": 0.0353,
+            "personal_care": 0.1524
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "shopping",
+          "correct": true,
+          "confidence_entropy": 0.1716,
+          "answer_confidence": 0.3941,
+          "probabilities": {
+            "groceries": 0.1385,
+            "dining": 0.0423,
+            "transport": 0.0362,
+            "shopping": 0.3941,
+            "bills": 0.1685,
+            "entertainment": 0.0366,
+            "health": 0.0665,
+            "travel": 0.0365,
+            "personal_care": 0.0808
+          }
+        }
+      ]
+    },
+    {
+      "name": "original_9_context",
+      "states": [
+        "Canadian consumer card purchase at merchant: PRESTO MOB/<REDACTED>",
+        "Canadian consumer card purchase at merchant: SQ *BLUE BOTTLE",
+        "Canadian consumer card purchase at merchant: LOBLAWS #1020",
+        "Canadian consumer card purchase at merchant: UBER TRIP",
+        "Canadian consumer card purchase at merchant: UBER EATS",
+        "Canadian consumer card purchase at merchant: NETFLIX.COM",
+        "Canadian consumer card purchase at merchant: AMZN MKTP CA",
+        "Canadian consumer card purchase at merchant: AIR CANADA",
+        "Canadian consumer card purchase at merchant: SEPHORA CANADA",
+        "Canadian consumer card purchase at merchant: STEAM GAMES",
+        "Canadian consumer card purchase at merchant: HYDRO ONE",
+        "Canadian consumer card purchase at merchant: DOLLARAMA #254"
+      ],
+      "correct": 4,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1184,
+          "answer_confidence": 0.3592,
+          "probabilities": {
+            "groceries": 0.1311,
+            "dining": 0.0567,
+            "transport": 0.0405,
+            "shopping": 0.3592,
+            "bills": 0.1074,
+            "entertainment": 0.0462,
+            "health": 0.0803,
+            "travel": 0.0673,
+            "personal_care": 0.1114
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1422,
+          "answer_confidence": 0.3676,
+          "probabilities": {
+            "groceries": 0.1264,
+            "dining": 0.0551,
+            "transport": 0.0279,
+            "shopping": 0.3676,
+            "bills": 0.0886,
+            "entertainment": 0.0407,
+            "health": 0.0797,
+            "travel": 0.0526,
+            "personal_care": 0.1614
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "bills",
+          "correct": false,
+          "confidence_entropy": 0.278,
+          "answer_confidence": 0.4929,
+          "probabilities": {
+            "groceries": 0.0814,
+            "dining": 0.0335,
+            "transport": 0.0271,
+            "shopping": 0.2134,
+            "bills": 0.4929,
+            "entertainment": 0.0285,
+            "health": 0.0455,
+            "travel": 0.0302,
+            "personal_care": 0.0475
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "transport",
+          "correct": true,
+          "confidence_entropy": 0.1898,
+          "answer_confidence": 0.3892,
+          "probabilities": {
+            "groceries": 0.0604,
+            "dining": 0.0413,
+            "transport": 0.3892,
+            "shopping": 0.2375,
+            "bills": 0.0636,
+            "entertainment": 0.0571,
+            "health": 0.0301,
+            "travel": 0.0878,
+            "personal_care": 0.0331
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1182,
+          "answer_confidence": 0.36,
+          "probabilities": {
+            "groceries": 0.1063,
+            "dining": 0.0717,
+            "transport": 0.1399,
+            "shopping": 0.36,
+            "bills": 0.0877,
+            "entertainment": 0.0788,
+            "health": 0.0369,
+            "travel": 0.0732,
+            "personal_care": 0.0455
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.193,
+          "answer_confidence": 0.3668,
+          "probabilities": {
+            "groceries": 0.0584,
+            "dining": 0.038,
+            "transport": 0.0241,
+            "shopping": 0.3668,
+            "bills": 0.0974,
+            "entertainment": 0.2661,
+            "health": 0.0409,
+            "travel": 0.0499,
+            "personal_care": 0.0584
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "shopping",
+          "correct": true,
+          "confidence_entropy": 0.1503,
+          "answer_confidence": 0.4171,
+          "probabilities": {
+            "groceries": 0.0928,
+            "dining": 0.0643,
+            "transport": 0.0426,
+            "shopping": 0.4171,
+            "bills": 0.1084,
+            "entertainment": 0.0649,
+            "health": 0.0501,
+            "travel": 0.0691,
+            "personal_care": 0.0906
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1538,
+          "answer_confidence": 0.3762,
+          "probabilities": {
+            "groceries": 0.0785,
+            "dining": 0.0578,
+            "transport": 0.0445,
+            "shopping": 0.3762,
+            "bills": 0.093,
+            "entertainment": 0.0543,
+            "health": 0.0435,
+            "travel": 0.2022,
+            "personal_care": 0.05
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.136,
+          "answer_confidence": 0.3431,
+          "probabilities": {
+            "groceries": 0.1258,
+            "dining": 0.0401,
+            "transport": 0.0359,
+            "shopping": 0.3431,
+            "bills": 0.0951,
+            "entertainment": 0.0276,
+            "health": 0.1485,
+            "travel": 0.0472,
+            "personal_care": 0.1367
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.541,
+          "answer_confidence": 0.7302,
+          "probabilities": {
+            "groceries": 0.0233,
+            "dining": 0.0244,
+            "transport": 0.0114,
+            "shopping": 0.1414,
+            "bills": 0.031,
+            "entertainment": 0.7302,
+            "health": 0.0085,
+            "travel": 0.0171,
+            "personal_care": 0.0127
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.1415,
+          "answer_confidence": 0.3965,
+          "probabilities": {
+            "groceries": 0.0944,
+            "dining": 0.048,
+            "transport": 0.0338,
+            "shopping": 0.3965,
+            "bills": 0.1092,
+            "entertainment": 0.0596,
+            "health": 0.0794,
+            "travel": 0.0651,
+            "personal_care": 0.114
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "shopping",
+          "correct": true,
+          "confidence_entropy": 0.2035,
+          "answer_confidence": 0.4678,
+          "probabilities": {
+            "groceries": 0.0965,
+            "dining": 0.0554,
+            "transport": 0.0372,
+            "shopping": 0.4678,
+            "bills": 0.1316,
+            "entertainment": 0.0489,
+            "health": 0.0435,
+            "travel": 0.0544,
+            "personal_care": 0.0647
+          }
+        }
+      ]
+    },
+    {
+      "name": "short_descriptions_10_raw",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "SQ *BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "AMZN MKTP CA",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 3,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "shopping",
+          "correct": false,
+          "confidence_entropy": 0.5146,
+          "answer_confidence": 0.6069,
+          "probabilities": {
+            "groceries": 0.011,
+            "dining": 0.0113,
+            "transport": 0.0075,
+            "shopping": 0.6069,
+            "bills": 0.0087,
+            "entertainment": 0.0188,
+            "health": 0.0168,
+            "travel": 0.0101,
+            "personal_care": 0.0236,
+            "other": 0.2852
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.4405,
+          "answer_confidence": 0.6546,
+          "probabilities": {
+            "groceries": 0.0454,
+            "dining": 0.0355,
+            "transport": 0.008,
+            "shopping": 0.1234,
+            "bills": 0.0122,
+            "entertainment": 0.0218,
+            "health": 0.0299,
+            "travel": 0.0098,
+            "personal_care": 0.0594,
+            "other": 0.6546
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.3843,
+          "answer_confidence": 0.5827,
+          "probabilities": {
+            "groceries": 0.0388,
+            "dining": 0.021,
+            "transport": 0.0133,
+            "shopping": 0.1824,
+            "bills": 0.0398,
+            "entertainment": 0.0163,
+            "health": 0.0645,
+            "travel": 0.0113,
+            "personal_care": 0.0299,
+            "other": 0.5827
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.3685,
+          "answer_confidence": 0.4837,
+          "probabilities": {
+            "groceries": 0.0228,
+            "dining": 0.0208,
+            "transport": 0.2794,
+            "shopping": 0.1041,
+            "bills": 0.0103,
+            "entertainment": 0.0202,
+            "health": 0.0146,
+            "travel": 0.037,
+            "personal_care": 0.007,
+            "other": 0.4837
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.3957,
+          "answer_confidence": 0.589,
+          "probabilities": {
+            "groceries": 0.0201,
+            "dining": 0.0452,
+            "transport": 0.1417,
+            "shopping": 0.1231,
+            "bills": 0.013,
+            "entertainment": 0.0262,
+            "health": 0.0154,
+            "travel": 0.0198,
+            "personal_care": 0.0064,
+            "other": 0.589
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.4151,
+          "answer_confidence": 0.5144,
+          "probabilities": {
+            "groceries": 0.0185,
+            "dining": 0.0163,
+            "transport": 0.0094,
+            "shopping": 0.2761,
+            "bills": 0.0203,
+            "entertainment": 0.1151,
+            "health": 0.0138,
+            "travel": 0.0083,
+            "personal_care": 0.0078,
+            "other": 0.5144
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.4768,
+          "answer_confidence": 0.4841,
+          "probabilities": {
+            "groceries": 0.016,
+            "dining": 0.0219,
+            "transport": 0.0093,
+            "shopping": 0.3994,
+            "bills": 0.011,
+            "entertainment": 0.01,
+            "health": 0.0142,
+            "travel": 0.0122,
+            "personal_care": 0.0219,
+            "other": 0.4841
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "travel",
+          "correct": true,
+          "confidence_entropy": 0.6682,
+          "answer_confidence": 0.7963,
+          "probabilities": {
+            "groceries": 0.0084,
+            "dining": 0.0091,
+            "transport": 0.009,
+            "shopping": 0.0258,
+            "bills": 0.0077,
+            "entertainment": 0.0041,
+            "health": 0.0035,
+            "travel": 0.7963,
+            "personal_care": 0.0023,
+            "other": 0.1337
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.3275,
+          "answer_confidence": 0.4057,
+          "probabilities": {
+            "groceries": 0.0299,
+            "dining": 0.0149,
+            "transport": 0.012,
+            "shopping": 0.207,
+            "bills": 0.0184,
+            "entertainment": 0.0124,
+            "health": 0.0328,
+            "travel": 0.0101,
+            "personal_care": 0.2567,
+            "other": 0.4057
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.6497,
+          "answer_confidence": 0.7843,
+          "probabilities": {
+            "groceries": 0.0054,
+            "dining": 0.0071,
+            "transport": 0.0035,
+            "shopping": 0.0933,
+            "bills": 0.0066,
+            "entertainment": 0.7843,
+            "health": 0.0043,
+            "travel": 0.0039,
+            "personal_care": 0.0035,
+            "other": 0.0881
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.4372,
+          "answer_confidence": 0.6223,
+          "probabilities": {
+            "groceries": 0.0283,
+            "dining": 0.0144,
+            "transport": 0.0092,
+            "shopping": 0.1818,
+            "bills": 0.0171,
+            "entertainment": 0.0197,
+            "health": 0.0464,
+            "travel": 0.0094,
+            "personal_care": 0.0514,
+            "other": 0.6223
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "shopping",
+          "correct": true,
+          "confidence_entropy": 0.5401,
+          "answer_confidence": 0.5542,
+          "probabilities": {
+            "groceries": 0.0128,
+            "dining": 0.0069,
+            "transport": 0.0055,
+            "shopping": 0.5542,
+            "bills": 0.0177,
+            "entertainment": 0.01,
+            "health": 0.0117,
+            "travel": 0.005,
+            "personal_care": 0.0111,
+            "other": 0.3652
+          }
+        }
+      ]
+    },
+    {
+      "name": "short_descriptions_10_structured",
+      "states": [
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "PRESTO MOB/<REDACTED>",
+          "merchant_clean": "PRESTO MOB/<REDACTED>"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "SQ *BLUE BOTTLE",
+          "merchant_clean": "BLUE BOTTLE"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "LOBLAWS #1020",
+          "merchant_clean": "LOBLAWS #1020"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "UBER TRIP",
+          "merchant_clean": "UBER TRIP"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "UBER EATS",
+          "merchant_clean": "UBER EATS"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "NETFLIX.COM",
+          "merchant_clean": "NETFLIX.COM"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "AMZN MKTP CA",
+          "merchant_clean": "Amazon marketplace"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "AIR CANADA",
+          "merchant_clean": "AIR CANADA"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "SEPHORA CANADA",
+          "merchant_clean": "SEPHORA CANADA"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "STEAM GAMES",
+          "merchant_clean": "STEAM GAMES"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "HYDRO ONE",
+          "merchant_clean": "HYDRO ONE"
+        },
+        {
+          "transaction": "consumer card purchase",
+          "merchant_raw": "DOLLARAMA #254",
+          "merchant_clean": "DOLLARAMA #254"
+        }
+      ],
+      "correct": 0,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.7778,
+          "answer_confidence": 0.9001,
+          "probabilities": {
+            "groceries": 0.0101,
+            "dining": 0.0032,
+            "transport": 0.004,
+            "shopping": 0.0356,
+            "bills": 0.0198,
+            "entertainment": 0.007,
+            "health": 0.0099,
+            "travel": 0.0027,
+            "personal_care": 0.0076,
+            "other": 0.9001
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.7499,
+          "answer_confidence": 0.8787,
+          "probabilities": {
+            "groceries": 0.0093,
+            "dining": 0.0051,
+            "transport": 0.0036,
+            "shopping": 0.0572,
+            "bills": 0.0194,
+            "entertainment": 0.0051,
+            "health": 0.0099,
+            "travel": 0.0033,
+            "personal_care": 0.0083,
+            "other": 0.8787
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.6259,
+          "answer_confidence": 0.8011,
+          "probabilities": {
+            "groceries": 0.0146,
+            "dining": 0.0068,
+            "transport": 0.0075,
+            "shopping": 0.0401,
+            "bills": 0.0757,
+            "entertainment": 0.0108,
+            "health": 0.0225,
+            "travel": 0.0053,
+            "personal_care": 0.0157,
+            "other": 0.8011
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.5525,
+          "answer_confidence": 0.6584,
+          "probabilities": {
+            "groceries": 0.0065,
+            "dining": 0.0064,
+            "transport": 0.2422,
+            "shopping": 0.0369,
+            "bills": 0.0177,
+            "entertainment": 0.0094,
+            "health": 0.007,
+            "travel": 0.0093,
+            "personal_care": 0.0063,
+            "other": 0.6584
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.7466,
+          "answer_confidence": 0.8627,
+          "probabilities": {
+            "groceries": 0.0036,
+            "dining": 0.0034,
+            "transport": 0.0836,
+            "shopping": 0.0241,
+            "bills": 0.0088,
+            "entertainment": 0.0048,
+            "health": 0.0036,
+            "travel": 0.0027,
+            "personal_care": 0.0025,
+            "other": 0.8627
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.9454,
+          "answer_confidence": 0.9808,
+          "probabilities": {
+            "groceries": 0.0004,
+            "dining": 0.0005,
+            "transport": 0.0005,
+            "shopping": 0.0076,
+            "bills": 0.002,
+            "entertainment": 0.0061,
+            "health": 0.001,
+            "travel": 0.0004,
+            "personal_care": 0.0008,
+            "other": 0.9808
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.7208,
+          "answer_confidence": 0.8211,
+          "probabilities": {
+            "groceries": 0.0028,
+            "dining": 0.0027,
+            "transport": 0.0037,
+            "shopping": 0.135,
+            "bills": 0.0045,
+            "entertainment": 0.0215,
+            "health": 0.0029,
+            "travel": 0.0025,
+            "personal_care": 0.0034,
+            "other": 0.8211
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.8979,
+          "answer_confidence": 0.9624,
+          "probabilities": {
+            "groceries": 0.0045,
+            "dining": 0.0018,
+            "transport": 0.0027,
+            "shopping": 0.0125,
+            "bills": 0.0045,
+            "entertainment": 0.0027,
+            "health": 0.0038,
+            "travel": 0.0019,
+            "personal_care": 0.0031,
+            "other": 0.9624
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.7818,
+          "answer_confidence": 0.8989,
+          "probabilities": {
+            "groceries": 0.0271,
+            "dining": 0.0033,
+            "transport": 0.0033,
+            "shopping": 0.0386,
+            "bills": 0.009,
+            "entertainment": 0.0041,
+            "health": 0.0076,
+            "travel": 0.0022,
+            "personal_care": 0.0057,
+            "other": 0.8989
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.7413,
+          "answer_confidence": 0.846,
+          "probabilities": {
+            "groceries": 0.0017,
+            "dining": 0.0017,
+            "transport": 0.0018,
+            "shopping": 0.0318,
+            "bills": 0.0089,
+            "entertainment": 0.1023,
+            "health": 0.002,
+            "travel": 0.0016,
+            "personal_care": 0.0022,
+            "other": 0.846
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.8053,
+          "answer_confidence": 0.9157,
+          "probabilities": {
+            "groceries": 0.0065,
+            "dining": 0.0028,
+            "transport": 0.0034,
+            "shopping": 0.0308,
+            "bills": 0.0133,
+            "entertainment": 0.0076,
+            "health": 0.0086,
+            "travel": 0.0025,
+            "personal_care": 0.0087,
+            "other": 0.9157
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.6596,
+          "answer_confidence": 0.8293,
+          "probabilities": {
+            "groceries": 0.0225,
+            "dining": 0.0052,
+            "transport": 0.0051,
+            "shopping": 0.0472,
+            "bills": 0.0346,
+            "entertainment": 0.0089,
+            "health": 0.0285,
+            "travel": 0.0045,
+            "personal_care": 0.0141,
+            "other": 0.8293
+          }
+        }
+      ]
+    },
+    {
+      "name": "coarse_4_raw",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "SQ *BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "AMZN MKTP CA",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 4,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "mobility",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.249,
+          "answer_confidence": 0.6353,
+          "probabilities": {
+            "food": 0.087,
+            "mobility": 0.106,
+            "retail": 0.6353,
+            "services": 0.1718
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "food",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.2431,
+          "answer_confidence": 0.632,
+          "probabilities": {
+            "food": 0.1355,
+            "mobility": 0.0795,
+            "retail": 0.632,
+            "services": 0.1531
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "food",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.2002,
+          "answer_confidence": 0.578,
+          "probabilities": {
+            "food": 0.1019,
+            "mobility": 0.0949,
+            "retail": 0.578,
+            "services": 0.2251
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "mobility",
+          "predicted": "mobility",
+          "correct": true,
+          "confidence_entropy": 0.5948,
+          "answer_confidence": 0.8543,
+          "probabilities": {
+            "food": 0.0213,
+            "mobility": 0.8543,
+            "retail": 0.0659,
+            "services": 0.0584
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "food",
+          "predicted": "mobility",
+          "correct": false,
+          "confidence_entropy": 0.1356,
+          "answer_confidence": 0.527,
+          "probabilities": {
+            "food": 0.1087,
+            "mobility": 0.527,
+            "retail": 0.1941,
+            "services": 0.1701
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "services",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.2753,
+          "answer_confidence": 0.6401,
+          "probabilities": {
+            "food": 0.0679,
+            "mobility": 0.086,
+            "retail": 0.6401,
+            "services": 0.2059
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "retail",
+          "predicted": "retail",
+          "correct": true,
+          "confidence_entropy": 0.2612,
+          "answer_confidence": 0.639,
+          "probabilities": {
+            "food": 0.0775,
+            "mobility": 0.0975,
+            "retail": 0.639,
+            "services": 0.1859
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "mobility",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.155,
+          "answer_confidence": 0.5143,
+          "probabilities": {
+            "food": 0.0855,
+            "mobility": 0.1305,
+            "retail": 0.5143,
+            "services": 0.2697
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "retail",
+          "predicted": "retail",
+          "correct": true,
+          "confidence_entropy": 0.2436,
+          "answer_confidence": 0.629,
+          "probabilities": {
+            "food": 0.0984,
+            "mobility": 0.0924,
+            "retail": 0.629,
+            "services": 0.1802
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "services",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.2175,
+          "answer_confidence": 0.591,
+          "probabilities": {
+            "food": 0.0814,
+            "mobility": 0.1034,
+            "retail": 0.591,
+            "services": 0.2243
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "services",
+          "predicted": "retail",
+          "correct": false,
+          "confidence_entropy": 0.1728,
+          "answer_confidence": 0.5575,
+          "probabilities": {
+            "food": 0.1077,
+            "mobility": 0.1139,
+            "retail": 0.5575,
+            "services": 0.2209
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "retail",
+          "predicted": "retail",
+          "correct": true,
+          "confidence_entropy": 0.1989,
+          "answer_confidence": 0.565,
+          "probabilities": {
+            "food": 0.0921,
+            "mobility": 0.094,
+            "retail": 0.565,
+            "services": 0.2489
+          }
+        }
+      ]
+    },
+    {
+      "name": "original_10_singleton",
+      "states": [
+        "PRESTO MOB/<REDACTED>",
+        "SQ *BLUE BOTTLE",
+        "LOBLAWS #1020",
+        "UBER TRIP",
+        "UBER EATS",
+        "NETFLIX.COM",
+        "AMZN MKTP CA",
+        "AIR CANADA",
+        "SEPHORA CANADA",
+        "STEAM GAMES",
+        "HYDRO ONE",
+        "DOLLARAMA #254"
+      ],
+      "correct": 3,
+      "total": 12,
+      "rows": [
+        {
+          "merchant": "PRESTO MOB/<REDACTED>",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1281,
+          "answer_confidence": 0.3105,
+          "probabilities": {
+            "groceries": 0.0644,
+            "dining": 0.0317,
+            "transport": 0.0344,
+            "shopping": 0.193,
+            "bills": 0.1354,
+            "entertainment": 0.0734,
+            "health": 0.0449,
+            "travel": 0.0565,
+            "personal_care": 0.0557,
+            "other": 0.3105
+          }
+        },
+        {
+          "merchant": "SQ *BLUE BOTTLE",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2055,
+          "answer_confidence": 0.3744,
+          "probabilities": {
+            "groceries": 0.1445,
+            "dining": 0.0303,
+            "transport": 0.0183,
+            "shopping": 0.2125,
+            "bills": 0.0694,
+            "entertainment": 0.0276,
+            "health": 0.0395,
+            "travel": 0.0303,
+            "personal_care": 0.0531,
+            "other": 0.3744
+          }
+        },
+        {
+          "merchant": "LOBLAWS #1020",
+          "expected": "groceries",
+          "predicted": "bills",
+          "correct": false,
+          "confidence_entropy": 0.2111,
+          "answer_confidence": 0.3648,
+          "probabilities": {
+            "groceries": 0.0853,
+            "dining": 0.0232,
+            "transport": 0.0244,
+            "shopping": 0.129,
+            "bills": 0.3648,
+            "entertainment": 0.0218,
+            "health": 0.0588,
+            "travel": 0.0266,
+            "personal_care": 0.0321,
+            "other": 0.2342
+          }
+        },
+        {
+          "merchant": "UBER TRIP",
+          "expected": "transport",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1188,
+          "answer_confidence": 0.2455,
+          "probabilities": {
+            "groceries": 0.096,
+            "dining": 0.0381,
+            "transport": 0.173,
+            "shopping": 0.1836,
+            "bills": 0.0684,
+            "entertainment": 0.0406,
+            "health": 0.0267,
+            "travel": 0.1131,
+            "personal_care": 0.0151,
+            "other": 0.2455
+          }
+        },
+        {
+          "merchant": "UBER EATS",
+          "expected": "dining",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1157,
+          "answer_confidence": 0.2772,
+          "probabilities": {
+            "groceries": 0.1239,
+            "dining": 0.0437,
+            "transport": 0.1124,
+            "shopping": 0.1952,
+            "bills": 0.0768,
+            "entertainment": 0.0573,
+            "health": 0.0334,
+            "travel": 0.0614,
+            "personal_care": 0.0188,
+            "other": 0.2772
+          }
+        },
+        {
+          "merchant": "NETFLIX.COM",
+          "expected": "bills",
+          "predicted": "entertainment",
+          "correct": false,
+          "confidence_entropy": 0.1399,
+          "answer_confidence": 0.239,
+          "probabilities": {
+            "groceries": 0.1179,
+            "dining": 0.0283,
+            "transport": 0.0207,
+            "shopping": 0.1963,
+            "bills": 0.1032,
+            "entertainment": 0.239,
+            "health": 0.0303,
+            "travel": 0.0367,
+            "personal_care": 0.0292,
+            "other": 0.1985
+          }
+        },
+        {
+          "merchant": "AMZN MKTP CA",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.2221,
+          "answer_confidence": 0.4221,
+          "probabilities": {
+            "groceries": 0.0548,
+            "dining": 0.0562,
+            "transport": 0.0323,
+            "shopping": 0.2161,
+            "bills": 0.0783,
+            "entertainment": 0.031,
+            "health": 0.0261,
+            "travel": 0.0515,
+            "personal_care": 0.0316,
+            "other": 0.4221
+          }
+        },
+        {
+          "merchant": "AIR CANADA",
+          "expected": "travel",
+          "predicted": "travel",
+          "correct": true,
+          "confidence_entropy": 0.1702,
+          "answer_confidence": 0.2956,
+          "probabilities": {
+            "groceries": 0.0956,
+            "dining": 0.0342,
+            "transport": 0.039,
+            "shopping": 0.1821,
+            "bills": 0.0684,
+            "entertainment": 0.0287,
+            "health": 0.023,
+            "travel": 0.2956,
+            "personal_care": 0.0175,
+            "other": 0.2159
+          }
+        },
+        {
+          "merchant": "SEPHORA CANADA",
+          "expected": "personal_care",
+          "predicted": "personal_care",
+          "correct": true,
+          "confidence_entropy": 0.1381,
+          "answer_confidence": 0.2654,
+          "probabilities": {
+            "groceries": 0.1207,
+            "dining": 0.039,
+            "transport": 0.0194,
+            "shopping": 0.2039,
+            "bills": 0.0654,
+            "entertainment": 0.0191,
+            "health": 0.0809,
+            "travel": 0.0286,
+            "personal_care": 0.2654,
+            "other": 0.1577
+          }
+        },
+        {
+          "merchant": "STEAM GAMES",
+          "expected": "entertainment",
+          "predicted": "entertainment",
+          "correct": true,
+          "confidence_entropy": 0.7023,
+          "answer_confidence": 0.8555,
+          "probabilities": {
+            "groceries": 0.0247,
+            "dining": 0.0086,
+            "transport": 0.0046,
+            "shopping": 0.0421,
+            "bills": 0.0156,
+            "entertainment": 0.8555,
+            "health": 0.0043,
+            "travel": 0.0076,
+            "personal_care": 0.0047,
+            "other": 0.0324
+          }
+        },
+        {
+          "merchant": "HYDRO ONE",
+          "expected": "bills",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1102,
+          "answer_confidence": 0.2569,
+          "probabilities": {
+            "groceries": 0.1046,
+            "dining": 0.033,
+            "transport": 0.0261,
+            "shopping": 0.2271,
+            "bills": 0.1076,
+            "entertainment": 0.0651,
+            "health": 0.0687,
+            "travel": 0.0417,
+            "personal_care": 0.0692,
+            "other": 0.2569
+          }
+        },
+        {
+          "merchant": "DOLLARAMA #254",
+          "expected": "shopping",
+          "predicted": "other",
+          "correct": false,
+          "confidence_entropy": 0.1916,
+          "answer_confidence": 0.3223,
+          "probabilities": {
+            "groceries": 0.095,
+            "dining": 0.0292,
+            "transport": 0.0294,
+            "shopping": 0.2474,
+            "bills": 0.1509,
+            "entertainment": 0.0309,
+            "health": 0.0304,
+            "travel": 0.0332,
+            "personal_care": 0.0313,
+            "other": 0.3223
+          }
+        }
+      ]
+    }
+  ],
+  "checkpoint_repo": "convaiinnovations/laya",
+  "checkpoint_revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+  "first_case_input_sha256": "f579fb2ab7580b8b49529092fced4c825bf1089cef497553090138a084e11999"
+}
