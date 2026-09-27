@@ -78,6 +78,7 @@ Key idea: the 3am job **never holds the database key**. It only has a public key
   - **If only the trigger fires:** the shortcut can't read the amount or merchant, so fall back to CIBC **email alerts** (Email trigger) or **SMS alerts** (Message trigger). Both expose their content and can run immediately. The notification trigger could still record a content-free "bank ping" with a timestamp, but that isn't enough to build a transaction.
 - **Shared "GK Capture" shortcut:** every automation (Wallet and each notification wording) calls it through a single `Run Shortcut` action, with the trigger input passed along. This follows the beta-era advice to keep logic out of the automation itself: if an iOS update breaks an automation, rebuilding it is a one-action job.
 - **Keep the shortcut simple:** it just writes a raw JSON file with no parsing on the phone. All parsing happens on the Mac, so a change in CIBC's wording only means updating a parser.
+- **Notification field mapping:** the app name shown beside the icon is a system header, separate from the notification payload's title. The CIBC sample screenshot suggests a card-description title, a merchant subtitle, and an amount body, but a screenshot cannot prove that split. Save the exact Shortcut Input values before designing the parser; see `M0_SCOPE.md`.
 - **Laya can't extract fields:** it only classifies, so amounts, merchants, and card last-4 digits in notification text come from **per-bank regex parsers** (`parsers/cibc.py`), written from real samples. Anything that fails to parse goes to an "unparsed" review list, and its raw text is kept so a parser fix can re-run over it.
 
 Queue file (immutable, written once, never modified, so iCloud never hits a sync conflict):
@@ -107,7 +108,7 @@ Wallet captures fill `amount_raw`, `merchant`, `name`, and `card`. Notification 
 ## 3. The nightly Mac job
 
 - **Schedule:** a user **LaunchAgent** (not a LaunchDaemon, because it needs the user's iCloud session) with `StartCalendarInterval` set to 03:00. If the Mac is asleep at 3am, launchd runs the missed job on the next wake. Optionally, `pmset repeat wake` can wake the Mac on AC power.
-- **Environment in the plist:** set `EnvironmentVariables` to `LAYA_DEVICE=mps`, `PYTORCH_ENABLE_MPS_FALLBACK=1`, and `HF_HUB_OFFLINE=1`. launchd does not inherit your shell environment, so the variables have to be set there.
+- **Environment in the plist:** set `EnvironmentVariables` to `LAYA_DEVICE=mps` and `HF_HUB_OFFLINE=1`. Do not enable MPS-to-CPU op fallback by default; the M0 spike ran this checkpoint on MPS without it. launchd does not inherit your shell environment, so the variables have to be set there.
 - **Evicted iCloud files:** mark the queue folder **"Keep Downloaded"** in Finder so files don't become `.icloud` placeholders. Skip any placeholders that still appear and retry them the next night.
 - **Folder permissions:** macOS privacy controls (TCC) protect `~/Library/Mobile Documents`, so the Python interpreter the job runs under needs Full Disk Access. Packaging the job as a small app bundle later would let you grant a narrower permission.
 - **Steps for each file:**
@@ -129,19 +130,19 @@ Wallet captures fill `amount_raw`, `merchant`, `name`, and `card`. Notification 
 - Run it in-process with `pip install laya` and `laya.load(...)`, **on the Apple GPU through PyTorch's Metal (MPS) backend**. Download the weights once from Hugging Face, then set `HF_HUB_OFFLINE=1` so the model never needs the network.
 - **Pin the device to MPS:** in `classify.py`:
   1. Check `torch.backends.mps.is_available()` at startup.
-  2. Load the model on the `"mps"` device. Use `LAYA_DEVICE=mps` (the same variable `laya-serve` reads) and/or pass the device to `laya.load(...)` if it accepts one. Otherwise move the model to `torch.device("mps")` after loading.
-  3. Log the device the model's parameters actually ended up on, so a silent CPU fallback shows up in the job log.
+  2. Load with `laya.load(..., device="mps")`; the M0 spike verified that this keyword works in Laya 0.3.11. `LAYA_DEVICE=mps` is useful for `laya-serve`, but do not rely on it for the direct SDK call.
+  3. Check the agent device and a model parameter device after inference, so an internal CPU fallback shows up in the job log.
 - **If MPS isn't available, fail loudly.** The job exits non-zero with a clear log message and leaves the queue files untouched for the next run, rather than quietly running on CPU. A `--allow-cpu` flag on `gk run` is the explicit escape hatch.
-- **Unsupported ops:** set `PYTORCH_ENABLE_MPS_FALLBACK=1`. Any PyTorch op that MPS doesn't implement then runs on CPU instead of crashing, while the rest of the model stays on the GPU. Log a warning if a fallback happens.
-- **Batching:** classify the whole night's queue in mini-batches (for example, 32 transactions per forward pass) to keep the GPU busy. A day's worth is well under a second of work.
+- **Unsupported ops:** leave `PYTORCH_ENABLE_MPS_FALLBACK` unset unless a future pinned dependency requires it; an M0 run completed without fallback. Re-test and log actual device placement after any upgrade.
+- **Batching:** classify the whole night's queue in mini-batches (for example, 32 transactions per forward pass) to keep the GPU busy. The M0 12-item warm batch took about 0.4 seconds on this M4 Pro; cold startup and larger batches need separate measurement.
 - Use one `choice` question over **at most 10 spending categories**: Groceries, Dining, Transport, Shopping, Subscriptions and Bills, Entertainment, Health, Travel, Personal Care, Other.
-  - Why 10: Laya fits a separate calibration temperature for each option-count bucket. Its docs say the shipped `choice:11+` bucket was badly mis-calibrated (it sharpened a 0.24 top probability to 0.99), so the package now clamps it. With 10 or fewer options you stay in the `6-10` bucket, where the confidence numbers mean something and the 0.6 review threshold is trustworthy.
+  - Why 10: Laya fits a separate calibration temperature for each option-count bucket. Its docs say the shipped `choice:11+` bucket was badly mis-calibrated, so the package now clamps it. With 10 or fewer options you avoid that bucket, but the 0.6 review threshold still needs task-specific validation; the M0 raw-string sample achieved only 3/12 correct.
   - If you want finer categories later, classify in two stages (coarse category first, then subcategory within it), each with 10 or fewer options.
 - **Direction comes from the parser, not Laya.** Income, refunds, and transfers are recognized from the bank text ("refund", "deposit", "e-Transfer received") or from the sign of the amount, and they skip spending classification. Laya only ever answers "what kind of spending is this?"
 - **Precedence:**
   1. A user merchant rule (`merchant_norm` mapped to a category) wins and skips Laya entirely.
   2. Otherwise use Laya's answer.
-  3. If confidence is below about 0.6, flag the transaction for review.
+  3. If confidence is below a threshold chosen on labelled real fixtures (0.6 is only a starting candidate), flag the transaction for review.
 - Every correction the user makes in the UI becomes a merchant rule, so accuracy improves quickly without fine-tuning. Fine-tuning on the corrections is an optional later step.
 
 ## 5. Idempotency and deduplication
@@ -183,10 +184,10 @@ Threat model: an attacker who gets the `.db` file (or a backup of it) can't read
 
 ```mermaid
 flowchart TB
-  DEK["DEK: random 256-bit data key"]
+  DEK["DEK: 256-bit key derived from recovery secret"]
   DB["SQLCipher database"]
   PwSlot["Password slot: Argon2id of password wraps DEK"]
-  TidSlot["Touch ID slot: Secure Enclave key wraps DEK"]
+  TidSlot["Touch ID slot: Secure Enclave key agreement derives a key that wraps DEK"]
   RecSlot["Recovery key: 24 words, DEK derived from it via HKDF"]
   StagePriv["Staging private key (stored inside DB)"]
   StagePub["Staging public key (plaintext config)"]
@@ -200,17 +201,17 @@ flowchart TB
 
 
 
-- **Encryption:** SQLCipher, keyed by a raw 256-bit **DEK** (data encryption key) generated at setup. The Python binding is `sqlcipher3` (with Homebrew's `sqlcipher`) or `apsw` built with SQLite3MultipleCiphers.
+- **Encryption:** SQLCipher, keyed by a raw 256-bit **DEK** (data encryption key) derived at setup from the recovery secret as described below. The Python binding is `sqlcipher3` (with Homebrew's `sqlcipher`) or `apsw` built with SQLite3MultipleCiphers.
 - **Keyslots** (the same idea as LUKS disk encryption) live in `keyslots.json`. It holds only salts and wrapped blobs, which are useless on their own:
   - **Password slot:** Argon2id (for example 256 MB of memory, 3 iterations) derives a key from the password. That key wraps the DEK with AES-GCM. The password itself is never stored.
-  - **Touch ID slot:** a small Swift helper, `gk-keyhelper`, uses CryptoKit `SecureEnclave.P256` with access control `.biometryCurrentSet`. The Secure Enclave key wraps the DEK, so unwrapping requires a fingerprint on that specific Mac, and the key can't leave the chip. The Python backend calls the helper as a subprocess.
+  - **Touch ID slot:** a small Swift helper, `gk-keyhelper`, uses CryptoKit `SecureEnclave.P256.KeyAgreement.PrivateKey` with access control `.biometryCurrentSet`. P-256 ECDH plus HKDF derives an AES-GCM wrapping key for the DEK; the enclave private key cannot leave the chip. Store its opaque representation, an ephemeral public key, and the wrapped DEK. The Python backend calls the helper as a subprocess. M0 proved an ad hoc signed local round trip; persistent cross-process unlock remains to be checked with the user present for any authentication prompt.
   - **Recovery key:** a 256-bit secret shown **once** at setup as 24 words, to be saved in a password manager or on paper. The DEK is derived from it (see Backups below), so it needs no stored slot.
 - **Forgot password:** unlock with Touch ID or the recovery key, then set a new password. Only the password slot is rewritten; the database is not re-encrypted.
 - **Touch ID stops working** (a fingerprint was added, or you're on a new Mac): `.biometryCurrentSet` invalidates the Touch ID slot. Unlock with the password or recovery key and re-enroll Touch ID.
 - **Lost password, recovery key, and Touch ID:** the data is unrecoverable, **by design**. Setup must say this plainly.
 - **Backups:** the `.db` file is already encrypted, so it's safe to copy into iCloud. On a new Mac, restore it with the password or recovery key.
-  - **Back up `keyslots.json` together with the database.** Every slot, including recovery, lives in that file, so losing it means even the correct password can't unwrap the DEK. Write both into one versioned backup folder, `GroundKeeper/backups/<date>/`.
-  - **Better: derive the DEK from the recovery key.** Generate a 256-bit recovery secret and set `DEK = HKDF(recovery_secret, "groundkeeper-dek-v1")`. The password and Touch ID slots still wrap that same DEK. Then **the recovery key plus the `.db` file alone** can always recover the data, even if `keyslots.json` is gone. The cost: rotating the DEK means issuing a new recovery key, which is acceptable since rotation is rare.
+  - **Back up `keyslots.json` together with the database.** It holds the password and Touch ID slots; losing it disables those unlock methods. Write both into one versioned backup folder, `GroundKeeper/backups/<date>/`.
+  - **Derive the DEK from the recovery key.** Generate a 256-bit recovery secret and set `DEK = HKDF(recovery_secret, "groundkeeper-dek-v1")`. The password and Touch ID slots wrap that same DEK. Then **the recovery key plus the `.db` file alone** can recover the data, even if `keyslots.json` is gone. Rotating the DEK requires a new recovery key.
   - Take backups with SQLite's backup API or `VACUUM INTO` on the open, keyed connection. A plain file copy of a database that's in use (especially in WAL mode) can produce a corrupt backup.
   - Keep the last N backups. A single overwritten file also overwrites a corrupted state.
 - **Nightly job and the locked database:** the staging keypair is X25519. The public key sits in plaintext config and the private key lives inside the encrypted database. The job can seal rows but can never read them.
@@ -281,6 +282,8 @@ flowchart LR
 ```
 
 ### M0: Spikes (decision gate)
+
+Current spike results, remaining checks, and the provisional notification field map are in `M0_SCOPE.md`.
 
 - **Scope:** everything in section 9.
   - Does the notification trigger pass the notification text into the shortcut?
@@ -458,4 +461,3 @@ This is the most important category in practice, because every capture failure i
 - **iPhone heartbeat:** a daily time-of-day automation writes `heartbeat-<date>.json` to the queue. It proves Shortcuts can still write to iCloud even on days you spend nothing.
 - **Job failure notice:** on failure, the job posts a local macOS notification that contains no transaction data ("GroundKeeper nightly run failed; open dashboard"). It also leaves the queue untouched.
 - **Test fixtures:** keep a folder of anonymized real queue files (CIBC purchase, refund, decline, French, and USD samples, plus Wallet taps). Add property-based tests for reconciliation, for example: shuffling arrival order never changes the final set of transactions, and N identical taps plus M alerts always produce max(N, M) transactions.
-
