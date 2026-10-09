@@ -1,0 +1,35 @@
+{"id": "ddt-18196", "old": {"category": "uncategorized", "review": true, "type": "unknown"}, "reason": "Processor wrapper plus ambiguous Roosters name supports no expense-purpose default; keep same suggestion as other Roosters debit rows."}
+{"id": "ddt-24867", "old": {"category": "entertainment", "review": false, "type": "expense"}, "reason": "Aquarium name without admission or other service cue could be a venue or retailer; consistent abstention across generic aquarium variants."}
+{"id": "ddt-50768", "old": {"category": "vehicle", "review": true, "type": "expense"}, "reason": "Mixed gas/convenience merchant does not establish fuel versus store purchase."}
+{"id": "ddt-28444", "old": {"category": "uncategorized", "review": true, "type": "unknown"}, "reason": "US Mobile is a named mobile service; withdrawal-from is the synthetic debit bank wrapper, not evidence of cash movement."}
+{"id": "ddt-61586", "old": {"category": "uncategorized", "review": true, "type": "unknown"}, "reason": "Named laser-tag/cinema service supports entertainment; withdrawal-from is only a debit bank wrapper."}
+{"id": "ddt-48222", "old": {"category": "vehicle", "review": false, "type": "expense"}, "reason": "Marathon fuel/convenience purchase lacks fuel cue; consistent with other mixed station descriptions."}
+{"id": "ddt-66628", "old": {"category": null, "review": false, "type": "cash_movement"}, "reason": "Remote online deposit may be cheque or other deposit; it does not identify cash, earnings, or own-account transfer."}
+{"id": "ddt-05016", "old": {"category": "shopping", "review": true, "type": "expense"}, "reason": "Mixed gas/convenience merchant does not establish fuel versus store purchase."}
+{"id": "ddt-40938", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-39811", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-27121", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-09485", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-43395", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-00244", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-43566", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-03659", "old": {"category": null, "review": true, "type": "unknown"}, "reason": "Unknown output schema clarification"}
+{"id": "ddt-44618", "old": {"category": null, "review": false, "type": "card_payment"}, "reason": "Payment thank you alone does not explicitly identify a card repayment."}
+{"id": "ddt-30260", "old": {"category": "housing", "review": true, "type": "expense"}, "reason": "Bare home-warranty/coverage provider does not establish premium versus repair/service purpose; blind review identified this boundary."}
+{"id": "ddt-41755", "old": {"category": "uncategorized", "review": true, "type": "expense"}, "reason": "Standalone shipping fee is understood outside the current category set; keep consistent with other shipping-only descriptions."}
+{"id": "ddt-25027", "old": {"category": "other", "review": false, "type": "expense"}, "reason": "Household recycling is a utility; policy clarified during audit."}
+{"id": "ddt-08045", "old": {"category": null, "review": false, "type": "cash_movement"}, "reason": "Remote online deposit may be cheque or other deposit; it does not identify cash, earnings, or own-account transfer."}
+{"id": "ddt-14753", "old": {"category": "other", "review": false, "type": "expense"}, "reason": "Explicit waste collection is a utility; policy clarified during audit."}
+{"id": "ddt-25559", "old": {"category": "uncategorized", "review": true, "type": "expense"}, "reason": "SP Plus is the identified parking provider; PayPal is only a processor wrapper."}
+{"id": "ddt-19640", "old": {"category": "other", "review": false, "type": "expense"}, "reason": "Vercel plus credit-report purpose is inconsistent with the recognized service; keep review instead of inventing a financial service."}
+{"id": "ddt-38166", "old": {"category": "uncategorized", "review": true, "type": "unknown"}, "reason": "Named laser-tag/cinema service supports entertainment; withdrawal-from is only a debit bank wrapper."}
+{"id": "ddt-57689", "old_merchant_group": null, "reason": "Missing group repaired conservatively from public description."}
+{"id": "ddt-58073", "old": {"category": "housing", "review": true, "type": "expense"}, "reason": "Bare home-warranty/coverage provider does not establish premium versus repair/service purpose; blind review identified this boundary."}
+{"id": "ddt-37104", "old": {"category": null, "review": false, "type": "transfer"}, "reason": "Account-ending transfer lacks evidence that the sender owns the other account."}
+{"id": "ddt-02913", "old": {"category": "dining", "review": false, "type": "expense"}, "reason": "Roosters alone is ambiguous; source Restaurants label cannot resolve identity."}
+{"id": "ddt-62674", "old": {"category": "housing", "review": true, "type": "expense"}, "reason": "Bare home-warranty/coverage provider does not establish premium versus repair/service purpose; blind review identified this boundary."}
+{"id": "ddt-32854", "old": {"category": null, "review": false, "type": "transfer"}, "reason": "Account-ending transfer lacks evidence that the sender owns the other account."}
+{"id": "ddt-33983", "old": {"category": "vehicle", "review": false, "type": "expense"}, "reason": "Mixed gas/convenience merchant does not establish fuel versus store purchase."}
+{"id": "ddt-08472", "old": {"category": null, "review": false, "type": "card_payment"}, "reason": "PayPal transfer to Barclaycard without explicit repayment context is ambiguous; apply the same abstention as other identical-pattern rows."}
+{"id": "ddt-03146", "old": {"category": "vehicle", "review": false, "type": "expense"}, "reason": "Marathon fuel/convenience purchase lacks fuel cue; consistent with other mixed station descriptions."}
+{"id": "ddt-55446", "old_merchant_group": null, "reason": "Missing group repaired conservatively from public description."}

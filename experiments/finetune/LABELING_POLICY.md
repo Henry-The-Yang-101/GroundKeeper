@@ -125,3 +125,26 @@ Explicit credited interest/benefit/earnings is income. An ATM fee is financial,
 not cash_movement. Credit against a principal-payment description without a
 reversal explanation is unknown/review. Keep all subbrands under a shared parent
 group for splitting; the purpose can still differ across subbrands.
+
+Clarification from bulk audit: household waste collection and recycling services
+are utilities. `unknown` is the explicit exception to nonexpense category=null:
+it must use uncategorized/review. An unspecified subscription for a clearly named
+social/dating service is Other when its outside-taxonomy purpose is understood;
+a vague app-store or processor bill remains Uncategorized. Public descriptions
+may be US or Canadian; country is not a training inclusion requirement.
+
+Bank-format clarification: with debit direction, `Withdrawal from` followed by a
+clearly identified specialized merchant is a purchase wrapper (e.g. US Mobile,
+IMAX, Datacamp), not evidence of cash withdrawal. Remote online deposit does not
+establish cash; it may be a cheque. A transfer from an account ending in digits
+alone does not establish common ownership. Mixed gas/convenience retailers such
+as Sheetz or QuikTrip without a fuel cue are Uncategorized/review. A generic
+"Payment Thank You" without card context does not establish a card repayment.
+
+Second blind audit adjudication: home warranty/coverage provider alone does not
+establish insurance premium versus actual upkeep; use expense/uncategorized/review
+unless the purpose is explicit. Bare Cricket or Aquarium without an identifying
+service cue remains ambiguous. RepairClinic's parts versus repair-service purpose
+is not known; preserve shopping as a provisional suggestion with review. Unknown
+merchant placeholders cannot establish transaction type. A recognizable business
+name may establish an expense while leaving the expense category unknown.

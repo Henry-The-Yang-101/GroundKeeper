@@ -35,3 +35,7 @@ def test_credit_and_model_predictions_require_review():
  model=lambda _: {'type':'unknown','category':'uncategorized','review':True}
  result=classify({'description':'Cafe','direction':'credit','currency':'CAD'},m,model,as_of=T1)
  assert result['method']=='model_review'
+def test_same_chain_different_purposes_still_compete():
+ m=store(fuzzy=FuzzyPolicy(70,8));m.confirm('Shop Alpha','groceries',T0,merchant_scope=True,merchant_id='same-chain')
+ m.confirm('Shop Alphi','medical',T0,merchant_scope=True,merchant_id='same-chain')
+ assert m.lookup('Shop Alph',T1) is None

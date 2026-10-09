@@ -1,0 +1,200 @@
+{
+  "ddt-25027": {
+    "answer": {
+      "category": "utilities",
+      "review": false
+    },
+    "reason": "Household recycling is a utility; policy clarified during audit."
+  },
+  "ddt-14753": {
+    "answer": {
+      "category": "utilities",
+      "review": false
+    },
+    "reason": "Explicit waste collection is a utility; policy clarified during audit."
+  },
+  "ddt-28444": {
+    "answer": {
+      "type": "expense",
+      "category": "utilities",
+      "review": false
+    },
+    "reason": "US Mobile is a named mobile service; withdrawal-from is the synthetic debit bank wrapper, not evidence of cash movement."
+  },
+  "ddt-61586": {
+    "answer": {
+      "type": "expense",
+      "category": "entertainment",
+      "review": false
+    },
+    "reason": "Named laser-tag/cinema service supports entertainment; withdrawal-from is only a debit bank wrapper."
+  },
+  "ddt-38166": {
+    "answer": {
+      "type": "expense",
+      "category": "entertainment",
+      "review": false
+    },
+    "reason": "Named laser-tag/cinema service supports entertainment; withdrawal-from is only a debit bank wrapper."
+  },
+  "ddt-50768": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Mixed gas/convenience merchant does not establish fuel versus store purchase."
+  },
+  "ddt-05016": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Mixed gas/convenience merchant does not establish fuel versus store purchase."
+  },
+  "ddt-33983": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Mixed gas/convenience merchant does not establish fuel versus store purchase."
+  },
+  "ddt-66628": {
+    "answer": {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Remote online deposit may be cheque or other deposit; it does not identify cash, earnings, or own-account transfer."
+  },
+  "ddt-08045": {
+    "answer": {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Remote online deposit may be cheque or other deposit; it does not identify cash, earnings, or own-account transfer."
+  },
+  "ddt-37104": {
+    "answer": {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Account-ending transfer lacks evidence that the sender owns the other account."
+  },
+  "ddt-32854": {
+    "answer": {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Account-ending transfer lacks evidence that the sender owns the other account."
+  },
+  "ddt-44618": {
+    "answer": {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Payment thank you alone does not explicitly identify a card repayment."
+  },
+  "ddt-19640": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Vercel plus credit-report purpose is inconsistent with the recognized service; keep review instead of inventing a financial service."
+  },
+  "ddt-25559": {
+    "answer": {
+      "type": "expense",
+      "category": "local_transport",
+      "review": false
+    },
+    "reason": "SP Plus is the identified parking provider; PayPal is only a processor wrapper."
+  },
+  "ddt-02913": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Roosters alone is ambiguous; source Restaurants label cannot resolve identity."
+  },
+  "ddt-08472": {
+    "answer": {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "PayPal transfer to Barclaycard without explicit repayment context is ambiguous; apply the same abstention as other identical-pattern rows."
+  },
+  "ddt-41755": {
+    "answer": {
+      "type": "expense",
+      "category": "other",
+      "review": false
+    },
+    "reason": "Standalone shipping fee is understood outside the current category set; keep consistent with other shipping-only descriptions."
+  },
+  "ddt-18196": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Processor wrapper plus ambiguous Roosters name supports no expense-purpose default; keep same suggestion as other Roosters debit rows."
+  },
+  "ddt-24867": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Aquarium name without admission or other service cue could be a venue or retailer; consistent abstention across generic aquarium variants."
+  },
+  "ddt-48222": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Marathon fuel/convenience purchase lacks fuel cue; consistent with other mixed station descriptions."
+  },
+  "ddt-03146": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Marathon fuel/convenience purchase lacks fuel cue; consistent with other mixed station descriptions."
+  },
+  "ddt-62674": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Bare home-warranty/coverage provider does not establish premium versus repair/service purpose; blind review identified this boundary."
+  },
+  "ddt-58073": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Bare home-warranty/coverage provider does not establish premium versus repair/service purpose; blind review identified this boundary."
+  },
+  "ddt-30260": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "Bare home-warranty/coverage provider does not establish premium versus repair/service purpose; blind review identified this boundary."
+  }
+}

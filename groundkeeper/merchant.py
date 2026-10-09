@@ -79,7 +79,8 @@ class MerchantMemory:
         ranked={}
         for key,r in rules.items():
             score=ratio(alias,key)
-            if r[5] not in ranked or score>ranked[r[5]][0]:ranked[r[5]]=(score,r[1])
+            identity=(r[5],r[1])
+            if identity not in ranked or score>ranked[identity][0]:ranked[identity]=(score,r[1])
         ranked=sorted(ranked.values(),reverse=True)
         if not ranked:return None
         best=ranked[0];runner=ranked[1][0] if len(ranked)>1 else 0

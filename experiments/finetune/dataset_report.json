@@ -1,0 +1,111 @@
+{
+  "selected": 950,
+  "raw_labeled": 950,
+  "retained": 810,
+  "excluded": {
+    "merchant_variant_cap_6": 140
+  },
+  "adjudicated_count": 35,
+  "source_audit_counts": {
+    "Restaurants": 50,
+    "Transfer": 50,
+    "Rent": 50,
+    "Groceries": 50,
+    "Personal Care": 50,
+    "Shopping": 50,
+    "Entertainment": 50,
+    "Fees": 50,
+    "Travel": 50,
+    "Income": 50,
+    "Education": 50,
+    "Utilities": 50,
+    "Mortgage": 50,
+    "Transportation": 50,
+    "Insurance": 50,
+    "Subscription": 50,
+    "Healthcare": 50
+  },
+  "source_retained": {
+    "DoDataThings/us-bank-transaction-categories-v2": 717,
+    "groundkeeper-authored-canadian-pilot-v1": 93
+  },
+  "policy_sha256": "cd19533eb25ca064d36b2a842864c50b22cf2b1768cba7b70df2557a9e4cdc36",
+  "split_counts": {
+    "train": 626,
+    "valid": 116,
+    "test": 68
+  },
+  "group_counts": {
+    "train": 399,
+    "valid": 59,
+    "test": 45
+  },
+  "split_category_counts": {
+    "train": {
+      "groceries": 33,
+      "dining": 42,
+      "local_transport": 13,
+      "vehicle": 22,
+      "housing": 40,
+      "utilities": 30,
+      "shopping": 29,
+      "medical": 39,
+      "personal_care": 32,
+      "fitness": 18,
+      "software": 21,
+      "education": 39,
+      "travel": 22,
+      "insurance": 41,
+      "financial": 9,
+      "taxes": 7,
+      "gifts": 1,
+      "uncategorized": 122,
+      "__none__": 29,
+      "other": 7,
+      "entertainment": 30
+    },
+    "valid": {
+      "dining": 5,
+      "housing": 8,
+      "entertainment": 12,
+      "gifts": 2,
+      "uncategorized": 20,
+      "__none__": 4,
+      "travel": 9,
+      "personal_care": 1,
+      "utilities": 15,
+      "insurance": 4,
+      "groceries": 9,
+      "shopping": 7,
+      "software": 4,
+      "education": 1,
+      "medical": 7,
+      "local_transport": 4,
+      "vehicle": 3,
+      "fitness": 1
+    },
+    "test": {
+      "shopping": 3,
+      "medical": 1,
+      "personal_care": 4,
+      "fitness": 6,
+      "entertainment": 7,
+      "uncategorized": 12,
+      "__none__": 1,
+      "other": 1,
+      "dining": 4,
+      "travel": 8,
+      "local_transport": 1,
+      "insurance": 5,
+      "groceries": 1,
+      "education": 6,
+      "utilities": 6,
+      "housing": 2
+    }
+  },
+  "sealed_test_sha256": "b9179e1e693ecc90952bd9dc1907fdafb7986359bcd113890309d7c43ac88863",
+  "real_reviewed_transactions": 0,
+  "human_labels": 0,
+  "augmentation": "none",
+  "fuzzy_calibration": "not_available"
+}

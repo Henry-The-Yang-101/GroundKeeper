@@ -5,7 +5,10 @@ SOURCES={
  'DoDataThings/us-bank-transaction-categories-v2':('3e8d052cb7b362fb1a04b6064d2331982553ea56',['README.md','transactions-synthetic.csv']),
  'crossingminds/credit_card_3k':('dcb5e807abb9cce5858ebcfee509c224c85bb860',['README.md','data.csv']),
  'mitulshah/transaction-categorization':('8597493f0aaa44c540c16458b18b17e4ada2f5cc',['README.md','categories.json','dataset_info.json','default/train/0000.parquet'])}
+import argparse
+p=argparse.ArgumentParser();p.add_argument('--include-gated',action='store_true');args=p.parse_args()
 for repo,(revision,names) in SOURCES.items():
+ if repo.startswith('mitulshah/') and not args.include_gated:continue
  for name in names:
   try:
    hf_hub_download(repo_id=repo,repo_type='dataset',filename=name,revision=revision,local_dir=Path('.local/finetune/sources')/repo.split('/')[0])

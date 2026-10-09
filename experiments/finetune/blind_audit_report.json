@@ -1,0 +1,120 @@
+{
+  "n": 75,
+  "agreement": 69,
+  "disagreements": [
+    {
+      "id": "ca-synthetic-096",
+      "input": {
+        "description": "UNKNOWN MERCHANT 82941",
+        "direction": "debit",
+        "currency": "CAD"
+      },
+      "first": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second_evidence": "unknown merchant name"
+    },
+    {
+      "id": "ddt-30682",
+      "input": {
+        "description": "CRICKET",
+        "direction": "debit",
+        "currency": "USD"
+      },
+      "first": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "second_evidence": "Cricket communications provider"
+    },
+    {
+      "id": "ddt-24867",
+      "input": {
+        "description": "Aquarium - Indianapolis",
+        "direction": "debit",
+        "currency": "USD"
+      },
+      "first": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "second_evidence": "Aquarium attraction"
+    },
+    {
+      "id": "ddt-48572",
+      "input": {
+        "description": "payment to: repairclinic.com",
+        "direction": "debit",
+        "currency": "USD"
+      },
+      "first": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "second": {
+        "type": "expense",
+        "category": "housing",
+        "review": false
+      },
+      "second_evidence": "repairclinic.com; specialized appliance-repair purpose"
+    },
+    {
+      "id": "ddt-16975",
+      "input": {
+        "description": "AQUARIUM CORP",
+        "direction": "debit",
+        "currency": "USD"
+      },
+      "first": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second_evidence": "AQUARIUM CORP; no explicit transaction purpose"
+    },
+    {
+      "id": "ddt-62674",
+      "input": {
+        "description": "HOME WARRANTY 6827 MARKET DR RALEIGH 27601-5310NC USA",
+        "direction": "debit",
+        "currency": "USD"
+      },
+      "first": {
+        "type": "expense",
+        "category": "housing",
+        "review": true
+      },
+      "second": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "second_evidence": "HOME WARRANTY; provider and premium purpose unstated"
+    }
+  ]
+}
