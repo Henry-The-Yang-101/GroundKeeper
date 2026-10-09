@@ -1,0 +1,141 @@
+{
+  "source_sha256": {
+    "train": "4df1ed5816a0106ec05fad0d7ceb2466fa23359851da7af431152d343e023d37",
+    "valid": "9af2e9e2aa432ff96cad2f41c0ae242f23497738ade56bee136f81df18963cbf"
+  },
+  "prepared_sha256": {
+    "train": "d014fe81da72dc5954c01a00175ecff790d0824f829e25509458486314e25013",
+    "valid": "18dae126d65193c4b475d9090f8bbccb44f64530debaabfea040f06bdee104dd"
+  },
+  "rows": {
+    "train": 2077,
+    "valid": 279
+  },
+  "train_decisions": 6231,
+  "questions": {
+    "type": {
+      "type": "choice",
+      "instructions": "Choose transaction type from evidence only. Credit alone does not establish income or refund. A payment rail does not prove own-account transfer. Unsplit mortgage or installment is unknown. Debit withdrawal from a named merchant is a purchase wrapper.",
+      "criteria": {
+        "expense": "purchase, service, fee or interest charge",
+        "income": "explicit credited payroll, benefits, earnings or interest",
+        "refund": "explicit return or reimbursement of prior spending",
+        "transfer": "explicit movement between own accounts",
+        "card_payment": "payment of credit card balance",
+        "loan_principal": "explicit principal repayment excluding interest",
+        "cash_movement": "ATM withdrawal or cash deposit",
+        "balance_adjustment": "explicit cash or balance adjustment",
+        "unknown": "insufficient, conflicting or unsplit payment evidence"
+      }
+    },
+    "category": {
+      "type": "choice",
+      "instructions": "Choose spending purpose. Purpose beats subscription or address words. No hidden gift intent. Unspecified pharmacy, digital bill or service fee is uncategorized. Refund uses original category only if explicit. Non-spending types use not_applicable; unknown uses uncategorized.",
+      "criteria": {
+        "groceries": "supermarket food",
+        "dining": "restaurant or meal delivery",
+        "local_transport": "transit, taxi, parking, tolls",
+        "vehicle": "fuel, repairs, registration",
+        "housing": "rent, upkeep, mortgage interest",
+        "utilities": "energy, water, phone, internet, household waste",
+        "shopping": "retail goods; mixed retailers need review",
+        "medical": "treatment or prescriptions",
+        "personal_care": "beauty or grooming",
+        "fitness": "gym or sports",
+        "entertainment": "media, games, hobbies",
+        "software": "productivity software or cloud",
+        "education": "tuition, courses, textbooks",
+        "travel": "flights, intercity travel, lodging, rental cars",
+        "insurance": "insurance premiums",
+        "financial": "bank or card fees, borrowing interest",
+        "taxes": "direct tax or government fees",
+        "gifts": "explicit gift or charitable donation",
+        "other": "known purpose outside listed categories; shipping fee",
+        "uncategorized": "insufficient spending purpose or unknown type",
+        "not_applicable": "non-spending type, or refund without original category"
+      }
+    },
+    "review": {
+      "type": "choice",
+      "instructions": "Does this decision need review under the labeling policy? Review means decision uncertainty, not merely an unfamiliar payer. Require review for conflicting or insufficient evidence, unknown type, uncategorized spending, mixed retailers, unsplit mortgage/installment, or refund with unknown original purpose.",
+      "criteria": {
+        "false": "sufficient unambiguous evidence",
+        "true": "uncertain or policy requires review"
+      }
+    }
+  },
+  "heads": {
+    "type": {
+      "tokens": 149,
+      "options": 9
+    },
+    "category": {
+      "tokens": 260,
+      "options": 21
+    },
+    "review": {
+      "tokens": 76,
+      "options": 2
+    }
+  },
+  "maximum_sequence_tokens": 309,
+  "max_len": 512,
+  "head_max_len": 384,
+  "question_sha256": "d4ae5cf2e79b83259663bf78a441b761639ea1078ca655cc4f021721a48646be",
+  "checkpoint_repo": "convaiinnovations/laya",
+  "checkpoint_revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+  "original_files": {
+    "encoder/config.json": {
+      "sha256": "bf3ab80598fdccf414855a2ce80f22859e4492d06ca8a62ddd1cfb63972f8979",
+      "bytes": 2083
+    },
+    "model.safetensors": {
+      "sha256": "891102d372688fc2a094dac56a384bc537b87c63f21f9f3dac0be2b7cbc8d86c",
+      "bytes": 842609210
+    },
+    "rl_agent_config.json": {
+      "sha256": "ae287b56bbcf5f8c4f4541ae9dfd00c914c4c48b940b8398c3058af37ba92bbd",
+      "bytes": 745
+    },
+    "tokenizer/tokenizer.json": {
+      "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+      "bytes": 3583228
+    },
+    "tokenizer/tokenizer_config.json": {
+      "sha256": "50044de60daaa73df97d262e15a40d4faf0160e7d742df64b377877a1320dd12",
+      "bytes": 308
+    }
+  },
+  "base_files": {
+    "encoder/config.json": {
+      "sha256": "bf3ab80598fdccf414855a2ce80f22859e4492d06ca8a62ddd1cfb63972f8979",
+      "bytes": 2083
+    },
+    "model.safetensors": {
+      "sha256": "891102d372688fc2a094dac56a384bc537b87c63f21f9f3dac0be2b7cbc8d86c",
+      "bytes": 842609210
+    },
+    "rl_agent_config.json": {
+      "sha256": "ae287b56bbcf5f8c4f4541ae9dfd00c914c4c48b940b8398c3058af37ba92bbd",
+      "bytes": 745
+    },
+    "tokenizer/tokenizer.json": {
+      "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+      "bytes": 3583228
+    },
+    "tokenizer/tokenizer_config.json": {
+      "sha256": "50044de60daaa73df97d262e15a40d4faf0160e7d742df64b377877a1320dd12",
+      "bytes": 308
+    }
+  },
+  "versions": {
+    "laya": "0.4.1",
+    "torch": "2.14.0",
+    "transformers": "5.19.0",
+    "safetensors": "0.8.0",
+    "numpy": "2.5.3"
+  },
+  "sealed_test_read": false,
+  "real_data": false,
+  "labels": "synthetic_ai_reviewed_not_human"
+}

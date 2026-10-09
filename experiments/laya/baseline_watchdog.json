@@ -1,0 +1,23 @@
+{
+  "label": "baseline",
+  "command": [
+    ".local/laya/.venv/bin/python",
+    "-m",
+    "scripts.laya_experiment",
+    "baseline"
+  ],
+  "active_processes_before": [
+    {
+      "pid": 96567,
+      "name": "python3.12",
+      "rss": 23756800
+    }
+  ],
+  "start": 1791561004.8421068,
+  "time_limit_seconds": 900.0,
+  "elapsed_seconds": 62.90326404571533,
+  "returncode": 0,
+  "stop_reason": null,
+  "peak_process_tree_rss_bytes": 2155642880,
+  "min_system_available_bytes": 3408101376
+}
