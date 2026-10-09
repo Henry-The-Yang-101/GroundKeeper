@@ -1,0 +1,25 @@
+{"id":"v2-authored-1185","type":"expense","category":"uncategorized","review":true,"merchant_group":"generic:drugstore","evidence":"General drugstore purchase; no item or prescription detail.","disposition":"keep"}
+{"id":"v2-authored-0238","type":"refund","category":null,"review":true,"merchant_group":"PenFed Credit Union","evidence":"Merchant purchase refund; no linked original purpose.","disposition":"keep"}
+{"id":"v2-authored-0312","type":"transfer","category":null,"review":false,"merchant_group":"TD Canada Trust","evidence":"Transfer between my own chequing and savings.","disposition":"keep"}
+{"id":"v2-authored-0417","type":"income","category":null,"review":false,"merchant_group":"Laurentian Bank","evidence":"Employer payroll salary deposit.","disposition":"keep"}
+{"id":"v2-authored-0445","type":"cash_movement","category":null,"review":false,"merchant_group":"ATB Financial","evidence":"ATM cash withdrawal.","disposition":"keep"}
+{"id":"v2-authored-0477","type":"card_payment","category":null,"review":false,"merchant_group":"Vancity Credit Union","evidence":"Payment to my credit card balance.","disposition":"keep"}
+{"id":"ddt-04662","type":"unknown","category":"uncategorized","review":true,"merchant_group":"Newrez","evidence":"Newrez Payment does not state the payment purpose or any principal-interest split.","disposition":"keep"}
+{"id":"v2-authored-0061","type":"transfer","category":null,"review":false,"merchant_group":"Navy Federal Credit Union","evidence":"Transfer between my own checking and savings.","disposition":"keep"}
+{"id":"ddt-00601","type":"expense","category":"utilities","review":false,"merchant_group":"Recology","evidence":"Trash collection; household waste service is utilities.","disposition":"keep"}
+{"id":"ddt-45969","type":"expense","category":"utilities","review":false,"merchant_group":"Republic Services","evidence":"Identifiable specialized waste-service merchant; utilities boundary for household waste.","disposition":"keep"}
+{"id":"v2-authored-0076","type":"refund","category":null,"review":true,"merchant_group":"Alliant Credit Union","evidence":"Merchant purchase refund; no linked original purpose.","disposition":"keep"}
+{"id":"v2-authored-0220","type":"refund","category":null,"review":true,"merchant_group":"Citizens Bank","evidence":"Merchant purchase refund; no linked original purpose.","disposition":"keep"}
+{"id":"v2-authored-0390","type":"cash_movement","category":null,"review":false,"merchant_group":"National Bank of Canada","evidence":"ATM cash withdrawal.","disposition":"keep"}
+{"id":"v2-authored-0409","type":"cash_movement","category":null,"review":false,"merchant_group":"Desjardins","evidence":"ATM cash withdrawal.","disposition":"keep"}
+{"id":"v2-authored-0294","type":"transfer","category":null,"review":false,"merchant_group":"RBC Royal Bank","evidence":"Transfer between my own chequing and savings.","disposition":"keep"}
+{"id":"ddt-17275","type":"unknown","category":"uncategorized","review":true,"merchant_group":"generic:unknown","evidence":"Teller check reference gives no payee or transaction purpose.","disposition":"keep"}
+{"id":"v2-authored-0235","type":"expense","category":"financial","review":false,"merchant_group":"PenFed Credit Union","evidence":"Monthly account service fee; account and credit-union cues support financial.","disposition":"keep"}
+{"id":"v2-authored-1020","type":"expense","category":"taxes","review":false,"merchant_group":"Pine Birch Municipal","evidence":"Municipal property tax payment.","disposition":"keep"}
+{"id":"v2-authored-0932","type":"expense","category":"insurance","review":false,"merchant_group":"North Hill Home Insurance","evidence":"Explicit home insurance premium.","disposition":"keep"}
+{"id":"v2-authored-0968","type":"expense","category":"financial","review":false,"merchant_group":"Tamarack Fern","evidence":"Overdraft interest charge.","disposition":"keep"}
+{"id":"v2-authored-0554","type":"balance_adjustment","category":null,"review":false,"merchant_group":"DUCA Credit Union","evidence":"Posted balance adjustment credit.","disposition":"keep"}
+{"id":"v2-authored-0526","type":"refund","category":null,"review":true,"merchant_group":"Alterna Savings","evidence":"Merchant purchase refund; no linked original purpose.","disposition":"keep"}
+{"id":"v2-authored-1045","type":"expense","category":"taxes","review":false,"merchant_group":"East Quarry","evidence":"Municipal property tax payment.","disposition":"keep"}
+{"id":"v2-authored-1164","type":"expense","category":"other","review":false,"merchant_group":"East Spruce Pet Veterinary","evidence":"Pet veterinary consultation; veterinary care is an explicit outside-taxonomy purpose.","disposition":"keep"}
+{"id":"v2-authored-0499","type":"cash_movement","category":null,"review":false,"merchant_group":"Coast Capital Savings","evidence":"ATM cash withdrawal.","disposition":"keep"}

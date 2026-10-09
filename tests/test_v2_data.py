@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.prepare_v2_training import allocate, cap_variants, coverage, entity_group, normalized_group
+from scripts.prepare_v2_training import allocate, cap_variants, coverage, entity_group, normalized_group, EXTRA_ALIASES, BANK_ALIASES
 
 
 def row(rid, group, text='purchase', typ='expense', category='dining', **kw):
@@ -40,6 +40,13 @@ def test_short_brand_alias_still_excludes_a_prior_test_merchant():
     assert normalized_group('citizensbank')!=normalized_group('citibank')
     assert normalized_group('collegeofnewark')!=normalized_group('collegeofnewyork')
     assert normalized_group('experian')!=normalized_group('expedia')
+
+
+def test_alias_resolution_is_idempotent_across_multiple_hops():
+    assert normalized_group('escaperoomco')=='generic:escaperoom'
+    for group in (*EXTRA_ALIASES,*BANK_ALIASES):
+        resolved=normalized_group(group)
+        assert normalized_group(resolved)==resolved
 
 
 def test_bank_variants_keep_distinct_types_instead_of_global_cap_six():

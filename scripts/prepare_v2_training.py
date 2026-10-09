@@ -46,16 +46,54 @@ EXTRA_ALIASES = {'enterprise':'enterpriseholdings','enterpriserentacar':'enterpr
     'paddlenet':'paddle','orangetheory':'orangetheoryfitness',
     'tiktokshop':'tiktok','socialsecurity':'socialsecurityadministration',
     'homesite':'homesiteinsurance','rallys':'checkersrallys',
-    'caesarssportsbook':'caesars','patelcocreditunion':'patelco'}
+    'caesarssportsbook':'caesars','patelcocreditunion':'patelco',
+    'fubotv':'fubo','carnivalcruiseline':'carnival',
+    'stateofcaliforniafound':'stateofcalifornia',
+    'pacificconsultingco':'pacificconsulting','municipalwater':'generic:municipalwater',
+    'frontier':'frontierairlines','unitedwholesale':'unitedwholesalemortgage',
+    'donehealthcorp':'donehealth','sportsclips':'sportclips','aquariumllc':'aquarium',
+    'unemploymentinsuranceco':'unemploymentinsurance','dunkindonuts':'dunkin',
+    'bishopscutcom':'bishopscut','casellawaste':'casella',
+    'childtaxcredit':'generic:childtaxcredit','escaperoom':'generic:escaperoom',
+    'generic:golfdrivingrange':'generic:drivingrange',
+    'generic:homewarrantyinsurance':'generic:homewarranty',
+    'generic:municipalwaterandphoneservice':'generic:municipalwater',
+    'generic:restaurantmeal':'generic:restaurant','generic:restaurantpurchase':'generic:restaurant',
+    'generic:statecomptrollercredit':'statecomptroller',
+    'generic:unclearpearsontransaction':'pearson',
+    'generic:unidentifiedmerchanttransaction':'generic:unidentifiedmerchant',
+    'generic:unknownmerchantpurchase':'generic:unknownmerchant',
+    'thehartford':'hartford','horizontechco':'horizontech',
+    'nationstarmortgage':'nationstar','sunpowersolar':'sunpower',
+    'thewallstreetjournal':'wallstreetjournal','mintmobile':'tmobile',
+    'visible':'verizon','drizly':'uber'}
+
+# Literal merchant text was obscured by an initial generic/processor group.
+# These repair split metadata only; the independent audit handles decisions.
+ROW_GROUP_OVERRIDES={'ddt-60459':'fastspring','ddt-65938':'visible'}
 
 
 def normalized_group(group):
     value = ('generic:' + key(group.split(':',1)[1])
              if group.startswith(('generic:','unknown:')) else key(group))
-    return EXTRA_ALIASES.get(value, BANK_ALIASES.get(value, value))
+    # Synthetic physician names recur with changed specialties; withholding a
+    # specialty while teaching the same surname is not an unseen-provider test.
+    doctor=re.fullmatch(r'dr([a-z]+?)(?:familymedicine|orthopedics|physicaltherapy|cardiology|optometry|dermatology|pediatrics|psychiatry|dentistry|dental)',value)
+    if doctor:
+        value='dr'+doctor[1]
+    seen=set()
+    while value not in seen:
+        seen.add(value)
+        target=EXTRA_ALIASES.get(value,BANK_ALIASES.get(value,value))
+        if target==value:
+            return value
+        value=target
+    raise ValueError('Cycle in merchant aliases')
 
 
 def entity_group(row, label):
+    if row['id'] in ROW_GROUP_OVERRIDES:
+        return normalized_group(ROW_GROUP_OVERRIDES[row['id']])
     if row.get('split_entity'):
         return normalized_group(row['split_entity'])
     # Recognizable banks take precedence over vague purpose-only labels. Avoid
@@ -215,12 +253,15 @@ def build(draft=False):
     candidates, labels = load_labels()
     source = {r['id']:r for r in candidates}
     fixes = json.loads((PUBLIC/'training_adjudications.json').read_text())
+    consistency_path=PUBLIC/'consistency_adjudications.json'
+    consistency=json.loads(consistency_path.read_text()) if consistency_path.exists() else {}
+    fixes={**fixes,**consistency}
     audit_path = PUBLIC/'new_label_audit.json'
     audit = json.loads(audit_path.read_text()) if audit_path.exists() else {}
     if not draft:
         from scripts.summarize_v2_audit import verify_completed
         audit = verify_completed()
-    overrides = audit.get('adjudications',{})
+    overrides = {**consistency,**audit.get('adjudications',{})}
     accepted, excluded = [], []
     old = read_rows(ROOT/'prepared/train_records.jsonl')
     for row in old:
@@ -281,6 +322,7 @@ def build(draft=False):
         'preparation_code_sha256':sha256(__file__),
         'annotation_packet_hashes':{p.name:sha256(p) for p in sorted((OUT/'labels').glob('batch_*.jsonl'))},
         'new_audit_sha256':sha256(audit_path) if audit_path.exists() else None,
+        'consistency_adjudications_sha256':sha256(consistency_path) if consistency_path.exists() else None,
         'files':{s:sha256(out/f'{s}_records.jsonl') for s in partitions},
         'caps':'24 per merchant; 2 per new merchant/decision; retained legacy variants exempt from per-decision cap',
         'limitations':['synthetic text and AI labels','authored wording is not real bank distribution',

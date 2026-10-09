@@ -1,0 +1,25 @@
+{"id":"v2-authored-1073","type":"expense","category":"gifts","review":false,"merchant_group":"generic:charitable-donation","evidence":"CHARITABLE DONATION","disposition":"keep"}
+{"id":"v2-authored-0339","type":"balance_adjustment","category":null,"review":false,"merchant_group":"Bank of Montreal","evidence":"ACCOUNT BALANCE CORRECTION ADJUSTMENT","disposition":"keep"}
+{"id":"v2-authored-1096","type":"expense","category":"gifts","review":false,"merchant_group":"generic:charitable-donation","evidence":"CHARITABLE DONATION","disposition":"keep"}
+{"id":"v2-authored-0845","type":"expense","category":"software","review":false,"merchant_group":"generic:software-license","evidence":"PRODUCTIVITY SOFTWARE LICENCE","disposition":"keep"}
+{"id":"v2-authored-0327","type":"income","category":null,"review":false,"merchant_group":"Bank of Montreal","evidence":"EMPLOYER PAYROLL SALARY DEPOSIT","disposition":"keep"}
+{"id":"v2-authored-0550","type":"loan_principal","category":null,"review":false,"merchant_group":"DUCA Credit Union","evidence":"PAYMENT OF PRINCIPAL EXCLUDING ALL INTEREST","disposition":"keep"}
+{"id":"v2-authored-0686","type":"expense","category":"housing","review":false,"merchant_group":"generic:plumbing-repair","evidence":"HOME PLUMBING REPAIR","disposition":"keep"}
+{"id":"ddt-07041","type":"expense","category":"medical","review":false,"merchant_group":"LensCrafters","evidence":"LENSCRAFTERS EYE CARE","disposition":"keep"}
+{"id":"ddt-43852","type":"expense","category":"medical","review":false,"merchant_group":"Dr. Anderson Dermatology","evidence":"DERMATOLOGY","disposition":"keep"}
+{"id":"v2-authored-0228","type":"cash_movement","category":null,"review":false,"merchant_group":"Citizens Bank","evidence":"ATM CASH WITHDRAWAL","disposition":"keep"}
+{"id":"v2-authored-0947","type":"expense","category":"financial","review":false,"merchant_group":"generic:credit-card-annual-fee","evidence":"CREDIT CARD ANNUAL FEE","disposition":"keep"}
+{"id":"v2-authored-0700","type":"expense","category":"utilities","review":false,"merchant_group":"generic:mobile-phone-service","evidence":"MOBILE PHONE SERVICE BILL","disposition":"keep"}
+{"id":"ddt-03237","type":"expense","category":"uncategorized","review":true,"merchant_group":"CVS","evidence":"CVS; no prescription or pharmacy-service cue","disposition":"keep"}
+{"id":"ddt-49487","type":"expense","category":"medical","review":false,"merchant_group":"Dr. Nguyen Cardiology","evidence":"CARDIOLOGY","disposition":"keep"}
+{"id":"v2-authored-1041","type":"expense","category":"taxes","review":false,"merchant_group":"generic:municipal-property-tax","evidence":"MUNICIPAL PROPERTY TAX PAYMENT","disposition":"keep"}
+{"id":"v2-authored-0033","type":"balance_adjustment","category":null,"review":false,"merchant_group":"Citibank","evidence":"ACCOUNT BALANCE CORRECTION ADJUSTMENT","disposition":"keep"}
+{"id":"v2-authored-0545","type":"refund","category":null,"review":true,"merchant_group":"DUCA Credit Union","evidence":"RETURNED PURCHASE REFUND CREDIT; original category not supplied","disposition":"keep"}
+{"id":"v2-authored-0209","type":"loan_principal","category":null,"review":false,"merchant_group":"KeyBank","evidence":"LOAN PRINCIPAL ONLY REPAYMENT NO INTEREST","disposition":"keep"}
+{"id":"v2-authored-1035","type":"expense","category":"taxes","review":false,"merchant_group":"generic:municipal-property-tax","evidence":"MUNICIPAL PROPERTY TAX PAYMENT","disposition":"keep"}
+{"id":"ddt-59775","type":"unknown","category":"uncategorized","review":true,"merchant_group":"Horizon Tech","evidence":"DIR DEP; does not identify payroll, benefits, interest, or another income purpose","disposition":"keep"}
+{"id":"v2-authored-0524","type":"income","category":null,"review":false,"merchant_group":"Alterna Savings","evidence":"EMPLOYER PAYROLL SALARY DEPOSIT","disposition":"keep"}
+{"id":"v2-authored-0995","type":"expense","category":"financial","review":false,"merchant_group":"generic:overdraft-interest","evidence":"OVERDRAFT INTEREST CHARGE","disposition":"keep"}
+{"id":"ddt-22910","type":"expense","category":"uncategorized","review":true,"merchant_group":"generic:unknown","evidence":"BISHOPS CUT; merchant purpose is not established by the supplied text","disposition":"keep"}
+{"id":"ddt-12784","type":"expense","category":"medical","review":false,"merchant_group":"Shah Family Medicine","evidence":"FAMILY MEDICINE","disposition":"keep"}
+{"id":"ddt-56307","type":"unknown","category":"uncategorized","review":true,"merchant_group":"Caesars","evidence":"SPORTSBOOK DEPOSIT; text does not establish a completed wager or settled expense","disposition":"keep"}

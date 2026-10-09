@@ -123,7 +123,8 @@ Path(sys.argv[3]).write_text(json.dumps({'predictions':predictions,'smoke':smoke
         m=report['metrics']
         lines.append(f"| {name} | {m['category_accuracy']:.1%} | {m['macro_f1_supported_categories']:.3f} | {m['joint_accuracy']:.1%} | {report['invalid_outputs']}/{m['n']} |")
     m=test['metrics']
-    lines += ['',f"New final synthetic test, evaluated exactly once: n={m['n']}, category accuracy {m['category_accuracy']:.1%}, supported-category macro-F1 {m['macro_f1_supported_categories']:.3f}, exact decision accuracy {m['joint_accuracy']:.1%}.",
+    lines += ['', 'Base and v1-comparable use the same v2 prompt and direct constrained decoder as the new adapters. V1-incumbent uses its original prompt and validated-retry decoder; that row compares the complete previous runtime, not weights alone.',
+        '',f"New final synthetic test, evaluated exactly once: n={m['n']}, category accuracy {m['category_accuracy']:.1%}, supported-category macro-F1 {m['macro_f1_supported_categories']:.3f}, exact decision accuracy {m['joint_accuracy']:.1%}.",
         '',f'Package: {total:,} bytes. Copied runtime and adapters were reloaded in a fresh process and matched the selected checkpoint.',
         '', 'The JSON type/category/review contract is preserved. Every model suggestion requires review. No numeric confidence or real-data calibration is claimed.',
         '', 'Limitations: authored US/Canadian wording and synthetic public US data; AI label errors may remain; small held-out groups and template effects; bank transaction distribution and regional generalization need real validation.', '']

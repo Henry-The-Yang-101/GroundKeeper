@@ -14,9 +14,12 @@ Inspect existing agents/files before resuming; do not duplicate active packets.
 The 75-row legacy training audit is complete, with one correction and one
 exclusion. The JSON decoder audit is in `DECODER_AUDIT.md`.
 
-The new pipeline has unit checks and a tokenizer/masking check against all 626
-legacy training rows (maximum 472 tokens with the v2 prompt). It has not yet run
-on a frozen v2 dataset or completed a v2 model training job.
+Preparation is complete. The frozen data has 2,077 training rows, 279 validation
+rows and 213 new sealed-test rows. All coverage gates passed. The 150-row audit
+and additional 16-row/12-row consistency reviews are committed. All training
+and validation token/mask checks passed (maximum 496, configured limit 512).
+The commands below document reconstruction, not permission to overwrite frozen
+artifacts. Check live pipeline/watchdog state before acting.
 
 ## Finish preparation
 

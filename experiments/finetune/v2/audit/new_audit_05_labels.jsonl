@@ -1,0 +1,25 @@
+{"id": "v2-authored-0933", "type": "expense", "category": "insurance", "review": false, "merchant_group": "North Hill", "evidence": "HOME INSURANCE PREMIUM", "disposition": "keep"}
+{"id": "ddt-01381", "type": "expense", "category": "housing", "review": false, "merchant_group": "Avalon Communities", "evidence": "RENT", "disposition": "keep"}
+{"id": "v2-authored-0440", "type": "card_payment", "category": null, "review": false, "merchant_group": "ATB Financial", "evidence": "PAYMENT TO MY CREDIT CARD BALANCE", "disposition": "keep"}
+{"id": "v2-authored-0877", "type": "expense", "category": "education", "review": false, "merchant_group": "Hazel Brook", "evidence": "COLLEGE TUITION PAYMENT", "disposition": "keep"}
+{"id": "v2-authored-0588", "type": "expense", "category": "groceries", "review": false, "merchant_group": "Hazel Maple Supermarket", "evidence": "SUPERMARKET GROCERY PURCHASE", "disposition": "keep"}
+{"id": "v2-authored-0267", "type": "balance_adjustment", "category": null, "review": false, "merchant_group": "M&T Bank", "evidence": "ACCOUNT BALANCE CORRECTION ADJUSTMENT", "disposition": "keep"}
+{"id": "v2-authored-0437", "type": "refund", "category": null, "review": true, "merchant_group": "ATB Financial", "evidence": "MERCHANT PURCHASE REFUND; no linked original category", "disposition": "keep"}
+{"id": "ddt-09574", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Perplexity AI", "evidence": "GOOGLE *PERPLEXITY AI gives no specific product", "disposition": "keep"}
+{"id": "v2-authored-0211", "type": "cash_movement", "category": null, "review": false, "merchant_group": "KeyBank", "evidence": "ATM CASH WITHDRAWAL", "disposition": "keep"}
+{"id": "v2-authored-0038", "type": "income", "category": null, "review": false, "merchant_group": "US Bank", "evidence": "EMPLOYER PAYROLL SALARY DEPOSIT", "disposition": "keep"}
+{"id": "v2-authored-0468", "type": "expense", "category": "financial", "review": false, "merchant_group": "Vancity Credit Union", "evidence": "MONTHLY ACCOUNT SERVICE FEE", "disposition": "keep"}
+{"id": "v2-authored-1049", "type": "expense", "category": "taxes", "review": false, "merchant_group": "generic:municipal property tax", "evidence": "MUNICIPAL PROPERTY TAX PAYMENT", "disposition": "keep"}
+{"id": "v2-authored-0517", "type": "cash_movement", "category": null, "review": false, "merchant_group": "Servus Credit Union", "evidence": "ATM CASH WITHDRAWAL", "disposition": "keep"}
+{"id": "v2-authored-0428", "type": "balance_adjustment", "category": null, "review": false, "merchant_group": "Laurentian Bank", "evidence": "ACCOUNT BALANCE CORRECTION ADJUSTMENT", "disposition": "keep"}
+{"id": "v2-authored-0063", "type": "card_payment", "category": null, "review": false, "merchant_group": "Navy Federal Credit Union", "evidence": "PAYMENT TO MY CREDIT CARD BALANCE", "disposition": "keep"}
+{"id": "ddt-03650", "type": "expense", "category": "dining", "review": false, "merchant_group": "Chick-fil-A", "evidence": "CHICK-FIL-A", "disposition": "keep"}
+{"id": "v2-authored-0335", "type": "loan_principal", "category": null, "review": false, "merchant_group": "Bank of Montreal", "evidence": "LOAN PRINCIPAL ONLY REPAYMENT NO INTEREST", "disposition": "keep"}
+{"id": "v2-authored-0544", "type": "refund", "category": null, "review": true, "merchant_group": "DUCA Credit Union", "evidence": "RETURNED PURCHASE REFUND CREDIT; no linked original category", "disposition": "keep"}
+{"id": "v2-authored-0677", "type": "expense", "category": "housing", "review": false, "merchant_group": "Cedar Maple", "evidence": "RESIDENTIAL FURNACE REPAIR", "disposition": "keep"}
+{"id": "ddt-14849", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "CLEAR", "evidence": "CLEAR with address only; billed service is unspecified", "disposition": "keep"}
+{"id": "ddt-27033", "type": "expense", "category": "utilities", "review": false, "merchant_group": "Con Edison", "evidence": "CONED", "disposition": "keep"}
+{"id": "v2-authored-0660", "type": "expense", "category": "vehicle", "review": false, "merchant_group": "Hazel Pine", "evidence": "AUTOMOBILE REPAIR SERVICE", "disposition": "keep"}
+{"id": "ddt-49741", "type": "expense", "category": "medical", "review": false, "merchant_group": "BetterHelp", "evidence": "BETTERHELP", "disposition": "keep"}
+{"id": "ddt-07083", "type": "expense", "category": "entertainment", "review": false, "merchant_group": "The Wall Street Journal", "evidence": "WALL STREET JOURNAL", "disposition": "keep"}
+{"id": "ddt-16004", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "SunPower", "evidence": "SUNPOWER ENERGY names a provider but not the billed service", "disposition": "keep"}

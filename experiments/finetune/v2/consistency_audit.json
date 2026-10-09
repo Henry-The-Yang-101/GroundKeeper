@@ -1,0 +1,279 @@
+{
+  "audited": 16,
+  "independent_reviewer": "gpt-6-luna",
+  "reasoning_effort": "xhigh",
+  "normalized_duplicate_families": 5,
+  "original_decisions": [
+    [
+      {
+        "id": "ddt-08472",
+        "answer": {
+          "category": "uncategorized",
+          "review": true,
+          "type": "unknown"
+        }
+      },
+      {
+        "id": "ddt-64456",
+        "answer": {
+          "category": "uncategorized",
+          "review": true,
+          "type": "unknown"
+        }
+      },
+      {
+        "id": "ddt-42539",
+        "answer": {
+          "type": "card_payment",
+          "category": null,
+          "review": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "ddt-41167",
+        "answer": {
+          "type": "expense",
+          "category": "financial",
+          "review": false
+        }
+      },
+      {
+        "id": "ddt-12095",
+        "answer": {
+          "type": "expense",
+          "category": "financial",
+          "review": false
+        }
+      },
+      {
+        "id": "ddt-33754",
+        "answer": {
+          "type": "expense",
+          "category": "financial",
+          "review": true
+        }
+      },
+      {
+        "id": "ddt-23079",
+        "answer": {
+          "type": "expense",
+          "category": "uncategorized",
+          "review": true
+        }
+      },
+      {
+        "id": "ddt-39392",
+        "answer": {
+          "type": "expense",
+          "category": "uncategorized",
+          "review": true
+        }
+      },
+      {
+        "id": "ddt-60184",
+        "answer": {
+          "type": "expense",
+          "category": "financial",
+          "review": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "ddt-13556",
+        "answer": {
+          "type": "expense",
+          "category": "shopping",
+          "review": false
+        }
+      },
+      {
+        "id": "ddt-20375",
+        "answer": {
+          "type": "expense",
+          "category": "uncategorized",
+          "review": true
+        }
+      }
+    ],
+    [
+      {
+        "id": "ddt-62816",
+        "answer": {
+          "type": "expense",
+          "category": "financial",
+          "review": false
+        }
+      },
+      {
+        "id": "ddt-10068",
+        "answer": {
+          "type": "expense",
+          "category": "financial",
+          "review": false
+        }
+      },
+      {
+        "id": "ddt-65985",
+        "answer": {
+          "type": "expense",
+          "category": "uncategorized",
+          "review": true
+        }
+      }
+    ],
+    [
+      {
+        "id": "ddt-65938",
+        "answer": {
+          "type": "unknown",
+          "category": "uncategorized",
+          "review": true
+        }
+      },
+      {
+        "id": "ddt-53398",
+        "answer": {
+          "type": "expense",
+          "category": "utilities",
+          "review": false
+        }
+      }
+    ]
+  ],
+  "parent_decisions": {
+    "ddt-08472": {
+      "answer": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "A payment rail and card issuer do not explicitly establish card repayment or account ownership."
+    },
+    "ddt-64456": {
+      "answer": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "A payment rail and card issuer do not explicitly establish card repayment or account ownership."
+    },
+    "ddt-42539": {
+      "answer": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "A payment rail and card issuer do not explicitly establish card repayment or account ownership."
+    },
+    "ddt-41167": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-12095": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-33754": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-23079": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-39392": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-60184": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-13556": {
+      "answer": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reason": "Recognizable specialized alcohol retail/delivery merchant supports retail goods; no prepared meal or gift intent is supplied."
+    },
+    "ddt-20375": {
+      "answer": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reason": "Recognizable specialized alcohol retail/delivery merchant supports retail goods; no prepared meal or gift intent is supplied."
+    },
+    "ddt-62816": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-10068": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-65985": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Fee establishes an expense, but no bank/account/card or underlying service is specified. Do not infer financial purpose from generic fee wording alone."
+    },
+    "ddt-65938": {
+      "answer": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reason": "Recognizable mobile communications brand supports utilities under the specialized-merchant default."
+    },
+    "ddt-53398": {
+      "answer": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reason": "Recognizable mobile communications brand supports utilities under the specialized-merchant default."
+    }
+  },
+  "disagreement_with_independent_fee_defaults": "No issuer/account/card or service evidence; choose expense/uncategorized/review rather than assume financial purpose.",
+  "real_labels": 0,
+  "human_labels": 0
+}

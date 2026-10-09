@@ -76,8 +76,19 @@ invalid retries preserves v1 category accuracy at 69.0%, improves macro-F1 from
 0.661 to 0.690, and returns zero invalid answers on the unchanged 116-row
 validation set. This is a decoding result, not a newly trained model gain.
 
-Luna 6 xhigh agents are labeling 2,900 new candidates in 116 blind packets of 25.
-Coverage-aware preparation, independent 150-row audit dispatch, immutable
-configuration, two-candidate training, baseline evaluation, and copied-runtime
-package verification scripts are implemented. Follow `RUNBOOK.md` to finish
-preparation and launch. No v2 training job has started.
+All 2,900 new candidates were labeled in 116 blind packets of 25. The independent
+150-row audit agreed on 146 initial decisions; all four disagreements were
+adjudicated. Additional blind reviews covered 16 duplicate-family cases and 12
+related boundary cases. These counts describe reviews, not unique human labels.
+
+The frozen v2 dataset has 2,077 training, 279 new validation and 213 newly sealed
+test rows. Training includes 496 CAD and 1,581 USD examples. Every required type
+and category coverage gate passes. Merchant/duplicate exclusions and variant
+caps take priority over the aspirational 3,000–5,000 example count.
+
+`training_config.json` freezes two one-pass candidates, 2,080 microbatches each,
+with saved-checkpoint evaluations at steps 696, 1392 and 2080. Maximum observed
+sequence length is 496 tokens; the configured limit is 512 with verified prompt
+masking and no truncation. Estimated total runtime is 19,093 seconds (5.3 hours),
+under the six-hour outer watchdog limit. See live status and `RUNBOOK.md` before
+starting or monitoring; never launch a duplicate pipeline.

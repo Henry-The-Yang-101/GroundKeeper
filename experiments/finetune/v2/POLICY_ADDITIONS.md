@@ -47,3 +47,13 @@ even when the transaction is a transfer, fee or principal payment. A generic
 purpose does not turn every bank's transactions into one merchant. Unknown rails
 or truly generic narrations remain generic and their variants must stay together.
 Authored synthetic records and public source records are never human confirmations.
+
+## Duplicate-family audit clarification
+
+A second blind 16-row audit exposed inconsistent labels across changing reference
+numbers. Reference numbers never supply purpose. Unqualified `ANNUAL FEE` and
+`MONTHLY SERVICE FEE` establish an expense, but lack bank/account/card or an
+identified underlying service: use expense/uncategorized/review. Explicit bank,
+card, account, overdraft or borrowing-interest cues still support financial.
+This follows the existing evidence-only boundary; do not infer a financial fee
+merely because all inputs happen to be bank transaction strings.

@@ -1,0 +1,119 @@
+{
+  "audited": 12,
+  "reviewer_model": "gpt-6-luna",
+  "reasoning_effort": "xhigh",
+  "ids": [
+    "ddt-09574",
+    "ddt-09594",
+    "ddt-20530",
+    "ddt-24212",
+    "ddt-24849",
+    "ddt-26209",
+    "ddt-55476",
+    "ddt-56307",
+    "ddt-67155",
+    "ddt-16004",
+    "ddt-30912",
+    "ddt-45397"
+  ],
+  "adjudications": {
+    "ddt-09574": {
+      "answer": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: An explicitly named Perplexity AI service supplies software purpose; Google is only the billing prefix, not an unspecified Google purchase."
+    },
+    "ddt-09594": {
+      "answer": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: SPORTSBOOK identifies the specific betting service, supporting the recreation default."
+    },
+    "ddt-20530": {
+      "answer": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: SPORTSBOOK identifies the specific betting service, supporting the recreation default."
+    },
+    "ddt-24212": {
+      "answer": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: SPORTSBOOK identifies the specific betting service, supporting the recreation default."
+    },
+    "ddt-24849": {
+      "answer": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: Retain the specialized named-restaurant default; Square is only the processor. Independent focused review agrees. Public restaurant references support the recognizable dining purpose without resolving a location."
+    },
+    "ddt-26209": {
+      "answer": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: SPORTSBOOK identifies the specific betting service, supporting the recreation default."
+    },
+    "ddt-55476": {
+      "answer": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: SPORTSBOOK identifies the specific betting service, supporting the recreation default."
+    },
+    "ddt-56307": {
+      "answer": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Focused independent boundary audit: DEPOSIT indicates funding; no wager or own-account transfer purpose is stated."
+    },
+    "ddt-67155": {
+      "answer": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reason": "Focused independent boundary audit: SPORTSBOOK identifies the specific betting service, supporting the recreation default."
+    },
+    "ddt-16004": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Focused independent boundary audit: SUNPOWER ENERGY names a business but does not specify the billed service or purpose."
+    },
+    "ddt-30912": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Focused independent boundary audit: SOLAR PMT does not identify a utility service, interest, principal, or other specific purpose."
+    },
+    "ddt-45397": {
+      "answer": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reason": "Focused independent boundary audit: WITHDRAWAL FROM is a debit merchant wrapper; SUNPOWER SOLAR gives no specific service purpose."
+    }
+  },
+  "test_examples_accessed": false,
+  "human_labels": 0
+}

@@ -1,0 +1,25 @@
+{"id": "ddt-33730", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Interactive Brokers", "evidence": "MONEYLINK does not establish own-account transfer or purchase purpose", "disposition": "keep"}
+{"id": "ddt-63801", "type": "expense", "category": "personal_care", "review": false, "merchant_group": "Ulta Beauty", "evidence": "ULTA SALON", "disposition": "keep"}
+{"id": "v2-authored-1188", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "generic:drugstore", "evidence": "general drugstore purchase; no item details", "disposition": "keep"}
+{"id": "v2-authored-0410", "type": "balance_adjustment", "category": null, "review": false, "merchant_group": "Desjardins", "evidence": "account balance correction adjustment", "disposition": "keep"}
+{"id": "v2-authored-1170", "type": "expense", "category": "other", "review": false, "merchant_group": "generic:pet veterinary", "evidence": "pet veterinary consultation", "disposition": "keep"}
+{"id": "ddt-47390", "type": "expense", "category": "medical", "review": false, "merchant_group": "Dr Martin Optometry", "evidence": "optometry", "disposition": "keep"}
+{"id": "v2-authored-0025", "type": "transfer", "category": null, "review": false, "merchant_group": "Citibank", "evidence": "between my own checking and savings", "disposition": "keep"}
+{"id": "v2-authored-0391", "type": "cash_movement", "category": null, "review": false, "merchant_group": "National Bank of Canada", "evidence": "ATM cash withdrawal", "disposition": "keep"}
+{"id": "v2-authored-1108", "type": "expense", "category": "gifts", "review": false, "merchant_group": "Glen Tamarack", "evidence": "charitable donation", "disposition": "keep"}
+{"id": "v2-authored-0015", "type": "balance_adjustment", "category": null, "review": false, "merchant_group": "Bank of America", "evidence": "account balance correction adjustment", "disposition": "keep"}
+{"id": "ddt-33986", "type": "expense", "category": "dining", "review": false, "merchant_group": "In-N-Out Burger", "evidence": "Innout, recognizable fast-food merchant name", "disposition": "keep"}
+{"id": "v2-authored-0714", "type": "expense", "category": "utilities", "review": false, "merchant_group": "Maple Upland", "evidence": "household waste collection bill", "disposition": "keep"}
+{"id": "v2-authored-0226", "type": "loan_principal", "category": null, "review": false, "merchant_group": "Citizens Bank", "evidence": "loan principal only repayment; no interest", "disposition": "keep"}
+{"id": "ddt-00129", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Centurion Lounge", "evidence": "withdrawal wrapper identifies merchant but lounge purpose does not resolve a category", "disposition": "keep"}
+{"id": "v2-authored-0442", "type": "loan_principal", "category": null, "review": false, "merchant_group": "ATB Financial", "evidence": "loan principal only repayment; no interest", "disposition": "keep"}
+{"id": "v2-authored-0470", "type": "income", "category": null, "review": false, "merchant_group": "Vancity Credit Union", "evidence": "employer payroll salary deposit", "disposition": "keep"}
+{"id": "ddt-17664", "type": "income", "category": null, "review": false, "merchant_group": "Amazon", "evidence": "PAYROLL", "disposition": "keep"}
+{"id": "ddt-47522", "type": "expense", "category": "local_transport", "review": false, "merchant_group": "TxTag", "evidence": "TXTAG auto-replenish", "disposition": "keep"}
+{"id": "v2-authored-1100", "type": "expense", "category": "gifts", "review": false, "merchant_group": "Cove Pine", "evidence": "charitable donation", "disposition": "keep"}
+{"id": "v2-authored-0780", "type": "expense", "category": "personal_care", "review": false, "merchant_group": "Hazel Upland", "evidence": "haircut and grooming", "disposition": "keep"}
+{"id": "v2-authored-1074", "type": "expense", "category": "gifts", "review": false, "merchant_group": "Maple Lake", "evidence": "charitable donation", "disposition": "keep"}
+{"id": "v2-authored-0474", "type": "transfer", "category": null, "review": false, "merchant_group": "Vancity Credit Union", "evidence": "transfer between my own chequing and savings", "disposition": "keep"}
+{"id": "v2-authored-0717", "type": "expense", "category": "utilities", "review": false, "merchant_group": "North Valley", "evidence": "household waste collection bill", "disposition": "keep"}
+{"id": "v2-authored-0694", "type": "expense", "category": "housing", "review": false, "merchant_group": "Oak Valley", "evidence": "home plumbing repair", "disposition": "keep"}
+{"id": "v2-authored-0170", "type": "card_payment", "category": null, "review": false, "merchant_group": "Fifth Third Bank", "evidence": "repayment of personal credit card", "disposition": "keep"}

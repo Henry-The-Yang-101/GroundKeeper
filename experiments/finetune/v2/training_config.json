@@ -1,0 +1,64 @@
+{
+  "approval": "User approved coverage repair, label audit, constrained JSON and hours of training on 2026-10-09",
+  "model": ".local/finetune/models/qwen35-text",
+  "train_n": 2077,
+  "valid_n": 279,
+  "learning_rates": [
+    5e-05,
+    2e-05
+  ],
+  "epochs": 1,
+  "iters": 2080,
+  "checkpoint_steps": [
+    696,
+    1392,
+    2080
+  ],
+  "batch_size": 1,
+  "grad_accumulation_steps": 8,
+  "num_layers": 4,
+  "seed": 20261009,
+  "max_seq_length": 512,
+  "observed_max_tokens": 496,
+  "mask_prompt": true,
+  "lora_parameters": {
+    "rank": 8,
+    "scale": 2.0,
+    "dropout": 0.0,
+    "keys": [
+      "self_attn.q_proj",
+      "self_attn.v_proj",
+      "linear_attn.in_proj_qkv",
+      "linear_attn.in_proj_z"
+    ]
+  },
+  "decoder": "constrained",
+  "prompt_version": "v2",
+  "overall_seconds": 21600,
+  "candidate_seconds": 10800,
+  "estimate_seconds": 19093.0,
+  "data_hashes": {
+    "train_records.jsonl": "4df1ed5816a0106ec05fad0d7ceb2466fa23359851da7af431152d343e023d37",
+    "valid_records.jsonl": "9af2e9e2aa432ff96cad2f41c0ae242f23497738ade56bee136f81df18963cbf",
+    "test_records.jsonl": "37b0d60c3fbbe273800e82c96790ae930c0b4280c988567075a6462d850e231f"
+  },
+  "legacy_validation_sha256": "2a75fa0b4a10ddea4ecca0a8dbe640dd93b6285bcb36b94f4e5beb3435182ec7",
+  "code_hashes": {
+    "groundkeeper/__init__.py": "75467ea1bf0d1c065e741134b3d2e17f17b3d37ed7e13a7c32b3c5f077809a77",
+    "groundkeeper/constraints.py": "04ba3df6b3dc91251d6de08859abce7b680f2cd333b8e51f8d39870c86b263ac",
+    "groundkeeper/merchant.py": "55c26ba8485f9fc1b95e9ed9593238cab34cb0e32bfc1ee2d2dabbde282736b4",
+    "groundkeeper/metrics.py": "a0a45bc90e909cd496865b812586a740b0cc8d58acfaf7007040c3388c047933",
+    "groundkeeper/policy.py": "34143711a06c93c9719736dd2e205e178a6bc143ac25e347d245617abac34793",
+    "groundkeeper/policy_v2.py": "5f2a25e7146d92befe10ce64be0141a406278cef17d38db41e13324434e8b874",
+    "groundkeeper/runtime.py": "666cb74d4970c626ecf9a32afe410797cee990f7ec861bc03584563237df7663",
+    "groundkeeper/runtime_v2.py": "08095fe25378481bf84fe1e0dd5eb8824fe1de8e8fad4bdcdbb30859f59f0509",
+    "scripts/evaluate_v2_baselines.py": "6df18f735e1e2d0498ae797beef0e87baf0463a9afebae4daac44c46125ded8b",
+    "scripts/finalize_v2.py": "e0847e83c76dd54e9b50aece6a4434e7f9455803c9f95cd1a014a05296f823fd",
+    "scripts/full_common.py": "e7ebfdbf32a5b0baa6d4426bc4d71fb2303299ed7f4b9da0b63354389435edf9",
+    "scripts/preflight_v2.py": "ded77e8233f6f11d6d9d5c92adf3e191db7aeace44221621c6db53480fd0f4be",
+    "scripts/run_v2_training.py": "f82113b728995eebb7a27817e8d37719efc8db32d63abcf7d08a4c0fa003515f",
+    "scripts/v2_common.py": "f8b6016c8a464bd24c3d37bd42fa57ddf7715104d2d5118dad98dd91a71be2cb",
+    "scripts/v2_pipeline.py": "053b615fcc963488a1620c69802259df6af97a696dfc434106c20a566a1b234a"
+  },
+  "frozen_unix": 1791528125.957271
+}
