@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.prepare_v2_training import allocate, cap_variants, coverage, entity_group
+from scripts.prepare_v2_training import allocate, cap_variants, coverage, entity_group, normalized_group
 
 
 def row(rid, group, text='purchase', typ='expense', category='dining', **kw):
@@ -30,6 +30,16 @@ def test_test_merchant_never_returns_in_v2_and_valid_never_trains():
     retained, excluded=allocate(rows,manifest)
     assert [(r['id'],r['split']) for r in retained]==[('b','valid')]
     assert excluded[0]['reason']=='v1_final_test_merchant'
+
+
+def test_short_brand_alias_still_excludes_a_prior_test_merchant():
+    r=row('a',normalized_group('orangetheory'))
+    manifest=[{'group':'orangetheoryfitness','split':'test','input_sha256':'unused'}]
+    retained,excluded=allocate([r],manifest)
+    assert not retained and excluded[0]['reason']=='v1_final_test_merchant'
+    assert normalized_group('citizensbank')!=normalized_group('citibank')
+    assert normalized_group('collegeofnewark')!=normalized_group('collegeofnewyork')
+    assert normalized_group('experian')!=normalized_group('expedia')
 
 
 def test_bank_variants_keep_distinct_types_instead_of_global_cap_six():

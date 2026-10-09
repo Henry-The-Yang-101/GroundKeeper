@@ -1,0 +1,219 @@
+{
+  "completed_packets_reviewed": 77,
+  "complete": false,
+  "purpose": "Leakage prevention, not verified corporate ownership",
+  "decisions": [
+    {
+      "new_group": "whataburger",
+      "prior_group": "habitburger",
+      "source_id": "ddt-22791",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drsinghfamilymedicine",
+      "prior_group": "drdavisfamilymedicine",
+      "source_id": "ddt-67715",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drsinghfamilymedicine",
+      "prior_group": "drwongfamilymedicine",
+      "source_id": "ddt-67715",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "lasertagcom",
+      "prior_group": "lasertag",
+      "source_id": "ddt-34756",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "orangetheory",
+      "prior_group": "orangetheoryfitness",
+      "source_id": "ddt-55260",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "patelcocreditunion",
+      "prior_group": "patelco",
+      "source_id": "ddt-34580",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "lincolnproperty",
+      "prior_group": "lincolnpropertycompany",
+      "source_id": "ddt-41230",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "homesite",
+      "prior_group": "homesiteinsurance",
+      "source_id": "ddt-58134",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "collegeofnewark",
+      "prior_group": "collegeofnewyork",
+      "source_id": "ddt-67437",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "paddlenet",
+      "prior_group": "paddle",
+      "source_id": "ddt-22317",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "rallys",
+      "prior_group": "checkersrallys",
+      "source_id": "ddt-09553",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "drwhiteorthopedics",
+      "prior_group": "drwalkerorthopedics",
+      "source_id": "ddt-46530",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drwhiteorthopedics",
+      "prior_group": "drchenorthopedics",
+      "source_id": "ddt-46530",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "hardrockbet",
+      "prior_group": "hardrock",
+      "source_id": "ddt-55091",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "mobil",
+      "prior_group": "tmobile",
+      "source_id": "ddt-19638",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drmoorefamilymedicine",
+      "prior_group": "drwongfamilymedicine",
+      "source_id": "ddt-44874",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "americanwatergas",
+      "prior_group": "americanwater",
+      "source_id": "ddt-07008",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "citizensbank",
+      "prior_group": "citibank",
+      "source_id": "ddt-28084",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drlewisorthopedics",
+      "prior_group": "drwalkerorthopedics",
+      "source_id": "ddt-55131",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drlewisorthopedics",
+      "prior_group": "drchenorthopedics",
+      "source_id": "ddt-55131",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "escaperoomco",
+      "prior_group": "escaperoom",
+      "source_id": "ddt-60912",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "summithealthcareco",
+      "prior_group": "summithealthcare",
+      "source_id": "ddt-67548",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "experian",
+      "prior_group": "expedia",
+      "source_id": "ddt-36251",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "sanpedromarket",
+      "prior_group": "asiansupermarket",
+      "source_id": "ddt-54935",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "drjohnsonfamilymedicine",
+      "prior_group": "drwongfamilymedicine",
+      "source_id": "ddt-63497",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "ramirezphysicaltherapy",
+      "prior_group": "smithphysicaltherapy",
+      "source_id": "ddt-16370",
+      "decision": "keep_separate",
+      "reason": "Different entity identifier; fuzzy name similarity is insufficient to merge."
+    },
+    {
+      "new_group": "socialsecurity",
+      "prior_group": "socialsecurityadministration",
+      "source_id": "ddt-01287",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "caesarssportsbook",
+      "prior_group": "caesars",
+      "source_id": "ddt-56307",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "tiktokshop",
+      "prior_group": "tiktok",
+      "source_id": "ddt-59430",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    },
+    {
+      "new_group": "bjswholesale",
+      "prior_group": "bjswholesaleclub",
+      "source_id": "ddt-64240",
+      "decision": "conservatively_group",
+      "reason": "Same textual brand identifier or provider with suffix/subservice; group conservatively for leakage prevention."
+    }
+  ],
+  "v1_test_records_read": false,
+  "model_evaluations_used": false
+}

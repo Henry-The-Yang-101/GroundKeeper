@@ -36,7 +36,17 @@ EXTRA_ALIASES = {'enterprise':'enterpriseholdings','enterpriserentacar':'enterpr
     'wholefoodsmarket':'amazon','trampolinepark':'generic:trampolinepark',
     'generic:trampolinepark':'generic:trampolinepark',
     'generic:brokeragetransaction':'generic:brokerage',
-    'generic:waterutility':'generic:municipalwater'}
+    'generic:waterutility':'generic:municipalwater',
+    # Conservative textual brand/family aliases identified in the blind-label
+    # group audit. Fuzzy similarity alone must never merge distinct entities.
+    'summithealthcareco':'summithealthcare','escaperoomco':'escaperoom',
+    'americanwatergas':'americanwater','bjswholesale':'bjswholesaleclub',
+    'lasertagcom':'generic:lasertag','lasertag':'generic:lasertag',
+    'hardrockbet':'hardrock','lincolnproperty':'lincolnpropertycompany',
+    'paddlenet':'paddle','orangetheory':'orangetheoryfitness',
+    'tiktokshop':'tiktok','socialsecurity':'socialsecurityadministration',
+    'homesite':'homesiteinsurance','rallys':'checkersrallys',
+    'caesarssportsbook':'caesars','patelcocreditunion':'patelco'}
 
 
 def normalized_group(group):
