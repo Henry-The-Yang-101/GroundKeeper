@@ -3,10 +3,10 @@ import argparse, json, os, signal, subprocess, sys, time
 from pathlib import Path
 import psutil
 
-p=argparse.ArgumentParser();p.add_argument('--seconds',type=int,required=True);p.add_argument('--label',required=True);p.add_argument('--rss-gb',type=float,default=18);p.add_argument('command',nargs=argparse.REMAINDER);a=p.parse_args()
-root=Path('.local/finetune/runs');root.mkdir(parents=True,exist_ok=True)
+p=argparse.ArgumentParser();p.add_argument('--seconds',type=int,required=True);p.add_argument('--label',required=True);p.add_argument('--rss-gb',type=float,default=18);p.add_argument('--runs-dir',default='.local/finetune/runs');p.add_argument('--overall-seconds',type=int,default=4*3600);p.add_argument('command',nargs=argparse.REMAINDER);a=p.parse_args()
+root=Path(a.runs_dir);root.mkdir(parents=True,exist_ok=True)
 deadline_path=root/'overall_deadline.json'
-if not deadline_path.exists(): deadline_path.write_text(json.dumps({'started':time.time(),'deadline':time.time()+4*3600}))
+if not deadline_path.exists(): deadline_path.write_text(json.dumps({'started':time.time(),'deadline':time.time()+a.overall_seconds}))
 deadline=json.loads(deadline_path.read_text())['deadline']
 if time.time()>=deadline:sys.exit('Overall experiment time limit expired; start a deliberate new session to continue.')
 cmd=a.command[1:] if a.command[:1]==['--'] else a.command

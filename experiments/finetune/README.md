@@ -108,8 +108,11 @@ first strict baseline and its rescoring evidence are retained separately.
 Checkpoints are diagnostic. The proposed full run must begin from the original
 base, not continue the probe, and requires the user's explicit approval after
 measured memory/runtime are available. Final test scoring is still deferred.
-`proposed_full_config.json` is the concrete configuration for that approval;
-the experiment entry point deliberately has no full-training mode yet.
+The user approved `proposed_full_config.json` on 2026-10-09. The separate full
+runner uses that exact configuration, explicitly seeds NumPy and MLX, scores
+each actual checkpoint during training, freezes selection, and then evaluates
+the final category test once through the packaged runtime. The original probe
+entry point continues to support probe work only.
 The package includes one base, one adapter, tokenizer, configs, template and
 manifest, with an exact decimal-byte total. The probe package is clearly marked
 experimental. The original base remains available for rollback.
@@ -139,3 +142,33 @@ Known limitations: AI labels; synthetic regional formatting; sparse gifts/taxes/
 Other/principal/refund coverage; no real corpus, calibrated acceptance threshold,
 future-known-merchant test, or production SQLCipher/dashboard integration. This
 experiment does not complete M0–M6 of the original application architecture.
+
+## Approved full run
+
+The full pipeline refuses to overwrite adapters or an existing package. Do not
+restart it while it is active. Run the read-only status command first.
+
+```sh
+.venv/bin/python -m scripts.full_status
+.venv/bin/python scripts/run_bounded.py --seconds 180 --label full-preflight -- .venv/bin/python -m scripts.run_full_training --check-only
+.venv/bin/python scripts/run_bounded.py --runs-dir .local/finetune/full-v1/runs --overall-seconds 3600 --seconds 3600 --label full-training -- /usr/bin/caffeinate -i .venv/bin/python -m scripts.full_pipeline
+```
+
+The full job has its own 60-minute deadline, a 50-minute training/evaluation
+phase bound and a 10-minute finalization bound. Existing probe deadlines and
+artifacts are preserved. `caffeinate -i` prevents idle sleep while the job runs.
+The existing process RSS and available-memory safeguards remain active.
+
+Checkpoint evaluation pauses training and uses the same model instance, avoiding
+a second GPU model. It saves the adapter before evaluation and preserves NumPy
+shuffle state. JSON reports are written atomically for progress monitoring.
+Checkpoint selection requires all five reports and uses macro-F1, then exact
+three-field accuracy, fewer invalid outputs, and earlier step. The finalizer
+checks the selected adapter hash, verifies reload decisions, packages under the
+3 GB limit, and records a one-time final-test access marker. Real calibration
+is still unavailable, so the application requires review for model suggestions.
+
+Progress and local predictions live in `.local/finetune/full-v1`. Completed
+aggregate reports and the final summary are copied to `full-results/`; public
+checkpoint metrics can be committed at significant improvements. Original probe
+measurements remain in `results/` and RESULTS.md.

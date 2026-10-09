@@ -1,5 +1,9 @@
 # Bounded public-data probe — 2026-10-09
 
+This records the completed probe and the proposal before approval. The user
+subsequently approved the full run on 2026-10-09. See README.md for its execution
+workflow and `full-results/RESULTS.md` once the full run has completed.
+
 The 128-microbatch JSON-output QLoRA probe completed successfully. Category
 accuracy on the fixed 116-row synthetic validation set increased from 49.1% to
 68.1%; exact agreement on all three fields increased from 44.0% to 57.8%.
