@@ -58,7 +58,8 @@ Categories (stable codes -> existing display labels):
    loan_principal. Generic mortgage/loan/installment payment has an unknown
    principal/interest split -> unknown/uncategorized/review. Never categorize the
    whole mortgage as housing. Mortgage interest explicitly stated -> housing;
-   other borrowing interest -> financial. Nonexpense types use category=null.
+   other borrowing interest -> financial. Nonexpense types use category=null, except `unknown`, which always uses
+   category=uncategorized and review=true.
 4. Explicit refund -> refund. Without original linked category, category=null and
    review=true; do not infer the original item category from its merchant. A bare
    credit at a shop is unknown/uncategorized/review, not an assumed refund.

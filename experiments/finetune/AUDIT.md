@@ -51,3 +51,33 @@ Source links: [DoDataThings](https://huggingface.co/datasets/DoDataThings/us-ban
 [MoneyData](https://data.mendeley.com/datasets/dnxtg6n4rv/1),
 [Foursquare](https://huggingface.co/datasets/foursquare/fsq-os-places),
 [Overture](https://docs.overturemaps.org/guides/places/).
+
+## Ungated replacement search
+
+After login, Mitul still returned 403 (not in authorized list). User requested an
+ungated alternative, so it is excluded. Live Hugging Face API counts on this run
+showed DoDataThings v2 at 431 monthly downloads versus Mitul at 213; the existing
+primary source is already more downloaded on that metric. Popularity is not a
+quality measure. Additional candidates inspected:
+
+- utkarshugale/BusinessTransactions: ungated, CC BY 4.0 in card and LICENSE,
+  revision `d73a8a0b8d9689ea39740cface8b1656e774e6d6`, 55 monthly downloads. Actual
+  CSV contains 17,471 rows (card claims 17,667), Qwen-generated US business
+  descriptions from Foursquare names/categories. At least 29 rows contain
+  generation artifacts by a narrow regex. Random 50-row suitability sample
+  retained locally. Many descriptions disclose invented line items/amounts;
+  a poor distribution match for bare Canadian bank strings. Not added to training.
+- mindweave/bank-transactions-us: 133 monthly downloads, CC BY-NC 4.0, simulated
+  business-account records, rather than personal Canadian spending. Excluded.
+- Sumeetgpt/indian-transaction-categorization-synthetic: 79 monthly downloads,
+  MIT, card reports 970 synthetic rows. Indian UPI/NEFT narration and merchants
+  are not a replacement for Canadian coverage. Excluded from this pilot.
+- Broad Kaggle fraud/payment datasets are not automatically merchant-category
+  text data. They were not substituted solely for popularity or row count.
+
+No stronger ungated Canadian category source was verified. The experiment uses
+an audited DoDataThings pilot plus 100 explicitly authored Canadian synthetic
+inputs, blind-labeled separately. Those inputs are a policy/coverage diagnostic,
+not collected Canadian transactions, not human-reviewed ground truth, and not
+proof of real-world accuracy. The 1,000 real Canadian evaluation target remains
+unfilled. Public merchant pairs stay separate from category training.

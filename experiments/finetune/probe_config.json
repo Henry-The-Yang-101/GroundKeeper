@@ -1,0 +1,27 @@
+{
+  "model": ".local/finetune/models/qwen35-text",
+  "data": ".local/finetune/prepared",
+  "adapter_path": ".local/finetune/adapters/probe",
+  "fine_tune_type": "lora",
+  "num_layers": 4,
+  "batch_size": 1,
+  "grad_accumulation_steps": 8,
+  "iters": 128,
+  "learning_rate": 0.00005,
+  "optimizer": "adam",
+  "optimizer_config": {},
+  "max_seq_length": 512,
+  "grad_checkpoint": true,
+  "mask_prompt": true,
+  "steps_per_report": 8,
+  "steps_per_eval": 64,
+  "val_batches": 8,
+  "save_every": 64,
+  "seed": 20261008,
+  "lora_parameters": {
+    "rank": 8,
+    "scale": 2.0,
+    "dropout": 0.0,
+    "keys": ["self_attn.q_proj", "self_attn.v_proj", "linear_attn.in_proj_qkv", "linear_attn.in_proj_z"]
+  }
+}
