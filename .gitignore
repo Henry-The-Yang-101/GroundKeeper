@@ -10,3 +10,7 @@ __pycache__/
 *.safetensors
 *.gguf
 .DS_Store
+apps/macos/build/
+apps/macos/DerivedData/
+xcuserdata/
+*.xcuserstate

@@ -3,15 +3,25 @@
 GroundKeeper is scoped to a **macOS app**, **Apple Shortcuts on iPhone**, and
 **iCloud Drive** for exchanging files. There is no planned native iPhone app.
 
-The repository currently contains Python classification code, model-training
-experiments, and research. The macOS app folder is initialized, but does not yet
-contain an Xcode project or a runnable app.
+The repository contains a native SwiftUI macOS app, Python classification code,
+model-training experiments, and research. The app currently provides a resizable
+window with an icon sidebar for Home, Full insights, Sync, and Settings. Each
+page contains only its subtitle; capture, storage, and classification are not
+connected yet.
+
+From the repository root, build and launch the app with:
+
+```sh
+./apps/macos/run.sh
+```
+
+See the [macOS app guide](apps/macos/README.md) for Xcode setup.
 
 ## Current repository map
 
 | Path | Purpose |
 | --- | --- |
-| [`apps/macos/`](apps/macos/README.md) | Native macOS app scaffold; recommended implementation: SwiftUI |
+| [`apps/macos/`](apps/macos/README.md) | Native SwiftUI macOS app and Xcode project |
 | `groundkeeper/` | Existing Python classification, merchant, policy, and runtime code |
 | `scripts/` | Dataset preparation, training, evaluation, packaging, and status commands |
 | `tests/` | Existing Python tests |
@@ -37,7 +47,7 @@ GroudKeeper/
   README.md
   AGENTS.md
   apps/
-    macos/                      # initialized: native app sources and tests
+    macos/                      # native app, Xcode project, reserved test folder
   shortcuts/                    # proposed: iPhone capture exports and setup guide
   contracts/                    # proposed: iCloud file schemas and safe examples
   docs/                         # proposed: current architecture, setup, decisions
