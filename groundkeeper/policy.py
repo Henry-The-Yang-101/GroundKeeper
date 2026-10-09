@@ -1,5 +1,5 @@
 """Versioned input/output contract shared by labeling, training, and inference."""
-import json
+import json,re
 CATEGORIES = ('groceries','dining','local_transport','vehicle','housing','utilities','shopping','medical','personal_care','fitness','entertainment','software','education','travel','insurance','financial','taxes','gifts','other','uncategorized')
 TYPES = ('expense','income','refund','transfer','card_payment','loan_principal','cash_movement','balance_adjustment','unknown')
 # Keep definitions compact enough for a 512-token experiment. Full annotator policy
@@ -37,6 +37,12 @@ def messages(inputs,answer=None):
     if answer is not None:result.append({'role':'assistant','content':json.dumps(validate_answer(answer),separators=(',',':'))})
     return result
 
+def parse_answer(text):
+    text=text.strip()
+    wrapped=re.fullmatch(r'```(?:json)?\s*\n?([\s\S]*?)\n?```',text,flags=re.I)
+    if wrapped:text=wrapped.group(1).strip()
+    return validate_answer(json.loads(text))
+
 def safe_prediction(text):
-    try:return validate_answer(json.loads(text))
+    try:return parse_answer(text)
     except (ValueError,TypeError):return {'type':'unknown','category':'uncategorized','review':True}

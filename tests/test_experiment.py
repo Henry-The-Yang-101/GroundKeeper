@@ -21,3 +21,8 @@ def test_zero_acceptance_error_rate_is_unavailable_not_perfect():
  pred=[{'type':'expense','category':'shopping','review':False}]
  r=evaluate(gold,pred);assert r['automatic_acceptance_coverage']==0 and r['automatically_accepted_error_rate'] is None
  assert evaluate(gold,pred,[True])['automatically_accepted_error_rate']==1
+def test_only_a_whole_json_fence_is_repaired():
+ from groundkeeper.policy import parse_answer
+ assert parse_answer('```json\n{"type":"expense","category":"dining","review":false}\n```')['category']=='dining'
+ with pytest.raises(ValueError):parse_answer('Here is JSON: {"type":"expense","category":"dining","review":false}')
+ with pytest.raises(ValueError):parse_answer('```json\n{"type":"income","category":"dining","review":false}\n```')

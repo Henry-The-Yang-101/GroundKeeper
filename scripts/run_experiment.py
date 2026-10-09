@@ -12,6 +12,7 @@ from mlx.utils import tree_flatten
 from types import SimpleNamespace
 from groundkeeper.policy import messages,validate_answer,safe_prediction
 from groundkeeper.metrics import evaluate
+from groundkeeper.runtime import generate_answer
 
 root=Path('.local/finetune');model_path=root/'models/qwen35-text'
 p=argparse.ArgumentParser();p.add_argument('mode',choices=['check','baseline','probe','probe-eval']);a=p.parse_args()
@@ -45,19 +46,18 @@ if a.mode=='check':
  assert report['adapted_layer_indices']==[28,29,30,31]
  (root/'compatibility_check.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))
 elif a.mode in ('baseline','probe-eval'):
- outputs=[];raw_outputs=[];times=[];invalid=0
+ outputs=[];raw_outputs=[];times=[];invalid=0;repaired=0
  for i,r in enumerate(valid_rows):
-  start=time.perf_counter();prompt=tok.apply_chat_template(messages(r['input']),tokenize=False,add_generation_prompt=True,enable_thinking=False)
-  text=generate(model,tok,prompt=prompt,max_tokens=96,sampler=make_sampler(0));times.append(time.perf_counter()-start)
-  try:answer=validate_answer(json.loads(text))
-  except (ValueError,TypeError):invalid+=1;answer=safe_prediction(text)
+  answer,details=generate_answer(model,tok,r['input']);text=details['raw'];times.append(details['latency_seconds'])
+  if not details['valid_schema']:invalid+=1
+  repaired+=int(details['removed_json_fence'])
   outputs.append(answer);raw_outputs.append({'id':r['id'],'prediction':answer,'raw':text})
   if (i+1)%10==0:print('evaluated',i+1,'/',len(valid_rows),flush=True)
  result=evaluate([r['answer'] for r in valid_rows],outputs)
  for source in sorted({r['source'] for r in valid_rows}):
   indices=[i for i,r in enumerate(valid_rows) if r['source']==source]
   result.setdefault('by_source',{})[source]=evaluate([valid_rows[i]['answer'] for i in indices],[outputs[i] for i in indices])
- report.update(metrics=result,invalid_outputs=invalid,mean_latency_seconds=sum(times)/len(times),total_generation_seconds=sum(times),mlx_peak_bytes=mx.get_peak_memory(),all_validation_merchants='unseen_in_training',matching_unresolved_count=len(valid_rows),real_user_confirmed_aliases=0)
+ report.update(metrics=result,invalid_outputs=invalid,format_repaired_outputs=repaired,mean_latency_seconds=sum(times)/len(times),total_generation_seconds=sum(times),mlx_peak_bytes=mx.get_peak_memory(),all_validation_merchants='unseen_in_training',matching_unresolved_count=len(valid_rows),real_user_confirmed_aliases=0)
  (root/f'{a.mode}_predictions.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in raw_outputs));(root/f'{a.mode}_report.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))
 else:
  events=[]

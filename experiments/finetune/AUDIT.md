@@ -81,3 +81,36 @@ inputs, blind-labeled separately. Those inputs are a policy/coverage diagnostic,
 not collected Canadian transactions, not human-reviewed ground truth, and not
 proof of real-world accuracy. The 1,000 real Canadian evaluation target remains
 unfilled. Public merchant pairs stay separate from category training.
+
+## Source-category mapping used for audit
+
+The table describes review rules, not an automatic label conversion.
+
+| Source label | Review rule under the 18-category policy |
+|---|---|
+| Restaurants | Dining when merchant/purpose is identifiable; ambiguous names abstain |
+| Groceries | Grocery default for identified supermarkets; mixed/opaque merchants reviewed |
+| Shopping | Shopping provisional at mixed retail; specialized item purpose can differ |
+| Transportation | Split local_transport, vehicle and travel by actual service; mixed fuel/store reviewed |
+| Entertainment | Entertainment for identifiable media/recreation; sports participation -> fitness |
+| Utilities | Utilities for identifiable household services, including waste; financing is not implied utility expense |
+| Subscription | Split by purpose: entertainment/software/education/fitness/Other; not a category |
+| Healthcare | Medical for treatment/pharmacy service; general drugstore remains ambiguous |
+| Insurance | Explicit premium/provider; bank-only and ambiguous warranty strings reviewed |
+| Mortgage | Principal only -> loan_principal; separately stated mortgage interest -> housing; unsplit -> unknown |
+| Rent | Housing when rent explicit; generic lease may be ambiguous |
+| Travel | Travel for flights/intercity/lodging/rental cars; dining remains dining |
+| Education | Education when learning purpose supported; general bookstore is provisional shopping |
+| Personal Care | Split grooming/cosmetics from fitness |
+| Transfer | Own ownership/card/principal/cash evidence required; rail alone -> unknown |
+| Income | Explicit payroll/benefit/earnings; refunds and opaque credits relabeled |
+| Fees | Financial fees when stated; credit contradictions reviewed; shipping alone -> Other |
+
+All 850 selected source rows were individually labeled blind, including 50 from
+each source category. A separate 60-case hard audit preceded this sample. The
+second 75-case blind review agreed on 69 decisions. Disagreements concerned
+unknown-merchant transaction type, Cricket, Aquarium, RepairClinic and home
+warranty. Parent adjudication retained conservative review targets and changed
+bare home warranties to Uncategorized. No disagreement was resolved using a
+hidden source category or inferred receipt. See the versioned audit and change
+records for exact public IDs.
