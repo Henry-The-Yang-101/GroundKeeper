@@ -1,0 +1,10 @@
+{
+  "shortcut_name": "GK Categorize Cloud",
+  "model": "Cloud",
+  "broad_world_knowledge": true,
+  "follow_up": false,
+  "output": "Text",
+  "prompt_path": "experiments/apple-shortcuts/prompt.txt",
+  "configured_using": "Shortcuts UI via Computer Use",
+  "comparison_note": "Same input fields, labeling definitions and validation rows; Apple has additional schema instructions and world knowledge. Model weights and serving version cannot be pinned."
+}
