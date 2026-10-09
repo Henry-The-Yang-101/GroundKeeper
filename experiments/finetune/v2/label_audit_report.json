@@ -1,0 +1,193 @@
+{
+  "audited": 75,
+  "initial_agreement": 66,
+  "disagreements": [
+    {
+      "id": "ddt-01660",
+      "old": {
+        "category": null,
+        "review": false,
+        "type": "income"
+      },
+      "blind_audit": {
+        "type": "income",
+        "category": null,
+        "review": true
+      },
+      "decision": {
+        "category": null,
+        "review": false,
+        "type": "income"
+      },
+      "disposition": "keep",
+      "reason": "Explicit benefits establish income; exact payer identity is immaterial to this type decision."
+    },
+    {
+      "id": "ddt-02793",
+      "old": {
+        "category": null,
+        "review": false,
+        "type": "balance_adjustment"
+      },
+      "blind_audit": {
+        "type": "balance_adjustment",
+        "category": null,
+        "review": true
+      },
+      "decision": {
+        "category": null,
+        "review": false,
+        "type": "balance_adjustment"
+      },
+      "disposition": "keep",
+      "reason": "Explicit cash adjustment establishes balance_adjustment, not physical cash movement."
+    },
+    {
+      "id": "ddt-12682",
+      "old": {
+        "category": null,
+        "review": false,
+        "type": "income"
+      },
+      "blind_audit": {
+        "type": "income",
+        "category": null,
+        "review": true
+      },
+      "decision": {
+        "category": null,
+        "review": false,
+        "type": "income"
+      },
+      "disposition": "keep",
+      "reason": "Concatenated PAYROLL is an explicit banking purpose cue; formatting alone does not warrant review."
+    },
+    {
+      "id": "ddt-15074",
+      "old": {
+        "category": null,
+        "review": false,
+        "type": "income"
+      },
+      "blind_audit": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "decision": {
+        "category": null,
+        "review": false,
+        "type": "income"
+      },
+      "disposition": "reject",
+      "reason": "Reject anomalous CITY OF PAYROLL rather than teach a disputed payer-versus-purpose interpretation."
+    },
+    {
+      "id": "ddt-18071",
+      "old": {
+        "category": null,
+        "review": false,
+        "type": "balance_adjustment"
+      },
+      "blind_audit": {
+        "type": "balance_adjustment",
+        "category": null,
+        "review": true
+      },
+      "decision": {
+        "category": null,
+        "review": false,
+        "type": "balance_adjustment"
+      },
+      "disposition": "keep",
+      "reason": "Explicit cash adjustment establishes balance_adjustment."
+    },
+    {
+      "id": "ddt-30839",
+      "old": {
+        "category": "taxes",
+        "review": false,
+        "type": "expense"
+      },
+      "blind_audit": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "decision": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "disposition": "keep",
+      "reason": "LLC suffix does not identify a government program; remove unsupported taxes default."
+    },
+    {
+      "id": "ddt-38640",
+      "old": {
+        "category": "other",
+        "review": false,
+        "type": "expense"
+      },
+      "blind_audit": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "decision": {
+        "category": "other",
+        "review": false,
+        "type": "expense"
+      },
+      "disposition": "keep",
+      "reason": "Standalone shipping fee is an understood outside-taxonomy purpose under the policy."
+    },
+    {
+      "id": "ddt-41755",
+      "old": {
+        "category": "other",
+        "review": false,
+        "type": "expense"
+      },
+      "blind_audit": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "decision": {
+        "category": "other",
+        "review": false,
+        "type": "expense"
+      },
+      "disposition": "keep",
+      "reason": "Standalone shipping fee is an understood outside-taxonomy purpose under the policy."
+    },
+    {
+      "id": "ddt-57689",
+      "old": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "blind_audit": {
+        "type": "expense",
+        "category": "travel",
+        "review": false
+      },
+      "decision": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "disposition": "keep",
+      "reason": "Bare Clear Enrollment does not identify a particular service; retain conservative abstention."
+    }
+  ],
+  "changed_labels": 1,
+  "rejected_from_v2": 1,
+  "reviewer_model": "gpt-6-luna",
+  "reasoning_effort": "xhigh",
+  "max_packet_size": 25,
+  "label_status": "ai_reviewed_not_human",
+  "v1_files_modified": false
+}

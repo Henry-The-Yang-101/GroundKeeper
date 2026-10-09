@@ -1,0 +1,21 @@
+{
+  "candidates": 2900,
+  "packets": 116,
+  "packet_size": 25,
+  "sources": {
+    "groundkeeper-authored-bank-coverage-v2": 576,
+    "DoDataThings/us-bank-transaction-categories-v2": 1700,
+    "groundkeeper-authored-purpose-coverage-v2": 624
+  },
+  "authored_planned_splits": {
+    "valid": 168,
+    "train": 864,
+    "test": 168
+  },
+  "source_data_sha256": "0424aed6e76f74a5b3b1ff61ccec43bc321622e6806da353b910b3b2c8108f6e",
+  "candidate_sha256": "0ccd5c826b55e2f86b2ebe7fa07c5da3d5ee363d4e938a6381150e5d058b8531",
+  "labels": "pending_blind_review",
+  "real_transactions": 0,
+  "human_labels": 0,
+  "note": "Candidates may be rejected or capped; do not call these accepted training examples."
+}

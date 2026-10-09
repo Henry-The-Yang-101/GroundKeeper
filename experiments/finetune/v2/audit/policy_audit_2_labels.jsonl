@@ -1,0 +1,25 @@
+{"id": "ddt-60560", "type": "income", "category": null, "review": false, "merchant_group": "Stanford University", "evidence": "UNIVERSITYPAYROLL; explicit payroll", "disposition": "keep"}
+{"id": "ddt-65575", "type": "expense", "category": "taxes", "review": false, "merchant_group": "TSA PreCheck", "evidence": "TSA Precheck; government enrollment fee", "disposition": "keep"}
+{"id": "ddt-67250", "type": "refund", "category": null, "review": true, "merchant_group": "ASOS", "evidence": "Payment Refund; original category absent", "disposition": "keep"}
+{"id": "ddt-08045", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "generic:deposit", "evidence": "REMOTE ONLINE DEPOSIT; may be cheque, source unclear", "disposition": "keep"}
+{"id": "ddt-04504", "type": "expense", "category": "shopping", "review": true, "merchant_group": "Costco", "evidence": "COSTCO; mixed retailer, item unspecified", "disposition": "keep"}
+{"id": "ca-synthetic-096", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "generic:unknown_merchant", "evidence": "UNKNOWN MERCHANT; placeholder gives no purpose", "disposition": "keep"}
+{"id": "ddt-27599", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Pacific Consulting", "evidence": "DIR DEP; no payroll or benefit text", "disposition": "keep"}
+{"id": "ddt-35729", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Apple", "evidence": "APPLE.COM/BILL; product unspecified", "disposition": "keep"}
+{"id": "ca-synthetic-089", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Loblaws", "evidence": "credit at merchant; no refund text", "disposition": "keep"}
+{"id": "ddt-19168", "type": "expense", "category": "education", "review": false, "merchant_group": "Pluralsight", "evidence": "WITHDRAWAL FROM PLURALSIGHT; training service", "disposition": "keep"}
+{"id": "ddt-21776", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Sylvan Learning", "evidence": "credit; no refund or income context", "disposition": "keep"}
+{"id": "ddt-55814", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Newrez", "evidence": "MORTGAGE; principal and interest unsplit", "disposition": "keep"}
+{"id": "ddt-56884", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Citibank", "evidence": "EXT TRNSFR; account ownership unclear", "disposition": "keep"}
+{"id": "ddt-36778", "type": "expense", "category": "shopping", "review": true, "merchant_group": "Amazon", "evidence": "AMZN MKTP; marketplace item unspecified", "disposition": "keep"}
+{"id": "ddt-24867", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Aquarium Indianapolis", "evidence": "Aquarium; service or purchase purpose unclear", "disposition": "keep"}
+{"id": "ddt-64456", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "PayPal / Barclaycard", "evidence": "INST XFER; card repayment purpose not explicit", "disposition": "keep"}
+{"id": "ddt-57689", "type": "expense", "category": "travel", "review": false, "merchant_group": "CLEAR", "evidence": "Clear Enrollment; airport identity service", "disposition": "keep"}
+{"id": "ddt-39268", "type": "expense", "category": "shopping", "review": true, "merchant_group": "Temu", "evidence": "TEMU; mixed marketplace item unspecified", "disposition": "keep"}
+{"id": "ddt-62983", "type": "expense", "category": "housing", "review": false, "merchant_group": "Greystar", "evidence": "GREYSTAR RENT; rent purpose stated", "disposition": "keep"}
+{"id": "ddt-42027", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Metro School District", "evidence": "DIR DEP; no payroll or benefit text", "disposition": "keep"}
+{"id": "ddt-48572", "type": "expense", "category": "shopping", "review": true, "merchant_group": "RepairClinic", "evidence": "repairclinic.com; parts versus repair service unclear", "disposition": "keep"}
+{"id": "ddt-34147", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Local Harvest", "evidence": "SQ *LOCAL HARVEST; merchant purpose unclear", "disposition": "keep"}
+{"id": "ddt-64782", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "California DMV", "evidence": "CA DMV; vehicle versus nonvehicle fee unclear", "disposition": "keep"}
+{"id": "ddt-49739", "type": "unknown", "category": "uncategorized", "review": true, "merchant_group": "Brex", "evidence": "ACH TRANSFER; purpose and account ownership absent", "disposition": "keep"}
+{"id": "ddt-05016", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Sheetz", "evidence": "SHEETZ; no fuel cue, mixed retailer", "disposition": "keep"}

@@ -1,0 +1,25 @@
+{"id": "ddt-18621", "type": "income", "category": null, "review": false, "merchant_group": "Fiverr", "evidence": "FIVERR PAYOUT; earnings payout", "disposition": "keep"}
+{"id": "ddt-20307", "type": "income", "category": null, "review": false, "merchant_group": "generic:payroll", "evidence": "PAYROLL; ACME CORP is generic", "disposition": "keep"}
+{"id": "ddt-24660", "type": "income", "category": null, "review": false, "merchant_group": "generic:benefit", "evidence": "UNEMPLOYMENT INS BENEFIT PAYMENT", "disposition": "keep"}
+{"id": "ddt-28718", "type": "income", "category": null, "review": false, "merchant_group": "Lyft", "evidence": "Lyft Driver Pay; earnings payout", "disposition": "keep"}
+{"id": "ddt-30839", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "Global Entry LLC", "evidence": "Global Entry Llc; merchant purpose unclear", "disposition": "keep"}
+{"id": "ddt-30898", "type": "income", "category": null, "review": false, "merchant_group": "generic:payroll", "evidence": "PAYROLL; BLUE SKY VENTURES identity unverified", "disposition": "keep"}
+{"id": "ddt-32338", "type": "expense", "category": "financial", "review": false, "merchant_group": "generic:cash_advance_fee", "evidence": "CASH ADVANCE FEE", "disposition": "keep"}
+{"id": "ddt-33258", "type": "expense", "category": "taxes", "review": false, "merchant_group": "TSA", "evidence": "TSA PRECHECK; government enrollment fee", "disposition": "keep"}
+{"id": "ddt-33449", "type": "income", "category": null, "review": false, "merchant_group": "generic:payroll", "evidence": "PAYROLL; district name is generic", "disposition": "keep"}
+{"id": "ddt-34501", "type": "income", "category": null, "review": false, "merchant_group": "generic:benefit", "evidence": "BENEFIT PAYMENT; EDI PYMNTS is payment rail", "disposition": "keep"}
+{"id": "ddt-35516", "type": "expense", "category": "financial", "review": false, "merchant_group": "generic:atm_fee", "evidence": "atm service charge", "disposition": "keep"}
+{"id": "ddt-38640", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "generic:shipping_fee", "evidence": "EXPEDITED SHIPPING FEE; underlying purchase unknown", "disposition": "keep"}
+{"id": "ddt-41450", "type": "income", "category": null, "review": false, "merchant_group": "Adobe", "evidence": "ADOBE INC PAYROLL", "disposition": "keep"}
+{"id": "ddt-41755", "type": "expense", "category": "uncategorized", "review": true, "merchant_group": "generic:shipping_fee", "evidence": "EXPEDITED SHIPPING FEE; underlying purchase unknown", "disposition": "keep"}
+{"id": "ddt-41848", "type": "expense", "category": "financial", "review": false, "merchant_group": "generic:atm_fee", "evidence": "ATM SERVICE CHARGE", "disposition": "keep"}
+{"id": "ddt-42987", "type": "income", "category": null, "review": false, "merchant_group": "generic:interest", "evidence": "Monthly Interest Paid", "disposition": "keep"}
+{"id": "ddt-46952", "type": "expense", "category": "other", "review": false, "merchant_group": "Tinder", "evidence": "TINDER WEB; dating service purpose", "disposition": "keep"}
+{"id": "ddt-47053", "type": "income", "category": null, "review": false, "merchant_group": "State of California", "evidence": "STATE OF CALIFORNIA; PAYROLL", "disposition": "keep"}
+{"id": "ddt-48727", "type": "expense", "category": "financial", "review": false, "merchant_group": "generic:atm_fee", "evidence": "Atm Operator Fee", "disposition": "keep"}
+{"id": "ddt-52250", "type": "income", "category": null, "review": false, "merchant_group": "Meta Platforms", "evidence": "META PLATFORMS PAYROLL", "disposition": "keep"}
+{"id": "ddt-52449", "type": "income", "category": null, "review": false, "merchant_group": "State of California", "evidence": "state of california payroll", "disposition": "keep"}
+{"id": "ddt-52764", "type": "income", "category": null, "review": false, "merchant_group": "US Government", "evidence": "US GOVERNMENT PAYROLL", "disposition": "keep"}
+{"id": "ddt-54171", "type": "income", "category": null, "review": false, "merchant_group": "generic:payroll", "evidence": "PAYROLL; COUNTY OF CO identity ambiguous", "disposition": "keep"}
+{"id": "ddt-54930", "type": "income", "category": null, "review": false, "merchant_group": "Meta Platforms", "evidence": "META PLATFORMS PAYROLL", "disposition": "keep"}
+{"id": "ddt-55585", "type": "income", "category": null, "review": false, "merchant_group": "generic:benefit", "evidence": "child tax credit benefit payment", "disposition": "keep"}

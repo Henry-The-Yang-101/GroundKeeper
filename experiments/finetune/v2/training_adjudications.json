@@ -1,0 +1,14 @@
+{
+  "ddt-30839": {
+    "answer": {
+      "type": "expense",
+      "category": "uncategorized",
+      "review": true
+    },
+    "reason": "LLC suffix does not identify a government program; remove unsupported taxes default."
+  },
+  "ddt-15074": {
+    "reject": true,
+    "reason": "Reject anomalous CITY OF PAYROLL rather than teach a disputed payer-versus-purpose interpretation."
+  }
+}

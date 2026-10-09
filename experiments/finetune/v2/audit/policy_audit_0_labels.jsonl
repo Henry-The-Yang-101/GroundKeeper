@@ -1,0 +1,25 @@
+{"id":"ca-synthetic-060","type":"expense","category":"financial","review":false,"merchant_group":"CIBC","evidence":"MONTHLY ACCOUNT FEE","disposition":"keep"}
+{"id":"ca-synthetic-061","type":"expense","category":"financial","review":false,"merchant_group":"RBC","evidence":"CREDIT CARD ANNUAL FEE","disposition":"keep"}
+{"id":"ca-synthetic-062","type":"expense","category":"financial","review":false,"merchant_group":"TD","evidence":"OVERDRAFT INTEREST","disposition":"keep"}
+{"id":"ca-synthetic-063","type":"expense","category":"financial","review":false,"merchant_group":"BMO","evidence":"FOREIGN TRANSACTION FEE","disposition":"keep"}
+{"id":"ca-synthetic-064","type":"expense","category":"taxes","review":false,"merchant_group":"CRA","evidence":"INCOME TAX PAYMENT","disposition":"keep"}
+{"id":"ca-synthetic-065","type":"expense","category":"taxes","review":false,"merchant_group":"generic:property-tax","evidence":"CITY PROPERTY TAX PAYMENT","disposition":"keep"}
+{"id":"ca-synthetic-066","type":"expense","category":"taxes","review":false,"merchant_group":"Government of Canada","evidence":"PASSPORT RENEWAL FEE; government admin fee","disposition":"keep"}
+{"id":"ca-synthetic-067","type":"expense","category":"taxes","review":false,"merchant_group":"Government of Ontario","evidence":"DRIVER LICENCE RENEWAL; nonvehicle licence","disposition":"keep"}
+{"id":"ca-synthetic-068","type":"expense","category":"gifts","review":false,"merchant_group":"Canadian Red Cross","evidence":"RED CROSS DONATION","disposition":"keep"}
+{"id":"ca-synthetic-083","type":"card_payment","category":null,"review":false,"merchant_group":"CIBC","evidence":"PAYMENT TO CIBC VISA CREDIT CARD","disposition":"keep"}
+{"id":"ca-synthetic-086","type":"income","category":null,"review":false,"merchant_group":"generic:payroll","evidence":"PAYROLL SALARY DEPOSIT","disposition":"keep"}
+{"id":"ca-synthetic-087","type":"income","category":null,"review":false,"merchant_group":"Government of Canada","evidence":"CANADA CHILD BENEFIT DEPOSIT","disposition":"keep"}
+{"id":"ca-synthetic-091","type":"income","category":null,"review":false,"merchant_group":"generic:savings-interest","evidence":"SAVINGS INTEREST PAID","disposition":"keep"}
+{"id":"ca-synthetic-092","type":"expense","category":"other","review":false,"merchant_group":"generic:pet-veterinary-care","evidence":"PET VETERINARY CONSULTATION; outside listed categories","disposition":"keep"}
+{"id":"ca-synthetic-094","type":"expense","category":"other","review":false,"merchant_group":"generic:pet-boarding","evidence":"PET BOARDING SERVICE; outside listed categories","disposition":"keep"}
+{"id":"ca-synthetic-095","type":"expense","category":"other","review":false,"merchant_group":"generic:document-translation","evidence":"PERSONAL DOCUMENT TRANSLATION; purpose outside listed categories","disposition":"keep"}
+{"id":"ddt-01660","type":"income","category":null,"review":true,"merchant_group":"generic:government-benefits","evidence":"va benefits / soc sec; specific benefit payer unclear","disposition":"keep"}
+{"id":"ddt-02299","type":"expense","category":"financial","review":false,"merchant_group":"generic:balance-transfer-fee","evidence":"BALANCE TRANSFER FEE","disposition":"keep"}
+{"id":"ddt-02793","type":"balance_adjustment","category":null,"review":true,"merchant_group":"generic:cash-adjustment","evidence":"CASH ADJUSTMENT; adjustment vs cash movement unclear","disposition":"keep"}
+{"id":"ddt-05708","type":"income","category":null,"review":false,"merchant_group":"Instacart","evidence":"INSTACART EARNINGS","disposition":"keep"}
+{"id":"ddt-06765","type":"expense","category":"other","review":false,"merchant_group":"Match.com","evidence":"MATCH.COM; named dating-service merchant","disposition":"keep"}
+{"id":"ddt-10806","type":"income","category":null,"review":false,"merchant_group":"Intuit","evidence":"ENTRY DESCR:PAYROLL; PPD","disposition":"keep"}
+{"id":"ddt-12682","type":"income","category":null,"review":true,"merchant_group":"Blue Sky Ventures","evidence":"VENTURESPAYROLL; payroll cue is concatenated with employer name","disposition":"keep"}
+{"id":"ddt-15074","type":"unknown","category":"uncategorized","review":true,"merchant_group":"City of Payroll","evidence":"CITY OF PAYROLL; unclear whether payroll is payer name or payment purpose","disposition":"keep"}
+{"id":"ddt-18071","type":"balance_adjustment","category":null,"review":true,"merchant_group":"generic:cash-adjustment","evidence":"DAILY CASH ADJUSTMENT; adjustment vs cash movement unclear","disposition":"keep"}
