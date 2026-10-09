@@ -1,0 +1,23 @@
+{
+  "validation_sha256": "9af2e9e2aa432ff96cad2f41c0ae242f23497738ade56bee136f81df18963cbf",
+  "qwen_predictions_sha256": "50f2c162b32a83502c405d9432d809487d593a8fcb8b5177a81d005c1a710d41",
+  "config_sha256": "9e942bdf7b7bbf026205d8c509f2262efbd3a1db00a8c14955625a75e9405739",
+  "config": {
+    "shortcut_name": "GK Categorize Cloud",
+    "model": "Cloud",
+    "broad_world_knowledge": true,
+    "follow_up": false,
+    "output": "Text",
+    "prompt_path": "experiments/apple-shortcuts/prompt.txt",
+    "configured_using": "Shortcuts UI via Computer Use",
+    "comparison_note": "Same input fields, labeling definitions and validation rows; Apple has additional schema instructions and world knowledge. Model weights and serving version cannot be pinned."
+  },
+  "prompt_sha256": "7175ca485ac2b7d8fc2543e172763c1d318898dc6f69092dd69fa436a9fc6b11",
+  "validation_n": 279,
+  "payload_fields": [
+    "description",
+    "direction",
+    "currency"
+  ],
+  "gold_labels_sent": false
+}

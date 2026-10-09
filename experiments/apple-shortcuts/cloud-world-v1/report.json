@@ -1,0 +1,1778 @@
+{
+  "dataset_n": 279,
+  "completed_n": 138,
+  "valid_n": 138,
+  "invalid_outputs": 0,
+  "execution_errors": 1,
+  "all_completed_accuracy": {
+    "category_accuracy": 0.7536231884057971,
+    "type_accuracy": 0.8260869565217391,
+    "review_accuracy": 0.7318840579710145,
+    "joint_accuracy": 0.6159420289855072
+  },
+  "valid_output_metrics": {
+    "n": 138,
+    "joint_accuracy": 0.6159420289855072,
+    "category_accuracy": 0.7536231884057971,
+    "type_accuracy": 0.8260869565217391,
+    "review_accuracy": 0.7318840579710145,
+    "macro_f1_supported_categories": 0.7501511427522107,
+    "macro_f1_all_categories": 0.6429866937876092,
+    "per_category": {
+      "groceries": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 8
+      },
+      "dining": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 6
+      },
+      "local_transport": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5
+      },
+      "vehicle": {
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "support": 3
+      },
+      "housing": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 7
+      },
+      "utilities": {
+        "precision": 0.8181818181818182,
+        "recall": 1.0,
+        "f1": 0.9,
+        "support": 9
+      },
+      "shopping": {
+        "precision": 0.5833333333333334,
+        "recall": 1.0,
+        "f1": 0.7368421052631579,
+        "support": 7
+      },
+      "medical": {
+        "precision": 0.7142857142857143,
+        "recall": 0.7142857142857143,
+        "f1": 0.7142857142857143,
+        "support": 7
+      },
+      "personal_care": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3
+      },
+      "fitness": {
+        "precision": 1.0,
+        "recall": 0.6,
+        "f1": 0.75,
+        "support": 5
+      },
+      "entertainment": {
+        "precision": 0.8888888888888888,
+        "recall": 0.8888888888888888,
+        "f1": 0.8888888888888888,
+        "support": 9
+      },
+      "software": {
+        "precision": 0.25,
+        "recall": 0.5,
+        "f1": 0.3333333333333333,
+        "support": 2
+      },
+      "education": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "travel": {
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "f1": 0.9565217391304348,
+        "support": 11
+      },
+      "insurance": {
+        "precision": 1.0,
+        "recall": 0.16666666666666666,
+        "f1": 0.2857142857142857,
+        "support": 6
+      },
+      "financial": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 2
+      },
+      "taxes": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "gifts": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "uncategorized": {
+        "precision": 0.7894736842105263,
+        "recall": 0.42857142857142855,
+        "f1": 0.5555555555555556,
+        "support": 35
+      },
+      "__none__": {
+        "precision": 0.46153846153846156,
+        "recall": 1.0,
+        "f1": 0.631578947368421,
+        "support": 12
+      }
+    },
+    "automatic_acceptance_coverage": 0.0,
+    "automatically_accepted_errors": 0,
+    "automatically_accepted_error_rate": null,
+    "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+  },
+  "mean_latency_seconds": 1.3915973592601654,
+  "median_latency_seconds": 1.3264884585005348,
+  "real_data": false,
+  "application_review_required": true,
+  "baseline": "Qwen v2 candidate 0, step 2080; saved predictions, no rerun",
+  "full_qwen_metrics": {
+    "n": 279,
+    "joint_accuracy": 0.7813620071684588,
+    "category_accuracy": 0.8207885304659498,
+    "type_accuracy": 0.9354838709677419,
+    "review_accuracy": 0.899641577060932,
+    "macro_f1_supported_categories": 0.8057741738214232,
+    "macro_f1_all_categories": 0.8057741738214232,
+    "per_category": {
+      "groceries": {
+        "precision": 0.75,
+        "recall": 1.0,
+        "f1": 0.8571428571428571,
+        "support": 12
+      },
+      "dining": {
+        "precision": 1.0,
+        "recall": 0.6,
+        "f1": 0.75,
+        "support": 10
+      },
+      "local_transport": {
+        "precision": 1.0,
+        "recall": 0.8888888888888888,
+        "f1": 0.9411764705882353,
+        "support": 9
+      },
+      "vehicle": {
+        "precision": 0.5384615384615384,
+        "recall": 1.0,
+        "f1": 0.7,
+        "support": 7
+      },
+      "housing": {
+        "precision": 0.875,
+        "recall": 0.6363636363636364,
+        "f1": 0.7368421052631579,
+        "support": 11
+      },
+      "utilities": {
+        "precision": 0.8333333333333334,
+        "recall": 0.7692307692307693,
+        "f1": 0.8,
+        "support": 13
+      },
+      "shopping": {
+        "precision": 0.8333333333333334,
+        "recall": 0.9090909090909091,
+        "f1": 0.8695652173913043,
+        "support": 11
+      },
+      "medical": {
+        "precision": 0.9,
+        "recall": 0.8181818181818182,
+        "f1": 0.8571428571428571,
+        "support": 11
+      },
+      "personal_care": {
+        "precision": 1.0,
+        "recall": 0.7142857142857143,
+        "f1": 0.8333333333333334,
+        "support": 7
+      },
+      "fitness": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 9
+      },
+      "entertainment": {
+        "precision": 0.8666666666666667,
+        "recall": 1.0,
+        "f1": 0.9285714285714286,
+        "support": 13
+      },
+      "software": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 6
+      },
+      "education": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5
+      },
+      "travel": {
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.8888888888888888,
+        "support": 15
+      },
+      "insurance": {
+        "precision": 0.5,
+        "recall": 0.8,
+        "f1": 0.6153846153846154,
+        "support": 10
+      },
+      "financial": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "support": 14
+      },
+      "taxes": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 8
+      },
+      "gifts": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 8
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 8
+      },
+      "uncategorized": {
+        "precision": 0.8611111111111112,
+        "recall": 0.6888888888888889,
+        "f1": 0.7654320987654321,
+        "support": 45
+      },
+      "__none__": {
+        "precision": 0.9534883720930233,
+        "recall": 0.8723404255319149,
+        "f1": 0.9111111111111111,
+        "support": 47
+      }
+    },
+    "automatic_acceptance_coverage": 0.0,
+    "automatically_accepted_errors": 0,
+    "automatically_accepted_error_rate": null,
+    "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+  },
+  "qwen_metrics_on_completed_subset": {
+    "n": 138,
+    "joint_accuracy": 0.7101449275362319,
+    "category_accuracy": 0.7608695652173914,
+    "type_accuracy": 0.927536231884058,
+    "review_accuracy": 0.8043478260869565,
+    "macro_f1_supported_categories": 0.7592582595058529,
+    "macro_f1_all_categories": 0.6507927938621597,
+    "per_category": {
+      "groceries": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 8
+      },
+      "dining": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "support": 6
+      },
+      "local_transport": {
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.8888888888888888,
+        "support": 5
+      },
+      "vehicle": {
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "support": 3
+      },
+      "housing": {
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333333333333333,
+        "support": 7
+      },
+      "utilities": {
+        "precision": 0.75,
+        "recall": 0.6666666666666666,
+        "f1": 0.7058823529411765,
+        "support": 9
+      },
+      "shopping": {
+        "precision": 0.75,
+        "recall": 0.8571428571428571,
+        "f1": 0.8,
+        "support": 7
+      },
+      "medical": {
+        "precision": 0.8333333333333334,
+        "recall": 0.7142857142857143,
+        "f1": 0.7692307692307693,
+        "support": 7
+      },
+      "personal_care": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "support": 3
+      },
+      "fitness": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5
+      },
+      "entertainment": {
+        "precision": 0.8181818181818182,
+        "recall": 1.0,
+        "f1": 0.9,
+        "support": 9
+      },
+      "software": {
+        "precision": 0.4,
+        "recall": 1.0,
+        "f1": 0.5714285714285714,
+        "support": 2
+      },
+      "education": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "travel": {
+        "precision": 1.0,
+        "recall": 0.7272727272727273,
+        "f1": 0.8421052631578947,
+        "support": 11
+      },
+      "insurance": {
+        "precision": 0.36363636363636365,
+        "recall": 0.6666666666666666,
+        "f1": 0.47058823529411764,
+        "support": 6
+      },
+      "financial": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "support": 2
+      },
+      "taxes": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "gifts": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "uncategorized": {
+        "precision": 0.8076923076923077,
+        "recall": 0.6,
+        "f1": 0.6885245901639344,
+        "support": 35
+      },
+      "__none__": {
+        "precision": 0.8461538461538461,
+        "recall": 0.9166666666666666,
+        "f1": 0.88,
+        "support": 12
+      }
+    },
+    "automatic_acceptance_coverage": 0.0,
+    "automatically_accepted_errors": 0,
+    "automatically_accepted_error_rate": null,
+    "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+  },
+  "errors": [
+    {
+      "id": "ddt-01107",
+      "input": {
+        "currency": "USD",
+        "description": "HOTWIRE INC.",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "travel",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "travel",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-01109",
+      "input": {
+        "currency": "USD",
+        "description": "HARTFORD EFT PYMT PPD ID: 4160602146",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "insurance",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-01550",
+      "input": {
+        "currency": "USD",
+        "description": "TRAVELOCITY",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "refund",
+        "category": "travel",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-01879",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER DISCORD NITRO WEB ID: PAYPALSI64",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "entertainment",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-03631",
+      "input": {
+        "currency": "USD",
+        "description": "udr inc lease payment",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "housing",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "housing",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-06608",
+      "input": {
+        "currency": "USD",
+        "description": "TARGET T-6698",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "shopping",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-07579",
+      "input": {
+        "currency": "USD",
+        "description": "USAA 4392 INDUSTRIAL ST SAN JOSE95101 CA USA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "insurance",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-07896",
+      "input": {
+        "currency": "USD",
+        "description": "CAPITAL ONE AUTOPAY PPD ID: 6451272999",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "card_payment",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-09095",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER ZENNI OPTICAL WEB ID: PAYPALSI27",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "medical",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-10831",
+      "input": {
+        "currency": "USD",
+        "description": "LOANCARE PAYMENT",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "loan_principal",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-12812",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER CROSSFIT WEB ID: PAYPALSI43",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "fitness",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-12851",
+      "input": {
+        "currency": "USD",
+        "description": "USAA 4080 ELM CT DENVER 80201-6965CO USA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-14317",
+      "input": {
+        "currency": "USD",
+        "description": "TIKTOK SHOP 3125 CENTER AVE SEATTLE98101 WA USA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "shopping",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-14746",
+      "input": {
+        "currency": "USD",
+        "description": "glossier*urn2wh85p7ec",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "personal_care",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-15313",
+      "input": {
+        "currency": "USD",
+        "description": "MERCARI 4216 BROADWAY DR NASHVILLE 37201-0607TN USA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "shopping",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-15758",
+      "input": {
+        "currency": "USD",
+        "description": "AETNA 8558 UNIVERSITY DR DENVER80201 CO USA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "insurance",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "medical",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-15989",
+      "input": {
+        "currency": "USD",
+        "description": "BIG LOTS #41542 PHOENIX",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "shopping",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-16004",
+      "input": {
+        "currency": "USD",
+        "description": "sunpower energy",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-18004",
+      "input": {
+        "currency": "USD",
+        "description": "ALLY BANK DDA TO DDA REFCODE NTOO8S32 WEB ID: XN888QCJ5Z",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-18159",
+      "input": {
+        "currency": "USD",
+        "description": "TARGET 41907623",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "refund",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-18630",
+      "input": {
+        "currency": "USD",
+        "description": "TARGET #3677 FREMONT",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "shopping",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-19754",
+      "input": {
+        "currency": "USD",
+        "description": "TARGET T-7833",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "refund",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-20728",
+      "input": {
+        "currency": "USD",
+        "description": "PHILLIPS 66",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-22044",
+      "input": {
+        "currency": "USD",
+        "description": "HOTWIRE 9688",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "travel",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "travel",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-22222",
+      "input": {
+        "currency": "USD",
+        "description": "AETNA BILLING PPD ID: 0797776404",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "insurance",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "medical",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-22298",
+      "input": {
+        "currency": "USD",
+        "description": "Goodyear 25344",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "vehicle",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-22388",
+      "input": {
+        "currency": "USD",
+        "description": "PreApproved Payment Bill User Payment: DISCORD NITRO",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-24279",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER WEB ID: PAYPALSI66",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-25855",
+      "input": {
+        "currency": "USD",
+        "description": "SP PLUS #588 DALLAS",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "local_transport",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "local_transport",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-26721",
+      "input": {
+        "currency": "USD",
+        "description": "BESTOW INSPAYMENT PPD ID: 4105307213",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "insurance",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-27221",
+      "input": {
+        "currency": "USD",
+        "description": "JETBLUE*YEN8RT5SJF",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "travel",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "travel",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-30089",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER CAPITAL ONE AUTOPAYWEB ID: PAYPALSI51",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-30517",
+      "input": {
+        "currency": "USD",
+        "description": "Penfed Cu Home Loan",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "loan_principal",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-30912",
+      "input": {
+        "currency": "USD",
+        "description": "SUNPOWER SOLAR PMT WEB ID: 935RH7JV",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-34190",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER 23ANDME WEB ID: PAYPALSI88",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-34583",
+      "input": {
+        "currency": "USD",
+        "description": "HOTWIRE 9004",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "refund",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-34961",
+      "input": {
+        "currency": "USD",
+        "description": "TALKSPACE; Billing",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "medical",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-38139",
+      "input": {
+        "currency": "USD",
+        "description": "ALLY BANK IFI DDA TO DDA LGTJVVW1 WEB ID: ZOMYHOAGWO",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-45753",
+      "input": {
+        "currency": "USD",
+        "description": "PreApproved Payment Bill User Payment: FITBIT PREMIUM",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "fitness",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-49112",
+      "input": {
+        "currency": "USD",
+        "description": "PHILLIPS 66 #5927 DALLAS",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-51169",
+      "input": {
+        "currency": "USD",
+        "description": "Deposit from HUNTINGTON Ext Trnsfr",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-51519",
+      "input": {
+        "currency": "USD",
+        "description": "tiktok shop 9504 center dr las vegas 89101-8609nv usa",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "shopping",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-51990",
+      "input": {
+        "currency": "USD",
+        "description": "PreApproved Payment Bill User Payment: USAA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-52888",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER HEADSPACE WEB ID: PAYPALSI08",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "software",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-53046",
+      "input": {
+        "currency": "USD",
+        "description": "SALESFORCE DIR DEP PPD ID: 779539843",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "income",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-54940",
+      "input": {
+        "currency": "USD",
+        "description": "THE ORDINARY.COM",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "personal_care",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-56609",
+      "input": {
+        "currency": "USD",
+        "description": "PAYPAL INST XFER SYNCHRONY WEB ID: PAYPALSI12",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "transfer",
+        "category": null,
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-56810",
+      "input": {
+        "currency": "USD",
+        "description": "usaa 2593 mission pkwy boston 02101-4561ma usa",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-57008",
+      "input": {
+        "currency": "USD",
+        "description": "SQUARE ENIX 9850 MISSION LN LAS VEGAS 89101 NV USA",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "entertainment",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-57835",
+      "input": {
+        "currency": "USD",
+        "description": "THE ORDINARY #30888 BOSTON",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "personal_care",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "ddt-59447",
+      "input": {
+        "currency": "USD",
+        "description": "NEW YORK TIMES* NEW YORK TIMES Plus",
+        "direction": "credit"
+      },
+      "gold": {
+        "category": "uncategorized",
+        "review": true,
+        "type": "unknown"
+      },
+      "prediction": {
+        "type": "refund",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "v2-authored-0162",
+      "input": {
+        "currency": "USD",
+        "description": "FIFTH THIRD BANK BANKING SERVICE CHARGE FOR THIS MONTH",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "financial",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "financial",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "v2-authored-0163",
+      "input": {
+        "currency": "USD",
+        "description": "BANKING SERVICE CHARGE FOR THIS MONTH / FIFTH THIRD BANK REF 1033",
+        "direction": "debit"
+      },
+      "gold": {
+        "category": "financial",
+        "review": false,
+        "type": "expense"
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "financial",
+        "review": true
+      },
+      "status": "ok"
+    }
+  ],
+  "by_source": {
+    "DoDataThings/us-bank-transaction-categories-v2": {
+      "n": 129,
+      "joint_accuracy": 0.6046511627906976,
+      "category_accuracy": 0.7364341085271318,
+      "type_accuracy": 0.813953488372093,
+      "review_accuracy": 0.7286821705426356,
+      "macro_f1_supported_categories": 0.7228122522845905,
+      "macro_f1_all_categories": 0.5851337280399066,
+      "per_category": {
+        "groceries": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 8
+        },
+        "dining": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 6
+        },
+        "local_transport": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 5
+        },
+        "vehicle": {
+          "precision": 0.6,
+          "recall": 1.0,
+          "f1": 0.75,
+          "support": 3
+        },
+        "housing": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 7
+        },
+        "utilities": {
+          "precision": 0.8181818181818182,
+          "recall": 1.0,
+          "f1": 0.9,
+          "support": 9
+        },
+        "shopping": {
+          "precision": 0.5833333333333334,
+          "recall": 1.0,
+          "f1": 0.7368421052631579,
+          "support": 7
+        },
+        "medical": {
+          "precision": 0.7142857142857143,
+          "recall": 0.7142857142857143,
+          "f1": 0.7142857142857143,
+          "support": 7
+        },
+        "personal_care": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        },
+        "fitness": {
+          "precision": 1.0,
+          "recall": 0.6,
+          "f1": 0.75,
+          "support": 5
+        },
+        "entertainment": {
+          "precision": 0.8888888888888888,
+          "recall": 0.8888888888888888,
+          "f1": 0.8888888888888888,
+          "support": 9
+        },
+        "software": {
+          "precision": 0.25,
+          "recall": 0.5,
+          "f1": 0.3333333333333333,
+          "support": 2
+        },
+        "education": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        },
+        "travel": {
+          "precision": 0.9166666666666666,
+          "recall": 1.0,
+          "f1": 0.9565217391304348,
+          "support": 11
+        },
+        "insurance": {
+          "precision": 1.0,
+          "recall": 0.16666666666666666,
+          "f1": 0.2857142857142857,
+          "support": 6
+        },
+        "financial": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "taxes": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "gifts": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "other": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "uncategorized": {
+          "precision": 0.7894736842105263,
+          "recall": 0.42857142857142855,
+          "f1": 0.5555555555555556,
+          "support": 35
+        },
+        "__none__": {
+          "precision": 0.2631578947368421,
+          "recall": 1.0,
+          "f1": 0.4166666666666667,
+          "support": 5
+        }
+      },
+      "automatic_acceptance_coverage": 0.0,
+      "automatically_accepted_errors": 0,
+      "automatically_accepted_error_rate": null,
+      "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+    },
+    "groundkeeper-authored-bank-coverage-v2": {
+      "n": 9,
+      "joint_accuracy": 0.7777777777777778,
+      "category_accuracy": 1.0,
+      "type_accuracy": 1.0,
+      "review_accuracy": 0.7777777777777778,
+      "macro_f1_supported_categories": 1.0,
+      "macro_f1_all_categories": 0.09523809523809523,
+      "per_category": {
+        "groceries": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "dining": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "local_transport": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "vehicle": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "housing": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "utilities": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "shopping": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "medical": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "personal_care": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "fitness": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "entertainment": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "software": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "education": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "travel": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "insurance": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "financial": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 2
+        },
+        "taxes": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "gifts": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "other": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "uncategorized": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "__none__": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 7
+        }
+      },
+      "automatic_acceptance_coverage": 0.0,
+      "automatically_accepted_errors": 0,
+      "automatically_accepted_error_rate": null,
+      "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+    }
+  },
+  "status": "stopped",
+  "stop_reason": "execution_error: Error: You have reached the usage limit for this model. Please try again later.",
+  "session_elapsed_seconds": 332.1737290000019,
+  "paired_correctness": {
+    "category": {
+      "both_correct": 85,
+      "apple_only_correct": 19,
+      "qwen_only_correct": 20,
+      "both_wrong": 14
+    },
+    "type": {
+      "both_correct": 110,
+      "apple_only_correct": 4,
+      "qwen_only_correct": 18,
+      "both_wrong": 6
+    },
+    "review": {
+      "both_correct": 91,
+      "apple_only_correct": 10,
+      "qwen_only_correct": 20,
+      "both_wrong": 17
+    },
+    "joint": {
+      "both_correct": 72,
+      "apple_only_correct": 13,
+      "qwen_only_correct": 26,
+      "both_wrong": 27
+    }
+  },
+  "measurement_note": "First 138 rows in fixed dataset order; quota blocked row 139. Partial subset is source-imbalanced, not a random or complete validation sample.",
+  "shortcut_export_sha256": "cb7a5330e584cdeee36a2571269bb979d18002e11bab6d7723eb3084b40efc08",
+  "smoke_requests_before_benchmark": 2,
+  "observed_successful_cloud_requests_this_task": 140,
+  "limit_note": "140 observed successful Cloud requests including two smoke tests; not a published numerical quota. Prior/shared account usage, caching and accounting are unknown.",
+  "config": {
+    "shortcut_name": "GK Categorize Cloud",
+    "model": "Cloud",
+    "broad_world_knowledge": true,
+    "follow_up": false,
+    "output": "Text",
+    "prompt_path": "experiments/apple-shortcuts/prompt.txt",
+    "configured_using": "Shortcuts UI via Computer Use",
+    "comparison_note": "Same input fields, labeling definitions and validation rows; Apple has additional schema instructions and world knowledge. Model weights and serving version cannot be pinned."
+  }
+}

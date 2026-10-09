@@ -4,12 +4,18 @@ The existing Shortcut was edited with Computer Use as **GK Categorize Cloud**.
 It accepts transaction JSON as Shortcut Input, appends it to `prompt.txt`, calls
 Apple's **Cloud** model with **Broad World Knowledge on**, **Text** output and
 **Follow Up off**, then uses **Stop and Output** with the model's Response.
-Missing input returns `{"type":"unknown","category":"uncategorized","review":true}`.
+Missing input uses **Stop and Respond** with
+`{"type":"unknown","category":"uncategorized","review":true}`; the CLI reports
+`Running was cancelled` for this branch, so callers must supply input.
 
 The first two Cloud Pro smoke calls failed with `Too many incoming requests`.
 After switching to Cloud, the synthetic Tim Hortons smoke call succeeded and
 the Python adapter independently returned valid dining JSON in 1.265 seconds.
 This observation does not establish different numerical limits for the models.
+
+The frozen, Apple-signed export is `GK Categorize Cloud.shortcut`. Measured
+results and limitations are in `RESULTS.md`; the saved responses, hashes and
+machine-readable report are under `cloud-world-v1/`.
 
 ## Calling the Shortcut
 
