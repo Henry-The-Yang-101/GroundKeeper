@@ -5,6 +5,18 @@ finance classifier. Read LABELING_POLICY.md, AUDIT.md, dataset_report.json and t
 measured RESULTS.md before approving a full run. All private transactions remain
 outside Git and outside cloud subagent prompts. No private transaction was used.
 
+The model output remains a JSON object, as reaffirmed by the user:
+
+```json
+{"type":"expense","category":"dining","review":false}
+```
+
+All three fields are training targets. There is no numeric confidence field;
+`review` expresses the labeling policy's need for review, not a calibrated
+probability. The application can require review even if the model returns false.
+Invalid model answers become unknown/uncategorized with review=true. JSON key
+order is immaterial; category-only text is not accepted or trained as the target.
+
 ## Reproduce preparation
 
 Run from the repository root on Apple Silicon. `uv.lock` pins Python dependencies;
@@ -75,6 +87,7 @@ AUDIT.md were not silently substituted or used as mirrors of gated data.
 .venv/bin/python scripts/run_bounded.py --seconds 1800 --label qlora-probe -- .venv/bin/python -m scripts.run_experiment probe
 .venv/bin/python scripts/run_bounded.py --seconds 900 --label probe-validation -- .venv/bin/python -m scripts.run_experiment probe-eval
 .venv/bin/python scripts/run_bounded.py --seconds 180 --label probe-package -- .venv/bin/python -m scripts.package_probe
+.venv/bin/python scripts/collect_probe_results.py
 ```
 
 The probe is 128 microbatches and 16 optimizer updates, not 128 optimizer updates.
@@ -95,6 +108,8 @@ first strict baseline and its rescoring evidence are retained separately.
 Checkpoints are diagnostic. The proposed full run must begin from the original
 base, not continue the probe, and requires the user's explicit approval after
 measured memory/runtime are available. Final test scoring is still deferred.
+`proposed_full_config.json` is the concrete configuration for that approval;
+the experiment entry point deliberately has no full-training mode yet.
 The package includes one base, one adapter, tokenizer, configs, template and
 manifest, with an exact decimal-byte total. The probe package is clearly marked
 experimental. The original base remains available for rollback.

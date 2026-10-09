@@ -1,0 +1,42 @@
+{
+  "upstream_revision": "32f3e8ecf65426fc3306969496342d504bfa13f3",
+  "files": {
+    "model.safetensors": {
+      "bytes": 2367238661,
+      "sha256": "d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477"
+    },
+    "tokenizer_config.json": {
+      "bytes": 1227,
+      "sha256": "72471e1b94dde9ab21e7ba4ff5667353fa6e24a332fe4975969141b86e238206"
+    },
+    "UPSTREAM_README.md": {
+      "bytes": 2273,
+      "sha256": "49c0a725bdd22705d2d34b93cfe20463b673e3339ce4de8b81a340c05cfef5bc"
+    },
+    "config.json": {
+      "bytes": 2312,
+      "sha256": "653b50314fd611e8bda57726cecfd8186bc719cd87c3f1fa398e16bdd24402aa"
+    },
+    "tokenizer.json": {
+      "bytes": 19989339,
+      "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+    },
+    "chat_template.jinja": {
+      "bytes": 7790,
+      "sha256": "75a058e6d934bc35af28f6a29e2abca694c880435f227d9ae57ae2d99a66d06f"
+    },
+    "model.safetensors.index.json": {
+      "bytes": 81008,
+      "sha256": "2e97890b24a47b9c290489efeb2b68b7e4dd4101360de80122165ebae4e0d6cf"
+    }
+  },
+  "total_bytes": 2387322610,
+  "quantization": {
+    "group_size": 64,
+    "bits": 4,
+    "mode": "affine"
+  },
+  "smoke_response": "{\"ready\":true}",
+  "mlx_peak_bytes": 4903668860,
+  "text_only_tensor_count": 924
+}

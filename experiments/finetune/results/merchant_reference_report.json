@@ -1,0 +1,342 @@
+{
+  "source_rows": 3111,
+  "unique_pairs": 3047,
+  "source_sha256": "a93db87fc84351bce97f23c4c71b94a6a2375abe760d337200ca4cbcc55940c3",
+  "split_counts": {
+    "train": 2437,
+    "valid": 316,
+    "test": 294
+  },
+  "reference_merchant_count": 546,
+  "selection": {
+    "threshold": 101,
+    "margin": 101
+  },
+  "validation_grid": [
+    {
+      "threshold": 80,
+      "margin": 0,
+      "n": 316,
+      "selected": 144,
+      "coverage": 0.45569620253164556,
+      "errors": 37,
+      "error_rate": 0.2569444444444444,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 80,
+      "margin": 5,
+      "n": 316,
+      "selected": 97,
+      "coverage": 0.3069620253164557,
+      "errors": 11,
+      "error_rate": 0.1134020618556701,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 80,
+      "margin": 10,
+      "n": 316,
+      "selected": 95,
+      "coverage": 0.30063291139240506,
+      "errors": 11,
+      "error_rate": 0.11578947368421053,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 80,
+      "margin": 15,
+      "n": 316,
+      "selected": 92,
+      "coverage": 0.2911392405063291,
+      "errors": 9,
+      "error_rate": 0.09782608695652174,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 80,
+      "margin": 20,
+      "n": 316,
+      "selected": 85,
+      "coverage": 0.2689873417721519,
+      "errors": 8,
+      "error_rate": 0.09411764705882353,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 85,
+      "margin": 0,
+      "n": 316,
+      "selected": 128,
+      "coverage": 0.4050632911392405,
+      "errors": 37,
+      "error_rate": 0.2890625,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 85,
+      "margin": 5,
+      "n": 316,
+      "selected": 81,
+      "coverage": 0.2563291139240506,
+      "errors": 11,
+      "error_rate": 0.13580246913580246,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 85,
+      "margin": 10,
+      "n": 316,
+      "selected": 80,
+      "coverage": 0.25316455696202533,
+      "errors": 11,
+      "error_rate": 0.1375,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 85,
+      "margin": 15,
+      "n": 316,
+      "selected": 77,
+      "coverage": 0.24367088607594936,
+      "errors": 9,
+      "error_rate": 0.11688311688311688,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 85,
+      "margin": 20,
+      "n": 316,
+      "selected": 73,
+      "coverage": 0.2310126582278481,
+      "errors": 8,
+      "error_rate": 0.1095890410958904,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 90,
+      "margin": 0,
+      "n": 316,
+      "selected": 89,
+      "coverage": 0.28164556962025317,
+      "errors": 3,
+      "error_rate": 0.033707865168539325,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 90,
+      "margin": 5,
+      "n": 316,
+      "selected": 69,
+      "coverage": 0.21835443037974683,
+      "errors": 2,
+      "error_rate": 0.028985507246376812,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 90,
+      "margin": 10,
+      "n": 316,
+      "selected": 68,
+      "coverage": 0.21518987341772153,
+      "errors": 2,
+      "error_rate": 0.029411764705882353,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 90,
+      "margin": 15,
+      "n": 316,
+      "selected": 66,
+      "coverage": 0.2088607594936709,
+      "errors": 1,
+      "error_rate": 0.015151515151515152,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 90,
+      "margin": 20,
+      "n": 316,
+      "selected": 64,
+      "coverage": 0.20253164556962025,
+      "errors": 1,
+      "error_rate": 0.015625,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 95,
+      "margin": 0,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 95,
+      "margin": 5,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 95,
+      "margin": 10,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 95,
+      "margin": 15,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 95,
+      "margin": 20,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 97,
+      "margin": 0,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 97,
+      "margin": 5,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 97,
+      "margin": 10,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 97,
+      "margin": 15,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 97,
+      "margin": 20,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 100,
+      "margin": 0,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 100,
+      "margin": 5,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 100,
+      "margin": 10,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 100,
+      "margin": 15,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    },
+    {
+      "threshold": 100,
+      "margin": 20,
+      "n": 316,
+      "selected": 0,
+      "coverage": 0.0,
+      "errors": 0,
+      "error_rate": null,
+      "top1_accuracy": 0.5537974683544303
+    }
+  ],
+  "test": {
+    "n": 294,
+    "selected": 0,
+    "coverage": 0.0,
+    "errors": 0,
+    "error_rate": null,
+    "top1_accuracy": 0.5782312925170068
+  },
+  "test_seen": {
+    "n": 263,
+    "selected": 0,
+    "coverage": 0.0,
+    "errors": 0,
+    "error_rate": null,
+    "top1_accuracy": 0.6463878326996197
+  },
+  "test_unseen": {
+    "n": 31,
+    "selected": 0,
+    "coverage": 0.0,
+    "errors": 0,
+    "error_rate": null,
+    "top1_accuracy": 0.0
+  },
+  "limitations": "Synthetic author-reviewed merchant identities; closed reference vocabulary for seen subset. Not category training, private confirmation, or real automatic-acceptance calibration. Threshold is not deployed."
+}

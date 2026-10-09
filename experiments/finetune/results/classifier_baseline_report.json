@@ -1,0 +1,148 @@
+{
+  "n": 116,
+  "joint_accuracy": 0.35344827586206895,
+  "category_accuracy": 0.3706896551724138,
+  "type_accuracy": 0.9137931034482759,
+  "review_accuracy": 0.7586206896551724,
+  "macro_f1_supported_categories": 0.3936184052126081,
+  "macro_f1_all_categories": 0.3373872044679498,
+  "per_category": {
+    "groceries": {
+      "precision": 0.2857142857142857,
+      "recall": 0.2222222222222222,
+      "f1": 0.25,
+      "support": 9
+    },
+    "dining": {
+      "precision": 0.13333333333333333,
+      "recall": 0.4,
+      "f1": 0.2,
+      "support": 5
+    },
+    "local_transport": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 4
+    },
+    "vehicle": {
+      "precision": 0.09090909090909091,
+      "recall": 0.3333333333333333,
+      "f1": 0.14285714285714285,
+      "support": 3
+    },
+    "housing": {
+      "precision": 0.5833333333333334,
+      "recall": 0.875,
+      "f1": 0.7,
+      "support": 8
+    },
+    "utilities": {
+      "precision": 0.75,
+      "recall": 0.4,
+      "f1": 0.5217391304347826,
+      "support": 15
+    },
+    "shopping": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 7
+    },
+    "medical": {
+      "precision": 1.0,
+      "recall": 0.42857142857142855,
+      "f1": 0.6,
+      "support": 7
+    },
+    "personal_care": {
+      "precision": 0.2,
+      "recall": 1.0,
+      "f1": 0.3333333333333333,
+      "support": 1
+    },
+    "fitness": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 1
+    },
+    "entertainment": {
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4,
+      "support": 12
+    },
+    "software": {
+      "precision": 0.2857142857142857,
+      "recall": 0.5,
+      "f1": 0.36363636363636365,
+      "support": 4
+    },
+    "education": {
+      "precision": 0.14285714285714285,
+      "recall": 1.0,
+      "f1": 0.25,
+      "support": 1
+    },
+    "travel": {
+      "precision": 0.5,
+      "recall": 0.2222222222222222,
+      "f1": 0.3076923076923077,
+      "support": 9
+    },
+    "insurance": {
+      "precision": 0.5,
+      "recall": 0.25,
+      "f1": 0.3333333333333333,
+      "support": 4
+    },
+    "financial": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+    },
+    "taxes": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+    },
+    "gifts": {
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6666666666666666,
+      "support": 2
+    },
+    "other": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+    },
+    "uncategorized": {
+      "precision": 0.5,
+      "recall": 0.4,
+      "f1": 0.4444444444444444,
+      "support": 20
+    },
+    "__none__": {
+      "precision": 0.6666666666666666,
+      "recall": 0.5,
+      "f1": 0.5714285714285714,
+      "support": 4
+    }
+  },
+  "automatic_acceptance_coverage": 0.0,
+  "automatically_accepted_errors": 0,
+  "automatically_accepted_error_rate": null,
+  "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+  "model": "char_wb 3-5 TF-IDF + balanced logistic regression, C=2",
+  "all_merchants_unseen": true,
+  "confirmed_merchant_pipeline": {
+    "coverage": 0,
+    "reason": "No user-confirmed aliases exist. Public/AI labels are not personal confirmations.",
+    "unresolved": 116
+  }
+}

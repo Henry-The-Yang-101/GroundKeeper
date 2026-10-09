@@ -1,0 +1,19 @@
+{
+  "total_bytes": 2389468179,
+  "limit_decimal_bytes": 3000000000,
+  "under_limit": true,
+  "includes": [
+    "base_weights",
+    "tokenizer",
+    "chat_template",
+    "configs",
+    "adapter",
+    "policy",
+    "manifest"
+  ],
+  "smoke_count": 5,
+  "all_smoke_schema_valid": true,
+  "all_smoke_review_required": true,
+  "package": ".local/finetune/package-probe",
+  "status": "probe_only"
+}

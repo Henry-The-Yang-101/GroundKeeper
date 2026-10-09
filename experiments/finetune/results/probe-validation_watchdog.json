@@ -1,0 +1,16 @@
+{
+  "label": "probe-validation",
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "scripts.run_experiment",
+    "probe-eval"
+  ],
+  "start": 1791518995.4433699,
+  "time_limit_seconds": 900.0,
+  "elapsed_seconds": 86.86766004562378,
+  "returncode": 0,
+  "stop_reason": null,
+  "peak_process_tree_rss_bytes": 2992046080,
+  "min_system_available_bytes": 6227787776
+}

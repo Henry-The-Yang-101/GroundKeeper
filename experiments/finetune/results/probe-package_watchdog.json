@@ -1,0 +1,15 @@
+{
+  "label": "probe-package",
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "scripts.package_probe"
+  ],
+  "start": 1791519160.3304892,
+  "time_limit_seconds": 180.0,
+  "elapsed_seconds": 8.097135782241821,
+  "returncode": 0,
+  "stop_reason": null,
+  "peak_process_tree_rss_bytes": 2675294208,
+  "min_system_available_bytes": 6587367424
+}

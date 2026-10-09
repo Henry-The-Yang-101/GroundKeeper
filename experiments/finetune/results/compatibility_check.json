@@ -1,0 +1,82 @@
+{
+  "mode": "check",
+  "train_n": 624,
+  "valid_n": 118,
+  "max_tokens": 384,
+  "min_answer_tokens": 15,
+  "prompt_mask_verified": true,
+  "thinking_disabled": true,
+  "adapter_parameters": {
+    "language_model.model.layers.28.linear_attn.in_proj_qkv.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.28.linear_attn.in_proj_qkv.lora_b": [
+      8,
+      8192
+    ],
+    "language_model.model.layers.28.linear_attn.in_proj_z.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.28.linear_attn.in_proj_z.lora_b": [
+      8,
+      4096
+    ],
+    "language_model.model.layers.29.linear_attn.in_proj_qkv.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.29.linear_attn.in_proj_qkv.lora_b": [
+      8,
+      8192
+    ],
+    "language_model.model.layers.29.linear_attn.in_proj_z.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.29.linear_attn.in_proj_z.lora_b": [
+      8,
+      4096
+    ],
+    "language_model.model.layers.30.linear_attn.in_proj_qkv.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.30.linear_attn.in_proj_qkv.lora_b": [
+      8,
+      8192
+    ],
+    "language_model.model.layers.30.linear_attn.in_proj_z.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.30.linear_attn.in_proj_z.lora_b": [
+      8,
+      4096
+    ],
+    "language_model.model.layers.31.self_attn.q_proj.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.31.self_attn.q_proj.lora_b": [
+      8,
+      8192
+    ],
+    "language_model.model.layers.31.self_attn.v_proj.lora_a": [
+      2560,
+      8
+    ],
+    "language_model.model.layers.31.self_attn.v_proj.lora_b": [
+      8,
+      1024
+    ]
+  },
+  "trainable_parameter_count": 532480,
+  "adapted_layer_indices": [
+    28,
+    29,
+    30,
+    31
+  ]
+}

@@ -1,5 +1,6 @@
 """Bounded native MLX experiment. Final test labels are never opened here."""
 import argparse,json,os,time,hashlib
+import numpy as np
 from pathlib import Path
 os.environ['HF_HUB_OFFLINE']='1';os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
 import mlx.core as mx
@@ -71,10 +72,14 @@ else:
  cfg=json.loads(Path('experiments/finetune/probe_config.json').read_text())
  assert cfg['iters']==128 and cfg['grad_accumulation_steps']==8
  assert not Path(cfg['adapter_path']).exists(),'Do not overwrite a probe'
+ # Native train_model seeds MLX adapters but only its CLI wrapper seeds NumPy.
+ # Seed the shuffle here because this harness calls train_model directly.
+ np.random.seed(cfg['seed'])
  args=SimpleNamespace(**{**CONFIG_DEFAULTS,**cfg,'resume_adapter_file':None,'train':True,'test':False,'report_to':None,'trust_remote_code':False})
  start=time.perf_counter();train_model(args,model,train,valid,Callback());elapsed=time.perf_counter()-start
- report.update(config=cfg,elapsed_seconds=elapsed,mlx_peak_bytes=mx.get_peak_memory(),microbatches=128,optimizer_updates=16,events=events)
+ report.update(config=cfg,elapsed_seconds=elapsed,mlx_peak_bytes=mx.get_peak_memory(),microbatches=128,optimizer_updates=16,events=events,numpy_shuffle_seeded=True,harness_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
  report['seconds_per_microbatch_including_validation']=elapsed/128
  report['estimated_one_epoch_seconds_including_validation']=elapsed/128*len(train_rows)
- report['one_epoch_microbatches']=len(train_rows);report['one_epoch_optimizer_updates']=(len(train_rows)+7)//8
+ report['one_epoch_microbatches']=len(train_rows);report['one_epoch_optimizer_updates']=len(train_rows)//8
+ report['padded_one_epoch_microbatches']=((len(train_rows)+7)//8)*8
  (root/'probe_report.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))

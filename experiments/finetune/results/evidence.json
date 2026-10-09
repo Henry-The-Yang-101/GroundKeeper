@@ -1,0 +1,40 @@
+{
+  "status": "bounded_probe_complete_full_run_awaiting_approval",
+  "output_contract": {
+    "type": "expense",
+    "category": "dining",
+    "review": false
+  },
+  "confidence_score": null,
+  "final_category_test_scored": false,
+  "real_reviewed_transactions": 0,
+  "measured_probe_numpy_shuffle_seeded": false,
+  "seed_note": "Measured probe seeded MLX but not NumPy batch order. Future wrapper runs seed both. Archived weights are exact; the measured training trajectory cannot be regenerated from seed alone.",
+  "measured_runner_sha256": "29635c7fd8c279e84b11adb1db77c59c6d0cc3a146ec7045d52bc48207aede1f",
+  "source_report_sha256": {
+    "text_model_report.json": "8efc26697eb1f54ed58872c32376cfea9c42697548a612512b8e3478427ec7b1",
+    "compatibility_check.json": "fdd1b66769d8ffcaadd2bca458521d3db461b96b709213e34e58888d994da97f",
+    "classifier_baseline_report.json": "476752b54be94adacf5a8b33e04c229321de6730e3e2b648f94e79849129b60f",
+    "baseline_strict_report.json": "9c8b122a3c17016e9bff0aad5cc14d8f8544a0df3245d920c1e46a6945c4d0e1",
+    "baseline_report.json": "621bf072e1c429d15836b509da34a8c6ce6ea65721b0d31e8236c7c2343b453a",
+    "probe_report.json": "d63f91cff34516f5b55b7ce88122d8cbdb48d0cb4401746c1513b4c36a7a7fe8",
+    "probe-eval_report.json": "7958d9ba7e00e197a9c4eee834f7d45363b3e6a061bc949f9ca677ab5877094e",
+    "merchant_reference_report.json": "3739b851a8ee6583235eb35dd81f9cbf6b4d6555ce86a039226b0845efec998a",
+    "package_report.json": "e5a8a849c6634651edc86e4465713483b7d6464a0e45c9a1e025dbec37d29612",
+    "qlora-probe_watchdog.json": "98052ad3b9727753b345f80b4cd485b17558c20480ca1ef8dac1df280ab780b6",
+    "probe-validation_watchdog.json": "0bd378accf9636a7cf1330f27f5ba46635ebe1511978353f7780de1b9ee7f4ec",
+    "probe-package_watchdog.json": "700e649879b89850df3f1d02c96067bdd5f5ea5ed2f9c9d9869209f9c71d8054",
+    "package_manifest.json": "032655ebaed0ef1aa0ff17f2e23564837d1d4125e2f68dbeefc75d58d4f386d4"
+  },
+  "code_and_input_sha256": {
+    "uv.lock": "dcc875b43b57542d40053448b64bfe3f46d13155abe3b7fb178f01927e4dfb30",
+    "experiments/finetune/probe_config.json": "d1d625a07450df83ebcc8aa3b34716d32ff0d47f8d6766b96efe2c655578d3c0",
+    "experiments/finetune/LABELING_POLICY.md": "cd19533eb25ca064d36b2a842864c50b22cf2b1768cba7b70df2557a9e4cdc36",
+    "experiments/finetune/split_manifest.jsonl": "10b58e4d5d46d08f9d1b7372fbb35d217d4cd3bd8787d12d3a91cc7efe48e489",
+    "groundkeeper/policy.py": "34143711a06c93c9719736dd2e205e178a6bc143ac25e347d245617abac34793",
+    "groundkeeper/runtime.py": "666cb74d4970c626ecf9a32afe410797cee990f7ec861bc03584563237df7663",
+    "groundkeeper/metrics.py": "a0a45bc90e909cd496865b812586a740b0cc8d58acfaf7007040c3388c047933",
+    "scripts/run_experiment.py": "61bc88020288273694605530c297250aef308694e3238a43dd6045ede71a89b6"
+  },
+  "watchdog_note": "Hashes refer to original local reports; process inventories are omitted in snapshots."
+}
