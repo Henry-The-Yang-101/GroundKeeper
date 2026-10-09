@@ -250,6 +250,9 @@ class EarlyStop(Exception):
 def train():
     integrity = check_integrity()
     cfg = json.loads(CONFIG.read_text())
+    for source, digest in cfg["code_hashes"].items():
+        if sha256(source) != digest:
+            raise ValueError(f"Code changed after training configuration froze: {source}")
     if cfg["epochs"] < 1 or cfg["epochs"] > 4 or cfg["loss"] != "soft-ce":
         raise ValueError("Unexpected finite training config")
     if (ROOT / "training-started.json").exists():
@@ -265,7 +268,7 @@ def train():
     if skipped or len(items) != 6231:
         raise ValueError(skipped)
     settings = train_config(cfg["epochs"])
-    if asdict(settings) != cfg["train_config"]:
+    if json.loads(json.dumps(asdict(settings))) != cfg["train_config"]:
         raise ValueError("Frozen hyperparameters differ")
     rows = read_rows(SOURCE / "valid_records.jsonl")
     history = []

@@ -71,6 +71,25 @@ available-memory limits. Save the best full fp32 checkpoint, then verify the
 packaged code/weights on validation. A package must stay below 3,000,000,000 bytes.
 No recurring monitor is created. Training logs/status remain local.
 
+The measured 192-decision probe completed six optimizer updates in 54.6 seconds.
+Four epochs project to 118 minutes of training, plus validation and packaging;
+the estimate is not a guaranteed completion time. Its watchdog observed 2.61 GB
+process RSS and at least 2.00 GB system-available memory. MPS driver allocation
+reached 8.97 GB; RSS and GPU/driver allocations are different measurements.
+The frozen run has 195 optimizer updates per epoch, at most 780 in total.
+
+The single pipeline below performs training, runtime reload verification,
+aggregate reporting and a final scoped Git commit without a follow-up automation.
+
+```sh
+caffeinate -i .local/laya/.venv/bin/python -m scripts.run_bounded --runs-dir .local/laya/training-runs --overall-seconds 21600 --seconds 21600 --label laya-full -- .local/laya/.venv/bin/python -m scripts.laya_pipeline
+```
+
+Inspect `.local/laya/pipeline.json` and `.local/laya/training-runs/laya-full.log`
+for live state. The pipeline is detached from the chat and should be started only
+once. It refuses a second start or overwrite of existing checkpoints/packages.
+If it fails, preserve evidence and inspect the saved error before any new run.
+
 Upstream references: [Laya 0.4.1](https://pypi.org/project/laya/0.4.1/),
 [training implementation](https://github.com/NandhaKishorM/laya/blob/v0.4.1/laya/train.py),
 [small-dataset training diagnostics](https://github.com/NandhaKishorM/laya/issues/963).
