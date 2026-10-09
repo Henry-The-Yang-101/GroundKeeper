@@ -1,0 +1,16 @@
+[project]
+name = "groundkeeper-experiment"
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "mlx-lm>=0.31,<0.33; sys_platform == 'darwin'",
+  "huggingface-hub>=0.34",
+  "pyarrow>=20",
+  "rapidfuzz>=3.14",
+  "scikit-learn>=1.7",
+  "psutil>=7",
+  "pytest>=8",
+]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

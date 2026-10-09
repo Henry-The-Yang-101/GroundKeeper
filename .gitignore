@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.local/
+.private/
+*.db
+*.db-*
+*.sqlite*
+*.safetensors
+*.gguf
+.DS_Store
