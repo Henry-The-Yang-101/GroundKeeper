@@ -39,12 +39,15 @@ def generate_decision(model, tokenizer, inputs, grammar=None, mode='constrained'
 
 class StructuredCategorizer:
     def __init__(self, model_path, adapter_path=None, mode='constrained', prompt_version='v2'):
+        if mode not in ('constrained','validated_retry') or prompt_version not in ('v1','v2'):
+            raise ValueError('Unsupported structured runtime configuration')
+        import mlx.core as mx
+        mx.set_memory_limit(14_000_000_000)
+        mx.set_cache_limit(512_000_000)
         from .runtime import LocalCategorizer
         loaded = LocalCategorizer(model_path, adapter_path)
         self.model, self.tokenizer = loaded.model, loaded.tokenizer
         self.grammar = DecisionGrammar(self.tokenizer)
-        if mode not in ('constrained','validated_retry') or prompt_version not in ('v1','v2'):
-            raise ValueError('Unsupported structured runtime configuration')
         self.mode = mode
         self.builder = messages if prompt_version=='v1' else messages_v2
 

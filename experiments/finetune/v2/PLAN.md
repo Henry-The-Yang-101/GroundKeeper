@@ -70,6 +70,14 @@ unrecoverable failure. Never claim synthetic gains establish real-world accuracy
 
 ## Current state
 
-Policy audit in progress. Three blind packets are in `.local/finetune/v2/audit`.
-The constrained decoder implementation is in `groundkeeper/constraints.py`;
-model-level validation is pending. No v2 training job has started.
+The 75-row legacy policy audit is complete: one label correction and one
+exclusion. The decoder audit found that keeping valid drafts and constraining
+invalid retries preserves v1 category accuracy at 69.0%, improves macro-F1 from
+0.661 to 0.690, and returns zero invalid answers on the unchanged 116-row
+validation set. This is a decoding result, not a newly trained model gain.
+
+Luna 6 xhigh agents are labeling 2,900 new candidates in 116 blind packets of 25.
+Coverage-aware preparation, independent 150-row audit dispatch, immutable
+configuration, two-candidate training, baseline evaluation, and copied-runtime
+package verification scripts are implemented. Follow `RUNBOOK.md` to finish
+preparation and launch. No v2 training job has started.
