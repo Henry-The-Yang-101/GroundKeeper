@@ -1,0 +1,3182 @@
+{
+  "config": {
+    "model": ".local/finetune/models/qwen35-text",
+    "data": ".local/finetune/prepared",
+    "adapter_path": ".local/finetune/adapters/full-v1",
+    "fine_tune_type": "lora",
+    "num_layers": 4,
+    "batch_size": 1,
+    "grad_accumulation_steps": 8,
+    "iters": 632,
+    "learning_rate": 5e-05,
+    "optimizer": "adam",
+    "optimizer_config": {},
+    "max_seq_length": 512,
+    "grad_checkpoint": true,
+    "mask_prompt": true,
+    "steps_per_report": 8,
+    "steps_per_eval": 128,
+    "val_batches": 8,
+    "save_every": 128,
+    "seed": 20261008,
+    "lora_parameters": {
+      "rank": 8,
+      "scale": 2.0,
+      "dropout": 0.0,
+      "keys": [
+        "self_attn.q_proj",
+        "self_attn.v_proj",
+        "linear_attn.in_proj_qkv",
+        "linear_attn.in_proj_z"
+      ]
+    }
+  },
+  "microbatches": 632,
+  "optimizer_updates": 79,
+  "elapsed_seconds_including_generation_validation": 2095.3066327499982,
+  "mlx_peak_bytes": 7865167668,
+  "max_tokens": 384,
+  "train_n": 626,
+  "valid_n": 116,
+  "checkpoints": [
+    {
+      "metrics": {
+        "n": 116,
+        "joint_accuracy": 0.5862068965517241,
+        "category_accuracy": 0.6896551724137931,
+        "type_accuracy": 0.8706896551724138,
+        "review_accuracy": 0.6896551724137931,
+        "macro_f1_supported_categories": 0.6522305076974403,
+        "macro_f1_all_categories": 0.5590547208835203,
+        "per_category": {
+          "groceries": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 9
+          },
+          "dining": {
+            "precision": 0.8333333333333334,
+            "recall": 1.0,
+            "f1": 0.9090909090909091,
+            "support": 5
+          },
+          "local_transport": {
+            "precision": 0.4,
+            "recall": 0.5,
+            "f1": 0.4444444444444444,
+            "support": 4
+          },
+          "vehicle": {
+            "precision": 0.6666666666666666,
+            "recall": 0.6666666666666666,
+            "f1": 0.6666666666666666,
+            "support": 3
+          },
+          "housing": {
+            "precision": 0.7777777777777778,
+            "recall": 0.875,
+            "f1": 0.8235294117647058,
+            "support": 8
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 0.4,
+            "f1": 0.5714285714285714,
+            "support": 15
+          },
+          "shopping": {
+            "precision": 0.75,
+            "recall": 0.8571428571428571,
+            "f1": 0.8,
+            "support": 7
+          },
+          "medical": {
+            "precision": 0.6666666666666666,
+            "recall": 0.5714285714285714,
+            "f1": 0.6153846153846154,
+            "support": 7
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "fitness": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "entertainment": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 12
+          },
+          "software": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "education": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 1
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 9
+          },
+          "insurance": {
+            "precision": 1.0,
+            "recall": 0.25,
+            "f1": 0.4,
+            "support": 4
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.4358974358974359,
+            "recall": 0.85,
+            "f1": 0.576271186440678,
+            "support": 20
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+        "by_source": {
+          "DoDataThings/us-bank-transaction-categories-v2": {
+            "n": 107,
+            "joint_accuracy": 0.5700934579439252,
+            "category_accuracy": 0.6822429906542056,
+            "type_accuracy": 0.8691588785046729,
+            "review_accuracy": 0.6728971962616822,
+            "macro_f1_supported_categories": 0.6371794871794871,
+            "macro_f1_all_categories": 0.5158119658119658,
+            "per_category": {
+              "groceries": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 9
+              },
+              "dining": {
+                "precision": 0.8,
+                "recall": 1.0,
+                "f1": 0.8888888888888888,
+                "support": 4
+              },
+              "local_transport": {
+                "precision": 0.4,
+                "recall": 0.5,
+                "f1": 0.4444444444444444,
+                "support": 4
+              },
+              "vehicle": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 3
+              },
+              "housing": {
+                "precision": 0.75,
+                "recall": 1.0,
+                "f1": 0.8571428571428571,
+                "support": 6
+              },
+              "utilities": {
+                "precision": 1.0,
+                "recall": 0.4,
+                "f1": 0.5714285714285714,
+                "support": 15
+              },
+              "shopping": {
+                "precision": 0.75,
+                "recall": 0.8571428571428571,
+                "f1": 0.8,
+                "support": 7
+              },
+              "medical": {
+                "precision": 0.6666666666666666,
+                "recall": 0.5714285714285714,
+                "f1": 0.6153846153846154,
+                "support": 7
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              },
+              "fitness": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 0.6,
+                "f1": 0.75,
+                "support": 10
+              },
+              "software": {
+                "precision": 0.6,
+                "recall": 0.75,
+                "f1": 0.6666666666666666,
+                "support": 4
+              },
+              "education": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "travel": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 9
+              },
+              "insurance": {
+                "precision": 1.0,
+                "recall": 0.25,
+                "f1": 0.4,
+                "support": 4
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.43243243243243246,
+                "recall": 0.8421052631578947,
+                "f1": 0.5714285714285714,
+                "support": 19
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 3
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          },
+          "groundkeeper-authored-canadian-pilot-v1": {
+            "n": 9,
+            "joint_accuracy": 0.7777777777777778,
+            "category_accuracy": 0.7777777777777778,
+            "type_accuracy": 0.8888888888888888,
+            "review_accuracy": 0.8888888888888888,
+            "macro_f1_supported_categories": 0.7222222222222222,
+            "macro_f1_all_categories": 0.20634920634920634,
+            "per_category": {
+              "groceries": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "dining": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "local_transport": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "vehicle": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 2
+              },
+              "utilities": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "shopping": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "medical": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "fitness": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "software": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "education": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "travel": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "insurance": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          }
+        }
+      },
+      "invalid_outputs": 12,
+      "format_repaired_outputs": 0,
+      "elapsed_seconds": 81.26337508299912,
+      "mean_latency_seconds": 0.7001798864739925,
+      "step": 128,
+      "checkpoint": ".local/finetune/adapters/full-v1/0000128_adapters.safetensors",
+      "checkpoint_sha256": "05107df06ad01dad60d9d56e9b41ae76aaaaaa4580b8fc3a1892101bb8b3fecd"
+    },
+    {
+      "metrics": {
+        "n": 116,
+        "joint_accuracy": 0.5689655172413793,
+        "category_accuracy": 0.6379310344827587,
+        "type_accuracy": 0.853448275862069,
+        "review_accuracy": 0.6637931034482759,
+        "macro_f1_supported_categories": 0.6302113659569799,
+        "macro_f1_all_categories": 0.5401811708202685,
+        "per_category": {
+          "groceries": {
+            "precision": 1.0,
+            "recall": 0.7777777777777778,
+            "f1": 0.875,
+            "support": 9
+          },
+          "dining": {
+            "precision": 0.7142857142857143,
+            "recall": 1.0,
+            "f1": 0.8333333333333334,
+            "support": 5
+          },
+          "local_transport": {
+            "precision": 0.4,
+            "recall": 0.5,
+            "f1": 0.4444444444444444,
+            "support": 4
+          },
+          "vehicle": {
+            "precision": 0.6666666666666666,
+            "recall": 0.6666666666666666,
+            "f1": 0.6666666666666666,
+            "support": 3
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 0.3333333333333333,
+            "f1": 0.5,
+            "support": 15
+          },
+          "shopping": {
+            "precision": 0.8571428571428571,
+            "recall": 0.8571428571428571,
+            "f1": 0.8571428571428571,
+            "support": 7
+          },
+          "medical": {
+            "precision": 0.75,
+            "recall": 0.42857142857142855,
+            "f1": 0.5454545454545454,
+            "support": 7
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "fitness": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "entertainment": {
+            "precision": 1.0,
+            "recall": 0.5833333333333334,
+            "f1": 0.7368421052631579,
+            "support": 12
+          },
+          "software": {
+            "precision": 1.0,
+            "recall": 0.75,
+            "f1": 0.8571428571428571,
+            "support": 4
+          },
+          "education": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 1
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 0.3333333333333333,
+            "f1": 0.5,
+            "support": 9
+          },
+          "insurance": {
+            "precision": 1.0,
+            "recall": 0.25,
+            "f1": 0.4,
+            "support": 4
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.36538461538461536,
+            "recall": 0.95,
+            "f1": 0.5277777777777778,
+            "support": 20
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+        "by_source": {
+          "DoDataThings/us-bank-transaction-categories-v2": {
+            "n": 107,
+            "joint_accuracy": 0.5514018691588785,
+            "category_accuracy": 0.6261682242990654,
+            "type_accuracy": 0.8504672897196262,
+            "review_accuracy": 0.6448598130841121,
+            "macro_f1_supported_categories": 0.6137798334089895,
+            "macro_f1_all_categories": 0.49686938895013427,
+            "per_category": {
+              "groceries": {
+                "precision": 1.0,
+                "recall": 0.7777777777777778,
+                "f1": 0.875,
+                "support": 9
+              },
+              "dining": {
+                "precision": 0.6666666666666666,
+                "recall": 1.0,
+                "f1": 0.8,
+                "support": 4
+              },
+              "local_transport": {
+                "precision": 0.4,
+                "recall": 0.5,
+                "f1": 0.4444444444444444,
+                "support": 4
+              },
+              "vehicle": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 3
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 6
+              },
+              "utilities": {
+                "precision": 1.0,
+                "recall": 0.3333333333333333,
+                "f1": 0.5,
+                "support": 15
+              },
+              "shopping": {
+                "precision": 0.8571428571428571,
+                "recall": 0.8571428571428571,
+                "f1": 0.8571428571428571,
+                "support": 7
+              },
+              "medical": {
+                "precision": 0.75,
+                "recall": 0.42857142857142855,
+                "f1": 0.5454545454545454,
+                "support": 7
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              },
+              "fitness": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 10
+              },
+              "software": {
+                "precision": 1.0,
+                "recall": 0.75,
+                "f1": 0.8571428571428571,
+                "support": 4
+              },
+              "education": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "travel": {
+                "precision": 1.0,
+                "recall": 0.3333333333333333,
+                "f1": 0.5,
+                "support": 9
+              },
+              "insurance": {
+                "precision": 1.0,
+                "recall": 0.25,
+                "f1": 0.4,
+                "support": 4
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.36,
+                "recall": 0.9473684210526315,
+                "f1": 0.5217391304347826,
+                "support": 19
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 3
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          },
+          "groundkeeper-authored-canadian-pilot-v1": {
+            "n": 9,
+            "joint_accuracy": 0.7777777777777778,
+            "category_accuracy": 0.7777777777777778,
+            "type_accuracy": 0.8888888888888888,
+            "review_accuracy": 0.8888888888888888,
+            "macro_f1_supported_categories": 0.7222222222222222,
+            "macro_f1_all_categories": 0.20634920634920634,
+            "per_category": {
+              "groceries": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "dining": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "local_transport": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "vehicle": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 2
+              },
+              "utilities": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "shopping": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "medical": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "fitness": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "software": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "education": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "travel": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "insurance": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          }
+        }
+      },
+      "invalid_outputs": 9,
+      "format_repaired_outputs": 0,
+      "elapsed_seconds": 81.60926408300293,
+      "mean_latency_seconds": 0.7032794328533782,
+      "step": 256,
+      "checkpoint": ".local/finetune/adapters/full-v1/0000256_adapters.safetensors",
+      "checkpoint_sha256": "9edfcfee4064b11722773bc9f39bb83f08b2da1f583ed0d5e8cbbb6ab02b2e8a"
+    },
+    {
+      "metrics": {
+        "n": 116,
+        "joint_accuracy": 0.5948275862068966,
+        "category_accuracy": 0.6637931034482759,
+        "type_accuracy": 0.8620689655172413,
+        "review_accuracy": 0.7241379310344828,
+        "macro_f1_supported_categories": 0.6363938167859736,
+        "macro_f1_all_categories": 0.5454804143879775,
+        "per_category": {
+          "groceries": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 9
+          },
+          "dining": {
+            "precision": 0.7142857142857143,
+            "recall": 1.0,
+            "f1": 0.8333333333333334,
+            "support": 5
+          },
+          "local_transport": {
+            "precision": 0.4,
+            "recall": 0.5,
+            "f1": 0.4444444444444444,
+            "support": 4
+          },
+          "vehicle": {
+            "precision": 0.5,
+            "recall": 0.6666666666666666,
+            "f1": 0.5714285714285714,
+            "support": 3
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 0.4,
+            "f1": 0.5714285714285714,
+            "support": 15
+          },
+          "shopping": {
+            "precision": 0.6,
+            "recall": 0.8571428571428571,
+            "f1": 0.7058823529411765,
+            "support": 7
+          },
+          "medical": {
+            "precision": 0.6,
+            "recall": 0.42857142857142855,
+            "f1": 0.5,
+            "support": 7
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "fitness": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "entertainment": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 12
+          },
+          "software": {
+            "precision": 1.0,
+            "recall": 0.75,
+            "f1": 0.8571428571428571,
+            "support": 4
+          },
+          "education": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 1
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 9
+          },
+          "insurance": {
+            "precision": 1.0,
+            "recall": 0.25,
+            "f1": 0.4,
+            "support": 4
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.4186046511627907,
+            "recall": 0.9,
+            "f1": 0.5714285714285714,
+            "support": 20
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+        "by_source": {
+          "DoDataThings/us-bank-transaction-categories-v2": {
+            "n": 107,
+            "joint_accuracy": 0.5794392523364486,
+            "category_accuracy": 0.6542056074766355,
+            "type_accuracy": 0.8598130841121495,
+            "review_accuracy": 0.7102803738317757,
+            "macro_f1_supported_categories": 0.6193469544680618,
+            "macro_f1_all_categories": 0.5013761059979548,
+            "per_category": {
+              "groceries": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 9
+              },
+              "dining": {
+                "precision": 0.6666666666666666,
+                "recall": 1.0,
+                "f1": 0.8,
+                "support": 4
+              },
+              "local_transport": {
+                "precision": 0.4,
+                "recall": 0.5,
+                "f1": 0.4444444444444444,
+                "support": 4
+              },
+              "vehicle": {
+                "precision": 0.6666666666666666,
+                "recall": 0.6666666666666666,
+                "f1": 0.6666666666666666,
+                "support": 3
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 6
+              },
+              "utilities": {
+                "precision": 1.0,
+                "recall": 0.4,
+                "f1": 0.5714285714285714,
+                "support": 15
+              },
+              "shopping": {
+                "precision": 0.6,
+                "recall": 0.8571428571428571,
+                "f1": 0.7058823529411765,
+                "support": 7
+              },
+              "medical": {
+                "precision": 0.6,
+                "recall": 0.42857142857142855,
+                "f1": 0.5,
+                "support": 7
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              },
+              "fitness": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 0.6,
+                "f1": 0.75,
+                "support": 10
+              },
+              "software": {
+                "precision": 1.0,
+                "recall": 0.75,
+                "f1": 0.8571428571428571,
+                "support": 4
+              },
+              "education": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "travel": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 9
+              },
+              "insurance": {
+                "precision": 1.0,
+                "recall": 0.25,
+                "f1": 0.4,
+                "support": 4
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.4146341463414634,
+                "recall": 0.8947368421052632,
+                "f1": 0.5666666666666667,
+                "support": 19
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 3
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          },
+          "groundkeeper-authored-canadian-pilot-v1": {
+            "n": 9,
+            "joint_accuracy": 0.7777777777777778,
+            "category_accuracy": 0.7777777777777778,
+            "type_accuracy": 0.8888888888888888,
+            "review_accuracy": 0.8888888888888888,
+            "macro_f1_supported_categories": 0.7222222222222222,
+            "macro_f1_all_categories": 0.20634920634920634,
+            "per_category": {
+              "groceries": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "dining": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "local_transport": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "vehicle": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 2
+              },
+              "utilities": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "shopping": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "medical": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "fitness": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "software": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "education": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "travel": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "insurance": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          }
+        }
+      },
+      "invalid_outputs": 8,
+      "format_repaired_outputs": 0,
+      "elapsed_seconds": 81.3570104160026,
+      "mean_latency_seconds": 0.7010888236207017,
+      "step": 384,
+      "checkpoint": ".local/finetune/adapters/full-v1/0000384_adapters.safetensors",
+      "checkpoint_sha256": "2fb0710d8f0ae77be3933dc01124e126ebe8a2886f9b182b5501338db31203e7"
+    },
+    {
+      "metrics": {
+        "n": 116,
+        "joint_accuracy": 0.6293103448275862,
+        "category_accuracy": 0.6896551724137931,
+        "type_accuracy": 0.896551724137931,
+        "review_accuracy": 0.7327586206896551,
+        "macro_f1_supported_categories": 0.6613654313685938,
+        "macro_f1_all_categories": 0.5668846554587947,
+        "per_category": {
+          "groceries": {
+            "precision": 1.0,
+            "recall": 0.8888888888888888,
+            "f1": 0.9411764705882353,
+            "support": 9
+          },
+          "dining": {
+            "precision": 0.7142857142857143,
+            "recall": 1.0,
+            "f1": 0.8333333333333334,
+            "support": 5
+          },
+          "local_transport": {
+            "precision": 0.4,
+            "recall": 0.5,
+            "f1": 0.4444444444444444,
+            "support": 4
+          },
+          "vehicle": {
+            "precision": 0.5,
+            "recall": 0.6666666666666666,
+            "f1": 0.5714285714285714,
+            "support": 3
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 0.4,
+            "f1": 0.5714285714285714,
+            "support": 15
+          },
+          "shopping": {
+            "precision": 0.75,
+            "recall": 0.8571428571428571,
+            "f1": 0.8,
+            "support": 7
+          },
+          "medical": {
+            "precision": 0.75,
+            "recall": 0.42857142857142855,
+            "f1": 0.5454545454545454,
+            "support": 7
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "fitness": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "entertainment": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 12
+          },
+          "software": {
+            "precision": 0.75,
+            "recall": 0.75,
+            "f1": 0.75,
+            "support": 4
+          },
+          "education": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 1
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 9
+          },
+          "insurance": {
+            "precision": 1.0,
+            "recall": 0.5,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.42857142857142855,
+            "recall": 0.9,
+            "f1": 0.5806451612903226,
+            "support": 20
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+        "by_source": {
+          "DoDataThings/us-bank-transaction-categories-v2": {
+            "n": 107,
+            "joint_accuracy": 0.6261682242990654,
+            "category_accuracy": 0.6822429906542056,
+            "type_accuracy": 0.9065420560747663,
+            "review_accuracy": 0.719626168224299,
+            "macro_f1_supported_categories": 0.6458103069621456,
+            "macro_f1_all_categories": 0.5227988199217369,
+            "per_category": {
+              "groceries": {
+                "precision": 1.0,
+                "recall": 0.8888888888888888,
+                "f1": 0.9411764705882353,
+                "support": 9
+              },
+              "dining": {
+                "precision": 0.6666666666666666,
+                "recall": 1.0,
+                "f1": 0.8,
+                "support": 4
+              },
+              "local_transport": {
+                "precision": 0.4,
+                "recall": 0.5,
+                "f1": 0.4444444444444444,
+                "support": 4
+              },
+              "vehicle": {
+                "precision": 0.6666666666666666,
+                "recall": 0.6666666666666666,
+                "f1": 0.6666666666666666,
+                "support": 3
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 6
+              },
+              "utilities": {
+                "precision": 1.0,
+                "recall": 0.4,
+                "f1": 0.5714285714285714,
+                "support": 15
+              },
+              "shopping": {
+                "precision": 0.75,
+                "recall": 0.8571428571428571,
+                "f1": 0.8,
+                "support": 7
+              },
+              "medical": {
+                "precision": 0.75,
+                "recall": 0.42857142857142855,
+                "f1": 0.5454545454545454,
+                "support": 7
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              },
+              "fitness": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 0.6,
+                "f1": 0.75,
+                "support": 10
+              },
+              "software": {
+                "precision": 0.75,
+                "recall": 0.75,
+                "f1": 0.75,
+                "support": 4
+              },
+              "education": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "travel": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 9
+              },
+              "insurance": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 4
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.425,
+                "recall": 0.8947368421052632,
+                "f1": 0.576271186440678,
+                "support": 19
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 3
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          },
+          "groundkeeper-authored-canadian-pilot-v1": {
+            "n": 9,
+            "joint_accuracy": 0.6666666666666666,
+            "category_accuracy": 0.7777777777777778,
+            "type_accuracy": 0.7777777777777778,
+            "review_accuracy": 0.8888888888888888,
+            "macro_f1_supported_categories": 0.7222222222222222,
+            "macro_f1_all_categories": 0.20634920634920634,
+            "per_category": {
+              "groceries": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "dining": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "local_transport": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "vehicle": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 2
+              },
+              "utilities": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "shopping": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "medical": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "fitness": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "software": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "education": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "travel": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "insurance": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          }
+        }
+      },
+      "invalid_outputs": 10,
+      "format_repaired_outputs": 0,
+      "elapsed_seconds": 81.2843222080046,
+      "mean_latency_seconds": 0.7004390158275281,
+      "step": 512,
+      "checkpoint": ".local/finetune/adapters/full-v1/0000512_adapters.safetensors",
+      "checkpoint_sha256": "efa206566bb1a1b9e5e6f4695cdf6b1a0cee34b11953797153efa7aabe6a7bd2"
+    },
+    {
+      "metrics": {
+        "n": 116,
+        "joint_accuracy": 0.603448275862069,
+        "category_accuracy": 0.6637931034482759,
+        "type_accuracy": 0.8879310344827587,
+        "review_accuracy": 0.75,
+        "macro_f1_supported_categories": 0.6307387601505249,
+        "macro_f1_all_categories": 0.5406332229861641,
+        "per_category": {
+          "groceries": {
+            "precision": 1.0,
+            "recall": 0.8888888888888888,
+            "f1": 0.9411764705882353,
+            "support": 9
+          },
+          "dining": {
+            "precision": 0.7142857142857143,
+            "recall": 1.0,
+            "f1": 0.8333333333333334,
+            "support": 5
+          },
+          "local_transport": {
+            "precision": 0.4,
+            "recall": 0.5,
+            "f1": 0.4444444444444444,
+            "support": 4
+          },
+          "vehicle": {
+            "precision": 0.5,
+            "recall": 0.6666666666666666,
+            "f1": 0.5714285714285714,
+            "support": 3
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 0.4,
+            "f1": 0.5714285714285714,
+            "support": 15
+          },
+          "shopping": {
+            "precision": 0.8571428571428571,
+            "recall": 0.8571428571428571,
+            "f1": 0.8571428571428571,
+            "support": 7
+          },
+          "medical": {
+            "precision": 0.75,
+            "recall": 0.42857142857142855,
+            "f1": 0.5454545454545454,
+            "support": 7
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "fitness": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "entertainment": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 12
+          },
+          "software": {
+            "precision": 0.5,
+            "recall": 0.75,
+            "f1": 0.6,
+            "support": 4
+          },
+          "education": {
+            "precision": 0.25,
+            "recall": 1.0,
+            "f1": 0.4,
+            "support": 1
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 9
+          },
+          "insurance": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "f1": 0.5,
+            "support": 4
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.4411764705882353,
+            "recall": 0.75,
+            "f1": 0.5555555555555556,
+            "support": 20
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+        "by_source": {
+          "DoDataThings/us-bank-transaction-categories-v2": {
+            "n": 107,
+            "joint_accuracy": 0.5887850467289719,
+            "category_accuracy": 0.6542056074766355,
+            "type_accuracy": 0.8878504672897196,
+            "review_accuracy": 0.7383177570093458,
+            "macro_f1_supported_categories": 0.6132548919746152,
+            "macro_f1_all_categories": 0.4964444363604028,
+            "per_category": {
+              "groceries": {
+                "precision": 1.0,
+                "recall": 0.8888888888888888,
+                "f1": 0.9411764705882353,
+                "support": 9
+              },
+              "dining": {
+                "precision": 0.6666666666666666,
+                "recall": 1.0,
+                "f1": 0.8,
+                "support": 4
+              },
+              "local_transport": {
+                "precision": 0.4,
+                "recall": 0.5,
+                "f1": 0.4444444444444444,
+                "support": 4
+              },
+              "vehicle": {
+                "precision": 0.6666666666666666,
+                "recall": 0.6666666666666666,
+                "f1": 0.6666666666666666,
+                "support": 3
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 6
+              },
+              "utilities": {
+                "precision": 1.0,
+                "recall": 0.4,
+                "f1": 0.5714285714285714,
+                "support": 15
+              },
+              "shopping": {
+                "precision": 0.8571428571428571,
+                "recall": 0.8571428571428571,
+                "f1": 0.8571428571428571,
+                "support": 7
+              },
+              "medical": {
+                "precision": 0.75,
+                "recall": 0.42857142857142855,
+                "f1": 0.5454545454545454,
+                "support": 7
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              },
+              "fitness": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 0.6,
+                "f1": 0.75,
+                "support": 10
+              },
+              "software": {
+                "precision": 0.5,
+                "recall": 0.75,
+                "f1": 0.6,
+                "support": 4
+              },
+              "education": {
+                "precision": 0.25,
+                "recall": 1.0,
+                "f1": 0.4,
+                "support": 1
+              },
+              "travel": {
+                "precision": 1.0,
+                "recall": 0.6666666666666666,
+                "f1": 0.8,
+                "support": 9
+              },
+              "insurance": {
+                "precision": 0.5,
+                "recall": 0.5,
+                "f1": 0.5,
+                "support": 4
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.4375,
+                "recall": 0.7368421052631579,
+                "f1": 0.5490196078431373,
+                "support": 19
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 3
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          },
+          "groundkeeper-authored-canadian-pilot-v1": {
+            "n": 9,
+            "joint_accuracy": 0.7777777777777778,
+            "category_accuracy": 0.7777777777777778,
+            "type_accuracy": 0.8888888888888888,
+            "review_accuracy": 0.8888888888888888,
+            "macro_f1_supported_categories": 0.7222222222222222,
+            "macro_f1_all_categories": 0.20634920634920634,
+            "per_category": {
+              "groceries": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "dining": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1
+              },
+              "local_transport": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "vehicle": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "housing": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6666666666666666,
+                "support": 2
+              },
+              "utilities": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "shopping": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "medical": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "personal_care": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "fitness": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "entertainment": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "software": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "education": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "travel": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "insurance": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "financial": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "taxes": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "gifts": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2
+              },
+              "other": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0
+              },
+              "uncategorized": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6666666666666666,
+                "support": 1
+              },
+              "__none__": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1
+              }
+            },
+            "automatic_acceptance_coverage": 0.0,
+            "automatically_accepted_errors": 0,
+            "automatically_accepted_error_rate": null,
+            "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+          }
+        }
+      },
+      "invalid_outputs": 9,
+      "format_repaired_outputs": 0,
+      "elapsed_seconds": 81.23636845900182,
+      "mean_latency_seconds": 0.7000291878878137,
+      "step": 632,
+      "checkpoint": ".local/finetune/adapters/full-v1/0000632_adapters.safetensors",
+      "checkpoint_sha256": "fe63f8d91b772e0f3bef0d60529a0180a242f29286db2ded42654511f795d72f"
+    }
+  ],
+  "events": [
+    {
+      "event": "sampled_validation_loss",
+      "iteration": 0,
+      "val_loss": 1.591054081916809,
+      "val_time": 5.334646083996631,
+      "elapsed_seconds": 5.482181166000373
+    },
+    {
+      "event": "train",
+      "iteration": 8,
+      "train_loss": 1.5623811483383179,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.27523669205106466,
+      "tokens_per_second": 4.541405418842567,
+      "trained_tokens": 132,
+      "peak_memory": 7.837191694,
+      "elapsed_seconds": 34.55828266599565
+    },
+    {
+      "event": "train",
+      "iteration": 16,
+      "train_loss": 1.610973834991455,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.2837274701915593,
+      "tokens_per_second": 4.716969191934674,
+      "trained_tokens": 265,
+      "peak_memory": 7.841627778,
+      "elapsed_seconds": 62.765985291000106
+    },
+    {
+      "event": "train",
+      "iteration": 24,
+      "train_loss": 1.6122583150863647,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3385582063194866,
+      "tokens_per_second": 5.543890628481593,
+      "trained_tokens": 396,
+      "peak_memory": 7.841627778,
+      "elapsed_seconds": 86.42028112499975
+    },
+    {
+      "event": "train",
+      "iteration": 32,
+      "train_loss": 1.3978092670440674,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.36855714176691867,
+      "tokens_per_second": 6.1272624818750225,
+      "trained_tokens": 529,
+      "peak_memory": 7.841627778,
+      "elapsed_seconds": 108.13748329100054
+    },
+    {
+      "event": "train",
+      "iteration": 40,
+      "train_loss": 1.1814240217208862,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38700837008361233,
+      "tokens_per_second": 6.434014152640056,
+      "trained_tokens": 662,
+      "peak_memory": 7.841627778,
+      "elapsed_seconds": 128.81884879100107
+    },
+    {
+      "event": "train",
+      "iteration": 48,
+      "train_loss": 1.0186983346939087,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38850530017197893,
+      "tokens_per_second": 6.458900615359149,
+      "trained_tokens": 795,
+      "peak_memory": 7.841627778,
+      "elapsed_seconds": 149.4208817079998
+    },
+    {
+      "event": "train",
+      "iteration": 56,
+      "train_loss": 0.854790985584259,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3901058208489878,
+      "tokens_per_second": 6.339219588796052,
+      "trained_tokens": 925,
+      "peak_memory": 7.841627778,
+      "elapsed_seconds": 169.9385303329982
+    },
+    {
+      "event": "train",
+      "iteration": 64,
+      "train_loss": 0.6067931056022644,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38787262266936806,
+      "tokens_per_second": 6.496866429711915,
+      "trained_tokens": 1059,
+      "peak_memory": 7.841656598,
+      "elapsed_seconds": 190.5743599999987
+    },
+    {
+      "event": "train",
+      "iteration": 72,
+      "train_loss": 0.30133482813835144,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.37097011397529506,
+      "tokens_per_second": 6.074635616345456,
+      "trained_tokens": 1190,
+      "peak_memory": 7.841656598,
+      "elapsed_seconds": 212.1510304159965
+    },
+    {
+      "event": "train",
+      "iteration": 80,
+      "train_loss": 0.31527194380760193,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.37935882925533554,
+      "tokens_per_second": 6.306840536369954,
+      "trained_tokens": 1323,
+      "peak_memory": 7.841656598,
+      "elapsed_seconds": 233.25062966599944
+    },
+    {
+      "event": "train",
+      "iteration": 88,
+      "train_loss": 0.22163249552249908,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3555781261693654,
+      "tokens_per_second": 5.9114863475657,
+      "trained_tokens": 1456,
+      "peak_memory": 7.841656598,
+      "elapsed_seconds": 255.75903291600116
+    },
+    {
+      "event": "train",
+      "iteration": 96,
+      "train_loss": 0.15413802862167358,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3826521575321604,
+      "tokens_per_second": 6.313760599280647,
+      "trained_tokens": 1588,
+      "peak_memory": 7.841656598,
+      "elapsed_seconds": 276.6763159999973
+    },
+    {
+      "event": "train",
+      "iteration": 104,
+      "train_loss": 0.13853994011878967,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39223897739844865,
+      "tokens_per_second": 6.520972999249209,
+      "trained_tokens": 1721,
+      "peak_memory": 7.841656598,
+      "elapsed_seconds": 297.0822871249984
+    },
+    {
+      "event": "train",
+      "iteration": 112,
+      "train_loss": 0.3140045702457428,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3928635718716238,
+      "tokens_per_second": 6.43314098939784,
+      "trained_tokens": 1852,
+      "peak_memory": 7.84605573,
+      "elapsed_seconds": 317.4560900409997
+    },
+    {
+      "event": "train",
+      "iteration": 120,
+      "train_loss": 0.2322208732366562,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3800666229101185,
+      "tokens_per_second": 6.41362426160825,
+      "trained_tokens": 1987,
+      "peak_memory": 7.85133957,
+      "elapsed_seconds": 338.5160380409943
+    },
+    {
+      "event": "sampled_validation_loss",
+      "iteration": 127,
+      "val_loss": 0.2016426920890808,
+      "val_time": 5.201851500001794,
+      "elapsed_seconds": 361.90798708299553
+    },
+    {
+      "event": "train",
+      "iteration": 128,
+      "train_loss": 0.13579779863357544,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38462755214179384,
+      "tokens_per_second": 6.346354610339598,
+      "trained_tokens": 2119,
+      "peak_memory": 7.85133957,
+      "elapsed_seconds": 364.5290887079973
+    },
+    {
+      "event": "checkpoint_validation",
+      "step": 128,
+      "category_accuracy": 0.6896551724137931,
+      "macro_f1": 0.6522305076974403,
+      "joint_accuracy": 0.5862068965517241,
+      "invalid_outputs": 12,
+      "new_accuracy_best": true,
+      "new_macro_f1_best": true,
+      "elapsed_seconds": 445.8007882909951
+    },
+    {
+      "event": "train",
+      "iteration": 136,
+      "train_loss": 0.15728771686553955,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3981262395756716,
+      "tokens_per_second": 6.519317173051623,
+      "trained_tokens": 2250,
+      "peak_memory": 7.85133957,
+      "elapsed_seconds": 465.90661537499545
+    },
+    {
+      "event": "train",
+      "iteration": 144,
+      "train_loss": 0.21262656152248383,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39410522852469293,
+      "tokens_per_second": 6.55199942422302,
+      "trained_tokens": 2383,
+      "peak_memory": 7.85133957,
+      "elapsed_seconds": 486.21587141599593
+    },
+    {
+      "event": "train",
+      "iteration": 152,
+      "train_loss": 0.10667635500431061,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3954878396686031,
+      "tokens_per_second": 6.574985334490527,
+      "trained_tokens": 2516,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 506.4544984999957
+    },
+    {
+      "event": "train",
+      "iteration": 160,
+      "train_loss": 0.2030654400587082,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3901974134246485,
+      "tokens_per_second": 6.291933291472457,
+      "trained_tokens": 2645,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 526.9667807500009
+    },
+    {
+      "event": "train",
+      "iteration": 168,
+      "train_loss": 0.1799115687608719,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38801725440865475,
+      "tokens_per_second": 6.353782540941722,
+      "trained_tokens": 2776,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 547.5940434160002
+    },
+    {
+      "event": "train",
+      "iteration": 176,
+      "train_loss": 0.08539455384016037,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3880241401789543,
+      "tokens_per_second": 6.256889260385638,
+      "trained_tokens": 2905,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 568.2215157079991
+    },
+    {
+      "event": "train",
+      "iteration": 184,
+      "train_loss": 0.14638757705688477,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38788836361545953,
+      "tokens_per_second": 6.400157999655082,
+      "trained_tokens": 3037,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 588.8562002909966
+    },
+    {
+      "event": "train",
+      "iteration": 192,
+      "train_loss": 0.0886375904083252,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39338389828005643,
+      "tokens_per_second": 6.490834321620931,
+      "trained_tokens": 3169,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 609.2028199999986
+    },
+    {
+      "event": "train",
+      "iteration": 200,
+      "train_loss": 0.0979158878326416,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39022072553569065,
+      "tokens_per_second": 6.389864380646934,
+      "trained_tokens": 3300,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 629.7135176250013
+    },
+    {
+      "event": "train",
+      "iteration": 208,
+      "train_loss": 0.08533554524183273,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38901682713549524,
+      "tokens_per_second": 6.516031854519545,
+      "trained_tokens": 3434,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 650.2882457079977
+    },
+    {
+      "event": "train",
+      "iteration": 216,
+      "train_loss": 0.20686621963977814,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3864729951045062,
+      "tokens_per_second": 6.473422668000479,
+      "trained_tokens": 3568,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 670.9989635829988
+    },
+    {
+      "event": "train",
+      "iteration": 224,
+      "train_loss": 0.07567800581455231,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39023752696701475,
+      "tokens_per_second": 6.438919194955743,
+      "trained_tokens": 3700,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 691.5098148329998
+    },
+    {
+      "event": "train",
+      "iteration": 232,
+      "train_loss": 0.19845540821552277,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39309264966483604,
+      "tokens_per_second": 6.780848206718422,
+      "trained_tokens": 3838,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 711.8716297499996
+    },
+    {
+      "event": "train",
+      "iteration": 240,
+      "train_loss": 0.09252311289310455,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.393980555766935,
+      "tokens_per_second": 6.500679170154428,
+      "trained_tokens": 3970,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 732.188262040996
+    },
+    {
+      "event": "train",
+      "iteration": 248,
+      "train_loss": 0.06655620038509369,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3875703742387063,
+      "tokens_per_second": 6.394911174938654,
+      "trained_tokens": 4102,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 752.8396797079986
+    },
+    {
+      "event": "sampled_validation_loss",
+      "iteration": 255,
+      "val_loss": 0.139924556016922,
+      "val_time": 5.160269874999358,
+      "elapsed_seconds": 776.1100013329997
+    },
+    {
+      "event": "train",
+      "iteration": 256,
+      "train_loss": 0.1342545747756958,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3853263132008033,
+      "tokens_per_second": 6.598713113563756,
+      "trained_tokens": 4239,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 778.7726619579989
+    },
+    {
+      "event": "checkpoint_validation",
+      "step": 256,
+      "category_accuracy": 0.6379310344827587,
+      "macro_f1": 0.6302113659569799,
+      "joint_accuracy": 0.5689655172413793,
+      "invalid_outputs": 9,
+      "new_accuracy_best": false,
+      "new_macro_f1_best": false,
+      "elapsed_seconds": 860.388578332997
+    },
+    {
+      "event": "train",
+      "iteration": 264,
+      "train_loss": 0.26940464973449707,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.36899966051979805,
+      "tokens_per_second": 6.226869271271592,
+      "trained_tokens": 4374,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 882.082465540996
+    },
+    {
+      "event": "train",
+      "iteration": 272,
+      "train_loss": 0.13397616147994995,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3830824539314582,
+      "tokens_per_second": 6.225089876386195,
+      "trained_tokens": 4504,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 902.9772733749996
+    },
+    {
+      "event": "train",
+      "iteration": 280,
+      "train_loss": 0.12272156774997711,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3749449570376529,
+      "tokens_per_second": 6.09285555186186,
+      "trained_tokens": 4634,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 924.3259221659973
+    },
+    {
+      "event": "train",
+      "iteration": 288,
+      "train_loss": 0.09521245211362839,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38252622056741703,
+      "tokens_per_second": 6.2638668617914535,
+      "trained_tokens": 4765,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 945.2497135410013
+    },
+    {
+      "event": "train",
+      "iteration": 296,
+      "train_loss": 0.1864183396100998,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39070458843255435,
+      "tokens_per_second": 6.446625709137146,
+      "trained_tokens": 4897,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 965.735558290995
+    },
+    {
+      "event": "train",
+      "iteration": 304,
+      "train_loss": 0.07795539498329163,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3939990012126224,
+      "tokens_per_second": 6.550233395159847,
+      "trained_tokens": 5030,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 986.0494772909951
+    },
+    {
+      "event": "train",
+      "iteration": 312,
+      "train_loss": 0.11275211721658707,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38568213026620624,
+      "tokens_per_second": 6.363755149392403,
+      "trained_tokens": 5162,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 1006.8026421659961
+    },
+    {
+      "event": "train",
+      "iteration": 320,
+      "train_loss": 0.07861033082008362,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3895879535817224,
+      "tokens_per_second": 6.52559822249385,
+      "trained_tokens": 5296,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 1027.3475032909992
+    },
+    {
+      "event": "train",
+      "iteration": 328,
+      "train_loss": 0.07905326038599014,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3880457776640802,
+      "tokens_per_second": 6.451261053665333,
+      "trained_tokens": 5429,
+      "peak_memory": 7.85661522,
+      "elapsed_seconds": 1047.9745375409984
+    },
+    {
+      "event": "train",
+      "iteration": 336,
+      "train_loss": 0.1655108779668808,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38921218006414116,
+      "tokens_per_second": 6.519304016074364,
+      "trained_tokens": 5563,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1068.5389075829953
+    },
+    {
+      "event": "train",
+      "iteration": 344,
+      "train_loss": 0.025172239169478416,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3921835041549716,
+      "tokens_per_second": 6.618096632615146,
+      "trained_tokens": 5698,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1088.948183415996
+    },
+    {
+      "event": "train",
+      "iteration": 352,
+      "train_loss": 0.14435811340808868,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3896878764446065,
+      "tokens_per_second": 6.381138976780432,
+      "trained_tokens": 5829,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1109.487295291001
+    },
+    {
+      "event": "train",
+      "iteration": 360,
+      "train_loss": 0.11240717768669128,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38128553979603236,
+      "tokens_per_second": 6.24355071416003,
+      "trained_tokens": 5960,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1130.480952165999
+    },
+    {
+      "event": "train",
+      "iteration": 368,
+      "train_loss": 0.040277376770973206,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38497761758894516,
+      "tokens_per_second": 6.304008488018977,
+      "trained_tokens": 6091,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1151.2718530409984
+    },
+    {
+      "event": "train",
+      "iteration": 376,
+      "train_loss": 0.06285548955202103,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3811194844598067,
+      "tokens_per_second": 6.288471493586811,
+      "trained_tokens": 6223,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1172.2728158329992
+    },
+    {
+      "event": "sampled_validation_loss",
+      "iteration": 383,
+      "val_loss": 0.1131502240896225,
+      "val_time": 5.229432000000088,
+      "elapsed_seconds": 1195.232347833
+    },
+    {
+      "event": "train",
+      "iteration": 384,
+      "train_loss": 0.0732274204492569,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3923074708332642,
+      "tokens_per_second": 6.424034834894702,
+      "trained_tokens": 6354,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1197.9063177909993
+    },
+    {
+      "event": "checkpoint_validation",
+      "step": 384,
+      "category_accuracy": 0.6637931034482759,
+      "macro_f1": 0.6363938167859736,
+      "joint_accuracy": 0.5948275862068966,
+      "invalid_outputs": 8,
+      "new_accuracy_best": false,
+      "new_macro_f1_best": false,
+      "elapsed_seconds": 1279.2732306249964
+    },
+    {
+      "event": "train",
+      "iteration": 392,
+      "train_loss": 0.10293354094028473,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38436181057753444,
+      "tokens_per_second": 6.341969874529318,
+      "trained_tokens": 6486,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1300.0971528749942
+    },
+    {
+      "event": "train",
+      "iteration": 400,
+      "train_loss": 0.16152222454547882,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38685205126757705,
+      "tokens_per_second": 6.479771858731915,
+      "trained_tokens": 6620,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1320.786574040998
+    },
+    {
+      "event": "train",
+      "iteration": 408,
+      "train_loss": 0.20994824171066284,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3873528917692938,
+      "tokens_per_second": 6.391322714193348,
+      "trained_tokens": 6752,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1341.4494194159997
+    },
+    {
+      "event": "train",
+      "iteration": 416,
+      "train_loss": 0.09694700688123703,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38510088405822723,
+      "tokens_per_second": 6.306026976453471,
+      "trained_tokens": 6883,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1362.2337665000014
+    },
+    {
+      "event": "train",
+      "iteration": 424,
+      "train_loss": 0.16957077383995056,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3913204289090304,
+      "tokens_per_second": 6.407872023385373,
+      "trained_tokens": 7014,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1382.6878212079973
+    },
+    {
+      "event": "train",
+      "iteration": 432,
+      "train_loss": 0.03850796818733215,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38052821204373805,
+      "tokens_per_second": 6.278715498721677,
+      "trained_tokens": 7146,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1403.7239699159982
+    },
+    {
+      "event": "train",
+      "iteration": 440,
+      "train_loss": 0.16660422086715698,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.369232428640713,
+      "tokens_per_second": 6.046181018991675,
+      "trained_tokens": 7277,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1425.4031353329992
+    },
+    {
+      "event": "train",
+      "iteration": 448,
+      "train_loss": 0.09692983329296112,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38070482687779983,
+      "tokens_per_second": 6.234041540123972,
+      "trained_tokens": 7408,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1446.428023374996
+    },
+    {
+      "event": "train",
+      "iteration": 456,
+      "train_loss": 0.03684571757912636,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3876725468733668,
+      "tokens_per_second": 6.493515160128893,
+      "trained_tokens": 7542,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1467.073913082997
+    },
+    {
+      "event": "train",
+      "iteration": 464,
+      "train_loss": 0.09226630628108978,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3857354306579719,
+      "tokens_per_second": 6.364634605856536,
+      "trained_tokens": 7674,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1487.824054165998
+    },
+    {
+      "event": "train",
+      "iteration": 472,
+      "train_loss": 0.10248294472694397,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3901495441056397,
+      "tokens_per_second": 6.242392705690235,
+      "trained_tokens": 7802,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1508.340027499995
+    },
+    {
+      "event": "train",
+      "iteration": 480,
+      "train_loss": 0.1105552390217781,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.390307103650008,
+      "tokens_per_second": 6.34249043431263,
+      "trained_tokens": 7932,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1528.847042082998
+    },
+    {
+      "event": "train",
+      "iteration": 488,
+      "train_loss": 0.13445834815502167,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.384383540245918,
+      "tokens_per_second": 6.246232528996167,
+      "trained_tokens": 8062,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1549.6710911249975
+    },
+    {
+      "event": "train",
+      "iteration": 496,
+      "train_loss": 0.1390363723039627,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3893436394558567,
+      "tokens_per_second": 6.326834141157671,
+      "trained_tokens": 8192,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1570.2285879159972
+    },
+    {
+      "event": "train",
+      "iteration": 504,
+      "train_loss": 0.09885337948799133,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3889436527281092,
+      "tokens_per_second": 6.320334356831775,
+      "trained_tokens": 8322,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1590.8078562910014
+    },
+    {
+      "event": "sampled_validation_loss",
+      "iteration": 511,
+      "val_loss": 0.10187555104494095,
+      "val_time": 5.2080573749990435,
+      "elapsed_seconds": 1614.0892327499969
+    },
+    {
+      "event": "train",
+      "iteration": 512,
+      "train_loss": 0.1627981811761856,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38705975455628455,
+      "tokens_per_second": 6.33810348085916,
+      "trained_tokens": 8453,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1616.696588040999
+    },
+    {
+      "event": "checkpoint_validation",
+      "step": 512,
+      "category_accuracy": 0.6896551724137931,
+      "macro_f1": 0.6613654313685938,
+      "joint_accuracy": 0.6293103448275862,
+      "invalid_outputs": 10,
+      "new_accuracy_best": false,
+      "new_macro_f1_best": true,
+      "elapsed_seconds": 1697.9905370409979
+    },
+    {
+      "event": "train",
+      "iteration": 520,
+      "train_loss": 0.12144303321838379,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3861506676880719,
+      "tokens_per_second": 6.516292517236214,
+      "trained_tokens": 8588,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1718.7193865000008
+    },
+    {
+      "event": "train",
+      "iteration": 528,
+      "train_loss": 0.12824180722236633,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38626342254068624,
+      "tokens_per_second": 6.325063544103737,
+      "trained_tokens": 8719,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1739.4413872500008
+    },
+    {
+      "event": "train",
+      "iteration": 536,
+      "train_loss": 0.10378309339284897,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3949426832111592,
+      "tokens_per_second": 6.516554272984127,
+      "trained_tokens": 8851,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1759.7081812499964
+    },
+    {
+      "event": "train",
+      "iteration": 544,
+      "train_loss": 0.1892610639333725,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.386672650388485,
+      "tokens_per_second": 6.380098731410001,
+      "trained_tokens": 8983,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1780.4088216249947
+    },
+    {
+      "event": "train",
+      "iteration": 552,
+      "train_loss": 0.04851729795336723,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3883152628757187,
+      "tokens_per_second": 6.310123021730429,
+      "trained_tokens": 9113,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1801.0199828330005
+    },
+    {
+      "event": "train",
+      "iteration": 560,
+      "train_loss": 0.12759342789649963,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3915107101488296,
+      "tokens_per_second": 6.557804394992896,
+      "trained_tokens": 9247,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1821.4643886249978
+    },
+    {
+      "event": "train",
+      "iteration": 568,
+      "train_loss": 0.18137164413928986,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3900764565641268,
+      "tokens_per_second": 6.387501976237576,
+      "trained_tokens": 9378,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1841.9843505409954
+    },
+    {
+      "event": "train",
+      "iteration": 576,
+      "train_loss": 0.11197921633720398,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.379571286731932,
+      "tokens_per_second": 6.452711874442844,
+      "trained_tokens": 9514,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1863.0806961659982
+    },
+    {
+      "event": "train",
+      "iteration": 584,
+      "train_loss": 0.0673862025141716,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.385186760414984,
+      "tokens_per_second": 6.162988166639744,
+      "trained_tokens": 9642,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1883.8622140000007
+    },
+    {
+      "event": "train",
+      "iteration": 592,
+      "train_loss": 0.05975768342614174,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.39274816933346834,
+      "tokens_per_second": 6.38215775166886,
+      "trained_tokens": 9772,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1904.2413767499966
+    },
+    {
+      "event": "train",
+      "iteration": 600,
+      "train_loss": 0.07535120844841003,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3831519796730825,
+      "tokens_per_second": 6.322007664605861,
+      "trained_tokens": 9904,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1925.1317526659986
+    },
+    {
+      "event": "train",
+      "iteration": 608,
+      "train_loss": 0.07041458785533905,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.3868541417652974,
+      "tokens_per_second": 6.43145010684807,
+      "trained_tokens": 10037,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1945.8216687909953
+    },
+    {
+      "event": "train",
+      "iteration": 616,
+      "train_loss": 0.07166668772697449,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.393006731768948,
+      "tokens_per_second": 6.3863593912454055,
+      "trained_tokens": 10167,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1966.1878204999957
+    },
+    {
+      "event": "train",
+      "iteration": 624,
+      "train_loss": 0.16618914902210236,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.38559563172291655,
+      "tokens_per_second": 6.362327923428123,
+      "trained_tokens": 10299,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 1986.946398041
+    },
+    {
+      "event": "sampled_validation_loss",
+      "iteration": 631,
+      "val_loss": 0.11110121756792068,
+      "val_time": 5.10400720799953,
+      "elapsed_seconds": 2010.0489809579958
+    },
+    {
+      "event": "train",
+      "iteration": 632,
+      "train_loss": 0.07232698053121567,
+      "learning_rate": 4.999999873689376e-05,
+      "iterations_per_second": 0.388260028617999,
+      "tokens_per_second": 6.503355479351484,
+      "trained_tokens": 10433,
+      "peak_memory": 7.865167668,
+      "elapsed_seconds": 2012.6625538750013
+    },
+    {
+      "event": "checkpoint_validation",
+      "step": 632,
+      "category_accuracy": 0.6637931034482759,
+      "macro_f1": 0.6307387601505249,
+      "joint_accuracy": 0.603448275862069,
+      "invalid_outputs": 9,
+      "new_accuracy_best": false,
+      "new_macro_f1_best": false,
+      "elapsed_seconds": 2093.907809999997
+    }
+  ],
+  "selected_step": 512
+}

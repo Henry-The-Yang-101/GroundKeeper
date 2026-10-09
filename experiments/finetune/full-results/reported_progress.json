@@ -1,0 +1,16 @@
+{
+  "best_category_accuracy": 0.6896551724137931,
+  "best_macro_f1": 0.6613654313685938,
+  "reported_steps": [
+    128,
+    512
+  ],
+  "last_reported_at": "2026-10-09T04:52:49.132Z",
+  "last_reported_joint_accuracy": 0.6293103448275862,
+  "last_reported_invalid_outputs": 10,
+  "completed": true,
+  "completed_report_unix": 1791521954.977828,
+  "selected_step": 512,
+  "final_test_category_accuracy": 0.6029411764705882,
+  "final_test_macro_f1": 0.5318681318681319
+}

@@ -1,0 +1,17 @@
+{
+  "label": "full-training",
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    ".venv/bin/python",
+    "-m",
+    "scripts.full_pipeline"
+  ],
+  "start": 1791519733.062289,
+  "time_limit_seconds": 3599.999825000763,
+  "elapsed_seconds": 2157.2993218898773,
+  "returncode": 0,
+  "stop_reason": null,
+  "peak_process_tree_rss_bytes": 3006267392,
+  "min_system_available_bytes": 2230484992
+}

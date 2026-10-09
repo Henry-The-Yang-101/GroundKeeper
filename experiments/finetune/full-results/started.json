@@ -1,0 +1,44 @@
+{
+  "approval": "User approved full training and improvement reports on 2026-10-09",
+  "pid": 47906,
+  "started_unix": 1791519736.155054,
+  "config": {
+    "model": ".local/finetune/models/qwen35-text",
+    "data": ".local/finetune/prepared",
+    "adapter_path": ".local/finetune/adapters/full-v1",
+    "fine_tune_type": "lora",
+    "num_layers": 4,
+    "batch_size": 1,
+    "grad_accumulation_steps": 8,
+    "iters": 632,
+    "learning_rate": 5e-05,
+    "optimizer": "adam",
+    "optimizer_config": {},
+    "max_seq_length": 512,
+    "grad_checkpoint": true,
+    "mask_prompt": true,
+    "steps_per_report": 8,
+    "steps_per_eval": 128,
+    "val_batches": 8,
+    "save_every": 128,
+    "seed": 20261008,
+    "lora_parameters": {
+      "rank": 8,
+      "scale": 2.0,
+      "dropout": 0.0,
+      "keys": [
+        "self_attn.q_proj",
+        "self_attn.v_proj",
+        "linear_attn.in_proj_qkv",
+        "linear_attn.in_proj_z"
+      ]
+    }
+  },
+  "code_sha256": "63bf2ebe95b21b982c810b906da6d756d93fa62583a4a813fc5b344e8fedb8e4",
+  "config_sha256": "fb50fdb891fe8f451c61da7b0ccd1f96e0c2fc5aa99a2747edda12eba2b96ac5",
+  "train_sha256": "fb1355f05b353ea488cca3f7ccf5fc18717db4d3e4ce9978c6e875662e348c6e",
+  "valid_sha256": "2a75fa0b4a10ddea4ecca0a8dbe640dd93b6285bcb36b94f4e5beb3435182ec7",
+  "numpy_and_mlx_seed": 20261008,
+  "initial_probe_accuracy": 0.6810344827586207,
+  "initial_probe_macro_f1": 0.6282134437004371
+}

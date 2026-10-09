@@ -1,0 +1,82 @@
+{
+  "files": {
+    "EXPERIMENTAL.txt": {
+      "bytes": 148,
+      "sha256": "8b8280ee5633a7d491af87631cb2882d1a397d36f5062f47549fb6b4c3f20f00"
+    },
+    "LABELING_POLICY.md": {
+      "bytes": 10033,
+      "sha256": "cd19533eb25ca064d36b2a842864c50b22cf2b1768cba7b70df2557a9e4cdc36"
+    },
+    "adapters/adapters.safetensors": {
+      "bytes": 2131967,
+      "sha256": "efa206566bb1a1b9e5e6f4695cdf6b1a0cee34b11953797153efa7aabe6a7bd2"
+    },
+    "adapters/adapter_config.json": {
+      "bytes": 1074,
+      "sha256": "32bc9f0f5322bbaeee37d2c01446a75fd522521a370928102ce73179761e153e"
+    },
+    "model/model.safetensors": {
+      "bytes": 2367238661,
+      "sha256": "d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477"
+    },
+    "model/tokenizer_config.json": {
+      "bytes": 1227,
+      "sha256": "72471e1b94dde9ab21e7ba4ff5667353fa6e24a332fe4975969141b86e238206"
+    },
+    "model/UPSTREAM_README.md": {
+      "bytes": 2273,
+      "sha256": "49c0a725bdd22705d2d34b93cfe20463b673e3339ce4de8b81a340c05cfef5bc"
+    },
+    "model/config.json": {
+      "bytes": 2312,
+      "sha256": "653b50314fd611e8bda57726cecfd8186bc719cd87c3f1fa398e16bdd24402aa"
+    },
+    "model/tokenizer.json": {
+      "bytes": 19989339,
+      "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+    },
+    "model/chat_template.jinja": {
+      "bytes": 7790,
+      "sha256": "75a058e6d934bc35af28f6a29e2abca694c880435f227d9ae57ae2d99a66d06f"
+    },
+    "model/model.safetensors.index.json": {
+      "bytes": 81008,
+      "sha256": "2e97890b24a47b9c290489efeb2b68b7e4dd4101360de80122165ebae4e0d6cf"
+    }
+  },
+  "selected_step": 512,
+  "selection_sha256": "f7ffca5c3e8a0222450dbd5ebb00bfbffa82a0923bba7ff86409b1ca21ad95cd",
+  "runtime": "groundkeeper.runtime.LocalCategorizer",
+  "model_revision": "32f3e8ecf65426fc3306969496342d504bfa13f3",
+  "thinking": false,
+  "status": "synthetic_experiment_review_required",
+  "smoke": [
+    {
+      "category": "dining",
+      "review": true,
+      "type": "expense"
+    },
+    {
+      "category": "dining",
+      "review": true,
+      "type": "expense"
+    },
+    {
+      "category": "shopping",
+      "review": true,
+      "type": "expense"
+    },
+    {
+      "type": "unknown",
+      "category": "uncategorized",
+      "review": true
+    },
+    {
+      "category": "uncategorized",
+      "review": true,
+      "type": "unknown"
+    }
+  ],
+  "reloaded_validation_predictions_match": true
+}

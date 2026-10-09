@@ -113,6 +113,12 @@ runner uses that exact configuration, explicitly seeds NumPy and MLX, scores
 each actual checkpoint during training, freezes selection, and then evaluates
 the final category test once through the packaged runtime. The original probe
 entry point continues to support probe work only.
+
+That full run is now complete. Checkpoint 512 was selected before final testing;
+the complete run took 35.95 minutes and its package is 2,389,468,280 bytes. See
+[full-results/RESULTS.md](full-results/RESULTS.md) for the final comparison,
+one-time synthetic test, exact runtime checks and limitations. Do not rerun the
+completed pipeline or use its final test for further model selection.
 The package includes one base, one adapter, tokenizer, configs, template and
 manifest, with an exact decimal-byte total. The probe package is clearly marked
 experimental. The original base remains available for rollback.

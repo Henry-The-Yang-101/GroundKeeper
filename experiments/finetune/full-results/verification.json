@@ -1,0 +1,24 @@
+{
+  "pipeline_exit_code": 0,
+  "watchdog_stop_reason": null,
+  "selected_adapter_and_packaged_adapter_hash_match": true,
+  "all_package_file_hashes_verified": true,
+  "package_total_bytes_verified": 2389468280,
+  "selection_frozen_before_final_test": true,
+  "final_test_rows": 68,
+  "final_test_passes": 1,
+  "packaged_runtime_reload_decisions_match": true,
+  "all_smoke_predictions_require_review": true,
+  "code_and_input_sha256": {
+    "scripts/run_full_training.py": "63bf2ebe95b21b982c810b906da6d756d93fa62583a4a813fc5b344e8fedb8e4",
+    "scripts/full_common.py": "e7ebfdbf32a5b0baa6d4426bc4d71fb2303299ed7f4b9da0b63354389435edf9",
+    "scripts/finalize_full_training.py": "2d76d606a510dec388567bc8e0dea9ee3c1c493db92467e1787efccd04a6d32d",
+    "scripts/full_pipeline.py": "ed4b7a499c80ed67f32f455fd3d98555095ebee1dfed6125b1072a03ece8d386",
+    "scripts/run_bounded.py": "21ec245b802f90a378d1a4db039568cd403def5618b90d3499b2f5fc3ab38041",
+    "experiments/finetune/proposed_full_config.json": "fb50fdb891fe8f451c61da7b0ccd1f96e0c2fc5aa99a2747edda12eba2b96ac5",
+    "experiments/finetune/split_manifest.jsonl": "10b58e4d5d46d08f9d1b7372fbb35d217d4cd3bd8787d12d3a91cc7efe48e489",
+    "groundkeeper/policy.py": "34143711a06c93c9719736dd2e205e178a6bc143ac25e347d245617abac34793",
+    "groundkeeper/runtime.py": "666cb74d4970c626ecf9a32afe410797cee990f7ec861bc03584563237df7663",
+    "uv.lock": "dcc875b43b57542d40053448b64bfe3f46d13155abe3b7fb178f01927e4dfb30"
+  }
+}

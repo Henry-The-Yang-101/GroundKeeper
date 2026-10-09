@@ -1,0 +1,12 @@
+{
+  "package": ".local/finetune/package-full-v1",
+  "total_bytes": 2389468280,
+  "under_limit": true,
+  "selected_step": 512,
+  "smoke_count": 5,
+  "all_smoke_schema_valid": true,
+  "all_smoke_review_required": true,
+  "three_reloaded_validation_predictions_match": true,
+  "rollback_base": ".local/finetune/models/qwen35-text",
+  "rollback_probe": ".local/finetune/package-probe"
+}
