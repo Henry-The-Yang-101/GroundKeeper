@@ -1,0 +1,2145 @@
+{
+  "metrics": {
+    "n": 279,
+    "joint_accuracy": 0.6487455197132617,
+    "category_accuracy": 0.6810035842293907,
+    "type_accuracy": 0.953405017921147,
+    "review_accuracy": 0.8602150537634409,
+    "macro_f1_supported_categories": 0.6318765998438695,
+    "macro_f1_all_categories": 0.6318765998438695,
+    "per_category": {
+      "groceries": {
+        "precision": 0.3333333333333333,
+        "recall": 0.5833333333333334,
+        "f1": 0.42424242424242425,
+        "support": 12
+      },
+      "dining": {
+        "precision": 0.18181818181818182,
+        "recall": 0.2,
+        "f1": 0.19047619047619047,
+        "support": 10
+      },
+      "local_transport": {
+        "precision": 1.0,
+        "recall": 0.7777777777777778,
+        "f1": 0.875,
+        "support": 9
+      },
+      "vehicle": {
+        "precision": 0.45454545454545453,
+        "recall": 0.7142857142857143,
+        "f1": 0.5555555555555556,
+        "support": 7
+      },
+      "housing": {
+        "precision": 1.0,
+        "recall": 0.7272727272727273,
+        "f1": 0.8421052631578947,
+        "support": 11
+      },
+      "utilities": {
+        "precision": 0.7,
+        "recall": 0.5384615384615384,
+        "f1": 0.6086956521739131,
+        "support": 13
+      },
+      "shopping": {
+        "precision": 0.125,
+        "recall": 0.18181818181818182,
+        "f1": 0.14814814814814814,
+        "support": 11
+      },
+      "medical": {
+        "precision": 0.8333333333333334,
+        "recall": 0.9090909090909091,
+        "f1": 0.8695652173913043,
+        "support": 11
+      },
+      "personal_care": {
+        "precision": 0.5,
+        "recall": 0.8571428571428571,
+        "f1": 0.631578947368421,
+        "support": 7
+      },
+      "fitness": {
+        "precision": 0.8,
+        "recall": 0.4444444444444444,
+        "f1": 0.5714285714285714,
+        "support": 9
+      },
+      "entertainment": {
+        "precision": 0.4,
+        "recall": 0.3076923076923077,
+        "f1": 0.34782608695652173,
+        "support": 13
+      },
+      "software": {
+        "precision": 0.625,
+        "recall": 0.8333333333333334,
+        "f1": 0.7142857142857143,
+        "support": 6
+      },
+      "education": {
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1": 0.8333333333333334,
+        "support": 5
+      },
+      "travel": {
+        "precision": 0.875,
+        "recall": 0.4666666666666667,
+        "f1": 0.6086956521739131,
+        "support": 15
+      },
+      "insurance": {
+        "precision": 0.6,
+        "recall": 0.9,
+        "f1": 0.72,
+        "support": 10
+      },
+      "financial": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 14
+      },
+      "taxes": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "support": 8
+      },
+      "gifts": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 8
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 8
+      },
+      "uncategorized": {
+        "precision": 0.7941176470588235,
+        "recall": 0.6,
+        "f1": 0.6835443037974683,
+        "support": 45
+      },
+      "__none__": {
+        "precision": 1.0,
+        "recall": 0.9574468085106383,
+        "f1": 0.9782608695652174,
+        "support": 47
+      }
+    },
+    "automatic_acceptance_coverage": 0.0,
+    "automatically_accepted_errors": 0,
+    "automatically_accepted_error_rate": null,
+    "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled.",
+    "by_source": {
+      "DoDataThings/us-bank-transaction-categories-v2": {
+        "n": 129,
+        "joint_accuracy": 0.5116279069767442,
+        "category_accuracy": 0.5503875968992248,
+        "type_accuracy": 0.9457364341085271,
+        "review_accuracy": 0.751937984496124,
+        "macro_f1_supported_categories": 0.5519843398999409,
+        "macro_f1_all_categories": 0.44684446563328545,
+        "per_category": {
+          "groceries": {
+            "precision": 0.23076923076923078,
+            "recall": 0.375,
+            "f1": 0.2857142857142857,
+            "support": 8
+          },
+          "dining": {
+            "precision": 0.4,
+            "recall": 0.3333333333333333,
+            "f1": 0.36363636363636365,
+            "support": 6
+          },
+          "local_transport": {
+            "precision": 1.0,
+            "recall": 0.6,
+            "f1": 0.75,
+            "support": 5
+          },
+          "vehicle": {
+            "precision": 0.14285714285714285,
+            "recall": 0.3333333333333333,
+            "f1": 0.2,
+            "support": 3
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 7
+          },
+          "utilities": {
+            "precision": 0.5,
+            "recall": 0.3333333333333333,
+            "f1": 0.4,
+            "support": 9
+          },
+          "shopping": {
+            "precision": 0.125,
+            "recall": 0.2857142857142857,
+            "f1": 0.17391304347826086,
+            "support": 7
+          },
+          "medical": {
+            "precision": 0.8571428571428571,
+            "recall": 0.8571428571428571,
+            "f1": 0.8571428571428571,
+            "support": 7
+          },
+          "personal_care": {
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 3
+          },
+          "fitness": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "f1": 0.8,
+            "support": 5
+          },
+          "entertainment": {
+            "precision": 0.5,
+            "recall": 0.2222222222222222,
+            "f1": 0.3076923076923077,
+            "support": 9
+          },
+          "software": {
+            "precision": 0.25,
+            "recall": 0.5,
+            "f1": 0.3333333333333333,
+            "support": 2
+          },
+          "education": {
+            "precision": 0.3333333333333333,
+            "recall": 1.0,
+            "f1": 0.5,
+            "support": 1
+          },
+          "travel": {
+            "precision": 0.75,
+            "recall": 0.2727272727272727,
+            "f1": 0.4,
+            "support": 11
+          },
+          "insurance": {
+            "precision": 0.5,
+            "recall": 0.8333333333333334,
+            "f1": 0.625,
+            "support": 6
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.7857142857142857,
+            "recall": 0.6285714285714286,
+            "f1": 0.6984126984126984,
+            "support": 35
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 0.8,
+            "f1": 0.8888888888888888,
+            "support": 5
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "groundkeeper-authored-bank-coverage-v2": {
+        "n": 54,
+        "joint_accuracy": 0.8888888888888888,
+        "category_accuracy": 0.9629629629629629,
+        "type_accuracy": 0.8888888888888888,
+        "review_accuracy": 0.9629629629629629,
+        "macro_f1_supported_categories": 0.9404283801874164,
+        "macro_f1_all_categories": 0.1343469114553452,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.8333333333333334,
+            "recall": 0.8333333333333334,
+            "f1": 0.8333333333333334,
+            "support": 6
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 0.9761904761904762,
+            "f1": 0.9879518072289156,
+            "support": 42
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "groundkeeper-authored-purpose-coverage-v2": {
+        "n": 96,
+        "joint_accuracy": 0.6979166666666666,
+        "category_accuracy": 0.6979166666666666,
+        "type_accuracy": 1.0,
+        "review_accuracy": 0.9479166666666666,
+        "macro_f1_supported_categories": 0.625576259489303,
+        "macro_f1_all_categories": 0.5957869137993361,
+        "per_category": {
+          "groceries": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "local_transport": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "vehicle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.25,
+            "f1": 0.4,
+            "support": 4
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "medical": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1": 0.8888888888888888,
+            "support": 4
+          },
+          "personal_care": {
+            "precision": 0.4,
+            "recall": 1.0,
+            "f1": 0.5714285714285714,
+            "support": 4
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "entertainment": {
+            "precision": 0.3333333333333333,
+            "recall": 0.5,
+            "f1": 0.4,
+            "support": 4
+          },
+          "software": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "education": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "insurance": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1": 0.8888888888888888,
+            "support": 4
+          },
+          "financial": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "taxes": {
+            "precision": 0.5333333333333333,
+            "recall": 1.0,
+            "f1": 0.6956521739130435,
+            "support": 8
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 8
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      }
+    },
+    "by_currency": {
+      "CAD": {
+        "n": 84,
+        "joint_accuracy": 0.7738095238095238,
+        "category_accuracy": 0.8095238095238095,
+        "type_accuracy": 0.9404761904761905,
+        "review_accuracy": 0.9404761904761905,
+        "macro_f1_supported_categories": 0.6639249639249639,
+        "macro_f1_all_categories": 0.6639249639249639,
+        "per_category": {
+          "groceries": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 2
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 2
+          },
+          "local_transport": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "vehicle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 2
+          },
+          "utilities": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 2
+          },
+          "medical": {
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "f1": 0.8,
+            "support": 2
+          },
+          "personal_care": {
+            "precision": 0.3333333333333333,
+            "recall": 1.0,
+            "f1": 0.5,
+            "support": 2
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 2
+          },
+          "entertainment": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 2
+          },
+          "software": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "education": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "travel": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "insurance": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 2
+          },
+          "financial": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "taxes": {
+            "precision": 0.5714285714285714,
+            "recall": 1.0,
+            "f1": 0.7272727272727273,
+            "support": 4
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "uncategorized": {
+            "precision": 0.75,
+            "recall": 0.5,
+            "f1": 0.6,
+            "support": 6
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 0.9642857142857143,
+            "f1": 0.9818181818181818,
+            "support": 28
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "USD": {
+        "n": 195,
+        "joint_accuracy": 0.5948717948717949,
+        "category_accuracy": 0.6256410256410256,
+        "type_accuracy": 0.958974358974359,
+        "review_accuracy": 0.8256410256410256,
+        "macro_f1_supported_categories": 0.6114369585176397,
+        "macro_f1_all_categories": 0.6114369585176397,
+        "per_category": {
+          "groceries": {
+            "precision": 0.29411764705882354,
+            "recall": 0.5,
+            "f1": 0.37037037037037035,
+            "support": 10
+          },
+          "dining": {
+            "precision": 0.2222222222222222,
+            "recall": 0.25,
+            "f1": 0.23529411764705882,
+            "support": 8
+          },
+          "local_transport": {
+            "precision": 1.0,
+            "recall": 0.7142857142857143,
+            "f1": 0.8333333333333334,
+            "support": 7
+          },
+          "vehicle": {
+            "precision": 0.3333333333333333,
+            "recall": 0.6,
+            "f1": 0.42857142857142855,
+            "support": 5
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.8888888888888888,
+            "f1": 0.9411764705882353,
+            "support": 9
+          },
+          "utilities": {
+            "precision": 0.625,
+            "recall": 0.45454545454545453,
+            "f1": 0.5263157894736842,
+            "support": 11
+          },
+          "shopping": {
+            "precision": 0.125,
+            "recall": 0.2222222222222222,
+            "f1": 0.16,
+            "support": 9
+          },
+          "medical": {
+            "precision": 0.8888888888888888,
+            "recall": 0.8888888888888888,
+            "f1": 0.8888888888888888,
+            "support": 9
+          },
+          "personal_care": {
+            "precision": 0.6666666666666666,
+            "recall": 0.8,
+            "f1": 0.7272727272727273,
+            "support": 5
+          },
+          "fitness": {
+            "precision": 0.8,
+            "recall": 0.5714285714285714,
+            "f1": 0.6666666666666666,
+            "support": 7
+          },
+          "entertainment": {
+            "precision": 0.3333333333333333,
+            "recall": 0.18181818181818182,
+            "f1": 0.23529411764705882,
+            "support": 11
+          },
+          "software": {
+            "precision": 0.5,
+            "recall": 0.75,
+            "f1": 0.6,
+            "support": 4
+          },
+          "education": {
+            "precision": 0.6,
+            "recall": 1.0,
+            "f1": 0.75,
+            "support": 3
+          },
+          "travel": {
+            "precision": 0.8333333333333334,
+            "recall": 0.38461538461538464,
+            "f1": 0.5263157894736842,
+            "support": 13
+          },
+          "insurance": {
+            "precision": 0.5384615384615384,
+            "recall": 0.875,
+            "f1": 0.6666666666666666,
+            "support": 8
+          },
+          "financial": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          },
+          "taxes": {
+            "precision": 0.4444444444444444,
+            "recall": 1.0,
+            "f1": 0.6153846153846154,
+            "support": 4
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 4
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 4
+          },
+          "uncategorized": {
+            "precision": 0.8,
+            "recall": 0.6153846153846154,
+            "f1": 0.6956521739130435,
+            "support": 39
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 0.9473684210526315,
+            "f1": 0.972972972972973,
+            "support": 19
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      }
+    },
+    "by_gold_type": {
+      "balance_adjustment": {
+        "n": 6,
+        "joint_accuracy": 1.0,
+        "category_accuracy": 1.0,
+        "type_accuracy": 1.0,
+        "review_accuracy": 1.0,
+        "macro_f1_supported_categories": 1.0,
+        "macro_f1_all_categories": 0.047619047619047616,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "card_payment": {
+        "n": 6,
+        "joint_accuracy": 1.0,
+        "category_accuracy": 1.0,
+        "type_accuracy": 1.0,
+        "review_accuracy": 1.0,
+        "macro_f1_supported_categories": 1.0,
+        "macro_f1_all_categories": 0.047619047619047616,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "cash_movement": {
+        "n": 6,
+        "joint_accuracy": 0.8333333333333334,
+        "category_accuracy": 1.0,
+        "type_accuracy": 0.8333333333333334,
+        "review_accuracy": 1.0,
+        "macro_f1_supported_categories": 1.0,
+        "macro_f1_all_categories": 0.047619047619047616,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "expense": {
+        "n": 200,
+        "joint_accuracy": 0.57,
+        "category_accuracy": 0.595,
+        "type_accuracy": 0.995,
+        "review_accuracy": 0.845,
+        "macro_f1_supported_categories": 0.5950211758535556,
+        "macro_f1_all_categories": 0.5666868341462434,
+        "per_category": {
+          "groceries": {
+            "precision": 0.3333333333333333,
+            "recall": 0.5833333333333334,
+            "f1": 0.42424242424242425,
+            "support": 12
+          },
+          "dining": {
+            "precision": 0.2,
+            "recall": 0.2,
+            "f1": 0.2,
+            "support": 10
+          },
+          "local_transport": {
+            "precision": 1.0,
+            "recall": 0.7777777777777778,
+            "f1": 0.875,
+            "support": 9
+          },
+          "vehicle": {
+            "precision": 0.45454545454545453,
+            "recall": 0.7142857142857143,
+            "f1": 0.5555555555555556,
+            "support": 7
+          },
+          "housing": {
+            "precision": 1.0,
+            "recall": 0.7272727272727273,
+            "f1": 0.8421052631578947,
+            "support": 11
+          },
+          "utilities": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "f1": 0.6086956521739131,
+            "support": 13
+          },
+          "shopping": {
+            "precision": 0.125,
+            "recall": 0.18181818181818182,
+            "f1": 0.14814814814814814,
+            "support": 11
+          },
+          "medical": {
+            "precision": 0.8333333333333334,
+            "recall": 0.9090909090909091,
+            "f1": 0.8695652173913043,
+            "support": 11
+          },
+          "personal_care": {
+            "precision": 0.5,
+            "recall": 0.8571428571428571,
+            "f1": 0.631578947368421,
+            "support": 7
+          },
+          "fitness": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          },
+          "entertainment": {
+            "precision": 0.4,
+            "recall": 0.3076923076923077,
+            "f1": 0.34782608695652173,
+            "support": 13
+          },
+          "software": {
+            "precision": 0.8333333333333334,
+            "recall": 0.8333333333333334,
+            "f1": 0.8333333333333334,
+            "support": 6
+          },
+          "education": {
+            "precision": 0.7142857142857143,
+            "recall": 1.0,
+            "f1": 0.8333333333333334,
+            "support": 5
+          },
+          "travel": {
+            "precision": 0.875,
+            "recall": 0.4666666666666667,
+            "f1": 0.6086956521739131,
+            "support": 15
+          },
+          "insurance": {
+            "precision": 0.6428571428571429,
+            "recall": 0.9,
+            "f1": 0.75,
+            "support": 10
+          },
+          "financial": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 14
+          },
+          "taxes": {
+            "precision": 0.5333333333333333,
+            "recall": 1.0,
+            "f1": 0.6956521739130435,
+            "support": 8
+          },
+          "gifts": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 8
+          },
+          "uncategorized": {
+            "precision": 0.16666666666666666,
+            "recall": 0.07692307692307693,
+            "f1": 0.10526315789473684,
+            "support": 13
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "income": {
+        "n": 11,
+        "joint_accuracy": 0.9090909090909091,
+        "category_accuracy": 0.9090909090909091,
+        "type_accuracy": 0.9090909090909091,
+        "review_accuracy": 0.9090909090909091,
+        "macro_f1_supported_categories": 0.9523809523809523,
+        "macro_f1_all_categories": 0.045351473922902494,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 0.9090909090909091,
+            "f1": 0.9523809523809523,
+            "support": 11
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "loan_principal": {
+        "n": 6,
+        "joint_accuracy": 1.0,
+        "category_accuracy": 1.0,
+        "type_accuracy": 1.0,
+        "review_accuracy": 1.0,
+        "macro_f1_supported_categories": 1.0,
+        "macro_f1_all_categories": 0.047619047619047616,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "refund": {
+        "n": 6,
+        "joint_accuracy": 1.0,
+        "category_accuracy": 1.0,
+        "type_accuracy": 1.0,
+        "review_accuracy": 1.0,
+        "macro_f1_supported_categories": 1.0,
+        "macro_f1_all_categories": 0.047619047619047616,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 6
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "transfer": {
+        "n": 6,
+        "joint_accuracy": 0.8333333333333334,
+        "category_accuracy": 0.8333333333333334,
+        "type_accuracy": 0.8333333333333334,
+        "review_accuracy": 0.8333333333333334,
+        "macro_f1_supported_categories": 0.9090909090909091,
+        "macro_f1_all_categories": 0.04329004329004329,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "__none__": {
+            "precision": 1.0,
+            "recall": 0.8333333333333334,
+            "f1": 0.9090909090909091,
+            "support": 6
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      },
+      "unknown": {
+        "n": 32,
+        "joint_accuracy": 0.71875,
+        "category_accuracy": 0.8125,
+        "type_accuracy": 0.71875,
+        "review_accuracy": 0.8125,
+        "macro_f1_supported_categories": 0.896551724137931,
+        "macro_f1_all_categories": 0.042692939244663386,
+        "per_category": {
+          "groceries": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "dining": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "local_transport": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "vehicle": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "housing": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "utilities": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "shopping": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "medical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "personal_care": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "fitness": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "entertainment": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "software": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "education": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "travel": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "insurance": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "financial": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "taxes": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "gifts": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "other": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "uncategorized": {
+            "precision": 1.0,
+            "recall": 0.8125,
+            "f1": 0.896551724137931,
+            "support": 32
+          },
+          "__none__": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        },
+        "automatic_acceptance_coverage": 0.0,
+        "automatically_accepted_errors": 0,
+        "automatically_accepted_error_rate": null,
+        "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+      }
+    }
+  },
+  "raw_field_accuracy": {
+    "type": 0.946236559139785,
+    "category": 0.6810035842293907,
+    "review": 0.8602150537634409
+  },
+  "raw_invalid_combinations": 16,
+  "constraint_changed": 16,
+  "invalid_outputs": 0,
+  "elapsed_seconds": 53.431669124998734,
+  "mean_latency_seconds": 0.19141349163783486,
+  "median_latency_seconds": 0.19083491699711885,
+  "p95_latency_seconds": 0.20737712499976624,
+  "device": "mps:0",
+  "precision": "fp32",
+  "temperature": 1.0,
+  "decoder": "joint_schema_constrained",
+  "validation_sha256": "9af2e9e2aa432ff96cad2f41c0ae242f23497738ade56bee136f81df18963cbf",
+  "real_data": false,
+  "application_review_required": true,
+  "sealed_test_read": false,
+  "epoch": 4,
+  "mean_training_loss": 0.030968861880094904
+}
