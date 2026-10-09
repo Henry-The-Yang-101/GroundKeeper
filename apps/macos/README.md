@@ -7,6 +7,9 @@ The selected icon is highlighted; hovering shows the page name. Command-1
 through Command-4 also switch pages. Colors follow the system appearance.
 The gray sidebar has smaller icons with Settings pinned to its bottom, and no
 divider between the sidebar and page.
+Hovering animates a soft highlight and a small icon enlargement, respecting
+Reduce Motion. The native traffic light group is horizontally centered over the
+sidebar and stays aligned when the window is resized.
 
 The iPhone side is Apple Shortcuts only. iCloud Drive is the file handoff between
 the iPhone capture workflow and this app.
@@ -43,6 +46,8 @@ macos/
       GroundKeeperApp.swift # app entry point and window configuration
       RootView.swift        # selected tab state and page routing
       SidebarView.swift     # icon buttons, selection styling, keyboard shortcuts
+      AppLayout.swift       # shared sidebar width
+      WindowControls.swift  # native traffic light positioning
     Features/
       Home/HomeView.swift
       FullInsights/FullInsightsView.swift

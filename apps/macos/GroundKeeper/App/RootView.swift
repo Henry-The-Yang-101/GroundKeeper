@@ -11,6 +11,7 @@ struct RootView: View {
         }
         .frame(minWidth: 400, maxWidth: .infinity, minHeight: 340, maxHeight: .infinity)
         .background(Color(nsColor: .textBackgroundColor))
+        .background(WindowControls(sidebarWidth: AppLayout.sidebarWidth))
     }
 
     @ViewBuilder
