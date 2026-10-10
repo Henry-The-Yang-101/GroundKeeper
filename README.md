@@ -31,11 +31,12 @@ See the [macOS app guide](apps/macos/README.md) for Xcode setup.
 | `.private/` | Ignored location reserved for private development fixtures |
 | [`TRANSACTION_CATEGORIES.md`](TRANSACTION_CATEGORIES.md) | Spending categories, transaction types, and review semantics |
 | [`M0_SCOPE.md`](M0_SCOPE.md) | Capture assumptions, measured feasibility, and remaining checks |
-| [`PLAN.md`](PLAN.md) | Earlier architecture proposal; includes a localhost dashboard and older model assumptions |
+| [`PLAN.md`](PLAN.md) | Current product plan, classifier choices, architecture proposals, and delivery gates |
 
-The platform scope above is the current direction. `PLAN.md` needs reconciliation
-before implementation; its earlier dashboard and model choices are not decisions
-for the new macOS app.
+`PLAN.md` reflects the current native macOS direction, with local Laya/Qwen,
+optional Apple Intelligence cloud via Shortcuts, and a weighted Council mode.
+It distinguishes product requirements from architecture proposals and open
+decisions.
 
 ## Suggested organization
 
