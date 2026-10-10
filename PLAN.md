@@ -13,15 +13,16 @@ app reconciles, categorizes, and displays them.
 - Platforms: macOS app and iPhone Shortcuts; no native iPhone app.
 - Local storage and local model inference run on the Mac. Apple Intelligence
   cloud inference is an optional user-selected mode, including within Council.
-- MVP: capture, import, reconciliation, suggestions, review, spending insights,
-  encrypted storage, recovery/backups, and visible capture/import failures.
+- MVP: automatic capture, manual transaction entries, CSV transaction import,
+  reconciliation, suggestions, user category corrections, review, spending
+  graphs, encrypted storage, recovery/backups, and visible capture/import failures.
 - Analysis roadmap: weekly/monthly/yearly graphs, budget limits, recurring costs,
   savings goals, cash flow, and net worth. Start with spending graphs; stage
   features needing income, balances, or manual input as described in
   [ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md).
 - Receipt scanning and direct bank integrations remain outside the established
-  MVP. Statement import/manual entry may be needed for completeness; their
-  exact scope is undecided.
+  MVP. Manual entries and CSV imports provide a way to fill capture gaps and
+  load historical transactions; supported bank CSV formats remain to be chosen.
 
 ## Capture and data flow
 
@@ -47,6 +48,34 @@ iPhone Wallet / CIBC alerts → GK Capture Shortcut → iCloud event queue
   Preserve inputs in development. Production deletes an input only after an
   atomic, durable sealed staging write; IDs/content hashes make retries harmless
   without collapsing distinct captures.
+
+## Manual entries, CSV import, and corrections
+
+- Users can add transactions in the Mac app with date/time, amount, currency,
+  account, merchant/description, transaction type, category, and optional notes
+  or tags. Preserve date-only precision where no exact time is known; validate
+  required fields and type/category combinations. A user-selected category is
+  confirmed; otherwise offer the selected classifier's suggestion or review.
+- CSV import supports a preview and column mapping for date, description,
+  amount or debit/credit columns, currency, account, and optional source ID/type/
+  category. Specify date format, decimal separators, and amount-sign convention;
+  remember reusable mappings. Missing currency/account can use an explicit
+  user-selected default. Missing purpose/category enters classification/review.
+- Validate rows before commit. Show accepted, invalid, and possible-duplicate
+  rows with reasons, allow corrections or explicit skipping, and report the
+  imported/skipped/rejected counts. Preserve batch/row provenance and support
+  undoing an import without erasing independently captured evidence or edits.
+- Reimporting the same batch must be idempotent. Reconcile overlapping CSV,
+  manual, Wallet, and bank records conservatively using source IDs and account/
+  amount/date/merchant evidence. Identical purchases can be legitimate; a
+  date-only match or repeated merchant is not enough to delete or merge a row.
+- Users can edit entries and override any AI-assigned category or transaction
+  type. Retain the original suggestion/provider and the correction history.
+  User-confirmed values take precedence and survive reclassification/imports.
+- Correcting a purchase does not create a merchant-wide rule automatically.
+  Offer a separate explicit action to apply a rule to future purchases, with
+  an optional reviewed preview of historical changes. Refresh affected budgets,
+  graphs, and review status after edits; unrelated review reasons remain open.
 
 ## Classification and user choice
 
@@ -127,9 +156,28 @@ modes may send minimized transaction descriptions to Apple for inference.
 
 ## Storage and background operation
 
-- Proposed storage: local SQLCipher with password/recovery-key unlock, Touch ID
-  after persistence/fallback tests, and inactivity auto-lock. Keep the live
+- Storage choice: SQLite with SQLCipher encryption as the primary local store.
+  Use explicit schema migrations, foreign keys, and uniqueness constraints.
+  Support password/recovery-key unlock, Touch ID after persistence/fallback
+  tests, and inactivity auto-lock. Keep the live
   database, keys, and models outside the synced queue and Git repository.
+- Proposed ownership: Swift app services own database access/migrations; Python
+  workers receive classifier inputs and return decisions. Locked background
+  workers write sealed staging without access to the live database key.
+- Store transactions, raw events/import provenance, accounts/card mappings,
+  merchants/rules, provider decisions, corrections/review, budget versions,
+  goals/funding allocations, recurring schedules, and balance snapshots in
+  related tables. Keep model weights, training datasets, and bulky attachments
+  outside the database; define retention for full provider responses.
+- Design for large histories: indexed date/account/category/merchant queries
+  and reconciliation lookups, paginated transaction lists, short batched writes,
+  and SQL chart aggregation. Use WAL with controlled writer access; keep summary
+  caches rebuildable. Verify responsiveness with realistic 100,000-row and
+  million-row fixtures, including imports, reconciliation, charts, and backups.
+  Treat those as test targets, not demonstrated performance guarantees.
+- Keep the live SQLite database on the Mac, outside iCloud Drive. Sync immutable
+  capture/staging files and completed encrypted backups; create consistent
+  snapshots through the database API rather than copying an active database.
 - Derive the database key from a recovery secret; password/Touch ID slots wrap
   that key. Recovery must work with the database and recovery key even if
   keyslots are lost. Losing all unlock methods means losing the data.
@@ -150,11 +198,78 @@ modes may send minimized transaction descriptions to Apple for inference.
 - Show last successful run/capture, queue age, heartbeat, review/quarantine
   counts, provider failures, and capture gaps.
 
+## Insights and graphs
+
+Graphs are core product features, computed locally from reconciled transactions
+and user-provided planning/balance data. Deliver spending graphs first, then
+budgets/recurring costs, goals/cash flow, and net worth/debt.
+
+| Insight | Planned behavior and graphs |
+| --- | --- |
+| Time-based spending | Day/week/month/quarter/year/all-time/custom and rolling 7/30/90-day views; totals, average spend, purchase count, daily/weekly/monthly bars, and cumulative lines. |
+| Category breakdown | Ranked category bars, stacked trends, and account/category/merchant/tag filters; show Uncategorized and provisional suggestions explicitly. |
+| Period comparisons | Dollar/percentage changes, side-by-side bars, and cumulative lines; compare equal elapsed portions separately from complete periods. |
+| Merchant and repeated spending | Identify frequently visited merchants; purchase counts, total/net spend, average ticket, typical gap between purchases, and frequency changes; ranked bars, spend/visit trends, and transaction timelines. |
+| Habits and distribution | Day-of-week patterns, largest purchases, transaction-size distributions, and an optional calendar heatmap, with drill-down to individual entries. |
+| Budget limits | Overall/category caps for weekly/monthly/yearly/custom periods, remaining allowance, overage, optional warnings, actual-versus-limit bars, spending pace, and budget history. |
+| Recurring bills/subscriptions | Suggest repeating payments for confirmation, support manual cadence, show upcoming-payment timelines, monthly recurring totals, and price-history lines. |
+| Cash flow | Income and outflow bars, observed surplus trend, and optional waterfall; distinguish spending from internal transfers, debt principal, and cash movements. |
+| Savings goals | Target amount/date, explicit contributions/withdrawals or funded allocations, progress bars, actual-versus-target lines, and required contributions per remaining period. |
+| Net worth | Assets minus liabilities using dated manual/imported balances; net-worth and asset/liability lines plus account contribution bars. |
+| Debt | Outstanding balance trends, principal/interest bars where known, and optional payoff scenarios using supplied terms. |
+| Forecasts/unusual changes | Later: clearly labeled end-period estimates and unusual purchase/category/merchant changes, using sufficient history and explicit assumptions. |
+
+### Repeated merchant spending
+
+- Group confirmed merchant identities and carefully reviewed aliases; do not
+  merge different businesses or purposes simply because names look similar.
+  Analyze canonical purchases after deduplication so Wallet plus bank capture
+  counts once, while separate repeated purchases still count individually.
+- Surface concrete summaries such as “8 purchases at this café this month,
+  totaling $64,” with purchase-count and spend comparisons to the prior period.
+  Track refunds separately and show net spend as well as gross purchases.
+- Distinguish frequent discretionary purchases from scheduled subscriptions:
+  repeated visits alone do not establish a recurring bill or a future payment.
+- Let users choose merchant-specific frequency/spend thresholds and periods;
+  make notices optional and link each finding to its transactions. Initial
+  detection uses transparent counts/rules; more advanced patterns need testing.
+
+### Shared analysis rules
+
+- Support configurable week start/reporting timezone, visible units/filters,
+  hover or selection for exact values, and chart-to-transaction drill-down.
+  Prefer native Swift Charts for standard bars/lines, accessible labels,
+  keyboard interaction, and a table alternative. Avoid an unreadable 18-slice pie.
+- Budget caps initially reset per period; optional rollover needs explicit
+  rules. Preserve historical limits. Overlapping overall/category/tag budgets
+  never create additional spending, and a cap does not reserve actual money.
+- Goal allocations are not expenses and cannot allocate the same funds beyond
+  available balances. Income minus net spending is an observed surplus, not
+  proof of saved money. Incomplete income/capture coverage must remain visible.
+- Net worth needs asset/debt balances, starting values, valuation dates, and
+  account inclusion; transaction captures alone are insufficient. Start with
+  manual dated snapshots, label stale/carried-forward values, and distinguish
+  investment balance changes from investment returns.
+- Exclude voids, own-account transfers, and card payments from spending; keep
+  principal/cash movements separate. Splits must sum to their parent amount.
+  Show gross spending/refunds/net spending; default refunds to date received
+  and original category when known. Do not silently backdate or invent labels.
+- Keep currencies separate until dated FX conversion is specified. Handle
+  zero baselines, short months, DST, partial periods, missing history, and
+  unresolved transactions explicitly. Corrections/imports invalidate summaries.
+- Forecasts are estimates, repeated-payment suggestions need confirmation, and
+  gaps are not proof of zero spending or canceled subscriptions.
+
+[ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md) retains expanded data requirements
+and A1–A4 acceptance criteria; this plan includes the full feature roadmap.
+
 ## Native app and integration
 
 Navigation is Home, Full insights, Sync, and Settings. Proposed responsibilities:
 Home overview/review; Full insights transactions and spending reports; Sync
-import health/manual sync; Settings providers, rules, card mappings, and security.
+import preview/history/health and manual sync; Settings providers, rules, card
+mappings, and security. Transaction views support adding/editing entries and
+correcting AI categories.
 Detailed page designs remain open.
 
 Graphs are a core feature. Home will summarize the selected period, budget/goal
@@ -179,12 +294,13 @@ The app shell and model experiments exist; the end-to-end product is not connect
 | M0: Contracts/feasibility | Real redacted payloads and CIBC formats, app/worker contract, iCloud access, provider availability, and Touch ID pass/defer decisions recorded. |
 | M1: Capture | A week of real Wallet/CIBC events and daily heartbeats reaches the Mac as valid files; missing/duplicate events investigated. |
 | M2: Parse/classify | Known fixtures parse correctly; unknowns preserved; provider adapters and Council obey the shared policy and failure contract. |
-| M3: Reconcile | Arrival-order/repeated-purchase checks pass; a real week reconciled against the statement with coverage gaps explained. |
+| M3: Reconcile and user input | Manual entries, CSV preview/mapping/import/undo, duplicate handling, and sticky category corrections work; arrival-order/repeated-purchase checks pass; a real week reconciled against the statement with gaps explained. |
 | M4: Encryption/recovery | Locked staging/import, wrong-key rejection, password recovery, lost-keyslot recovery, and backup restoration work end to end. |
 | M5: Unattended operation | Three unattended nights, including a missed 03:00 run, preserve events; retries, provider failures, quarantine, and safe logs verified. |
-| M6: App MVP | Two weeks of daily capture, review, insights, sync, and settings use without the CLI; locking and failure indicators work. |
+| M6: App MVP | Two weeks of capture, manual entry, CSV import, category correction, review, spending/repeated-merchant graphs, sync, and settings without the CLI; locking, failure indicators, and large-history checks work. |
 
 Open decisions: final checkpoints/provider default; Council weights, thresholds,
 and partial-result behavior; Apple cloud variant/Shortcut setup; app-worker
-packaging; runtime paths/retention; auto-lock duration; statement import/manual
-entry. CSV export and additional subcategories can follow the MVP.
+packaging; runtime paths/retention; auto-lock duration; supported CSV mappings;
+budget rollover; goal funding; balance entry/import formats; repeated-spending
+thresholds. CSV export and additional subcategories can follow the MVP.

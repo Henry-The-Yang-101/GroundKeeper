@@ -12,6 +12,7 @@ need additional data. Nothing in this document is implemented yet.
 | Category breakdown | Where does my money go? Filter by account, category, merchant, or tag; inspect Uncategorized and pending review separately. | Ranked horizontal bars; stacked category bars over time. | Category policy and review states; A1. |
 | Period comparisons | How does this week/month compare with the previous one or last year? Show dollar and percentage change with equal-period comparisons. | Side-by-side bars; current/prior cumulative lines aligned by elapsed day. | Historical transactions; A1. |
 | Merchant and habit analysis | Which merchants cost the most? How often do I visit, what is the average purchase, and which days are expensive? | Ranked merchant bars; transaction-size distribution; optional calendar heatmap. | Normalized merchants and timestamps; A1/A2. |
+| Repeated merchant spending | How many separate purchases did I make at the same merchant, how much did they total, and is the frequency increasing? Optional user-defined notices. | Purchase-count/spend trends; transaction timeline; ranked frequency bars. | Reconciled purchases and confirmed merchant aliases; A1/A2. |
 | Budget limits | How much remains in my overall/category budget? Set weekly, monthly, yearly, or custom-period limits and optional alerts. | Actual-versus-limit bars; cumulative spend versus planned pace; history of under/over budget. | User budget definitions and transactions; A2. |
 | Recurring bills/subscriptions | What repeats, when might it recur, and did the price change? Suggest patterns for confirmation; allow manual schedules. | Upcoming-payment timeline; monthly recurring-cost bars; price-history line. | Merchant history plus confirmed cadence/amount; A2. |
 | Cash flow | What income came in and expenses went out? Separate ordinary spending from debt principal, cash movements, and internal transfers. | Income/outflow bars with observed surplus line; optional waterfall. | Reviewed income and outflow coverage; A3. |
@@ -23,6 +24,12 @@ need additional data. Nothing in this document is implemented yet.
 Prioritize ranked bars over a large 18-slice pie. A small optional composition
 chart may show selected categories plus a clearly labeled remainder. Graphs
 should answer a question and expose their source transactions.
+
+Repeated-spending detection counts canonical purchases, not raw capture events.
+Group confirmed merchant aliases; expose count, gross/refunded/net spend,
+average purchase, gaps between visits, and changes over comparable periods.
+Frequent café visits do not establish a subscription. Optional notices use
+user-defined frequency/spend thresholds and link to the underlying entries.
 
 ## Time, filtering, and chart interaction
 
@@ -103,6 +110,13 @@ should answer a question and expose their source transactions.
 
 ## Calculation and data-quality rules
 
+- Include manually entered and CSV-imported transactions alongside captures,
+  preserving source/batch provenance and conservative duplicate reconciliation.
+  Date-only imports must not imply a known purchase time. Import previews,
+  mappings, row errors, and undo behavior are scoped in `PLAN.md`.
+- User category/type corrections override AI suggestions and survive future
+  processing. Retain history, refresh affected summaries, and require an explicit
+  separate action before turning one correction into a merchant-wide rule.
 - Compute deterministic metrics locally from canonical reconciled records;
   classification providers do not calculate dashboard totals.
 - Exclude voided purchases, own-account transfers, and credit-card payments from
@@ -122,7 +136,7 @@ should answer a question and expose their source transactions.
 
 ## Storage additions and acceptance gates
 
-Retain the proposed SQLCipher transaction store. Add versioned budget definitions,
+Use the chosen SQLite/SQLCipher transaction store. Add versioned budget definitions,
 goal funding/allocation records, confirmed recurring schedules, account metadata,
 and dated balance snapshots; add FX observations only when conversion ships.
 Provider decisions, user corrections, and sources remain inspectable. Summary
@@ -130,7 +144,7 @@ caches are rebuildable and invalidate on underlying changes.
 
 | Phase | Completion evidence |
 | --- | --- |
-| A1: Spending graphs (MVP) | Time/category/merchant views and drill-down match SQL totals and reconciled fixtures; period boundaries, refunds, splits, duplicates, currencies, and uncertainty are verified. |
+| A1: Spending graphs (MVP) | Time/category/merchant/repeat-purchase views and drill-down match SQL totals for captures, manual entries, and CSV imports; category corrections, period boundaries, refunds, splits, duplicates, currencies, and uncertainty are verified. |
 | A2: Budgets and recurring costs | Period caps/history and warning thresholds behave correctly; suggested subscriptions are confirmed; projections are labeled. |
 | A3: Goals and cash flow | Explicit funding and withdrawals reconcile; transfers are not income/spending; incomplete income is visible; allocations do not double-count funds. |
 | A4: Net worth and debt | Manual/imported dated balances reconcile; liabilities, stale snapshots, inclusion, and currency handling are verified; forecasts require supplied terms. |
