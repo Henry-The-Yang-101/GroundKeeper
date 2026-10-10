@@ -90,3 +90,15 @@ struct UnavailableFeature: View {
         }
     }
 }
+
+struct Metric: View {
+    let label: String
+    let value: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(.title3.weight(.medium)).monospacedDigit()
+        }
+        .accessibilityElement(children: .combine)
+    }
+}

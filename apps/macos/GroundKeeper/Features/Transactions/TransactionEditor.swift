@@ -7,25 +7,39 @@ struct TransactionEditor: View {
     @State private var showingDiscardConfirmation = false
     @FocusState private var merchantFocused: Bool
     private let original: Transaction
+    private let originalAmountText: String
     let onSave: (Transaction) -> Void
 
     init(transaction: Transaction, onSave: @escaping (Transaction) -> Void) {
         original = transaction
         _draft = State(initialValue: transaction)
-        _amountText = State(initialValue: transaction.amount == 0 ? "" : transaction.amount.formatted(.number.grouping(.never)))
+        let initialAmount = transaction.amount == 0 ? "" : transaction.amount.formatted(.number.grouping(.never))
+        originalAmountText = initialAmount
+        _amountText = State(initialValue: initialAmount)
         self.onSave = onSave
     }
 
     private var amount: Decimal? {
-        try? Decimal(amountText, format: .number.locale(.current), lenient: false)
+        let input = amountText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = input.components(separatedBy: Locale.current.decimalSeparator ?? ".")
+        // Foundation's parser accepts numeric prefixes, even with lenient: false.
+        // Validate the entire field first; grouping separators are not input syntax.
+        guard (1...2).contains(parts.count), !parts[0].isEmpty,
+              parts.allSatisfy({ $0.unicodeScalars.allSatisfy(CharacterSet.decimalDigits.contains) }),
+              parts.count == 1 || parts[1].count <= 2 else { return nil }
+        return try? Decimal(input, format: .number.locale(.current), lenient: false)
     }
     private var valid: Bool {
         !draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && (amount ?? 0) > 0
+            && validAmount
             && !(draft.kind.usesCategory && draft.category == .other && draft.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
+    private var validAmount: Bool {
+        guard let amount else { return false }
+        return amount > 0 && amount.exponent >= -2
+    }
     private var isChanged: Bool {
-        draft != original || (amount ?? 0) != original.amount
+        draft != original || amountText != originalAmountText
     }
 
     var body: some View {
@@ -46,13 +60,13 @@ struct TransactionEditor: View {
                         .focused($merchantFocused)
                     HStack {
                         TextField("Amount", text: $amountText)
-                            .accessibilityHint("Enter a positive amount. Transaction type determines its purpose.")
+                            .accessibilityHint("Enter a positive amount without thousands separators. Transaction type determines its purpose.")
                         Picker("Currency", selection: $draft.currency) {
                             ForEach(["CAD", "USD", "EUR", "GBP"], id: \.self) { Text($0) }
                         }.labelsHidden().frame(width: 85)
                     }
-                    if !amountText.isEmpty && (amount ?? 0) <= 0 {
-                        Text("Enter an amount greater than zero.").font(.caption).foregroundStyle(.red)
+                    if !amountText.isEmpty && !validAmount {
+                        Text("Use a positive amount, up to two decimal places, and no thousands separators.").font(.caption).foregroundStyle(.red)
                     }
                     DatePicker("Date", selection: $draft.date, displayedComponents: .date)
                     Picker("Account", selection: $draft.account) {
@@ -60,6 +74,7 @@ struct TransactionEditor: View {
                         Text("Chequing").tag("Chequing")
                         Text("Cash").tag("Cash")
                     }
+                    LabeledContent("Source", value: draft.source)
                     Picker("Type", selection: $draft.kind) {
                         ForEach(TransactionKind.allCases) { Text($0.rawValue).tag($0) }
                     }
@@ -93,11 +108,14 @@ struct TransactionEditor: View {
                     .disabled(!valid)
             }.padding(20)
         }
-        .frame(width: 530, height: 650)
+        .frame(width: 530, height: 600)
         .interactiveDismissDisabled(isChanged)
         .onAppear { merchantFocused = true }
         .onChange(of: draft.category) { _, category in
             if category == .uncategorized { draft.needsReview = true }
+        }
+        .onChange(of: draft.kind) { _, kind in
+            if kind.usesCategory && draft.category == .uncategorized { draft.needsReview = true }
         }
         .confirmationDialog("Discard your changes?", isPresented: $showingDiscardConfirmation, titleVisibility: .visible) {
             Button("Discard changes", role: .destructive) { dismiss() }

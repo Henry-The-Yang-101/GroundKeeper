@@ -11,6 +11,7 @@ struct FullInsightsView: View {
                     ForEach(InsightsSection.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                .labelsHidden()
                 .frame(maxWidth: 380)
                 Spacer()
             }.padding(.horizontal, 28).padding(.vertical, 16)
@@ -27,7 +28,7 @@ struct FullInsightsView: View {
 private struct SpendingReportView: View {
     var body: some View {
         PageContent {
-            PageHeading(title: "Where it all goes.", subtitle: "October 1–10, 2026 · CAD · Illustrative report")
+            PageHeading(title: "Spending", subtitle: "October 1–10, 2026 · CAD · Illustrative report")
             HStack(spacing: 16) {
                 Surface { Metric(label: "Net spending", value: "$742.50") }
                 Surface { Metric(label: "Daily average", value: "$74.25") }

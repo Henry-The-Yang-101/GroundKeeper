@@ -5,10 +5,10 @@ struct PlanningView: View {
 
     var body: some View {
         PageContent {
-            PageHeading(title: "A little room to plan.", subtitle: "Budgets, goals, and balances in one place.")
+            PageHeading(title: "Planning", subtitle: "Budgets, goals, and balances in one place.")
             Picker("Planning view", selection: $selection) {
                 ForEach(PlanningSection.allCases) { Text($0.rawValue).tag($0) }
-            }.pickerStyle(.segmented).frame(maxWidth: 420)
+            }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 420)
             switch selection {
             case .budgets:
                 Surface {

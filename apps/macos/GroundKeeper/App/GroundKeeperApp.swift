@@ -24,6 +24,13 @@ struct GroundKeeperApp: App {
                 Button("Settings…") { workspace.selectedTab = .settings }
                     .keyboardShortcut(",")
             }
+            CommandGroup(after: .textEditing) {
+                Button("Find Transactions…") {
+                    workspace.showTransactions()
+                    workspace.focusTransactionSearch = true
+                }
+                .keyboardShortcut("f")
+            }
             CommandMenu("Navigate") {
                 ForEach(AppTab.allCases) { tab in
                     Button(tab.title) { workspace.selectedTab = tab }

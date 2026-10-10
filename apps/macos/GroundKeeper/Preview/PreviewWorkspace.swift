@@ -9,6 +9,7 @@ final class PreviewWorkspace {
     var insightsSection: InsightsSection = .spending
     var transactions = SampleData.transactions
     var reviewOnly = false
+    var focusTransactionSearch = false
     var editor: Transaction?
     var showingImportPreview = false
 
@@ -32,26 +33,5 @@ final class PreviewWorkspace {
     func reset() {
         transactions = SampleData.transactions
         reviewOnly = false
-    }
-}
-
-enum InsightsSection: String, CaseIterable, Identifiable {
-    case spending = "Spending"
-    case transactions = "Transactions"
-    case planning = "Planning"
-    var id: Self { self }
-}
-
-enum AppAppearance: String, CaseIterable, Identifiable {
-    case system = "System"
-    case light = "Light"
-    case dark = "Dark"
-    var id: Self { self }
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .system: nil
-        case .light: .light
-        case .dark: .dark
-        }
     }
 }

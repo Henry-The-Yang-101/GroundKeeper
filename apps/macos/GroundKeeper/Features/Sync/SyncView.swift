@@ -5,7 +5,7 @@ struct SyncView: View {
 
     var body: some View {
         PageContent {
-            PageHeading(title: "Everything arrives here.", subtitle: "Capture on your iPhone. Review on your Mac.")
+            PageHeading(title: "Sync", subtitle: "Capture on your iPhone. Review on your Mac.")
             Surface {
                 HStack(alignment: .top, spacing: 16) {
                     Image(systemName: "icloud").font(.system(size: 32)).foregroundStyle(AppStyle.accent)

@@ -3,6 +3,7 @@ import SwiftUI
 struct TransactionsView: View {
     @Environment(PreviewWorkspace.self) private var workspace
     @State private var search = ""
+    @FocusState private var searchFocused: Bool
     @State private var category: SpendingCategory?
     @State private var account = "All accounts"
     @State private var selectedID: Transaction.ID?
@@ -29,6 +30,7 @@ struct TransactionsView: View {
                 HStack(spacing: 12) {
                     TextField("Search transactions", text: $search)
                         .textFieldStyle(.roundedBorder)
+                        .focused($searchFocused)
                         .accessibilityLabel("Search transactions")
                     Toggle("Needs review", isOn: $workspace.reviewOnly)
                         .toggleStyle(.button)
@@ -51,8 +53,12 @@ struct TransactionsView: View {
             Divider()
             Table(filteredTransactions, selection: $selectedID, sortOrder: $sortOrder) {
                 TableColumn("Date", value: \Transaction.date) { transaction in
-                    Text(transaction.date, format: .dateTime.month(.abbreviated).day())
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(transaction.date, format: .dateTime.month(.abbreviated).day())
+                        Text(transaction.date, format: .dateTime.year()).font(.caption)
+                    }
+                    .foregroundStyle(.secondary)
+                    .accessibilityElement(children: .combine)
                 }.width(min: 65, ideal: 80, max: 95)
                 TableColumn("Transaction", value: \Transaction.merchant) { transaction in
                     VStack(alignment: .leading, spacing: 4) {
@@ -104,7 +110,7 @@ struct TransactionsView: View {
             }
             Divider()
             HStack {
-                Text("\(filteredTransactions.count) transactions").foregroundStyle(.secondary)
+                Text("\(filteredTransactions.count) \(filteredTransactions.count == 1 ? "transaction" : "transactions")").foregroundStyle(.secondary)
                 Spacer()
                 Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
                     .disabled(selectedTransaction == nil)
@@ -112,6 +118,12 @@ struct TransactionsView: View {
                     .disabled(selectedTransaction == nil)
                     .keyboardShortcut("e", modifiers: .command)
             }.padding(.horizontal, 20).padding(.vertical, 12)
+        }
+        .task(id: workspace.focusTransactionSearch) {
+            guard workspace.focusTransactionSearch else { return }
+            // Let the split-view navigation install its focus scope first.
+            do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+            focusSearchIfRequested()
         }
         .confirmationDialog("Delete this sample transaction?", isPresented: Binding(
             get: { deletionCandidate != nil },
@@ -126,6 +138,13 @@ struct TransactionsView: View {
             Button("Cancel", role: .cancel) { deletionCandidate = nil }
         } message: {
             Text("You can restore the original examples in Settings.")
+        }
+    }
+
+    private func focusSearchIfRequested() {
+        if workspace.focusTransactionSearch {
+            searchFocused = true
+            workspace.focusTransactionSearch = false
         }
     }
 

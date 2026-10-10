@@ -4,10 +4,11 @@ GroundKeeper is scoped to a **macOS app**, **Apple Shortcuts on iPhone**, and
 **iCloud Drive** for exchanging files. There is no planned native iPhone app.
 
 The repository contains a native SwiftUI macOS app, Python classification code,
-model-training experiments, and research. The app currently provides a resizable
-window with an icon sidebar for Home, Full insights, Sync, and Settings. Each
-page contains only its subtitle; capture, storage, and classification are not
-connected yet.
+model-training experiments, and research. The app provides a native sidebar,
+spending-chart previews, searchable and editable sample transactions, a CSV
+walkthrough, and appearance settings. Sample edits stay in memory; charts use
+fixed examples. Capture, storage, classification, and financial analysis are
+not connected yet.
 
 From the repository root, build and launch the app with:
 
