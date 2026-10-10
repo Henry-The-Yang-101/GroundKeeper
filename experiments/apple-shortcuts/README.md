@@ -61,5 +61,25 @@ are separate from completed examples; partial accuracy is compared with Qwen
 on precisely the same subset and is not presented as a full-set result.
 The labels are synthetic weak labels, so agreement is not real-world accuracy.
 
+## On-device comparison
+
+The user switched the live Shortcut to **On-Device** while retaining its name
+**GK Categorize Cloud**. Verify the actual model in the editor before each run;
+the name is not a reliable model indicator. The on-device comparison preserves
+the same prompt, including its world-knowledge sentence, but this model has no
+Broad World Knowledge toggle. No prompt repair or output correction is applied.
+
+```sh
+.venv/bin/python -m scripts.benchmark_apple_shortcuts \
+  --config experiments/apple-shortcuts/config-on-device.json \
+  --output .local/apple-shortcuts/on-device-v1 \
+  --limit 279 --timeout 60 --session-seconds 3600 --interval 1
+```
+
+This uses a separate manifest and response log. Invalid decision schemas receive
+zero accuracy credit even when their raw text is syntactically valid JSON.
+Before resuming the older Cloud benchmark, restore its original Cloud model and
+Broad World Knowledge settings; do not mix provider settings in one measurement.
+
 The Shortcut accepts input and returns output in a live CLI smoke test while
 the Mac is unlocked. Locked-screen/launchd behavior remains untested.

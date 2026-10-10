@@ -73,6 +73,7 @@ def summarize(rows, records, qwen):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=Path, default=CONFIG)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=279)
     parser.add_argument("--timeout", type=float, default=60)
@@ -81,7 +82,7 @@ def main():
     args = parser.parse_args()
     if args.limit < 1 or args.timeout <= 0 or args.session_seconds <= 0 or args.interval < 0:
         parser.error("Invalid benchmark bounds")
-    config = json.loads(CONFIG.read_text())
+    config = json.loads(args.config.read_text())
     rows = read_rows(VALIDATION)
     if any(r["split"] != "valid" for r in rows):
         raise ValueError("Only validation examples are permitted")
@@ -91,7 +92,7 @@ def main():
         raise ValueError("Qwen comparison IDs must match the complete validation set")
     args.output.mkdir(parents=True, exist_ok=True)
     manifest = {"validation_sha256": digest(VALIDATION), "qwen_predictions_sha256": digest(QWEN),
-                "config_sha256": digest(CONFIG), "config": config,
+                "config_sha256": digest(args.config), "config": config,
                 "prompt_sha256": digest(Path(config["prompt_path"])),
                 "validation_n": len(rows), "payload_fields": ["description", "direction", "currency"],
                 "gold_labels_sent": False}

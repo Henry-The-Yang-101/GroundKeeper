@@ -1,0 +1,10 @@
+{
+  "shortcut_name": "GK Categorize Cloud",
+  "model": "On-Device",
+  "broad_world_knowledge": false,
+  "follow_up": false,
+  "output": "Text",
+  "prompt_path": "experiments/apple-shortcuts/prompt.txt",
+  "configured_using": "User switched model; verified in Shortcuts UI via Computer Use",
+  "comparison_note": "Same prompt, input fields and validation rows as the earlier Cloud benchmark. On-Device has no Broad World Knowledge control. The unchanged prompt still mentions world knowledge, but no cloud knowledge toggle is available. The Shortcut retains its existing name despite using On-Device."
+}
