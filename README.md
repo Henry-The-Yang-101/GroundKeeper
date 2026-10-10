@@ -32,6 +32,7 @@ See the [macOS app guide](apps/macos/README.md) for Xcode setup.
 | [`TRANSACTION_CATEGORIES.md`](TRANSACTION_CATEGORIES.md) | Spending categories, transaction types, and review semantics |
 | [`M0_SCOPE.md`](M0_SCOPE.md) | Capture assumptions, measured feasibility, and remaining checks |
 | [`PLAN.md`](PLAN.md) | Current product plan, classifier choices, architecture proposals, and delivery gates |
+| [`ANALYSIS_FEATURES.md`](ANALYSIS_FEATURES.md) | Graphs, budgets, goals, cash flow, and net-worth roadmap with data requirements |
 
 `PLAN.md` reflects the current native macOS direction, with local Laya/Qwen,
 optional Apple Intelligence cloud via Shortcuts, and a weighted Council mode.

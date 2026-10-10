@@ -15,9 +15,13 @@ app reconciles, categorizes, and displays them.
   cloud inference is an optional user-selected mode, including within Council.
 - MVP: capture, import, reconciliation, suggestions, review, spending insights,
   encrypted storage, recovery/backups, and visible capture/import failures.
-- Budget limits, savings goals, net worth, receipt scanning, and direct bank
-  integrations are outside the established MVP. Statement import/manual entry
-  may be needed for completeness; their scope is undecided.
+- Analysis roadmap: weekly/monthly/yearly graphs, budget limits, recurring costs,
+  savings goals, cash flow, and net worth. Start with spending graphs; stage
+  features needing income, balances, or manual input as described in
+  [ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md).
+- Receipt scanning and direct bank integrations remain outside the established
+  MVP. Statement import/manual entry may be needed for completeness; their
+  exact scope is undecided.
 
 ## Capture and data flow
 
@@ -152,6 +156,14 @@ Navigation is Home, Full insights, Sync, and Settings. Proposed responsibilities
 Home overview/review; Full insights transactions and spending reports; Sync
 import health/manual sync; Settings providers, rules, card mappings, and security.
 Detailed page designs remain open.
+
+Graphs are a core feature. Home will summarize the selected period, budget/goal
+progress, and items needing attention. Full insights will provide interactive
+time-series, category/merchant breakdowns, and comparisons, with drill-down to
+the underlying transactions. Savings and net-worth graphs require explicit
+contribution or balance data; captured spending alone cannot establish them.
+See [ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md) for chart designs, data needs,
+calculation rules, and phased acceptance criteria.
 
 Keep views in `apps/macos/`, services in `groundkeeper/`, capture exports in
 `shortcuts/`, and experiments outside production app code. Define a versioned
