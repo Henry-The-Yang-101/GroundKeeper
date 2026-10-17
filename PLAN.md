@@ -1,6 +1,6 @@
 # GroundKeeper plan
 
-Updated: 2026-10-09. This is the current product direction. Architecture details
+Updated: 2026-10-17. This is the current product direction. Architecture details
 remain proposals until verified; historical evidence stays in `research/`,
 `experiments/`, and [M0_SCOPE.md](M0_SCOPE.md).
 
@@ -17,7 +17,8 @@ app reconciles, categorizes, and displays them.
   reconciliation, suggestions, user category corrections, review, spending
   graphs, encrypted storage, recovery/backups, and visible capture/import failures.
 - Analysis roadmap: weekly/monthly/yearly graphs, budget limits, recurring costs,
-  savings goals, cash flow, and net worth. Start with spending graphs; stage
+  savings goals, cash flow, net worth, and automatic insights, including repeated
+  merchant spending. Start with spending graphs and calculated insights; stage
   features needing income, balances, or manual input as described in
   [ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md).
 - Receipt scanning and direct bank integrations remain outside the established
@@ -209,6 +210,7 @@ budgets/recurring costs, goals/cash flow, and net worth/debt.
 | Time-based spending | Day/week/month/quarter/year/all-time/custom and rolling 7/30/90-day views; totals, average spend, purchase count, daily/weekly/monthly bars, and cumulative lines. |
 | Category breakdown | Ranked category bars, stacked trends, and account/category/merchant/tag filters; show Uncategorized and provisional suggestions explicitly. |
 | Period comparisons | Dollar/percentage changes, side-by-side bars, and cumulative lines; compare equal elapsed portions separately from complete periods. |
+| Automatic insights | Proactively surface meaningful spending patterns and changes using local calculations/rules, with optional AI explanations; evidence-linked summaries on Home and Full insights. |
 | Merchant and repeated spending | Identify frequently visited merchants; purchase counts, total/net spend, average ticket, typical gap between purchases, and frequency changes; ranked bars, spend/visit trends, and transaction timelines. |
 | Habits and distribution | Day-of-week patterns, largest purchases, transaction-size distributions, and an optional calendar heatmap, with drill-down to individual entries. |
 | Budget limits | Overall/category caps for weekly/monthly/yearly/custom periods, remaining allowance, overage, optional warnings, actual-versus-limit bars, spending pace, and budget history. |
@@ -219,6 +221,34 @@ budgets/recurring costs, goals/cash flow, and net worth/debt.
 | Debt | Outstanding balance trends, principal/interest bars where known, and optional payoff scenarios using supplied terms. |
 | Forecasts/unusual changes | Later: clearly labeled end-period estimates and unusual purchase/category/merchant changes, using sufficient history and explicit assumptions. |
 
+### Automatic insights
+
+- Generate insights automatically after unlocked import/reconciliation and when
+  corrections change the data; support on-demand refresh and weekly/monthly
+  recaps.
+- Start with deterministic SQL/statistical rules for repeated merchants,
+  category/merchant spend changes, purchase frequency, average purchase size,
+  and budget thresholds. Add recurring-price changes, goal progress, and other
+  findings as their required data becomes available.
+- Optional AI can summarize, prioritize, or suggest patterns to verify. All
+  amounts, counts, comparisons, and supporting evidence must come from local
+  calculations; validate any AI-proposed finding before displaying it as fact.
+  The feature remains useful without AI or when a provider is unavailable.
+- Select text-capable local/cloud providers separately from transaction
+  classification. Laya's decision output does not establish narrative-generation
+  capability. Cloud insight generation requires an explicit user choice and
+  minimized inputs; permission to categorize one transaction does not authorize
+  sending the user's financial history to a cloud model.
+- Each insight shows its period, comparison baseline, freshness, supporting
+  transactions/chart, and relevant coverage/review caveats. Missing history,
+  unresolved duplicates, or category uncertainty must not create definite claims.
+- Rank material findings, suppress repeats, and support dismiss/snooze and
+  configurable sensitivity. Notifications are opt-in; avoid repeated nudges for
+  the same unchanged pattern. Findings do not automatically edit transactions.
+- Store insight type, evidence references, calculated metrics, data/rule/model
+  versions, and dismissal state. Invalidate or replace stale findings after
+  edits/import undo rather than continuing to display outdated conclusions.
+
 ### Repeated merchant spending
 
 - Group confirmed merchant identities and carefully reviewed aliases; do not
@@ -228,11 +258,17 @@ budgets/recurring costs, goals/cash flow, and net worth/debt.
 - Surface concrete summaries such as “8 purchases at this café this month,
   totaling $64,” with purchase-count and spend comparisons to the prior period.
   Track refunds separately and show net spend as well as gross purchases.
+- Detect frequent merchants automatically across supported weekly/monthly and
+  custom ranges. Explain observed changes in purchase count versus average
+  purchase size when the data supports that breakdown; do not infer motivation
+  or item-level price inflation from a changing average receipt.
 - Distinguish frequent discretionary purchases from scheduled subscriptions:
   repeated visits alone do not establish a recurring bill or a future payment.
 - Let users choose merchant-specific frequency/spend thresholds and periods;
-  make notices optional and link each finding to its transactions. Initial
-  detection uses transparent counts/rules; more advanced patterns need testing.
+  provide tested defaults so setup is optional. Show findings on Home and Full
+  insights with spend/frequency graphs and transaction drill-down. Notices are
+  optional; initial detection uses transparent counts/rules, while more advanced
+  patterns need testing.
 
 ### Shared analysis rules
 
@@ -297,10 +333,11 @@ The app shell and model experiments exist; the end-to-end product is not connect
 | M3: Reconcile and user input | Manual entries, CSV preview/mapping/import/undo, duplicate handling, and sticky category corrections work; arrival-order/repeated-purchase checks pass; a real week reconciled against the statement with gaps explained. |
 | M4: Encryption/recovery | Locked staging/import, wrong-key rejection, password recovery, lost-keyslot recovery, and backup restoration work end to end. |
 | M5: Unattended operation | Three unattended nights, including a missed 03:00 run, preserve events; retries, provider failures, quarantine, and safe logs verified. |
-| M6: App MVP | Two weeks of capture, manual entry, CSV import, category correction, review, spending/repeated-merchant graphs, sync, and settings without the CLI; locking, failure indicators, and large-history checks work. |
+| M6: App MVP | Two weeks of capture, manual entry, CSV import, category correction, review, spending/repeated-merchant graphs, automatic calculated insights, sync, and settings without the CLI; insight evidence, refresh/dismissal, locking, failure indicators, and large-history checks work. Optional AI explanations must match calculated facts and respect provider/privacy choices. |
 
 Open decisions: final checkpoints/provider default; Council weights, thresholds,
 and partial-result behavior; Apple cloud variant/Shortcut setup; app-worker
 packaging; runtime paths/retention; auto-lock duration; supported CSV mappings;
 budget rollover; goal funding; balance entry/import formats; repeated-spending
-thresholds. CSV export and additional subcategories can follow the MVP.
+thresholds; insight sensitivity, ranking, and text-generation provider. CSV
+export and additional subcategories can follow the MVP.

@@ -1,6 +1,6 @@
 # GroundKeeper analysis features
 
-Scope proposal, 2026-10-09. Graphs are part of the product; the roadmap below
+Scope proposal, updated 2026-10-17. Graphs are part of the product; the roadmap below
 separates spending analysis supported by captures from planning features that
 need additional data. Nothing in this document is implemented yet.
 
@@ -11,6 +11,7 @@ need additional data. Nothing in this document is implemented yet.
 | Spending over time | What did I spend today, this week/month/year, or in a custom period? Show totals, daily average, purchase count, and largest purchases. | Daily/weekly/monthly bars; cumulative spending line. | Reconciled transactions; A1. |
 | Category breakdown | Where does my money go? Filter by account, category, merchant, or tag; inspect Uncategorized and pending review separately. | Ranked horizontal bars; stacked category bars over time. | Category policy and review states; A1. |
 | Period comparisons | How does this week/month compare with the previous one or last year? Show dollar and percentage change with equal-period comparisons. | Side-by-side bars; current/prior cumulative lines aligned by elapsed day. | Historical transactions; A1. |
+| Automatic insights | Automatically surface meaningful patterns using local calculations/rules, optionally summarized by AI; refresh after data changes and support dismiss/snooze. | Evidence-linked summary with supporting trend/comparison and transaction drill-down. | Reconciled data, coverage checks, and tested thresholds; A1 baseline, optional AI after validation. |
 | Merchant and habit analysis | Which merchants cost the most? How often do I visit, what is the average purchase, and which days are expensive? | Ranked merchant bars; transaction-size distribution; optional calendar heatmap. | Normalized merchants and timestamps; A1/A2. |
 | Repeated merchant spending | How many separate purchases did I make at the same merchant, how much did they total, and is the frequency increasing? Optional user-defined notices. | Purchase-count/spend trends; transaction timeline; ranked frequency bars. | Reconciled purchases and confirmed merchant aliases; A1/A2. |
 | Budget limits | How much remains in my overall/category budget? Set weekly, monthly, yearly, or custom-period limits and optional alerts. | Actual-versus-limit bars; cumulative spend versus planned pace; history of under/over budget. | User budget definitions and transactions; A2. |
@@ -30,6 +31,31 @@ Group confirmed merchant aliases; expose count, gross/refunded/net spend,
 average purchase, gaps between visits, and changes over comparable periods.
 Frequent café visits do not establish a subscription. Optional notices use
 user-defined frequency/spend thresholds and link to the underlying entries.
+Provide tested defaults for automatic discovery without requiring setup; compare
+visit frequency and average purchase size over equivalent periods without
+inferring purchase contents or motivation.
+
+## Automatic insight generation
+
+- Run local calculations after unlocked import/reconciliation and relevant edits;
+  expose on-demand refresh and weekly/monthly recaps in Home/Full insights.
+  Initial detectors cover repeated merchants, spending/frequency changes, and
+  budget thresholds; later detectors depend on confirmed schedules and goals.
+- Optional text-capable AI summarizes/prioritizes verified facts or proposes
+  patterns for local validation. Arithmetic and evidence remain deterministic;
+  Laya classification alone is not a narrative-generation interface. AI outages
+  must not prevent displaying calculated insights.
+- Record the period/baseline, supporting transactions, freshness, rule/model
+  version, and data-quality caveats. Recompute after corrections or import undo.
+  Insufficient history and unresolved data can suppress a finding or mark it
+  provisional. Deduplicate notices and retain dismiss/snooze preferences.
+- Choose insight-generation providers explicitly, independently of category
+  classification. Cloud summaries use minimized inputs only with the user's
+  cloud-insights choice; do not send full financial history implicitly.
+- Acceptance: displayed counts/amounts match SQL, repeat captures count once,
+  comparisons use equivalent periods, corrections invalidate stale findings,
+  dismissals avoid repeated nudges, and AI summaries introduce no unsupported
+  numeric or causal claims. Notifications are opt-in.
 
 ## Time, filtering, and chart interaction
 
