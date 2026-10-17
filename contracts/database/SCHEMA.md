@@ -40,8 +40,10 @@ double-entry ledger or investment-lot accounting system.
 
 ## Conventions and connection setup
 
-- IDs are app-generated opaque UUID text, except stable seeded taxonomy codes.
-  Generate phone event UUIDs once per capture and preserve them through retries.
+- Internal IDs are app-generated opaque UUID text, except stable taxonomy codes.
+  Source event IDs are opaque text: the current Shortcut hashes a timestamp and
+  random values, rather than emitting UUIDs. Preserve those IDs unchanged on
+  retries; never require UUID syntax or use Wallet transaction display text as ID.
   Display names are never identity keys. New category IDs need not equal codes.
 - All `*_at_ms`, `*_until_ms`, `*_from_ms`, `as_of_ms` timestamps are integer UTC
   Unix milliseconds. `*_on` fields are validated `YYYY-MM-DD` civil dates.
@@ -105,13 +107,14 @@ double-entry ledger or investment-lot accounting system.
 
 The iPhone capture Shortcut attempts **one current-location sample at capture
 time**, puts it into the versioned iCloud event, and records location status.
-Suggested event field (this extends the planned envelope; it is not a claim that
-the capture Shortcut is already implemented):
+Suggested event field (location is a planned extension to the capture Shortcut;
+the current sample-tested version-2 envelopes do not yet supply it):
 
 ```json
 {
-  "event_id": "<stable UUID>",
-  "source": "apple_wallet",
+  "schema_version": 2,
+  "event_id": "<opaque stable event ID>",
+  "source": "wallet_transaction",
   "captured_at": "2026-10-17T15:42:10-04:00",
   "location_status": "available",
   "location": {
@@ -204,6 +207,58 @@ or receive an explicit mapped broader AI suggestion. Existing experimental
 
 ## Sources, duplicate delivery and reconciliation
 
+### Version-2 Shortcut payload mapping
+
+The chat **Design Apple Pay notification logic** records sample-tested branches
+in GroundKeeper Capture Transaction: direct Wallet transaction automation and
+banking notification automation. Real iPhone-trigger/locked-phone behavior is
+not established by those sample runs. No production importer is implemented by
+this schema change.
+
+Keep both envelope shapes in the existing `raw_event_payloads.payload_json`.
+The `capture_event_details` view exposes their fields without storing another
+copy or adding source-specific tables. It returns one row per event; missing
+fields or a payload removed by retention appear as NULL. Query by event ID for
+details; reconciliation/reporting uses the existing indexed typed columns.
+
+| Capture JSON | Storage / meaning |
+| --- | --- |
+| `schema_version: 2`, `event_id`, `captured_at` | `raw_events.schema_version`, opaque `source_event_id`, parsed capture timestamp/offset. These metadata columns are indexed/validated independently of retained payload JSON. |
+| `source: wallet_transaction` | Resolve a configured `sources` row with `kind=apple_wallet`; the wire name remains unchanged in the raw envelope/view. |
+| `source: bank_notification` | Resolve a configured bank notification source. |
+| `app`, `input_shape` | Preserve in JSON; expose as `app_name`/`input_shape` in the view. `app` is a supplied label, not a verified bundle identifier or unique device ID. |
+| Wallet `card_or_pass` | Raw `wallet_card_or_pass_text` in the view; parser retains the supplied label in `event_observations.instrument_text`, with nullable `instrument_id`/`account_id` until confirmed mapping. |
+| Wallet `merchant` | Raw `wallet_merchant_text`; parsed `event_observations.merchant_text`, then optional canonical `transactions.merchant_id`. |
+| Wallet `amount` | Preserve currency-bearing text as `wallet_amount_text`; parse exact decimal to signed integer `amount_minor` + known `currency` in observations. Do not parse money through float or assume CAD from `$`. |
+| Wallet `name`, `transaction` | Raw `wallet_name`/`wallet_transaction_text`; keep as source evidence/display text. A parser may derive a description, but neither is a bank ID or guaranteed purchase timestamp. |
+| Bank `title`, `subtitle`, `body` | Raw `notification_title`, `notification_subtitle`, `notification_body` in the view; parse only observed bank formats into the existing observation columns. Preserve quotes, newlines, empty strings and missing fields. |
+| `is_test: true` | Set `raw_events.is_test=1`; retain for diagnostics. SQL rejects linking these samples to transactions. The importer must copy/validate this flag before reconciliation; tests must never enter real totals. |
+
+Bank title text and Wallet Card or Pass text can identify the same card using
+different labels. Preserve each observation's `instrument_text`, use an explicit
+confirmed source mapping, and let both point to the same `payment_instruments`
+row. A label is not a guaranteed card number or globally unique identity. Do not
+create an account/instrument just because a new display label appears. If a
+label is used as a lookup key in `source_account_mappings.external_account_key`,
+namespace it as a label, scope it by source, and review ambiguity/label changes.
+
+The canonical transaction already has `instrument_id`, account, merchant,
+amount/currency, timestamp and source-event links. Copying all Wallet and bank
+fields onto it would create conflicting duplicates. Use its field provenance
+and linked observations to explain which source supplied the chosen values.
+Missing or ambiguous amount/currency/account remains a partial observation in
+review; do not invent a numeric transaction to satisfy NOT NULL columns. Direct
+Wallet capture is evidence of a tap, not proof of posted bank settlement.
+
+Older `schema_version=1`/`input_shape=separate_fields` bank envelopes remain raw
+evidence; dispatch by envelope version/source/shape in the future importer.
+Absent `is_test` maps to false and absent location fields to `not_requested`.
+Changing this design fixture does not migrate any existing database; an installed
+vault would need a versioned additive migration for `is_test`, `instrument_text`,
+the view and guards.
+
+### Identity and reconciliation
+
 The transaction has a **set of sources**, exposed by
 `transaction_source_summary`, rather than a single `source='wallet'` field that
 loses the later bank/CSV provenance. Source instances retain channel, device and
@@ -214,8 +269,8 @@ Use validity intervals for card replacements; don't collect full PANs.
 Three different problems have different keys:
 
 1. **Delivery replay:** `(source_id, source_event_id)` uniquely identifies one
-   capture. The same UUID and hash is an idempotent replay; store/reuse its
-   receipt without a new purchase. The same UUID with different content is an
+   capture. The same event ID and hash is an idempotent replay; store/reuse its
+   receipt without a new purchase. The same event ID with different content is an
    identity collision: quarantine and review, never overwrite original evidence.
    Content hashes detect transport changes; identical text/amount/hash under two
    different capture IDs can represent two legitimate purchases and is not unique.
@@ -410,7 +465,7 @@ category hierarchy cycles and protection against replacing confirmed selections.
 
 Services must additionally enforce the following in atomic operations:
 
-- Full JSON/date/UUID/hash validation and event-ID/content collision handling;
+- Full JSON/date/internal-UUID/opaque-event-ID/hash validation and collision handling;
   immutable evidence/policy/model/rule definitions and terminal classifier runs.
 - Exact source/account/instrument mapping and nonoverlapping validity windows;
   account currency and instrument ownership; amount direction/type consistency;

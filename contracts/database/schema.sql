@@ -156,6 +156,7 @@ CREATE TABLE raw_events (
   event_kind TEXT NOT NULL CHECK(event_kind IN ('transaction','heartbeat','status')),
   captured_at_ms INTEGER NOT NULL, captured_offset_minutes INTEGER NOT NULL CHECK(captured_offset_minutes BETWEEN -840 AND 840),
   received_at_ms INTEGER NOT NULL, payload_sha256 TEXT NOT NULL,
+  is_test INTEGER NOT NULL DEFAULT 0 CHECK(is_test IN (0,1)),
   external_account_key TEXT,
   location_status TEXT NOT NULL DEFAULT 'not_requested'
     CHECK(location_status IN ('not_requested','available','denied','unavailable','timeout')),
@@ -187,6 +188,7 @@ CREATE TABLE event_observations (
   utc_offset_minutes INTEGER CHECK(utc_offset_minutes BETWEEN -840 AND 840), timezone_id TEXT,
   posted_on TEXT, merchant_text TEXT, description TEXT,
   account_id TEXT REFERENCES accounts(id), instrument_id TEXT REFERENCES payment_instruments(id),
+  instrument_text TEXT, -- Supplied card/pass label; retain even before account mapping.
   lifecycle TEXT CHECK(lifecycle IN ('pending','posted','declined','voided','unknown')),
   external_record_id TEXT, error_code TEXT,
   CHECK((original_amount_minor IS NULL)=(original_currency IS NULL)),
@@ -303,6 +305,14 @@ CREATE TABLE transaction_event_links (
 ) STRICT;
 CREATE UNIQUE INDEX one_current_transaction_per_event ON transaction_event_links(event_id) WHERE unlinked_at_ms IS NULL;
 CREATE INDEX transaction_sources ON transaction_event_links(transaction_id,event_id) WHERE unlinked_at_ms IS NULL;
+CREATE TRIGGER reject_test_capture_link BEFORE INSERT ON transaction_event_links
+WHEN (SELECT is_test FROM raw_events WHERE id=NEW.event_id)=1 BEGIN
+  SELECT RAISE(ABORT,'test captures cannot become transaction evidence');
+END;
+CREATE TRIGGER reject_test_capture_relink BEFORE UPDATE OF event_id ON transaction_event_links
+WHEN (SELECT is_test FROM raw_events WHERE id=NEW.event_id)=1 BEGIN
+  SELECT RAISE(ABORT,'test captures cannot become transaction evidence');
+END;
 CREATE TABLE external_transaction_refs (
   id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(id),
   external_account_key TEXT NOT NULL, namespace TEXT NOT NULL, external_record_id TEXT NOT NULL,
@@ -561,6 +571,25 @@ CREATE INDEX goal_movements_goal ON goal_movements(goal_id,occurred_on);
 CREATE INDEX recurrence_transaction ON recurring_occurrences(transaction_id);
 CREATE INDEX insight_evidence_transaction ON insight_evidence(transaction_id);
 CREATE INDEX current_assignments ON transaction_parts(current_assignment_id);
+
+-- Read-through projection: preserve each source field once in the raw payload.
+-- Missing/expired payloads produce NULL fields; no Wallet/notification tables.
+CREATE VIEW capture_event_details AS
+SELECT e.id AS event_id,e.source_id,s.kind AS source_kind,e.schema_version,
+  e.captured_at_ms,e.captured_offset_minutes,e.received_at_ms,e.is_test,
+  json_extract(p.payload_json,'$.source') AS payload_source,
+  json_extract(p.payload_json,'$.input_shape') AS input_shape,
+  json_extract(p.payload_json,'$.app') AS app_name,
+  json_extract(p.payload_json,'$.title') AS notification_title,
+  json_extract(p.payload_json,'$.subtitle') AS notification_subtitle,
+  json_extract(p.payload_json,'$.body') AS notification_body,
+  json_extract(p.payload_json,'$.transaction') AS wallet_transaction_text,
+  json_extract(p.payload_json,'$.card_or_pass') AS wallet_card_or_pass_text,
+  json_extract(p.payload_json,'$.merchant') AS wallet_merchant_text,
+  json_extract(p.payload_json,'$.amount') AS wallet_amount_text,
+  json_extract(p.payload_json,'$.name') AS wallet_name
+FROM raw_events e JOIN sources s ON s.id=e.source_id
+LEFT JOIN raw_event_payloads p ON p.event_id=e.id;
 
 CREATE VIEW current_transaction_parts AS
 SELECT t.id AS transaction_id,t.account_id,t.merchant_id,t.currency,t.occurred_on,t.occurred_at_ms,

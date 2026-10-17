@@ -1,5 +1,6 @@
 """Design-contract checks with fictional SQLite data; no app or model invocation."""
 from pathlib import Path
+import json
 import sqlite3
 
 import pytest
@@ -317,3 +318,67 @@ def test_transaction_and_part_amounts_retain_account_currency_and_original_fx(db
     assert db.execute('SELECT currency,net_spending_minor FROM spending_entries').fetchone() == ('CAD',1700)
     with pytest.raises(sqlite3.IntegrityError):
         transaction(db, 'bad-fx', original_amount_minor=-100)
+
+
+@pytest.mark.parametrize('source,payload,expected', [
+    ('wallet', dict(source='wallet_transaction', app='Wallet', input_shape='wallet_transaction_fields',
+                    transaction='Sample tap, not a unique ID', card_or_pass='Sample Visa',
+                    merchant='Sample Cafe', amount='CAD 1.23', name='Sample payment'),
+     ('wallet_transaction','wallet_transaction_fields','Sample Visa','Sample Cafe','CAD 1.23',
+      'Sample payment','Sample tap, not a unique ID',None,None,None)),
+    ('bank', dict(source='bank_notification', app='Sample Bank', input_shape='notification_fields',
+                  title='Sample card', subtitle='', body='$1.23 — "sample"\nsecond line'),
+     ('bank_notification','notification_fields',None,None,None,None,None,
+      'Sample card','','$1.23 — "sample"\nsecond line')),
+])
+def test_v2_capture_shapes_are_preserved_once_and_exposed_in_view(db, source, payload, expected):
+    # Fictional version-2 envelope; no production importer or live Shortcut is run.
+    payload.update(schema_version=2, event_id='a'*64, captured_at='2026-10-17T15:42:10.000-04:00')
+    put(db, 'raw_events', id='capture', source_id=source, source_event_id=payload['event_id'],
+        schema_version=2, event_kind='transaction', captured_at_ms=1000,
+        captured_offset_minutes=-240, received_at_ms=2000, payload_sha256='fixture')
+    encoded = json.dumps(payload, ensure_ascii=False)
+    put(db, 'raw_event_payloads', event_id='capture', payload_json=encoded)
+    row = db.execute('''SELECT payload_source,input_shape,wallet_card_or_pass_text,wallet_merchant_text,
+        wallet_amount_text,wallet_name,wallet_transaction_text,notification_title,notification_subtitle,
+        notification_body FROM capture_event_details WHERE event_id='capture' ''').fetchone()
+    assert row == expected
+    assert db.execute('SELECT payload_json FROM raw_event_payloads').fetchone() == (encoded,)
+    assert db.execute('SELECT source_kind FROM capture_event_details').fetchone() == (
+        'apple_wallet' if source == 'wallet' else 'bank_notification',)
+
+
+def test_unknown_card_label_survives_until_mapping_and_sources_share_instrument(db):
+    event(db, 'wallet-label')
+    event(db, 'bank-label', 'bank')
+    db.execute("UPDATE event_observations SET instrument_text='Example Visa' WHERE id='wallet-labelo'")
+    assert db.execute("SELECT instrument_text,instrument_id FROM event_observations WHERE id='wallet-labelo'").fetchone() == (
+        'Example Visa', None)
+    put(db, 'payment_instruments', id='instrument', account_id='card', name='Example Visa', kind='wallet_card')
+    db.execute("UPDATE event_observations SET instrument_id='instrument',account_id='card' WHERE id='wallet-labelo'")
+    db.execute("UPDATE event_observations SET instrument_text='Example card, bank label',instrument_id='instrument',account_id='card' WHERE id='bank-labelo'")
+    transaction(db, instrument_id='instrument')
+    link(db, 'wallet-link', 'wallet-label', 't1')
+    link(db, 'bank-link', 'bank-label', 't1')
+    assert db.execute('SELECT sum(net_spending_minor) FROM spending_entries').fetchone() == (1250,)
+    assert db.execute('SELECT last_four FROM payment_instruments').fetchone() == (None,)
+
+
+def test_test_capture_cannot_be_linked_or_swapped_into_transaction_evidence(db):
+    transaction(db)
+    event(db, 'sample')
+    db.execute("UPDATE raw_events SET is_test=1 WHERE id='sample'")
+    with pytest.raises(sqlite3.IntegrityError, match='test captures'):
+        link(db, 'test-link', 'sample', 't1')
+    event(db, 'real')
+    link(db, 'real-link', 'real', 't1')
+    with pytest.raises(sqlite3.IntegrityError, match='test captures'):
+        db.execute("UPDATE transaction_event_links SET event_id='sample',observation_id='sampleo' WHERE id='real-link'")
+
+
+def test_capture_view_preserves_event_when_payload_expires_or_old_fields_missing(db):
+    event(db, 'old')
+    put(db, 'raw_event_payloads', event_id='old', payload_json='{"source":"bank_notification","input_shape":"separate_fields"}')
+    assert db.execute("SELECT wallet_card_or_pass_text,notification_body,is_test FROM capture_event_details WHERE event_id='old'").fetchone() == (None,None,0)
+    db.execute("DELETE FROM raw_event_payloads WHERE event_id='old'")
+    assert db.execute("SELECT input_shape,wallet_card_or_pass_text FROM capture_event_details WHERE event_id='old'").fetchone() == (None,None)

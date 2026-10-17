@@ -36,6 +36,19 @@ iPhone Wallet / CIBC alerts → GK Capture Shortcut → iCloud event queue
 - Save raw fields as immutable, versioned JSON using Shortcuts Dictionary
   serialization. Include a stable event ID, source, capture timestamp with
   offset, and available Wallet/bank payload fields. Keep phone capture simple.
+- The capture Shortcut now writes version-2 envelopes with two branches:
+  `source=wallet_transaction`, `input_shape=wallet_transaction_fields` carries
+  `transaction`, `card_or_pass`, `merchant`, `amount`, `name`, and `app`;
+  `source=bank_notification`, `input_shape=notification_fields` carries `title`,
+  `subtitle`, `body`, and `app`. Use direct Wallet transaction automation.
+  The referenced Shortcut work verified sample branch output; real iPhone tap
+  and locked-phone capture still need verification. Location remains planned.
+- Map wire source `wallet_transaction` to database source kind `apple_wallet`.
+  Store the original envelope once; parse amount/currency/merchant/card hints
+  into observations and resolve card labels to instruments only when supported.
+  Card or Pass is a supplied label, not guaranteed last-four/full-card data;
+  Wallet `transaction` text is not a unique purchase ID. Preserve opaque hashed
+  event IDs unchanged. Mark `is_test` samples and exclude them from transactions.
 - At transaction capture, also attempt to obtain the phone's current location
   and include an optional geotag in the iCloud event: latitude, longitude,
   measurement timestamp and horizontal accuracy when available. Record whether
