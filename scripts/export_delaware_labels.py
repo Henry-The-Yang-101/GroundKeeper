@@ -325,6 +325,18 @@ def report():
         text += f'- [{purpose}]({base}/{filename})\n'
     text += ('\nThe new real test is `test.canonical.jsonl`, read-only and absent from trainer-facing exports. '
              'Keep it outside training; obtain independent human review before using it as a gold accuracy benchmark.\n\n')
+    text += '## Verification\n\n'
+    for provider in ('qwen','laya'):
+        check_path = ROOT / 'verification' / f'{provider}.json'
+        if check_path.exists():
+            check = json.loads(check_path.read_text())
+            assert check['manifest_sha256'] == sha(prepared / 'manifest.json') and check['passed']
+            text += (f"- {provider}: export targets match canonical records; maximum sequence "
+                     f"{check['maximum_sequence_tokens']}/512 tokens, no truncation. "
+                     f"[Check result]({check_path.resolve()}).\n")
+        else:
+            text += f'- {provider}: tokenizer verification pending.\n'
+    text += '\nNo inference or training was used in these checks; the new sealed test was not parsed.\n\n'
     text += '## Coverage\n\n| Category | Retained rows |\n|---|---:|\n'
     for category, n in sorted(data['category_counts'].items(), key=lambda x: str(x[0])):
         text += f'| {category} | {n:,} |\n'
