@@ -1,0 +1,390 @@
+{
+  "reviewed_on": "2026-10-17",
+  "n": 100,
+  "labels": "one_Codex_blind_row_by_row_AI_reviewer_not_human_ground_truth",
+  "human_confirmed_labels": 0,
+  "reference_frozen_before_inference": true,
+  "manifest": {
+    "dataset": "https://data.delaware.gov/resource/nurt-5rqw.json",
+    "metadata": "https://data.delaware.gov/api/views/nurt-5rqw.json",
+    "seed": 20261017,
+    "n": 100,
+    "population_rows": 2251316,
+    "rows_updated_at": 1791729886,
+    "sampling": "uniform transaction rows without replacement; stable :id order; full source history",
+    "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+    "direction": "unknown",
+    "currency": null,
+    "input_scope": "merchant text only; no amount, MCC, agency, date or source label supplied",
+    "reference_status": "frozen_before_model_inference",
+    "human_labels": 0,
+    "training_allowed": false,
+    "existing_sealed_test_read": false,
+    "unique_descriptions": 96,
+    "elapsed_seconds": 22.12496487500175,
+    "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+    "reference_frozen_unix": 1792259639.077249,
+    "policy_sha256": "cd19533eb25ca064d36b2a842864c50b22cf2b1768cba7b70df2557a9e4cdc36",
+    "policy_additions_sha256": "cba01ae40f9c1ffd48207256a1257f32c98bd07e3941531e706d59634a4c3b2a"
+  },
+  "paired_category_results": {
+    "both_correct": 29,
+    "qwen_only_correct": 25,
+    "laya_only_correct": 10,
+    "both_wrong": 36
+  },
+  "models": {
+    "qwen": {
+      "n": 100,
+      "category_accuracy": 0.54,
+      "type_accuracy": 0.68,
+      "review_accuracy": 0.53,
+      "joint_accuracy": 0.29,
+      "macro_f1_supported_categories": 0.5380004738213694,
+      "category_accuracy_wilson95": [
+        0.44264860323368227,
+        0.6343919169097589
+      ],
+      "invalid_outputs": 0,
+      "mean_wall_seconds": 0.8767749545900005,
+      "per_category": {
+        "groceries": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 1
+        },
+        "dining": {
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334,
+          "f1": 0.8333333333333334,
+          "support": 12
+        },
+        "local_transport": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 2
+        },
+        "vehicle": {
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334,
+          "f1": 0.8333333333333334,
+          "support": 6
+        },
+        "housing": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "utilities": {
+          "precision": 0.625,
+          "recall": 0.7142857142857143,
+          "f1": 0.6666666666666666,
+          "support": 7
+        },
+        "shopping": {
+          "precision": 0.875,
+          "recall": 0.42424242424242425,
+          "f1": 0.5714285714285714,
+          "support": 33
+        },
+        "medical": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "personal_care": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "fitness": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "entertainment": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        },
+        "software": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8,
+          "support": 3
+        },
+        "education": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        },
+        "travel": {
+          "precision": 0.3333333333333333,
+          "recall": 0.3333333333333333,
+          "f1": 0.3333333333333333,
+          "support": 3
+        },
+        "insurance": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "financial": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "taxes": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "gifts": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "other": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 7
+        },
+        "uncategorized": {
+          "precision": 0.3111111111111111,
+          "recall": 0.6363636363636364,
+          "f1": 0.417910447761194,
+          "support": 22
+        },
+        "__none__": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        }
+      },
+      "run": {
+        "model": "qwen",
+        "n": 100,
+        "started_unix": 1792259648.038251,
+        "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+        "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+        "checkpoint": ".local/finetune/v2/training/candidate-0/adapters/0002080_adapters.safetensors",
+        "checkpoint_sha256": "4a46b314239dd384b6d0f57bd6e445a8d4087670d48a87e9ca2e2715adec1e78",
+        "base_path": ".local/finetune/models/qwen35-text",
+        "base_weight_hashes": {
+          "model.safetensors": "d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477"
+        },
+        "prompt_version": "v2",
+        "decoder": "constrained",
+        "step": 2080,
+        "completed": 100,
+        "elapsed_seconds": 87.68486370799656,
+        "predictions_sha256": "9211adf4660097aaa52ae9af232b9493295a279575a55cb226bd98bc9450554f",
+        "finished_unix": 1792259739.17705
+      },
+      "unique_description_metrics": {
+        "n": 96,
+        "category_accuracy": 0.5520833333333334,
+        "joint_accuracy": 0.2916666666666667,
+        "macro_f1_supported_categories": 0.5416592789598108
+      },
+      "high_certainty_reference_metrics": {
+        "n": 63,
+        "category_accuracy": 0.6984126984126984,
+        "joint_accuracy": 0.42857142857142855,
+        "macro_f1_supported_categories": 0.6476190476190478
+      }
+    },
+    "laya": {
+      "n": 100,
+      "category_accuracy": 0.39,
+      "type_accuracy": 0.91,
+      "review_accuracy": 0.61,
+      "joint_accuracy": 0.33,
+      "macro_f1_supported_categories": 0.30488618223437963,
+      "category_accuracy_wilson95": [
+        0.3001687400639441,
+        0.4879698295415926
+      ],
+      "invalid_outputs": 0,
+      "mean_wall_seconds": 0.17947476123001252,
+      "per_category": {
+        "groceries": {
+          "precision": 0.14285714285714285,
+          "recall": 1.0,
+          "f1": 0.25,
+          "support": 1
+        },
+        "dining": {
+          "precision": 0.5,
+          "recall": 0.4166666666666667,
+          "f1": 0.45454545454545453,
+          "support": 12
+        },
+        "local_transport": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 2
+        },
+        "vehicle": {
+          "precision": 0.5,
+          "recall": 0.16666666666666666,
+          "f1": 0.25,
+          "support": 6
+        },
+        "housing": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "utilities": {
+          "precision": 0.3333333333333333,
+          "recall": 0.14285714285714285,
+          "f1": 0.2,
+          "support": 7
+        },
+        "shopping": {
+          "precision": 0.7777777777777778,
+          "recall": 0.42424242424242425,
+          "f1": 0.5490196078431373,
+          "support": 33
+        },
+        "medical": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "personal_care": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "fitness": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "entertainment": {
+          "precision": 0.2,
+          "recall": 0.3333333333333333,
+          "f1": 0.25,
+          "support": 3
+        },
+        "software": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        },
+        "education": {
+          "precision": 0.16666666666666666,
+          "recall": 1.0,
+          "f1": 0.2857142857142857,
+          "support": 1
+        },
+        "travel": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        },
+        "insurance": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "financial": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "taxes": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "gifts": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "other": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 7
+        },
+        "uncategorized": {
+          "precision": 0.325,
+          "recall": 0.5909090909090909,
+          "f1": 0.41935483870967744,
+          "support": 22
+        },
+        "__none__": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        }
+      },
+      "run": {
+        "model": "laya",
+        "n": 100,
+        "started_unix": 1792259788.7558908,
+        "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+        "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+        "checkpoint": ".local/laya/package",
+        "checkpoint_sha256": "f244cdc21f302cd6825d436c5052c069ab7a610e335435d721c83e0211ecac7f",
+        "epoch": 3,
+        "decoder": "existing_joint_constrained",
+        "device": "mps",
+        "verified_compatibility_changes": [
+          {
+            "file": "tokenizer/tokenizer_config.json",
+            "original_sha256": "68acf857b869285d8c3ac2757ddd26e6f8030fb275d6800131521eb736084608",
+            "runtime_sha256": "bd3408343458ce0434909fb1eceb99c1c8ca6b833610c04d08160f3d3c792a87",
+            "reason": "verified upstream Laya tokenizer-class compatibility rewrite"
+          }
+        ],
+        "completed": 100,
+        "elapsed_seconds": 17.953569083998445,
+        "predictions_sha256": "56fdcf80eb5f56ff14d5b56e69f835e6b0fde2bc8fd0f85d1ac124afae460c11",
+        "finished_unix": 1792259812.128299
+      },
+      "unique_description_metrics": {
+        "n": 96,
+        "category_accuracy": 0.40625,
+        "joint_accuracy": 0.34375,
+        "macro_f1_supported_categories": 0.31902958152958155
+      },
+      "high_certainty_reference_metrics": {
+        "n": 63,
+        "category_accuracy": 0.3968253968253968,
+        "joint_accuracy": 0.3492063492063492,
+        "macro_f1_supported_categories": 0.36315789473684207
+      }
+    }
+  }
+}

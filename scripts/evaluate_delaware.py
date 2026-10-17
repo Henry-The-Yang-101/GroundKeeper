@@ -163,14 +163,36 @@ def predict(name):
         from groundkeeper.laya_runtime import LocalLayaCategorizer
         package = Path('.local/laya/package')
         package_manifest = json.loads((package / 'manifest.json').read_text())
+        compatibility_changes = []
         for rel, record in package_manifest['files'].items():
-            if digest(package / rel) != record['sha256']:
+            actual_hash = digest(package / rel)
+            if actual_hash == record['sha256']:
+                continue
+            # The existing packager hashes before runtime reload. Upstream Laya
+            # rewrites this one config during that reload; verify the exact
+            # documented transformation against the immutable selected checkpoint.
+            if rel != 'tokenizer/tokenizer_config.json':
                 raise ValueError(f'Packaged Laya artifact changed: {rel}')
+            original = Path('.local/laya/training') / f"checkpoint-epoch-{package_manifest['selected_epoch']}" / rel
+            if digest(original) != record['sha256']:
+                raise ValueError('Original tokenizer config does not match packaged manifest')
+            normalized = json.loads(original.read_text())
+            if normalized.get('tokenizer_class') != 'TokenizersBackend':
+                raise ValueError('Unexpected tokenizer compatibility input')
+            normalized['tokenizer_class'] = 'PreTrainedTokenizerFast'
+            normalized.pop('backend', None)
+            normalized.pop('is_local', None)
+            if json.loads((package / rel).read_text()) != normalized:
+                raise ValueError('Tokenizer difference exceeds the upstream compatibility rewrite')
+            compatibility_changes.append({'file': rel, 'original_sha256': record['sha256'],
+                                          'runtime_sha256': actual_hash,
+                                          'reason': 'verified upstream Laya tokenizer-class compatibility rewrite'})
         if digest('groundkeeper/laya_runtime.py') != package_manifest['files']['groundkeeper/laya_runtime.py']['sha256']:
             raise ValueError('Current Laya runtime differs from the tested package')
         model = LocalLayaCategorizer(package, device='mps')
         info.update(checkpoint=str(package), checkpoint_sha256=package_manifest['files']['model.safetensors']['sha256'],
-                    epoch=package_manifest['selected_epoch'], decoder='existing_joint_constrained', device='mps')
+                    epoch=package_manifest['selected_epoch'], decoder='existing_joint_constrained', device='mps',
+                    verified_compatibility_changes=compatibility_changes)
         def infer(inputs):
             value = model.predict(inputs)
             torch.mps.synchronize()
@@ -247,8 +269,15 @@ def score():
     review = ['# Delaware 100-transaction diagnostic review', '',
               'Reference decisions were written before model inference by one Codex AI reviewer. '
               'They are not human-confirmed ground truth. Merchant text only; direction unknown; currency null.', '',
-              '| ID | Published merchant text | Reference type / category / review | Qwen | Laya | Reference evidence |',
-              '| --- | --- | --- | --- | --- | --- |']
+              '| Metric | Qwen v2 | Laya epoch 3 |', '| --- | --- | --- |',
+              f"| Category correct | {sum(q)}/100 | {sum(l)}/100 |",
+              f"| Complete decision correct | {round(report['models']['qwen']['joint_accuracy'] * 100)}/100 | {round(report['models']['laya']['joint_accuracy'] * 100)}/100 |", '',
+              'Reference certainty was recorded before inference: ' + ', '.join(
+                  f"{sum(r['reference_certainty'] == level for r in references)} {level}"
+                  for level in ('high', 'moderate', 'low')) + '. '
+              'The file contains the original frozen reference, not corrected labels derived from model outputs.', '',
+              '| ID | Published merchant text | Reference certainty | Reference type / category / review | Qwen | Laya | Reference evidence |',
+              '| --- | --- | --- | --- | --- | --- | --- |']
     def decision(a):
         return f"{a['type']} / {a['category']} / {str(a['review']).lower()}"
     for index, (record, reference) in enumerate(zip(sample_rows, references)):
@@ -257,7 +286,7 @@ def score():
             category = 'category correct' if a['category'] == reference['answer']['category'] else 'CATEGORY ERROR'
             joint = 'exact match' if a == reference['answer'] else 'decision differs'
             return decision(a) + '; ' + category + '; ' + joint
-        cells = [record['id'], record['input']['description'], decision(reference['answer']),
+        cells = [record['id'], record['input']['description'], reference['reference_certainty'], decision(reference['answer']),
                  cell('qwen'), cell('laya'), reference['evidence']]
         review.append('| ' + ' | '.join(str(c).replace('|', '\\|').replace('\n', ' ') for c in cells) + ' |')
     (ROOT / 'review.md').write_text('\n'.join(review) + '\n')
