@@ -112,7 +112,13 @@ def freeze():
     reviews = {r['id']: r for r in review_labels}
     original = {r['id']: r for r in labels}
     initial_agreements = sum(all(r[k] == original[r['id']][k] for k in ('type','category','review','disposition')) for r in review_labels)
+    field_agreement = {k: sum(r[k] == original[r['id']][k] for r in review_labels) / len(review_labels)
+                       for k in ('type','category','review')}
     source = {r['id']: r for r in candidates}
+    old_train_path = Path('.local/finetune/v2/prepared/train_records.jsonl')
+    old_config = json.loads(Path('experiments/finetune/v2/training_config.json').read_text())
+    assert sha(old_train_path) == old_config['data_hashes']['train_records.jsonl']
+    old_train_descriptions = {key(r['input']['description']) for r in read(old_train_path)}
     changes = json.loads((ROOT / 'pilot_adjudications.json').read_text())['overrides']
     audit_path = ROOT / 'audit_adjudications.json'
     if audit_path.exists():
@@ -176,6 +182,8 @@ def freeze():
         reason = None
         if family in blocked_components:
             reason = 'diagnostic_or_historical_holdout_family_overlap'
+        elif key(row['input']['description']) in old_train_descriptions:
+            reason = 'normalized_description_already_in_old_training'
         elif label['disposition'] == 'reject':
             reason = 'worker_rejected'
         elif conflict and not fix:
@@ -222,6 +230,7 @@ def freeze():
         'independent_audit_rows': len(review_labels),
         'independent_audit_initial_exact_agreements': initial_agreements,
         'independent_audit_initial_exact_agreement_rate': initial_agreements / len(review_labels),
+        'independent_audit_initial_field_agreement': field_agreement,
         'independent_audit_sampling': '25 per primary worker; Other/financial/insurance/nonexpense prioritized, remaining hash-selected',
         'audit_disagreements_after_coordinator_corrections': len(disagreements),
         'unresolved_audit_disagreements_in_exports': 0,
@@ -229,6 +238,8 @@ def freeze():
         'source': json.loads((ROOT / 'inventory_manifest.json').read_text()),
         'policy_sha256': manifest['policy_sha256'],
         'policy_additions_sha256': manifest['policy_additions_sha256'],
+        'old_training_records_sha256': sha(old_train_path),
+        'old_training_transactions': len(read(old_train_path)),
         'worker_guide_sha256': sha('research/DELAWARE_LABELING_WORKER_GUIDE.md'),
         'sampling': manifest['selection'], 'representative_personal_banking_sample': False,
         'input_features': ['description', 'direction=unknown', 'currency=null'],
