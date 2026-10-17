@@ -1,5 +1,10 @@
 # Bundled classifier bridge
 
+**App integration update (2026-10-17):** The Swift app now owns a local SQLite
+ledger, durable classification jobs and review-required assignments. See the
+[application integration](../database/IMPLEMENTATION.md). The original bridge
+diagnostics and historical smoke measurements below remain useful in isolation.
+
 GroundKeeper's native app calls `com.groundkeeper.macos.classifier`, an embedded
 XPC service. A native Objective-C host embeds CPython; Python/MLX/PyTorch never
 load in the UI process. Swift owns SQLite and application state. This bridge

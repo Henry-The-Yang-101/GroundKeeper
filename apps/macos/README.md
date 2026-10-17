@@ -1,122 +1,67 @@
-# GroundKeeper macOS interface
+# GroundKeeper macOS application
 
-A native SwiftUI frontend for Home, Full insights, Sync, and Settings. This is
-an **interface preview with fictional data**, not a connected finance app.
-Transaction changes live in memory and disappear when the app quits. Only the
-appearance preference is saved in UserDefaults.
+The SwiftUI app now uses **ordinary SQLite** in local Application Support.
+Capture ingestion, CSV import, reconciliation, transaction editing and local
+classification are connected. Analytics, encryption and unattended execution
+while the app is closed are deferred.
 
 ## Build and launch
 
-Requires Xcode 16 or later with its command-line tools selected. Deployment
-target: macOS 26.2+ on Apple silicon, matching the pinned MLX native runtime.
-Verified locally with Xcode 27. The earlier UI-only preview targeted macOS 14.
-
-From the repository root:
+Requires Xcode and macOS 26.2+ on Apple silicon, matching the bundled MLX runtime.
+With the pinned Python runtime already staged:
 
 ```sh
 ./apps/macos/run.sh
 ```
 
-Build output goes to the ignored `.local/macos/DerivedData/` directory. Open
-`GroundKeeper.xcodeproj` to use Xcode or SwiftUI previews. Local builds use ad hoc
-signing and the bundle identifier `com.groundkeeper.macos`.
+The app is built at
+`.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app`.
+The local Swift package `GroundKeeperCore` uses the system SQLite library and
+has no external package dependency. The XPC service embeds the existing pinned
+Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/README.md).
 
-The window defaults to 1140 × 800, with a 760 × 560 minimum. macOS may restore
-its previous size. The native sidebar can be resized or hidden. Standard window
-controls, tiling, full screen, menus, keyboard focus, and scrolling are retained.
+## First use
 
-## What you can try
+1. In Settings, add your real accounts and their currencies. There are no
+   invented default financial accounts or sample transactions in the live DB.
+2. Choose a verified local model package in Settings to enable classification.
+3. In Sync, connect the existing iCloud `GroundKeeper` folder or its `inbox`.
+4. Confirm captured card labels against accounts in Sync's review list. Import
+   CSV files with explicit date, amount/sign and column mapping.
 
-- **Home:** fixed spending example, review count, and recent transactions. Open
-  a transaction to edit it or jump into the review queue.
-- **Full insights / Spending:** Swift Charts bars with exact hover values, a
-  selectable text table alternative, and ranked category amounts. Report values
-  are fixed fixtures, independent of edits to sample transactions.
-- **Full insights / Transactions:** search descriptions, notes, categories, or
-  types; filter by account, category, or review status; sort by date, merchant,
-  or amount. Select and edit, double-click, or use the context menu. Deletion
-  requires confirmation.
-- **Transaction editor:** merchant, amount, currency, date, account, type,
-  category, review status, source, and notes. Amounts must be positive with at
-  most two decimal places, without thousands separators, for the four supported preview currencies. Other
-  expenses require a note. Uncategorized purchases/refunds stay in review.
-  Canceling a changed draft asks before discarding it.
-- **Planning:** fixed budget and savings-goal examples, plus a balance-data
-  empty state. Creating budgets, funding goals, and recording balances are not
-  connected.
-- **Sync:** disconnected capture status, setup explanation, activity empty state,
-  and a two-step CSV mapping/review walkthrough. The walkthrough uses fixtures;
-  it does not read files, interpret mappings, validate rows, or import anything.
-- **Settings:** System/Light/Dark appearance, restore/clear sample transactions,
-  and disclosure groups explaining future provider/account configuration.
-  Security and provider statuses explicitly show that they are not connected.
+All classifier suggestions require review. Editing confirms an assignment and
+protects it from late classifier replies. Unknown notification formats can be
+corrected without overwriting the original capture. Possible duplicates can be
+linked or retained separately. Source files remain in iCloud; persisted delivery
+identities prevent replay. The app checks the folder every 15 seconds while open.
 
-| Shortcut | Action |
-| --- | --- |
-| ⌘1–⌘4 | Home, Full insights, Sync, Settings |
-| ⌘N | Add a sample transaction |
-| ⌘F | Open and focus transaction search |
-| ⌘E | Edit the selected visible transaction |
-| ⌘, | Settings |
-| Return / Escape | Save or cancel a transaction sheet |
+The live database is at
+`~/Library/Containers/com.groundkeeper.macos/Data/Library/Application Support/GroundKeeper/vault.sqlite`.
+It is never synced as a live SQLite file. See the
+[schema audit and implementation](../../contracts/database/IMPLEMENTATION.md)
+for migrations, retries, matching rules and current limits.
 
-Colors use native semantic surfaces and a light/dark accent asset. Controls
-retain system focus indicators and accessibility labels. Review states include
-text and symbols; charts expose exact amounts and a table alternative. No custom
-motion or AppKit window-control positioning is used.
+## UI
 
-## Code organization
+Home shows recent saved transactions and setup status. Transactions supports
+editing, soft deletion, page-local filters/search/sorting and 500-row pagination.
+Sync contains imports, capture review and queue activity. Settings contains
+accounts and local model selection. The earlier charts/planning prototypes
+remain source fixtures but are not exposed as live reports.
 
-```text
-GroundKeeper/
-  App/                      App scene, menu commands, native split navigation
-  Models/                   Presentation types and spending-category vocabulary
-  Preview/
-    PreviewWorkspace.swift  Observable, disposable transaction/navigation state
-    SampleData.swift        Fictional transactions and fixed report fixtures
-  Features/
-    Home/                   Overview
-    FullInsights/           Report chart, categories, planning examples
-    Transactions/           Searchable table, rows, and draft editor
-    Sync/                   Disconnected state and CSV walkthrough
-    Settings/               Appearance and preview controls
-    Shared/                 Small reusable layout and presentation components
-  Resources/                Adaptive accent asset
-  Services/                 Async XPC classifier client and smoke runner
+Keyboard shortcuts: ⌘N adds a transaction, ⌘F opens transaction search, ⌘,
+opens Settings, and ⌘1–⌘4 selects a navigation tab.
+
+## Verification
+
+```sh
+swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
+.venv/bin/python -m pytest tests/test_database_schema.py tests/test_worker.py -q
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --ledger-smoke
 ```
 
-The synchronized Xcode source folder picks up new Swift files automatically.
-The app has no third-party dependencies. `PreviewWorkspace` is deliberately not
-an eventual storage or finance service. Keep future database, reconciliation,
-classification, reporting, and file access behind separate service contracts.
-
-## Integration boundaries
-
-No SQLite/SQLCipher, iCloud access, network requests, background jobs, insights
-calculations, encryption, Touch ID, or backups are connected. Reports and
-planning do not derive from edited transactions.
-Settings now includes explicit local classifier diagnostics using the bundled
-XPC/Python service: check Metal GPU support, select a verified data-only model
-package, classify fictional sample text and release the model. This does not
-automatically categorize or persist the sample workspace. See the
-[classifier bridge guide](../../contracts/classifier/README.md) for build,
-runtime pins, model export, protocol, signing and verification details.
-The review count and list filtering/sorting are presentation state only.
-
-Categories follow `../../TRANSACTION_CATEGORIES.md`: the 18 named spending
-categories, separate Uncategorized/Other fallbacks, and an independent review
-status. Transaction types remain separate from categories. Editing a sample
-transaction never creates a merchant rule.
-
-The existing Python experiments, captures, and training artifacts are untouched.
-See `../../PLAN.md` for the intended product and service contracts still needed.
-
-## Validation
-
-Debug and Release builds are checked with `xcodebuild`. The interface is also
-smoke-tested in the running app: light/dark appearance, compact window layout,
-keyboard navigation, sample transaction creation/editing and input validation,
-search/review filtering and no-results recovery, draft-discard confirmation,
-chart table values, and the CSV walkthrough. This is UI validation, not evidence
-that the planned backend features work. VoiceOver narration and all macOS
-accessibility preference combinations have not been exhaustively tested.
+For a synthetic database → real XPC classifier → persisted assignment check,
+append `--ledger-model-picker /path/to/model-package`. The picker grants the
+service access to the selected model. Smoke mode uses a separate temporary
+fictional database, never the primary database. Use a whole-process timeout
+when automating smoke checks.

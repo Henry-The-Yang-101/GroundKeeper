@@ -132,3 +132,11 @@ Add `--ledger-model-picker /path/to/model` to exercise one real database → XPC
 Python → persisted-assignment cycle. This does not use or change the user's
 transaction database. iPhone-trigger delivery and unseen bank export formats
 still require their own real-source validation.
+
+Verified locally on 2026-10-17: nine Swift tests and 55 Python schema/worker
+tests passed, the Debug app built and passed deep/strict signature verification,
+and the actual signed app completed a fictional CSV → durable job → Laya XPC →
+persisted review-required assignment smoke check. The primary local database was
+initialized empty, with both migrations and successful integrity/foreign-key
+checks. The user's iCloud folder and financial account mappings still require
+selection in the app; no real transactions were imported during validation.

@@ -1,13 +1,17 @@
 import Foundation
+import GroundKeeperCore
 
-/// Presentation data only. No persistence, classification, or reconciliation behavior.
+/// Editable presentation of a persisted account-side transaction.
 struct Transaction: Identifiable, Equatable {
     var id = UUID()
     var merchant = ""
     var date = Date()
     var amount: Decimal = 0
     var currency = "CAD"
-    var account = "Everyday card"
+    var account = "Unassigned"
+    var accountID: String?
+    var revision = 0
+    var isDebit = true
     var kind: TransactionKind = .purchase
     var category: SpendingCategory = .uncategorized
     var needsReview = true
@@ -15,11 +19,12 @@ struct Transaction: Identifiable, Equatable {
     var source = "Manual entry"
 
     var formattedAmount: String {
-        amount.formatted(.currency(code: currency))
+        (isDebit ? -amount : amount).formatted(.currency(code: currency))
     }
 }
 
 enum TransactionKind: String, CaseIterable, Identifiable {
+    case unknown = "Unknown"
     case purchase = "Purchase"
     case refund = "Refund"
     case income = "Income"
@@ -30,7 +35,20 @@ enum TransactionKind: String, CaseIterable, Identifiable {
     case adjustment = "Adjustment"
 
     var id: Self { self }
-    var usesCategory: Bool { self == .purchase || self == .refund }
+    var usesCategory: Bool { self == .purchase || self == .refund || self == .unknown }
+    var code: String {
+        switch self {
+        case .unknown: "unknown"
+        case .purchase: "expense"
+        case .refund: "refund"
+        case .income: "income"
+        case .transfer: "transfer"
+        case .cardPayment: "card_payment"
+        case .loanPrincipal: "loan_principal"
+        case .cashMovement: "cash_movement"
+        case .adjustment: "balance_adjustment"
+        }
+    }
 }
 
 enum SpendingCategory: String, CaseIterable, Identifiable {
@@ -56,6 +74,15 @@ enum SpendingCategory: String, CaseIterable, Identifiable {
     case other = "Other"
 
     var id: Self { self }
+    var code: String {
+        switch self {
+        case .transport: "local_transport"
+        case .health: "medical"
+        case .personalCare: "personal_care"
+        case .fees: "financial"
+        default: String(describing: self)
+        }
+    }
     var symbol: String {
         switch self {
         case .groceries: "basket"
@@ -78,6 +105,33 @@ enum SpendingCategory: String, CaseIterable, Identifiable {
         case .gifts: "gift"
         case .uncategorized: "questionmark"
         case .other: "ellipsis"
+        }
+    }
+}
+
+extension Transaction {
+    init(_ stored: LedgerTransaction) {
+        self.init()
+        id = UUID(uuidString: stored.id)!
+        revision = stored.revision; merchant = stored.description; currency = stored.currency
+        amount = Decimal(stored.amountMinor.magnitude) / 100; isDebit = stored.amountMinor < 0
+        accountID = stored.accountID; account = stored.accountName
+        let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian); formatter.dateFormat = "yyyy-MM-dd"
+        date = formatter.date(from: stored.occurredOn) ?? Date()
+        kind = TransactionKind.allCases.first { $0.code == stored.type } ?? .unknown
+        category = SpendingCategory.allCases.first { $0.code == stored.category } ?? .uncategorized
+        needsReview = stored.needsReview; notes = stored.notes; source = "\(stored.sources) · \(stored.origin)"
+    }
+    var edit: TransactionEdit {
+        get throws {
+            let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.calendar = Calendar(identifier: .gregorian); formatter.dateFormat = "yyyy-MM-dd"
+            let minor = try ExactMoney.parse(NSDecimalNumber(decimal: amount).stringValue, currency: currency)
+            return TransactionEdit(id: id.uuidString, revision: revision, description: merchant, amountMinor: isDebit ? -minor : minor,
+                currency: currency, occurredOn: formatter.string(from: date), accountID: accountID, type: kind.code,
+                category: kind == .unknown ? "uncategorized" : kind.usesCategory ? category.code : nil,
+                needsReview: needsReview || kind == .unknown || (kind.usesCategory && category == .uncategorized), notes: notes)
         }
     }
 }

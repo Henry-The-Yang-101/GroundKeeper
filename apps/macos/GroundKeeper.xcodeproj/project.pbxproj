@@ -6,6 +6,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+ D10000000000000000000001 = {isa = PBXBuildFile; productRef = D10000000000000000000002; };
 		C10000000000000000000001 = {isa = PBXBuildFile; fileRef = C10000000000000000000002; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy); }; };
 /* End PBXBuildFile section */
 
@@ -29,7 +30,7 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (D10000000000000000000001); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -66,7 +67,7 @@
 			dependencies = (C60000000000000000000002);
 			fileSystemSynchronizedGroups = (A20000000000000000000001 /* GroundKeeper */);
 			name = GroundKeeper;
-			packageProductDependencies = ();
+			packageProductDependencies = (D10000000000000000000002);
 			productName = GroundKeeper;
 			productReference = A10000000000000000000001 /* GroundKeeper.app */;
 			productType = "com.apple.product-type.application";
@@ -84,6 +85,7 @@
 			mainGroup = A40000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+ packageReferences = (D10000000000000000000003);
 			productRefGroup = A40000000000000000000002 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -113,6 +115,12 @@
 		C80000000000000000000001 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = (); name = "Embed offline Python runtime"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\ncd \"$SRCROOT/../..\"\n\".venv/bin/python\" -m scripts.embed_classifier_runtime\n"; };
 /* End PBXShellScriptBuildPhase section */
 
+/* Begin XCLocalSwiftPackageReference section */
+ D10000000000000000000003 = {isa = XCLocalSwiftPackageReference; relativePath = GroundKeeperCore; };
+/* End XCLocalSwiftPackageReference section */
+/* Begin XCSwiftPackageProductDependency section */
+ D10000000000000000000002 = {isa = XCSwiftPackageProductDependency; productName = GroundKeeperCore; };
+/* End XCSwiftPackageProductDependency section */
 /* Begin XCBuildConfiguration section */
 		C90000000000000000000002 = {isa = XCBuildConfiguration; buildSettings = {
 			GCC_PREPROCESSOR_DEFINITIONS = ("$(inherited)", "DEBUG=1");

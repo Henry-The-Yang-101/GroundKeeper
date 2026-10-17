@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppWorkspace.self) private var workspace
     @State private var draft: Transaction
     @State private var amountText: String
     @State private var showingDiscardConfirmation = false
@@ -31,7 +32,7 @@ struct TransactionEditor: View {
     }
     private var valid: Bool {
         !draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && validAmount
+            && validAmount && draft.accountID != nil && workspace.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
             && !(draft.kind.usesCategory && draft.category == .other && draft.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
     private var validAmount: Bool {
@@ -48,7 +49,7 @@ struct TransactionEditor: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(original.merchant.isEmpty ? "Add transaction" : "Edit transaction")
                         .font(.title2.weight(.semibold))
-                    Text("Sample workspace · Saved for this session only")
+                    Text("Saved to your local database")
                         .font(.callout).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -69,11 +70,11 @@ struct TransactionEditor: View {
                         Text("Use a positive amount, up to two decimal places, and no thousands separators.").font(.caption).foregroundStyle(.red)
                     }
                     DatePicker("Date", selection: $draft.date, displayedComponents: .date)
-                    Picker("Account", selection: $draft.account) {
-                        Text("Everyday card").tag("Everyday card")
-                        Text("Chequing").tag("Chequing")
-                        Text("Cash").tag("Cash")
+                    Picker("Account", selection: $draft.accountID) {
+                        Text("Choose account").tag(nil as String?)
+                        ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag(Optional($0.id)) }
                     }
+                    Picker("Direction", selection: $draft.isDebit) { Text("Money out").tag(true); Text("Money in").tag(false) }
                     LabeledContent("Source", value: draft.source)
                     Picker("Type", selection: $draft.kind) {
                         ForEach(TransactionKind.allCases) { Text($0.rawValue).tag($0) }
@@ -102,15 +103,18 @@ struct TransactionEditor: View {
             HStack {
                 Button("Cancel", action: cancel).keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Save sample transaction") { save() }
+                Button("Save transaction") { save() }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!valid)
+                    .disabled(!valid || workspace.saving)
             }.padding(20)
         }
         .frame(width: 530, height: 600)
         .interactiveDismissDisabled(isChanged)
         .onAppear { merchantFocused = true }
+        .onChange(of: draft.accountID) { _, id in
+            if let account = workspace.accounts.first(where: { $0.id == id }) { draft.currency = account.currency; draft.account = account.name }
+        }
         .onChange(of: draft.category) { _, category in
             if category == .uncategorized { draft.needsReview = true }
         }
@@ -134,6 +138,5 @@ struct TransactionEditor: View {
         if !draft.kind.usesCategory { draft.category = .uncategorized }
         if draft.kind.usesCategory && draft.category == .uncategorized { draft.needsReview = true }
         onSave(draft)
-        dismiss()
     }
 }

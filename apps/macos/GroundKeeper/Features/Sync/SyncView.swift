@@ -1,69 +1,124 @@
 import SwiftUI
+import GroundKeeperCore
 
 struct SyncView: View {
-    @Environment(PreviewWorkspace.self) private var workspace
-
+    @Environment(AppWorkspace.self) private var workspace
     var body: some View {
         PageContent {
             PageHeading(title: "Sync", subtitle: "Capture on your iPhone. Review on your Mac.")
             Surface {
-                HStack(alignment: .top, spacing: 16) {
-                    Image(systemName: "icloud").font(.system(size: 32)).foregroundStyle(AppStyle.accent)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Connect your capture folder").font(.title3.weight(.semibold))
-                        Text("GroundKeeper will use your iCloud Drive capture folder to receive transactions from Apple Shortcuts.")
-                            .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                        Label("Not connected", systemImage: "minus.circle").font(.callout)
-                    }
-                    Spacer(minLength: 0)
+                SectionHeading(title: "iCloud capture folder", detail: workspace.folderName)
+                Text(workspace.status).foregroundStyle(.secondary)
+                if let last = workspace.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
+                HStack {
+                    Button("Connect folder…", action: workspace.selectFolder)
+                    Button(workspace.processing ? "Processing…" : "Sync now") { Task { await workspace.sync() } }.disabled(workspace.processing)
+                    Button("Retry failed work", action: workspace.retryFailures)
+                }.disabled(!workspace.ready || workspace.saving)
+                Text("Checks every 15 seconds while the app is open. Files stay in iCloud; committed delivery IDs prevent re-importing them. Test captures never become transactions.").font(.caption).foregroundStyle(.secondary)
+            }
+            Surface {
+                HStack {
+                    SectionHeading(title: "Bank statements", detail: "Map columns, validate exact amounts, and import your history.")
+                    Button("Import CSV…") { workspace.showingImportPreview = true }.disabled(workspace.accounts.isEmpty)
                 }
-                Divider()
-                Text("Folder access and syncing are not available in this interface preview.")
-                    .font(.callout).foregroundStyle(.secondary)
+                if workspace.accounts.isEmpty { Text("Add an account in Settings before importing.").font(.caption) }
             }
             Surface {
-                SectionHeading(title: "How capture will work")
-                CaptureStep(number: "1", title: "Capture a transaction", detail: "An iPhone Shortcut saves the transaction to your capture folder.", symbol: "iphone")
-                Divider()
-                CaptureStep(number: "2", title: "Receive it on your Mac", detail: "New files arrive through iCloud Drive.", symbol: "icloud")
-                Divider()
-                CaptureStep(number: "3", title: "Review the details", detail: "Confirm anything that needs your input before it joins your spending history.", symbol: "checklist")
-            }
-            Surface {
-                HStack(alignment: .center, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Bring your own history").font(.headline)
-                        Text("Preview a CSV mapping and review screen with sample rows.")
-                            .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer()
-                    Button("Preview CSV import…") { workspace.showingImportPreview = true }
+                SectionHeading(title: "Review captures", detail: "\(workspace.reviews.count) open items shown")
+                if workspace.reviews.isEmpty { Text("No capture issues to review.").foregroundStyle(.secondary) }
+                ForEach(workspace.reviews) { review in
+                    CaptureReviewRow(review: review)
+                    Divider()
                 }
             }
             Surface {
-                SectionHeading(title: "Activity")
-                UnavailableFeature(title: "No sync activity yet", symbol: "clock", description: "Once connected, capture status, import history, and any files needing attention will appear here.")
-                    .frame(minHeight: 170)
+                SectionHeading(title: "Activity", detail: "\(workspace.pendingJobs) classification jobs pending · \(workspace.failedJobs) failed")
+                ForEach(workspace.queue) { item in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(item.path).lineLimit(1)
+                            if !item.error.isEmpty { Text(item.error.replacingOccurrences(of: "_", with: " ")).font(.caption).foregroundStyle(.secondary) }
+                        }
+                        Spacer()
+                        Text("\(item.state) · \(item.attempts) attempts").font(.caption)
+                    }
+                }
             }
         }
     }
 }
-
-private struct CaptureStep: View {
-    let number: String
-    let title: String
-    let detail: String
-    let symbol: String
+private struct CaptureReviewRow: View {
+    @Environment(AppWorkspace.self) private var workspace
+    let review: ReviewRecord
+    @State private var accountID = ""
+    @State private var correcting = false
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Text(number).font(.callout.weight(.semibold))
-                .frame(width: 26, height: 26).background(.quaternary, in: Circle())
-            VStack(alignment: .leading, spacing: 5) {
-                Text(title).fontWeight(.medium)
-                Text(detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(review.description.isEmpty ? "Unparsed capture" : review.description).fontWeight(.medium)
+            Text(review.reason.replacingOccurrences(of: "_", with: " ")).font(.callout).foregroundStyle(.secondary)
+            if !review.label.isEmpty { Text("Card label: \(review.label)").font(.caption) }
+            if ["account_mapping_required", "currency_required"].contains(review.reason) {
+                HStack {
+                    Picker("Confirmed account", selection: $accountID) {
+                        Text("Choose account").tag("")
+                        ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
+                    }
+                    Button("Confirm mapping") { workspace.map(review, accountID: accountID) }.disabled(accountID.isEmpty)
+                }
             }
-            Spacer(minLength: 0)
-            Image(systemName: symbol).foregroundStyle(.secondary).frame(width: 24)
-        }
+            if review.reason == "possible_duplicate" {
+                ForEach(review.candidates, id: \.self) { id in
+                    let record = workspace.transactions.first { $0.id.uuidString == id }
+                    Button("Link to \(record?.merchant ?? "transaction") · \(record?.date.formatted(date: .abbreviated, time: .omitted) ?? String(id.prefix(8)))") { workspace.resolve(review, transactionID: id) }
+                }
+                Button("Keep as a separate transaction") { workspace.resolve(review, transactionID: nil) }
+            }
+            if !["possible_duplicate", "event_identity_collision"].contains(review.reason) {
+                Button("Correct capture details…") { correcting = true }
+            }
+            Button("Dismiss review") { workspace.dismiss(review) }.font(.caption)
+        }.disabled(workspace.saving)
+        .sheet(isPresented: $correcting) { CaptureCorrection(review: review) }
+    }
+}
+
+private struct CaptureCorrection: View {
+    @Environment(AppWorkspace.self) private var workspace
+    @Environment(\.dismiss) private var dismiss
+    let review: ReviewRecord
+    @State private var description = ""
+    @State private var amount = ""
+    @State private var accountID = ""
+    @State private var day = ""
+    @State private var error: String?
+    @State private var saving = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Correct capture details").font(.title2)
+            Text("Original source evidence is preserved. Enter a negative amount for money out, positive for money in.").foregroundStyle(.secondary)
+            Form {
+                TextField("Description", text: $description)
+                TextField("Signed amount", text: $amount)
+                TextField("Date (YYYY-MM-DD)", text: $day)
+                Picker("Account", selection: $accountID) {
+                    Text("Choose account").tag("")
+                    ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
+                }
+            }
+            if let error { Text(error).foregroundStyle(.red) }
+            HStack {
+                Button("Cancel") { dismiss() }.disabled(saving)
+                Spacer()
+                Button("Save correction") {
+                    saving = true
+                    Task {
+                        defer { saving = false }
+                        do { try await workspace.correct(review, description: description, amount: amount, accountID: accountID, day: day); dismiss() }
+                        catch { self.error = error.localizedDescription }
+                    }
+                }.disabled(saving || accountID.isEmpty).buttonStyle(.borderedProminent)
+            }
+        }.padding(24).frame(width: 520).onAppear { description = review.description }
     }
 }

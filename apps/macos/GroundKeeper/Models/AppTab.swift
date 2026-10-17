@@ -9,7 +9,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .home: "Home"
-        case .fullInsights: "Full insights"
+        case .fullInsights: "Transactions"
         case .sync: "Sync"
         case .settings: "Settings"
         }
@@ -18,7 +18,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     func symbol(isSelected: Bool) -> String {
         switch self {
         case .home: isSelected ? "house.fill" : "house"
-        case .fullInsights: "chart.bar.xaxis"
+        case .fullInsights: "list.bullet.rectangle"
         case .sync: "arrow.triangle.2.circlepath"
         case .settings: "gearshape"
         }

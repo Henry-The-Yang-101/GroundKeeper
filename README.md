@@ -41,7 +41,7 @@ See the [macOS app guide](apps/macos/README.md) for Xcode setup.
 | [`M0_SCOPE.md`](M0_SCOPE.md) | Capture assumptions, measured feasibility, and remaining checks |
 | [`PLAN.md`](PLAN.md) | Current product plan, classifier choices, architecture proposals, and delivery gates |
 | [`ANALYSIS_FEATURES.md`](ANALYSIS_FEATURES.md) | Graphs, budgets, goals, cash flow, and net-worth roadmap with data requirements |
-| [`contracts/database/SCHEMA.md`](contracts/database/SCHEMA.md) | Proposed SQLite/SQLCipher schema, source reconciliation, optional geotags, category/model provenance, and service invariants |
+| [`contracts/database/SCHEMA.md`](contracts/database/SCHEMA.md) | SQLite schema and Swift integration, source reconciliation, category/model provenance, and service invariants |
 | [`contracts/classifier/README.md`](contracts/classifier/README.md) | Bundled XPC/Python classifier, runtime pins, model packages, GPU execution and verification |
 
 `PLAN.md` reflects the current native macOS direction, with local Laya/Qwen,

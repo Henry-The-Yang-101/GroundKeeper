@@ -1,98 +1,48 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(PreviewWorkspace.self) private var workspace
+    @Environment(AppWorkspace.self) private var workspace
     @AppStorage("appearance") private var appearance = AppAppearance.system
-    @State private var sampleAction: SampleAction?
-
+    @State private var accountName = ""
+    @State private var currency = "CAD"
+    @State private var kind = "credit_card"
     var body: some View {
         Form {
-            Section {
+            Section("Appearance") {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented)
-            } header: {
-                Text("Appearance")
-            } footer: {
-                Text("System follows your Mac’s light or dark appearance. Accessibility settings are inherited from macOS.")
             }
             Section {
-                LabeledContent("Workspace", value: "Sample data")
-                LabeledContent("Transaction storage", value: "This session only")
-                HStack {
-                    Button("Restore sample transactions…") { sampleAction = .restore }
-                    Button("Clear sample transactions…") { sampleAction = .clear }
+                LabeledContent("Storage", value: workspace.ready ? "SQLite · local Mac" : "Unavailable")
+                Text(workspace.vaultPath).font(.caption).textSelection(.enabled)
+                Text("The database is stored locally in Application Support, outside iCloud Drive. Encryption and backup features are deferred.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
+            } header: { Text("Local vault") }
+            Section {
+                LabeledContent("Model", value: workspace.classifierStatus)
+                Button("Choose local model package…", action: workspace.selectModel).disabled(!workspace.ready || workspace.processing || workspace.saving)
+                LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
+                Text("Unconfirmed new transactions are sent to the local Python worker. Every result requires review. Confirmed choices are preserved. Cloud providers and Council are not enabled.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } header: { Text("Categorization") }
+            Section {
+                ForEach(workspace.accounts) { account in LabeledContent(account.name, value: account.currency) }
+                TextField("New account name", text: $accountName)
+                Picker("Currency", selection: $currency) { ForEach(["CAD", "USD", "EUR", "GBP"], id: \.self) { Text($0) } }
+                Picker("Kind", selection: $kind) {
+                    Text("Credit card").tag("credit_card"); Text("Chequing").tag("checking")
+                    Text("Savings").tag("savings"); Text("Cash").tag("cash"); Text("Other").tag("other")
                 }
-            } header: {
-                Text("Preview workspace")
-            } footer: {
-                Text("Transaction edits are discarded when you quit. Appearance is the only saved preference. Report and planning figures remain fixed examples.")
+                Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
+                    .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespaces).isEmpty)
+                Text("Confirm Wallet and bank card labels in Sync. Names and last-four digits alone do not establish account identity.").font(.caption).foregroundStyle(.secondary)
+            } header: { Text("Accounts") }
+            Section("GroundKeeper") {
+                Text("Local capture, import, reconciliation and classification")
+                Text("Analytics and planning will be added later.").foregroundStyle(.secondary)
             }
-            Section {
-                DisclosureGroup("Classification options") {
-                    provider("Fine-tuned Laya", detail: "Local decision model")
-                    provider("Fine-tuned Qwen", detail: "Local language model")
-                    provider("Apple Intelligence Cloud", detail: "Cloud processing through an Apple Shortcut")
-                    provider("Council", detail: "Combines local providers and Apple cloud processing")
-                }
-                LabeledContent("Provider status", value: "Not connected")
-            } header: {
-                Text("Categorization")
-            } footer: {
-                Text("Automatic transaction categorization is not connected. The local diagnostics below can load a model and classify explicitly entered sample text.")
-            }
-            ClassifierDiagnosticsView()
-            Section("Accounts & rules") {
-                DisclosureGroup("Sample accounts") {
-                    LabeledContent("Everyday card", value: "CAD · Credit card")
-                    LabeledContent("Chequing", value: "CAD · Bank account")
-                    LabeledContent("Cash", value: "CAD · Cash")
-                }
-                LabeledContent("Merchant rules", value: "Not configured")
-                Text("Editing a category changes only that sample transaction. Card mappings and reusable merchant rules will be configured here.")
-                    .font(.callout).foregroundStyle(.secondary)
-            }
-            Section {
-                LabeledContent("Encrypted storage", value: "Not connected")
-                LabeledContent("Touch ID & auto-lock", value: "Not connected")
-                LabeledContent("Recovery & backups", value: "Not connected")
-            } header: {
-                Text("Security")
-            } footer: {
-                Text("Security controls will become available with encrypted storage. This preview is intended for fictional data only.")
-            }
-            Section {
-                LabeledContent("GroundKeeper", value: "macOS interface preview")
-                Text("A quieter way to keep track of spending.").foregroundStyle(.secondary)
-            }
-        }
-        .formStyle(.grouped)
-        .frame(maxWidth: 850)
-        .frame(maxWidth: .infinity)
-        .background(AppStyle.pageBackground)
-        .confirmationDialog(sampleAction?.title ?? "Update sample workspace?", isPresented: Binding(
-            get: { sampleAction != nil }, set: { if !$0 { sampleAction = nil } }
-        ), titleVisibility: .visible) {
-            Button(sampleAction?.button ?? "Continue", role: .destructive) {
-                if sampleAction == .restore { workspace.reset() } else { workspace.transactions = [] }
-                sampleAction = nil
-            }
-            Button("Cancel", role: .cancel) { sampleAction = nil }
-        } message: {
-            Text("This replaces your current sample transaction edits. Fixed report examples will stay the same.")
-        }
+        }.formStyle(.grouped).frame(maxWidth: 850).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
     }
-
-    private func provider(_ name: String, detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(name)
-            Text(detail).font(.caption).foregroundStyle(.secondary)
-        }.padding(.vertical, 4)
-    }
-}
-
-private enum SampleAction {
-    case restore, clear
-    var title: String { self == .restore ? "Restore the sample transactions?" : "Clear all sample transactions?" }
-    var button: String { self == .restore ? "Restore samples" : "Clear samples" }
 }

@@ -14,3 +14,5 @@ apps/macos/build/
 apps/macos/DerivedData/
 xcuserdata/
 *.xcuserstate
+apps/macos/GroundKeeperCore/.build/
+apps/macos/GroundKeeperCore/.swiftpm/

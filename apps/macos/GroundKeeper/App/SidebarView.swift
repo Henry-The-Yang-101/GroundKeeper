@@ -22,9 +22,9 @@ struct SidebarView: View {
         .navigationTitle("GroundKeeper")
         .safeAreaInset(edge: .bottom) {
             VStack(alignment: .leading, spacing: 6) {
-                Label("Sample workspace", systemImage: "rectangle.on.rectangle")
+                Label("Local workspace", systemImage: "rectangle.on.rectangle")
                     .font(.callout.weight(.medium))
-                Text("Fictional data. Edits last until you quit.")
+                Text("Saved on this Mac. Capture via iCloud Drive.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

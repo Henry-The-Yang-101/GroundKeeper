@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TransactionsView: View {
-    @Environment(PreviewWorkspace.self) private var workspace
+    @Environment(AppWorkspace.self) private var workspace
     @State private var search = ""
     @FocusState private var searchFocused: Bool
     @State private var category: SpendingCategory?
@@ -42,7 +42,7 @@ struct TransactionsView: View {
                         ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag(Optional($0)) }
                     }.frame(maxWidth: 290)
                     Picker("Account", selection: $account) {
-                        ForEach(["All accounts", "Everyday card", "Chequing", "Cash"], id: \.self) { Text($0) }
+                        ForEach(["All accounts"] + workspace.accounts.map(\.name), id: \.self) { Text($0) }
                     }.frame(maxWidth: 240)
                     Spacer(minLength: 0)
                     if hasFilters {
@@ -88,7 +88,7 @@ struct TransactionsView: View {
             .contextMenu(forSelectionType: Transaction.ID.self) { ids in
                 if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
                     Button("Edit transaction…") { workspace.editor = transaction }
-                    Button("Delete sample transaction…", role: .destructive) { deletionCandidate = transaction }
+                    Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
                 }
             } primaryAction: { ids in
                 if let id = ids.first { workspace.editor = workspace.transactions.first { $0.id == id } }
@@ -98,7 +98,7 @@ struct TransactionsView: View {
                     ContentUnavailableView {
                         Label(hasFilters ? "No matching transactions" : "No transactions yet", systemImage: hasFilters ? "magnifyingglass" : "tray")
                     } description: {
-                        Text(hasFilters ? "Try a different search or clear your filters." : "Add a sample transaction to try the interface.")
+                        Text(hasFilters ? "Try a different search or clear your filters." : "Import or add a transaction.")
                     } actions: {
                         if hasFilters {
                             Button("Clear filters", action: clearFilters)
@@ -112,6 +112,9 @@ struct TransactionsView: View {
             HStack {
                 Text("\(filteredTransactions.count) \(filteredTransactions.count == 1 ? "transaction" : "transactions")").foregroundStyle(.secondary)
                 Spacer()
+                Button("Previous") { workspace.changePage(workspace.page - 1) }.disabled(workspace.page == 0)
+                Text("Page \(workspace.page + 1)").font(.caption)
+                Button("Next") { workspace.changePage(workspace.page + 1) }.disabled((workspace.page + 1) * 500 >= workspace.totalTransactions)
                 Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
                     .disabled(selectedTransaction == nil)
                 Button("Edit…") { workspace.editor = selectedTransaction }
@@ -125,19 +128,19 @@ struct TransactionsView: View {
             do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
             focusSearchIfRequested()
         }
-        .confirmationDialog("Delete this sample transaction?", isPresented: Binding(
+        .confirmationDialog("Delete this transaction?", isPresented: Binding(
             get: { deletionCandidate != nil },
             set: { if !$0 { deletionCandidate = nil } }
         ), titleVisibility: .visible) {
             Button("Delete transaction", role: .destructive) {
                 guard let id = deletionCandidate?.id else { return }
-                workspace.transactions.removeAll { $0.id == id }
+                if let transaction = workspace.transactions.first(where: { $0.id == id }) { workspace.delete(transaction) }
                 selectedID = nil
                 deletionCandidate = nil
             }
             Button("Cancel", role: .cancel) { deletionCandidate = nil }
         } message: {
-            Text("You can restore the original examples in Settings.")
+            Text("This hides the transaction while retaining its source evidence and history. Re-importing the same capture will not recreate it.")
         }
     }
 

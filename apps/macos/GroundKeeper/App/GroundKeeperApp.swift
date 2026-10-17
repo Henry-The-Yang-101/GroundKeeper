@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct GroundKeeperApp: App {
-    @State private var workspace = PreviewWorkspace()
+    @State private var workspace = AppWorkspace()
     @AppStorage("appearance") private var appearance = AppAppearance.system
 
     var body: some Scene {
@@ -12,6 +12,8 @@ struct GroundKeeperApp: App {
                 .preferredColorScheme(appearance.colorScheme)
                 .task {
                     if CommandLine.arguments.contains("--classifier-smoke") { await ClassifierSmoke.run() }
+                    else if CommandLine.arguments.contains("--ledger-smoke") { await LedgerSmoke.run() }
+                    else { await workspace.start() }
                 }
         }
         .defaultSize(width: 1140, height: 800)

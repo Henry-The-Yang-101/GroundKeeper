@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RootView: View {
-    @Environment(PreviewWorkspace.self) private var workspace
+    @Environment(AppWorkspace.self) private var workspace
 
     var body: some View {
         @Bindable var workspace = workspace
@@ -13,9 +13,9 @@ struct RootView: View {
                 .navigationTitle(workspace.selectedTab?.title ?? "Home")
                 .toolbar {
                     ToolbarItem(placement: .automatic) {
-                        Text("Sample data")
+                        Text(workspace.ready ? "Local vault" : "Opening vault")
                             .font(.caption).foregroundStyle(.secondary)
-                            .help("Fictional transactions. Changes are kept only for this session.")
+                            .help(workspace.status)
                     }
                     ToolbarItem(placement: .primaryAction) {
                         Button {
@@ -23,7 +23,8 @@ struct RootView: View {
                         } label: {
                             Label("Add transaction", systemImage: "plus")
                         }
-                        .help("Add a sample transaction (⌘N)")
+                        .help("Add a transaction (⌘N)")
+                        .disabled(!workspace.ready)
                     }
                 }
         }
@@ -35,6 +36,9 @@ struct RootView: View {
         .sheet(isPresented: $workspace.showingImportPreview) {
             ImportPreviewView()
         }
+        .alert("GroundKeeper needs attention", isPresented: Binding(get: { workspace.errorMessage != nil }, set: { if !$0 { workspace.errorMessage = nil } })) {
+            Button("OK") { workspace.errorMessage = nil }
+        } message: { Text(workspace.errorMessage ?? "") }
     }
 
     @ViewBuilder private var selectedPage: some View {
@@ -48,9 +52,9 @@ struct RootView: View {
 }
 
 #Preview("Light") {
-    RootView().environment(PreviewWorkspace()).preferredColorScheme(.light)
+    RootView().environment(AppWorkspace()).preferredColorScheme(.light)
 }
 
 #Preview("Dark") {
-    RootView().environment(PreviewWorkspace()).preferredColorScheme(.dark)
+    RootView().environment(AppWorkspace()).preferredColorScheme(.dark)
 }
