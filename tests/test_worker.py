@@ -148,3 +148,46 @@ def test_gpu_unavailable_is_explicit_not_cpu_fallback(monkeypatch, tmp_path):
     result = worker.handle(request("prepare_model"), package_root=root)
     assert result["error"]["code"] == "gpu_unavailable"
     assert worker.model is None
+
+
+@pytest.mark.parametrize("backend", ["qwen_mlx", "laya_mps"])
+def test_partial_load_releases_tensors_before_clearing_cache(monkeypatch, tmp_path, backend):
+    import sys
+    import weakref
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    references, cleared = [], []
+    class Tensor:
+        pass
+    def allocate():
+        tensor = Tensor()
+        references.append(weakref.ref(tensor))
+        raise RuntimeError("partial allocation")
+    def fail(*args, **kwargs):
+        try:
+            allocate()
+        except RuntimeError as error:
+            raise RuntimeError("wrapped loader error") from error
+    def clear():
+        assert references and references[0]() is None
+        cleared.append(backend)
+    mx = SimpleNamespace(metal=SimpleNamespace(is_available=lambda: True), gpu=object(),
+        set_default_device=lambda _: None, set_cache_limit=lambda _: None,
+        set_memory_limit=lambda _: None, stream=lambda _: nullcontext(),
+        synchronize=lambda: None, clear_cache=clear)
+    torch = SimpleNamespace(backends=SimpleNamespace(mps=SimpleNamespace(is_available=lambda: True)),
+        set_num_threads=lambda _: None, mps=SimpleNamespace(synchronize=lambda: None, empty_cache=clear))
+    monkeypatch.setitem(sys.modules, "mlx", SimpleNamespace(core=mx))
+    monkeypatch.setitem(sys.modules, "mlx.core", mx)
+    monkeypatch.setitem(sys.modules, "mlx_lm", SimpleNamespace(load=fail))
+    monkeypatch.setitem(sys.modules, "torch", torch)
+    monkeypatch.setattr("groundkeeper.laya_runtime.LocalLayaCategorizer", fail)
+    monkeypatch.setattr("groundkeeper.worker.verify_package", lambda *_: ({"backend": backend}, "digest"))
+    worker = Worker()
+    result = worker.handle(request("prepare_model"), package_root=tmp_path)
+    assert result["error"]["code"] == "inference_failed"
+    assert cleared == [backend]
+    assert worker.model is None and worker._allocated_backend is None
+    worker.release()
+    assert cleared == [backend]

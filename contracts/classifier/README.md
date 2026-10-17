@@ -148,7 +148,12 @@ thread/GIL. Both app and service bound pending work to 16 requests.
   is disabled. No unvalidated precision conversion changes the trained model.
 - Only one heavyweight model is retained. Switching drops the old model and
   clears its allocator cache before loading the next. Python/native libraries
-  themselves remain resident until the process ends.
+  themselves remain resident until the process ends. Partial load failures also
+  clear the selected backend's allocator after releasing failed-loader traceback
+  references. Laya's package-specific global tokenizer cache entries are evicted
+  after loading; the active agent retains its tokenizer until release. This
+  integration uses the private cache API in pinned Laya 0.4.1 and must be checked
+  when upgrading that dependency.
 - `review=true` is enforced on every suggestion. Structural validation/GPU use
   do not establish real transaction accuracy or automatic-acceptance calibration.
 
@@ -159,6 +164,8 @@ A native watchdog exits the service if a request remains stuck five seconds
 beyond its deadline. This loses all in-flight requests; Swift reports the
 interruption and can reconnect. A cancel request alone is not permission to
 kill other work before its deadline.
+Each watchdog is cancelled when its request finishes and holds only a weak job
+reference, so completed request payloads are not retained until their deadlines.
 
 The client matches response ID, protocol, model identity and job/part/revision.
 Interruption/invalidation drains each continuation exactly once. Callback

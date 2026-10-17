@@ -44,3 +44,33 @@ def test_missing_option_fails_closed():
     answer, detail = decode(answers)
     assert answer["review"]
     assert not detail["valid_schema"]
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_package_tokenizer_cache_evicted_after_load(monkeypatch, tmp_path, fails):
+    import sys
+    import threading
+    from types import SimpleNamespace
+    import groundkeeper.laya_runtime as runtime
+
+    (tmp_path / "model.safetensors").touch()
+    directory = str(tmp_path / "tokenizer")
+    tokenizer = object()
+    cache = {(directory, 1): tokenizer, (directory, 2): tokenizer, ("unrelated", 1): object()}
+    device = SimpleNamespace(type="mps")
+    agent = SimpleNamespace(tok=tokenizer, device=device,
+        model=SimpleNamespace(parameters=lambda: iter([SimpleNamespace(device=device)])))
+    def load(*args, **kwargs):
+        if fails:
+            raise RuntimeError("failed loading")
+        return agent
+    monkeypatch.setitem(sys.modules, "laya", SimpleNamespace(load=load,
+        agent=SimpleNamespace(_TOKENIZERS=cache, _TOKENIZERS_LOCK=threading.Lock())))
+    monkeypatch.setattr(runtime, "configure_agent", lambda value: value)
+    if fails:
+        with pytest.raises(RuntimeError, match="failed loading"):
+            runtime.LocalLayaCategorizer(tmp_path)
+    else:
+        loaded = runtime.LocalLayaCategorizer(tmp_path)
+        assert loaded.agent.tok is tokenizer
+    assert set(cache) == {("unrelated", 1)}

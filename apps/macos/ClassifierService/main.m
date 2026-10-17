@@ -170,17 +170,24 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
         [self.condition unlock];
         currentJob=job;
         NSData *result;
+        dispatch_source_t watchdog=nil;
         if (atomic_load(&job->cancelled) || NSProcessInfo.processInfo.systemUptime>=job.deadline) {
             BOOL expired=NSProcessInfo.processInfo.systemUptime>=job.deadline;
             result=failure(job.requestID,expired ? @"deadline_exceeded" : @"cancelled",expired ? @"Request deadline exceeded" : @"Request cancelled");
         } else {
             // A native watchdog remains independent of Python's GIL/native calls.
-            NSString *identity=job.requestID;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW,(int64_t)((MAX(0.,job.deadline-NSProcessInfo.processInfo.systemUptime)+5.)*NSEC_PER_SEC)),
-                dispatch_get_global_queue(QOS_CLASS_UTILITY,0), ^{
-                    [self.condition lock]; BOOL stuck=self.pending[identity]==job; [self.condition unlock];
+            __weak GKJob *watchedJob=job;
+            watchdog=dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,0,0,dispatch_get_global_queue(QOS_CLASS_UTILITY,0));
+            dispatch_source_set_timer(watchdog,
+                dispatch_time(DISPATCH_TIME_NOW,(int64_t)((MAX(0.,job.deadline-NSProcessInfo.processInfo.systemUptime)+5.)*NSEC_PER_SEC)),
+                DISPATCH_TIME_FOREVER,0);
+            dispatch_source_set_event_handler(watchdog, ^{
+                    GKJob *active=watchedJob;
+                    if (!active) return;
+                    [self.condition lock]; BOOL stuck=self.pending[active.requestID]==active; [self.condition unlock];
                     if (stuck) _exit(75);
                 });
+            dispatch_resume(watchdog);
             emit(job,@{@"stage":@"running"});
             if (!self.attemptedPython) {
                 self.attemptedPython=YES;
@@ -231,6 +238,7 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
             }
         }
         [self.condition lock]; [self.pending removeObjectForKey:job.requestID]; [self.condition unlock];
+        if (watchdog) dispatch_source_cancel(watchdog);
         if (NSProcessInfo.processInfo.systemUptime>=job.deadline) result=failure(job.requestID,@"deadline_exceeded",@"Request deadline exceeded");
         else if (atomic_load(&job->cancelled)) result=failure(job.requestID,@"cancelled",@"Request cancelled");
         job.reply(result); currentJob=nil;

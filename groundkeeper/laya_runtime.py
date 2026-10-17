@@ -145,7 +145,18 @@ class LocalLayaCategorizer:
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
         import laya
-        self.agent = configure_agent(laya.load(str(path), device=device, backend="eager"))
+        try:
+            self.agent = configure_agent(laya.load(str(path), device=device, backend="eager"))
+        finally:
+            # Pinned Laya 0.4.1 caches parsed tokenizers globally. The loaded
+            # agent already owns its tokenizer; remove this package's cache
+            # entries so release (and failed loading) can reclaim them.
+            from laya import agent as laya_agent
+            tokenizer_directory = os.path.abspath(path / "tokenizer")
+            with laya_agent._TOKENIZERS_LOCK:
+                for key in list(laya_agent._TOKENIZERS):
+                    if key[0] == tokenizer_directory:
+                        del laya_agent._TOKENIZERS[key]
         if self.agent.device.type != device or next(self.agent.model.parameters()).device.type != device:
             raise RuntimeError("Laya did not remain on the requested device")
 

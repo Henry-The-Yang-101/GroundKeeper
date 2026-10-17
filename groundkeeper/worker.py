@@ -13,6 +13,7 @@ import math
 import os
 from pathlib import Path
 import time
+import traceback
 
 from .policy import CATEGORIES, TYPES, validate_answer, validate_input
 
@@ -31,6 +32,19 @@ class WorkerError(Exception):
 def _check(cancelled):
     if cancelled():
         raise WorkerError("cancelled", "Request cancelled or deadline exceeded")
+
+
+def _clear_exception_frames(error):
+    pending, seen = [error], set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        traceback.clear_frames(current.__traceback__)
+        pending.extend(e for e in (current.__cause__, current.__context__) if e is not None)
+        if isinstance(current, BaseExceptionGroup):
+            pending.extend(current.exceptions)
 
 
 def _relative(root, value):
@@ -104,6 +118,7 @@ class Worker:
             os.environ[key] = value
         self.model = self.tokenizer = self.grammar = self.manifest = self.identity = None
         self.root = None
+        self._allocated_backend = None
 
     def handle(self, request, cancelled=lambda: False, event=lambda _: None, package_root=None):
         """Return one JSON-safe envelope. Exceptions never include financial inputs."""
@@ -142,7 +157,10 @@ class Worker:
                     try:
                         self.prepare(root, manifest, digest)
                         _check(cancelled)
-                    except BaseException:
+                    except BaseException as error:
+                        # Failed loader frames can retain tensors until the exception
+                        # is handled. Drop those references before clearing allocators.
+                        _clear_exception_frames(error)
                         self.release()
                         raise
                     result = {"model": self.identity, "reused": False}
@@ -185,6 +203,7 @@ class Worker:
             import mlx.core as mx
             if not mx.metal.is_available():
                 raise WorkerError("gpu_unavailable", "MLX Metal GPU is unavailable")
+            self._allocated_backend = backend
             mx.set_default_device(mx.gpu)
             # Bounded allocator cache; model weights remain quantized on unified memory.
             mx.set_cache_limit(128 * 1024 * 1024)
@@ -201,6 +220,7 @@ class Worker:
             import torch
             if not torch.backends.mps.is_available():
                 raise WorkerError("gpu_unavailable", "PyTorch Metal MPS is unavailable")
+            self._allocated_backend = backend
             torch.set_num_threads(2)
             from .laya_runtime import LocalLayaCategorizer
             self.model = LocalLayaCategorizer(root / manifest.get("model_directory", "."), device="mps")
@@ -269,7 +289,8 @@ class Worker:
         return parse_answer(text)
 
     def release(self):
-        backend = self.manifest["backend"] if self.manifest else None
+        backend = self._allocated_backend or (self.manifest["backend"] if self.manifest else None)
+        self._allocated_backend = None
         self.model = self.tokenizer = self.grammar = self.manifest = self.identity = self.root = None
         gc.collect()
         if backend == "qwen_mlx":
