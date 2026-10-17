@@ -189,9 +189,36 @@ def validate(worker, packet=None):
     print(json.dumps({'worker': worker, 'validated_rows': completed, 'packets': list(selected)}))
 
 
+def audit(worker, check=False):
+    """Blind 25-row second review; oversample policy boundaries, then hash sample."""
+    folder = ROOT / 'audits' / f'{worker:03d}'
+    if check:
+        inputs, labels = read(folder / 'inputs.jsonl'), read(folder / 'labels.jsonl')
+        assert len(labels) == 25 and [r['id'] for r in inputs] == [r['id'] for r in labels]
+        for label in labels:
+            assert set(label) == FIELDS and label['disposition'] in ('keep', 'reject')
+            validate_answer({k: label[k] for k in ('type', 'category', 'review')})
+            assert all(isinstance(label[k], str) and label[k].strip() for k in ('merchant_group', 'evidence'))
+        print(json.dumps({'audit_worker': worker, 'validated_rows': 25}))
+        return
+    target = worker - 3 if worker > 3 else worker + 77
+    inputs = [r for packet in range(1, 5) for r in read(ROOT / 'workers' / f'{target:03d}' / f'inputs_{packet:02d}.jsonl')]
+    labels = [r for packet in range(1, 5) for r in read(ROOT / 'workers' / f'{target:03d}' / f'labels_{packet:02d}.jsonl')]
+    by_id = {r['id']: r for r in labels}
+    priority = lambda r: (0 if by_id[r['id']]['category'] in {'other','insurance','financial'} or by_id[r['id']]['type'] not in {'expense','unknown'} else 1,
+                          hashlib.sha256(('audit-v1:' + r['id']).encode()).hexdigest())
+    chosen = sorted(inputs, key=priority)[:25]
+    folder.mkdir(parents=True, exist_ok=True)
+    if (folder / 'inputs.jsonl').exists():
+        assert read(folder / 'inputs.jsonl') == chosen
+    else:
+        write(folder / 'inputs.jsonl', chosen)
+    print(json.dumps({'audit_worker': worker, 'target_worker': target, 'inputs': str(folder / 'inputs.jsonl'), 'n': 25}))
+
+
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('phase', choices=['prepare', 'validate'])
+    p.add_argument('phase', choices=['prepare', 'validate', 'audit-prepare', 'audit-validate'])
     p.add_argument('--worker', type=int)
     p.add_argument('--packet', type=int, choices=range(1, 5))
     a = p.parse_args()
@@ -199,5 +226,7 @@ if __name__ == '__main__':
         prepare()
     elif a.worker is None or not 1 <= a.worker <= 80:
         p.error('validate requires --worker 1..80')
+    elif a.phase.startswith('audit-'):
+        audit(a.worker, check=a.phase == 'audit-validate')
     else:
         validate(a.worker, a.packet)

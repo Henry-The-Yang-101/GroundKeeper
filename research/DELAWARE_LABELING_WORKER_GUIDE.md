@@ -122,3 +122,15 @@ provider. General retail pharmacies remain ambiguous; recognizable clinical
 healthcare providers can support medical. A processor plus a truncated university
 name does not necessarily establish the underlying fee purpose. Compound
 FEES/PUBLICATIONS without a clear purchased item may remain uncategorized.
+
+## Independent audit when explicitly assigned
+
+Some task messages also assign a separate 25-row blind audit. This is additional
+quality review of another worker's inputs; it does not change your 100 primary
+assignments. Read ONLY `.local/delaware-labeling-v1/audits/NNN/inputs.jsonl`
+and independently write the same seven-key contract, same order, to
+`audits/NNN/labels.jsonl`. Do not read the original worker's labels. Validate with
+`.venv/bin/python -m scripts.prepare_delaware_labels audit-validate --worker N`.
+The coordinator prepares audit inputs; you must not invoke audit-prepare yourself
+because it reads original annotations. No audit is assigned unless the task
+message explicitly says its inputs are ready.
