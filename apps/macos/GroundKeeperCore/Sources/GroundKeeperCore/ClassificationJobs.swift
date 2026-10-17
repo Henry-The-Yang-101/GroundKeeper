@@ -47,6 +47,7 @@ extension LedgerStore {
     public func completeClassification(_ task: ClassificationTask, decision: ClassificationDecision) throws {
         try db.transaction {
             guard let job = try db.query("SELECT * FROM classification_jobs WHERE id=? AND run_id=?", [.text(task.id), .text(task.runID)]).first else { return }
+            guard try db.query("SELECT status FROM classification_runs WHERE id=?", [.text(task.runID)]).first?.text("status") == "running" else { return }
             guard decision.review else { throw LedgerError.invalid("Classifier suggestions must require review.") }
             try db.query("UPDATE classification_runs SET status='succeeded',finished_at_ms=?,type_code=?,category_id=?,needs_review=1,output_json=? WHERE id=? AND status='running'",
                 [.integer(nowMS()), .text(decision.type), .optional(decision.category), .text(try json(decision)), .text(task.runID)])

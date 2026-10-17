@@ -5,12 +5,17 @@ public enum ExactMoney {
     public static func parse(_ input: String, currency: String, decimalComma: Bool = false) throws -> Int64 {
         guard currencies.contains(currency) else { throw LedgerError.invalid("Unsupported currency.") }
         var value = input.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        // Currency markers must surround the number; never turn "1$2" into 12.
         for code in currencies where value.contains(code) {
             guard code == currency else { throw LedgerError.invalid("Amount currency conflicts with the selected account.") }
-            value = value.replacingOccurrences(of: code, with: "")
+            guard value.components(separatedBy: code).count == 2,
+                  value.hasPrefix(code) || value.hasSuffix(code) else { throw LedgerError.invalid("Invalid currency marker.") }
+            value = value.replacingOccurrences(of: code, with: "").trimmingCharacters(in: .whitespaces)
         }
         for (symbol, allowed) in [("$", ["CAD", "USD"]), ("€", ["EUR"]), ("£", ["GBP"])] where value.contains(symbol) {
             guard allowed.contains(currency) else { throw LedgerError.invalid("Currency symbol conflicts with the selected currency.") }
+            guard value.components(separatedBy: symbol).count == 2,
+                  value.hasPrefix(symbol) || value.hasPrefix("-" + symbol) || value.hasPrefix("+" + symbol) || value.hasPrefix("(" + symbol) else { throw LedgerError.invalid("Invalid currency symbol.") }
             value = value.replacingOccurrences(of: symbol, with: "")
         }
         value = value.trimmingCharacters(in: .whitespaces)
@@ -93,28 +98,29 @@ public enum CSVParser {
     public static func parse(_ input: String, delimiter: Character = ",") throws -> [[String]] {
         guard [",", ";", "\t"].contains(delimiter) else { throw LedgerError.invalid("Unsupported delimiter.") }
         let text = input.hasPrefix("\u{feff}") ? String(input.dropFirst()) : input
-        var rows: [[String]] = [], row: [String] = [], field = "", quoted = false, closed = false
+        var rows: [[String]] = [], row: [String] = [], field = "", quoted = false, closed = false, fieldLength = 0
         var iterator = text.makeIterator(), pending: Character? = iterator.next()
         while let char = pending {
             pending = iterator.next()
+            fieldLength += 1
             if quoted {
                 if char == "\"" {
                     if pending == "\"" { field.append("\""); pending = iterator.next() }
                     else { quoted = false; closed = true }
                 } else { field.append(char) }
             } else if char == delimiter {
-                row.append(field); field = ""; closed = false
+                row.append(field); field = ""; closed = false; fieldLength = 0
             } else if char == "\n" || char == "\r" || char == "\r\n" {
                 if char == "\r" && pending == "\n" { pending = iterator.next() }
                 row.append(field)
                 if row.contains(where: { !$0.isEmpty }) { rows.append(row) }
-                row = []; field = ""; closed = false
+                row = []; field = ""; closed = false; fieldLength = 0
             } else if char == "\"" && field.isEmpty && !closed { quoted = true }
             else {
                 guard !closed && char != "\"" else { throw LedgerError.invalid("Malformed CSV quoting.") }
                 field.append(char)
             }
-            guard field.utf8.count <= 65_536, rows.count <= 50_000, row.count <= 128 else { throw LedgerError.invalid("CSV exceeds row, column or field limits.") }
+            guard fieldLength <= 65_536, rows.count <= 50_000, row.count <= 128 else { throw LedgerError.invalid("CSV exceeds row, column or field limits.") }
         }
         guard !quoted else { throw LedgerError.invalid("Unclosed CSV quote.") }
         row.append(field); if row.contains(where: { !$0.isEmpty }) { rows.append(row) }

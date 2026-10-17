@@ -2,6 +2,13 @@
 
 Design date: 2026-10-17. Companion DDL: [schema.sql](schema.sql).
 
+**Implementation update:** The Swift application now installs this schema with
+numbered migrations and a processing extension. Per the user's 2026-10-17
+decision, it uses ordinary local SQLite; encryption/SQLCipher are deferred.
+See [current implementation and audit](IMPLEMENTATION.md) for working behavior,
+setup, validation and remaining boundaries. The original design below includes
+future features and should not be read as the current implementation status.
+
 This is a proposed, executable schema for a **single local vault on one Mac**.
 It covers the current product plan, including later planning/analysis modules.
 It does not install a database, migrate the experiments, or connect the SwiftUI

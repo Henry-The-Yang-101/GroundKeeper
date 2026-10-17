@@ -4,12 +4,13 @@ import Testing
 
 extension LedgerStore {
     func testRows(_ sql: String) throws -> [Row] { try db.query(sql) }
+    func makeRetriesDue() throws { try db.query("UPDATE classification_jobs SET next_attempt_at_ms=0 WHERE status='pending'") }
 }
-func vault() throws -> (LedgerStore, URL, Data) {
+func vault() throws -> (LedgerStore, URL) {
     let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-    let url = folder.appendingPathComponent("vault.sqlite"), key = Data(repeating: 42, count: 32)
-    return (try LedgerStore(url: url, key: key), url, key)
+    let url = folder.appendingPathComponent("vault.sqlite")
+    return (try LedgerStore(url: url), url)
 }
 func capture(_ id: String, wallet: Bool = true, test: Bool = false, time: String = "2026-10-17T10:00:00-04:00", amount: String = "CAD 12.50") throws -> Data {
     var payload: [String: Any] = ["schema_version": 2, "event_id": id, "source": wallet ? "wallet_transaction" : "bank_notification", "captured_at": time,
@@ -29,7 +30,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try ExactMoney.parse("CAD 1,234.56", currency: "CAD") == 123456)
     #expect(try ExactMoney.parse("(12.50)", currency: "CAD") == -1250)
     #expect(try ExactMoney.parse("1.234,56", currency: "EUR", decimalComma: true) == 123456)
-    for invalid in ["12.345", "12abc", "1,23.00", "9223372036854775807", "USD 5"] {
+    for invalid in ["12.345", "12abc", "1,23.00", "9223372036854775807", "USD 5", "1$2", "CADCAD 12", "$12$"] {
         #expect(throws: (any Error).self) { try ExactMoney.parse(invalid, currency: "CAD") }
     }
     #expect(throws: (any Error).self) { try CivilDate.parse("2026-02-30") }
@@ -42,16 +43,16 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(rows[1][1] == "Cafe, \"A\"\nLine")
     #expect(throws: (any Error).self) { try CSVParser.parse("a,b\n\"unclosed,2") }
 }
-@Test func encryptedMigrationAndWrongKey() async throws {
-    let (store, url, _) = try vault()
+@Test func migrationsAndPlainSQLite() async throws {
+    let (store, url) = try vault()
     #expect(try await store.integrityCheck())
     #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 2)
-    #expect(throws: (any Error).self) { try LedgerStore(url: url, key: Data(repeating: 1, count: 32)) }
     let bytes = try Data(contentsOf: url)
-    #expect(!bytes.starts(with: Data("SQLite format 3".utf8)))
+    #expect(bytes.starts(with: Data("SQLite format 3".utf8)))
+    #expect(throws: (any Error).self) { try LedgerStore(url: url) }
 }
 @Test func captureReplayCollisionTestFlagAndOneToOneMatching() async throws {
-    let (store, _, _) = try vault()
+    let (store, _) = try vault()
     try await store.addAccount(name: "Test card", currency: "CAD")
     try await ingestMapped(store, id: "w1")
     try await ingestMapped(store, id: "b1", wallet: false)
@@ -70,7 +71,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.integrityCheck())
 }
 @Test func csvImportAtomicityReplayAndReview() async throws {
-    let (store, _, _) = try vault()
+    let (store, _) = try vault()
     try await store.addAccount(name: "Test card", currency: "CAD")
     try await ingestMapped(store, id: "w1")
     var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
@@ -88,7 +89,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.integrityCheck())
 }
 @Test func staleClassificationCannotOverwriteUserEditAndRecovery() async throws {
-    var (store, url, key) = try vault()
+    var (store, url) = try vault()
     try await store.addAccount(name: "Test card", currency: "CAD")
     try await ingestMapped(store, id: "w1")
     let model = String(repeating: "a", count: 64)
@@ -103,8 +104,63 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     try await ingestMapped(store, id: "w2")
     try await store.enqueueClassifications(modelID: model)
     _ = try await store.claimClassification(modelID: model)
-    store = try LedgerStore(url: url, key: key)
+    await store.close()
+    store = try LedgerStore(url: url)
     #expect(try await store.snapshot().pendingJobs == 1)
     #expect(try await store.claimClassification(modelID: model) != nil)
     #expect(try await store.integrityCheck())
+}
+
+@Test func reverseArrivalAndDateOnlyMatchesRequireConfirmation() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Test", currency: "CAD")
+    var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
+    let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n".utf8), filename: "posted.csv")
+    try await store.importCSV(csv, mapping: mapping)
+    try await ingestMapped(store, id: "late-wallet")
+    let review = try await store.snapshot().reviews.first { $0.reason == "possible_duplicate" }!
+    #expect(try await store.snapshot().transactions.count == 1)
+    try await store.resolveMatch(eventID: review.eventID, transactionID: review.candidates[0])
+    #expect(try await store.snapshot().transactions.count == 1)
+    let (other, _) = try vault()
+    try await other.addAccount(name: "Test", currency: "CAD")
+    try await ingestMapped(other, id: "bank-first", wallet: false)
+    try await ingestMapped(other, id: "wallet-second")
+    #expect(try await other.snapshot().transactions.count == 1)
+}
+@Test func quarantineAndCorrectionRetainEvidence() async throws {
+    let (store, _) = try vault()
+    for _ in 0..<3 { try await store.ingestCapture(data: Data("broken".utf8), deliveryPath: "broken.json", forceRetry: true) }
+    #expect(try await store.snapshot().queue[0].state == "quarantined")
+    try await store.addAccount(name: "Test", currency: "CAD")
+    let data = try capture("partial", amount: "$12.50")
+    try await store.ingestCapture(data: data, deliveryPath: "partial.json")
+    #expect(try await store.snapshot().transactions.isEmpty)
+    let snapshot = try await store.snapshot(), review = snapshot.reviews[0]
+    try await store.correctCapture(eventID: review.eventID, description: "CORRECTED CAFE", amountMinor: -1250, accountID: snapshot.accounts[0].id, day: "2026-10-17")
+    #expect(try await store.snapshot().transactions[0].description == "CORRECTED CAFE")
+    #expect(try await store.testRows("SELECT * FROM event_observations").count == 2)
+    #expect(try await store.testRows("SELECT payload_json FROM raw_event_payloads")[0].text("payload_json") == String(decoding: data, as: UTF8.self))
+}
+@Test func classificationRetriesAreBoundedAndSuccessIsIdempotent() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Test", currency: "CAD")
+    try await ingestMapped(store, id: "w1")
+    let model = String(repeating: "b", count: 64)
+    try await store.registerModel(id: model, name: "fixture", backend: "laya_mps", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.enqueueClassifications(modelID: model)
+    for _ in 0..<3 {
+        let job = try await store.claimClassification(modelID: model)!
+        try await store.failClassification(job, code: "busy", retryable: true)
+        try await store.makeRetriesDue()
+    }
+    #expect(try await store.claimClassification(modelID: model) == nil)
+    #expect(try await store.snapshot().failedJobs == 1)
+    try await store.retryClassificationFailures()
+    let job = try await store.claimClassification(modelID: model)!
+    let decision = ClassificationDecision(type: "expense", category: "dining", review: true)
+    try await store.completeClassification(job, decision: decision)
+    try await store.completeClassification(job, decision: decision)
+    #expect(try await store.testRows("SELECT * FROM category_assignments").count == 2)
+    #expect(try await store.testRows("SELECT status FROM classification_jobs")[0].text("status") == "succeeded")
 }

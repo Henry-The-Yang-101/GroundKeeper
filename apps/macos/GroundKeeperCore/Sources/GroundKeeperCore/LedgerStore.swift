@@ -3,8 +3,8 @@ import Foundation
 /// Serializes all writers. No transaction spans an await or an inference call.
 public actor LedgerStore {
     let db: Database
-    public init(url: URL, key: Data) throws {
-        let db = try Database(url: url, key: key)
+    public init(url: URL) throws {
+        let db = try Database(url: url)
         // This is a single-process, single-writer vault. Recover work interrupted by quit/crash.
         try db.transaction {
             try db.query("UPDATE classification_runs SET status='unavailable',error_code='interrupted',finished_at_ms=? WHERE status='running'", [.integer(nowMS())])
@@ -17,6 +17,7 @@ public actor LedgerStore {
     public func integrityCheck() throws -> Bool {
         try db.query("PRAGMA integrity_check").first?.text("integrity_check") == "ok" && db.query("PRAGMA foreign_key_check").isEmpty
     }
+    public func close() { db.close() }
     public func addAccount(name: String, currency: String, kind: String = "credit_card") throws {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty, name.count <= 100, ExactMoney.currencies.contains(currency),
               ["credit_card", "checking", "cash", "savings", "other"].contains(kind) else { throw LedgerError.invalid("Enter an account name, currency and valid account type.") }

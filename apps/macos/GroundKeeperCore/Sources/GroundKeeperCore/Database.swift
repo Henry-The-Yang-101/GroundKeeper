@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
-import SQLCipher
+import SQLite3
+import Darwin
 
 public enum LedgerError: Error, LocalizedError, Sendable {
     case invalid(String), storage(Int32), conflict, unavailable(String)
@@ -35,23 +36,28 @@ extension Dictionary where Key == String, Value == SQLValue {
 /// Confined to LedgerStore. No SQL or binding values escape in errors/logs.
 final class Database {
     private var handle: OpaquePointer?
-    init(url: URL, key: Data) throws {
-        guard key.count == 32 else { throw LedgerError.invalid("Expected a 256-bit vault key.") }
+    private var ownerLock: Int32 = -1
+    init(url: URL) throws {
+        ownerLock = Darwin.open(url.path + ".ownerlock", O_CREAT | O_RDWR, 0o600)
+        guard ownerLock >= 0, flock(ownerLock, LOCK_EX | LOCK_NB) == 0 else {
+            if ownerLock >= 0 { Darwin.close(ownerLock) }; ownerLock = -1
+            throw LedgerError.unavailable("This database is already open in another GroundKeeper process.")
+        }
         let rc = sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, nil)
-        guard rc == SQLITE_OK else { if let handle { sqlite3_close(handle) }; handle = nil; throw LedgerError.storage(rc) }
+        guard rc == SQLITE_OK else { close(); throw LedgerError.storage(rc) }
         do {
-            // Raw key syntax avoids exposing the key in a prepared statement or log.
-            let hex = key.map { String(format: "%02x", $0) }.joined()
-            try executeScript("PRAGMA key = \"x'\(hex)'\";")
-            guard !(try query("PRAGMA cipher_version")).isEmpty else { throw LedgerError.unavailable("SQLCipher is required.") }
             _ = try query("SELECT count(*) FROM sqlite_master")
             sqlite3_busy_timeout(handle, 3000)
             try executeScript("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA temp_store=MEMORY;")
             guard try query("PRAGMA foreign_keys").first?.number("foreign_keys") == 1 else { throw LedgerError.unavailable("Foreign keys could not be enabled.") }
             try migrate()
-        } catch { sqlite3_close(handle); handle = nil; throw error }
+        } catch { close(); throw error }
     }
-    deinit { if let handle { sqlite3_close(handle) } }
+    deinit { close() }
+    func close() {
+        if let handle { sqlite3_close(handle); self.handle = nil }
+        if ownerLock >= 0 { flock(ownerLock, LOCK_UN); Darwin.close(ownerLock); ownerLock = -1 }
+    }
     func executeScript(_ sql: String) throws {
         let rc = sqlite3_exec(handle, sql, nil, nil, nil)
         guard rc == SQLITE_OK else { throw LedgerError.storage(rc) }

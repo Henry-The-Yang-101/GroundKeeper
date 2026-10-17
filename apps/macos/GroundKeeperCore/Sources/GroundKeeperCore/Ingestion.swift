@@ -1,6 +1,11 @@
 import Foundation
 
 extension LedgerStore {
+    public func captureIsTerminal(path: String, hash: String) throws -> Bool {
+        let id = contentHash(Data("\(path)|\(hash)".utf8))
+        let state = try db.query("SELECT state FROM queue_items WHERE id=?", [.text(id)]).first?.text("state")
+        return state == "imported" || state == "quarantined"
+    }
     /// A delivery is durable only after its raw event, observation and disposition commit together.
     public func ingestCapture(data: Data, deliveryPath: String, forceRetry: Bool = false) throws {
         let hash = contentHash(data)
@@ -89,11 +94,12 @@ extension LedgerStore {
               AND t.occurred_on BETWEEN date(?,'-3 days') AND date(?,'+3 days')
             """, [.text(kind), .text(observation.accountID!), .text(observation.currency!), .integer(observation.amount!), .text(observation.day), .text(observation.day)])
         let matches = candidates.filter { normalize($0.text("description")) == normalize(observation.description) }
+        let possible = matches.filter { kind == "csv" || $0.number("same_kind") == 0 }
         let captures = matches.filter { $0.number("same_kind") == 0 && $0.number("has_capture") == 1 && abs($0.number("capture_time") - observation.captured) <= 300_000 && $0.text("lifecycle") == "pending" }
-        if kind != "csv", captures.count == 1 {
+        if kind != "csv", captures.count == 1, possible.count == 1 {
             try link(eventID: eventID, observationID: observationID, transactionID: captures[0].text("id"), kind: kind, actor: "system")
-        } else if kind == "csv" && !matches.isEmpty || captures.count > 1 {
-            try review(eventID: eventID, reason: "possible_duplicate", candidates: (kind == "csv" ? matches : captures).map { $0.text("id") })
+        } else if !possible.isEmpty {
+            try review(eventID: eventID, reason: "possible_duplicate", candidates: possible.map { $0.text("id") })
         } else {
             // Distinct same-source captures are distinct purchases. No merchant/amount hash dedup.
             let transactionID = try createTransaction(observation)
@@ -147,6 +153,19 @@ extension LedgerStore {
     }
     public func dismissReview(_ id: String) throws {
         try db.query("UPDATE review_items SET status='dismissed',resolved_at_ms=?,resolution='user_dismissed' WHERE id=?", [.integer(nowMS()), .text(id)])
+    }
+    public func correctCapture(eventID: String, description: String, amountMinor: Int64, accountID: String, day: String) throws {
+        guard !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, description.count <= 2048,
+              amountMinor != 0, amountMinor != Int64.min, let account = try account(accountID) else { throw LedgerError.invalid("Enter a description, nonzero amount and account.") }
+        _ = try CivilDate.parse(day)
+        try db.transaction {
+            guard let event = try db.query("SELECT e.*,s.kind FROM raw_events e JOIN sources s ON s.id=e.source_id WHERE e.id=? AND e.is_test=0", [.text(eventID)]).first,
+                  try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This capture already has a transaction or is test evidence.") }
+            let observation = Observation(description: description, amount: amountMinor, currency: account.currency, day: day, captured: event.number("captured_at_ms"), offset: Int(event.number("captured_offset_minutes")), accountID: accountID, label: event.text("external_account_key"), lifecycle: "pending", dateOnly: true)
+            try resolveReviews(eventID)
+            try process(observation, eventID: eventID, sourceID: event.text("source_id"), kind: event.text("kind"))
+            try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms,after_json) VALUES (?,?,'raw_event',?,'user','correct_observation',?,?)", [.text(identifier()), .text(identifier()), .text(eventID), .integer(nowMS()), .text(try json(observation))])
+        }
     }
     public func retryQueue() throws {
         try db.query("UPDATE queue_items SET state='waiting',attempt_count=0,next_attempt_at_ms=0 WHERE state IN ('waiting','quarantined') AND error_code IS NOT 'event_identity_collision'")
