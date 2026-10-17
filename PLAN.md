@@ -213,6 +213,14 @@ modes may send minimized transaction descriptions to Apple for inference.
 - Proposed ownership: Swift app services own database access/migrations; Python
   workers receive classifier inputs and return decisions. Locked background
   workers write sealed staging without access to the live database key.
+- The local classification bridge now has a bundled XPC target hosting isolated
+  CPython, a Swift actor client and explicit Settings diagnostics. Qwen runs on
+  MLX Metal; Laya runs on PyTorch MPS, with GPU availability required. See the
+  [bridge contract](contracts/classifier/README.md). The service has no database
+  access. Swift transaction/job integration, durable retries, cloud adapter,
+  Council orchestration and locked staging remain separate work. Release uses
+  same-team signing/library validation; local ad hoc Debug has development-only
+  exceptions. The pinned native runtime currently requires macOS 26.2+ and arm64.
 - Store transactions, raw events/import provenance, accounts/card mappings,
   merchants/rules, provider decisions, corrections/review, budget versions,
   goals/funding allocations, recurring schedules, and balance snapshots in

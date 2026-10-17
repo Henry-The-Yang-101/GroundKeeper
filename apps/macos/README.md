@@ -8,7 +8,8 @@ appearance preference is saved in UserDefaults.
 ## Build and launch
 
 Requires Xcode 16 or later with its command-line tools selected. Deployment
-target: macOS 14+. Verified locally with Xcode 27 on Apple silicon.
+target: macOS 26.2+ on Apple silicon, matching the pinned MLX native runtime.
+Verified locally with Xcode 27. The earlier UI-only preview targeted macOS 14.
 
 From the repository root:
 
@@ -81,7 +82,7 @@ GroundKeeper/
     Settings/               Appearance and preview controls
     Shared/                 Small reusable layout and presentation components
   Resources/                Adaptive accent asset
-  Services/                 Reserved; no services implemented
+  Services/                 Async XPC classifier client and smoke runner
 ```
 
 The synchronized Xcode source folder picks up new Swift files automatically.
@@ -91,9 +92,15 @@ classification, reporting, and file access behind separate service contracts.
 
 ## Integration boundaries
 
-No SQLite/SQLCipher, iCloud access, model invocation, network requests,
-background jobs, insights calculations, encryption, Touch ID, or backups were
-implemented here. Reports and planning do not derive from edited transactions.
+No SQLite/SQLCipher, iCloud access, network requests, background jobs, insights
+calculations, encryption, Touch ID, or backups are connected. Reports and
+planning do not derive from edited transactions.
+Settings now includes explicit local classifier diagnostics using the bundled
+XPC/Python service: check Metal GPU support, select a verified data-only model
+package, classify fictional sample text and release the model. This does not
+automatically categorize or persist the sample workspace. See the
+[classifier bridge guide](../../contracts/classifier/README.md) for build,
+runtime pins, model export, protocol, signing and verification details.
 The review count and list filtering/sorting are presentation state only.
 
 Categories follow `../../TRANSACTION_CATEGORIES.md`: the 18 named spending

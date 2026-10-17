@@ -10,6 +10,9 @@ struct GroundKeeperApp: App {
             RootView()
                 .environment(workspace)
                 .preferredColorScheme(appearance.colorScheme)
+                .task {
+                    if CommandLine.arguments.contains("--classifier-smoke") { await ClassifierSmoke.run() }
+                }
         }
         .defaultSize(width: 1140, height: 800)
         .windowResizability(.contentMinSize)

@@ -39,8 +39,9 @@ struct SettingsView: View {
             } header: {
                 Text("Categorization")
             } footer: {
-                Text("Provider selection will be available when classification is connected. No models run and no transaction information is sent anywhere in this preview.")
+                Text("Automatic transaction categorization is not connected. The local diagnostics below can load a model and classify explicitly entered sample text.")
             }
+            ClassifierDiagnosticsView()
             Section("Accounts & rules") {
                 DisclosureGroup("Sample accounts") {
                     LabeledContent("Everyday card", value: "CAD · Credit card")
