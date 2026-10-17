@@ -128,6 +128,7 @@
 			PRODUCT_BUNDLE_IDENTIFIER = com.groundkeeper.macos.classifier; PRODUCT_NAME = GroundKeeperClassifier; SKIP_INSTALL = YES;
 		}; name = Debug; };
 		C90000000000000000000003 = {isa = XCBuildConfiguration; buildSettings = {
+			CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 			ARCHS = arm64; CLANG_ENABLE_OBJC_ARC = YES; CLANG_ENABLE_MODULES = YES;
 			CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual;
 			CODE_SIGN_ENTITLEMENTS = ClassifierService/ClassifierService.entitlements;
@@ -190,6 +191,7 @@
 		B20000000000000000000002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				ARCHS = arm64;
 				CODE_SIGN_ENTITLEMENTS = GroundKeeper.entitlements;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

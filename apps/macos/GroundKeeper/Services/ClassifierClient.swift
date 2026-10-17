@@ -202,12 +202,15 @@ private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @uncheck
 actor ClassifierClient {
     static let policyVersion = "groundkeeper-18-v1"
     private let transport = ClassifierTransport()
+    private var categories = Set<String>()
+    private var types = Set<String>()
     var events: AsyncStream<ClassifierEvent> { transport.events }
 
     private func call(_ request: ClassifierRequest) async throws -> ClassifierResult {
         let data = try JSONEncoder().encode(request)
         guard data.count <= 65536 else { throw ClassifierBridgeError.invalidResponse }
         let responseData = try await transport.send(data, id: request.requestID, timeoutMS: request.timeoutMS)
+        try Task.checkCancellation()
         guard responseData.count <= 65536 else { throw ClassifierBridgeError.invalidResponse }
         let response = try JSONDecoder().decode(ClassifierResponse.self, from: responseData)
         guard response.protocolVersion == 1, response.requestID == request.requestID else { throw ClassifierBridgeError.invalidResponse }
@@ -220,7 +223,11 @@ actor ClassifierClient {
     }
     func handshake() async throws -> ClassifierResult {
         let result = try await call(ClassifierRequest(operation: "handshake"))
-        guard result.policyVersion == Self.policyVersion else { throw ClassifierBridgeError.invalidResponse }
+        guard result.policyVersion == Self.policyVersion, let categories = result.categories,
+              let types = result.types, categories.contains("uncategorized"), types.contains("unknown") else {
+            throw ClassifierBridgeError.invalidResponse
+        }
+        self.categories = Set(categories); self.types = Set(types)
         return result
     }
     func probeGPU() async throws -> ClassifierResult { try await call(ClassifierRequest(operation: "gpu_probe")) }
@@ -233,6 +240,7 @@ actor ClassifierClient {
         }
     }
     func prepareModel(at url: URL, timeoutMS: Int = 120_000) async throws -> ClassifierModel {
+        _ = try await handshake()
         // Transient cross-process bookmarks use options=[]; app-scoped persistent
         // bookmarks cannot be resolved as another process's app-scoped grant.
         let bookmark = try url.bookmarkData(options: [],
@@ -245,12 +253,22 @@ actor ClassifierClient {
     func releaseModel() async throws { _ = try await call(ClassifierRequest(operation: "release_model")) }
     func classify(_ input: ClassifierInput, model: ClassifierModel, partID: String, revision: Int,
                   jobID: String = UUID().uuidString) async throws -> ClassifierResult {
+        if categories.isEmpty { _ = try await handshake() }
         var request = ClassifierRequest(operation: "classify")
         request.partID = partID; request.jobID = jobID; request.transactionRevision = revision
         request.policyVersion = Self.policyVersion; request.modelManifestSHA256 = model.manifestSHA256; request.input = input
         let result = try await call(request)
         guard result.partID == partID, result.jobID == jobID, result.transactionRevision == revision,
               result.model == model, let decision = result.decision, decision.review else { throw ClassifierBridgeError.invalidResponse }
+        guard types.contains(decision.type), decision.category.map({ categories.contains($0) }) ?? true else {
+            throw ClassifierBridgeError.invalidResponse
+        }
+        switch decision.type {
+        case "expense": guard decision.category != nil else { throw ClassifierBridgeError.invalidResponse }
+        case "unknown": guard decision.category == "uncategorized" else { throw ClassifierBridgeError.invalidResponse }
+        case "refund": break
+        default: guard decision.category == nil else { throw ClassifierBridgeError.invalidResponse }
+        }
         return result
     }
 }

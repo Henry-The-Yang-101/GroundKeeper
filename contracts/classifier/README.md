@@ -181,6 +181,8 @@ an explicit library-validation exception and a peer-identifier-only requirement.
 Those development exceptions do not apply to Release. This Mac has no valid
 distribution signing identity configured, so notarized/same-team hardened
 distribution cannot be claimed from the local development smoke tests.
+Release also disables Xcode's injected debugging entitlements; its service has
+neither `get-task-allow` nor the library-validation exception.
 
 ## Verification commands
 
@@ -218,6 +220,11 @@ These are smoke measurements, not a controlled throughput benchmark or accuracy
 evaluation; concurrent training and first-use compilation affect timing. The
 model packages are historical experimental models, not newly selected production
 checkpoints. Native logs are kept in the ignored `.local/macos/` workspace.
+
+The full Python suite passed 97 tests. Debug and Release builds passed, and both
+app bundles passed deep/strict code-signature verification. GPU/model inference
+was verified in the local Debug configuration; same-team hardened Release
+execution and notarization require a configured distribution identity.
 
 ## Technical references
 

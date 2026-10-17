@@ -10,6 +10,13 @@ walkthrough, and appearance settings. Sample edits stay in memory; charts use
 fixed examples. Capture, storage, classification, and financial analysis are
 not connected yet.
 
+Settings also provides local classifier diagnostics through a bundled XPC
+service with isolated Python, MLX Metal and PyTorch MPS. It can load a verified
+model package and classify explicitly entered sample text; it does not yet
+categorize or persist the transaction workspace. See the
+[classifier bridge guide](contracts/classifier/README.md). The bundled build
+currently requires Apple silicon and macOS 26.2+.
+
 From the repository root, build and launch the app with:
 
 ```sh
@@ -35,6 +42,7 @@ See the [macOS app guide](apps/macos/README.md) for Xcode setup.
 | [`PLAN.md`](PLAN.md) | Current product plan, classifier choices, architecture proposals, and delivery gates |
 | [`ANALYSIS_FEATURES.md`](ANALYSIS_FEATURES.md) | Graphs, budgets, goals, cash flow, and net-worth roadmap with data requirements |
 | [`contracts/database/SCHEMA.md`](contracts/database/SCHEMA.md) | Proposed SQLite/SQLCipher schema, source reconciliation, optional geotags, category/model provenance, and service invariants |
+| [`contracts/classifier/README.md`](contracts/classifier/README.md) | Bundled XPC/Python classifier, runtime pins, model packages, GPU execution and verification |
 
 `PLAN.md` reflects the current native macOS direction, with local Laya/Qwen,
 optional Apple Intelligence cloud via Shortcuts, and a weighted Council mode.
