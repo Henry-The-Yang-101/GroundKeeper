@@ -77,7 +77,10 @@ def status(spawned=None):
     for w, n in result.items():
         if n:
             state['workers'].setdefault(w, {'agent': '/root/delaware_' + w})
-            state['workers'][w].update({'primary_rows': n, 'audit_rows': audits.get(w, 0)})
+            state['workers'][w].pop('validated_rows', None)
+            state['workers'][w].update({'primary_rows': n, 'audit_rows': audits.get(w, 0),
+                'stage': 'primary_and_audit_written' if n == 100 and audits.get(w) == 25 else
+                         'primary_written_audit_pending' if n == 100 else 'primary_in_progress'})
     (ROOT / 'coordinator_state.json').write_text(json.dumps(state, indent=2) + '\n')
     print(json.dumps({'annotated_rows': sum(result.values()), 'audit_rows': sum(audits.values()),
                       'confirmed_worker_spawns': sum(bool(r.get('spawn_confirmed')) for r in state['workers'].values()),
@@ -95,6 +98,10 @@ def freeze():
     assert sha(ROOT / 'candidates.jsonl') == manifest['candidates_sha256']
     assert sha('experiments/finetune/LABELING_POLICY.md') == manifest['policy_sha256']
     assert sha('experiments/finetune/v2/POLICY_ADDITIONS.md') == manifest['policy_additions_sha256']
+    registry = json.loads((ROOT / 'coordinator_state.json').read_text())['workers']
+    assert all(registry.get(f'{w:03d}', {}).get('spawn_confirmed') and
+               registry[f'{w:03d}']['model'] == 'gpt-6-luna' and
+               registry[f'{w:03d}']['reasoning_effort'] == 'xhigh' for w in range(1,81))
     labels = []
     for worker in range(1, 81):
         validate(worker)
@@ -109,6 +116,9 @@ def freeze():
         review_labels += [{**r, 'audit_worker': worker, 'reviewer_model': 'gpt-6-luna',
                            'reasoning_effort': 'xhigh'} for r in read(ROOT / 'audits' / f'{worker:03d}' / 'labels.jsonl')]
     assert len(review_labels) == len({r['id'] for r in review_labels}) == 2000
+    for worker in range(1,81):
+        registry[f'{worker:03d}'].update({'primary_validated_rows': 100, 'audit_validated_rows': 25,
+                                         'stage': 'validated_complete'})
     reviews = {r['id']: r for r in review_labels}
     original = {r['id']: r for r in labels}
     initial_agreements = sum(all(r[k] == original[r['id']][k] for k in ('type','category','review','disposition')) for r in review_labels)
@@ -119,7 +129,8 @@ def freeze():
     old_config = json.loads(Path('experiments/finetune/v2/training_config.json').read_text())
     assert sha(old_train_path) == old_config['data_hashes']['train_records.jsonl']
     old_train_descriptions = {key(r['input']['description']) for r in read(old_train_path)}
-    changes = json.loads((ROOT / 'pilot_adjudications.json').read_text())['overrides']
+    pilot_adjudications = json.loads((ROOT / 'pilot_adjudications.json').read_text())
+    changes = pilot_adjudications['overrides']
     audit_path = ROOT / 'audit_adjudications.json'
     if audit_path.exists():
         changes += json.loads(audit_path.read_text())['overrides']
@@ -203,6 +214,16 @@ def freeze():
     write(out / 'all_annotations.jsonl', labels)
     write(out / 'independent_audit_annotations.jsonl', review_labels)
     write(out / 'audit_disagreements.jsonl', disagreements)
+    write(out / 'coordinator_adjudications.jsonl', changes)
+    (out / 'provenance.json').write_text(json.dumps({
+        'candidate_inputs_sha256': sha(ROOT / 'candidates.jsonl'),
+        'inventory_manifest': json.loads((ROOT / 'inventory_manifest.json').read_text()),
+        'pilot_audit': json.loads((ROOT / 'pilot_audit_report.json').read_text()),
+        'pilot_public_identity_sources': pilot_adjudications['identity_sources'],
+        'worker_registry': registry,
+        'source_job_manifest': manifest,
+        'source_exclusion_metadata_sha256': sha(ROOT / 'exclusion_metadata.json'),
+    }, indent=2) + '\n')
     write(out / 'quarantine.jsonl', quarantine)
     write(out / 'split_manifest.jsonl', [{k: r[k] for k in ('id','merchant_family','split','label_status')} for r in accepted])
     for s, rows in splits.items():
@@ -249,7 +270,7 @@ def freeze():
                        'Merchant identity cannot establish hidden purchase purpose.',
                        'New test labels need independent human review before accuracy claims.',
                        'Family aliases may miss undocumented ownership relationships.'],
-        'sha256': {p.name: sha(p) for p in sorted(out.glob('*.jsonl'))},
+        'sha256': {p.name: sha(p) for p in sorted(out.iterdir()) if p.suffix in {'.json','.jsonl'}},
     }
     (out / 'manifest.json').write_text(json.dumps(report, indent=2) + '\n')
     (out / 'README.md').write_text(
@@ -277,9 +298,14 @@ def freeze():
     out.rename(target)
     manifest.update({'status': report['status'], 'splits_frozen': True,
                      'prepared_manifest_sha256': sha(target / 'manifest.json'),
+                     'final_group_audit_required': False, 'human_review_pending': True,
                      'final_group_audit_completed': 'conservative deterministic alias/identity union',
                      'accepted': len(accepted), 'quarantined': len(quarantine)})
     (ROOT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    state = json.loads((ROOT / 'coordinator_state.json').read_text())
+    state.update({'status': report['status'], 'workers': registry, 'primary_rows': 8000,
+                  'independent_audit_rows': 2000, 'training_started': False})
+    (ROOT / 'coordinator_state.json').write_text(json.dumps(state, indent=2) + '\n')
     print(json.dumps({k: report[k] for k in ('accepted','quarantined','split_counts','category_counts')}, indent=2))
 
 
