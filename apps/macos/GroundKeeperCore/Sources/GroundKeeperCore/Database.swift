@@ -4,11 +4,12 @@ import SQLite3
 import Darwin
 
 public enum LedgerError: Error, LocalizedError, Sendable {
-    case invalid(String), storage(Int32), conflict, unavailable(String)
+    case invalid(String), storage(Int32), conflict, unavailable(String), ownedByAnotherProcess
     public var errorDescription: String? {
         switch self {
         case .invalid(let reason), .unavailable(let reason): reason
         case .storage(let code): "Database operation failed (\(code)). Your source data has been retained."
+        case .ownedByAnotherProcess: "This database is already open in another GroundKeeper process."
         case .conflict: "This record changed. Refresh it before saving."
         }
     }
@@ -41,7 +42,7 @@ final class Database {
         ownerLock = Darwin.open(url.path + ".ownerlock", O_CREAT | O_RDWR, 0o600)
         guard ownerLock >= 0, flock(ownerLock, LOCK_EX | LOCK_NB) == 0 else {
             if ownerLock >= 0 { Darwin.close(ownerLock) }; ownerLock = -1
-            throw LedgerError.unavailable("This database is already open in another GroundKeeper process.")
+            throw LedgerError.ownedByAnotherProcess
         }
         let rc = sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, nil)
         guard rc == SQLITE_OK else { close(); throw LedgerError.storage(rc) }

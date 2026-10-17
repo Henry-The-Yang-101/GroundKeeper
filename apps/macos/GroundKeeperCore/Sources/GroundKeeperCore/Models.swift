@@ -118,3 +118,20 @@ public struct ClassificationDecision: Codable, Sendable {
     public let type: String, category: String?, review: Bool
     public init(type: String, category: String?, review: Bool) { self.type = type; self.category = category; self.review = review }
 }
+
+public enum QueueProcessingMode: String, CaseIterable, Identifiable, Codable, Sendable {
+    case background, whileOpen, manual
+    public var id: String { rawValue }
+    public var title: String {
+        switch self {
+        case .background: "Automatically in the background"
+        case .whileOpen: "Only while GroundKeeper is open"
+        case .manual: "Only when I click Process queue"
+        }
+    }
+    public var automaticallyProcesses: Bool { self != .manual }
+}
+public struct CaptureDeliveryState: Sendable {
+    public let terminal: Bool
+    public let nextAttemptMS: Int64
+}

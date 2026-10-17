@@ -57,6 +57,30 @@ public actor LedgerStore {
             pendingJobs: Int(try db.query("SELECT count(*) AS n FROM classification_jobs WHERE status IN ('pending','running')").first!.number("n")),
             failedJobs: Int(try db.query("SELECT count(*) AS n FROM classification_jobs WHERE status='failed'").first!.number("n")))
     }
+    /// Includes transactions awaiting their first model selection, without creating jobs.
+    public func unqueuedClassificationCount() throws -> Int {
+        Int(try db.query("""
+            SELECT count(*) AS n FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id
+            JOIN category_assignments a ON a.id=p.current_assignment_id
+            WHERE t.state='active' AND a.origin='system' AND a.confirmed_at_ms IS NULL
+            AND NOT EXISTS(SELECT 1 FROM classification_jobs j WHERE j.part_id=p.id
+              AND j.input_revision=t.revision AND j.status<>'obsolete'
+              AND (j.model_id=json_extract((SELECT value_json FROM app_settings WHERE key='classifier_model'),'$')
+                OR NOT EXISTS(SELECT 1 FROM app_settings WHERE key='classifier_model')))
+            """).first!.number("n"))
+    }
+    public func captureDeliveryStates() throws -> [String: CaptureDeliveryState] {
+        Dictionary(uniqueKeysWithValues: try db.query("SELECT id,state,next_attempt_at_ms FROM queue_items").map {
+            ($0.text("id"), CaptureDeliveryState(terminal: ["imported", "quarantined"].contains($0.text("state")), nextAttemptMS: $0.number("next_attempt_at_ms")))
+        })
+    }
+    /// A deliberate scheduler stop should not consume an inference retry.
+    public func releaseClassification(_ task: ClassificationTask) throws {
+        try db.transaction {
+            try db.query("UPDATE classification_runs SET status='unavailable',error_code='paused',finished_at_ms=? WHERE id=? AND status='running'", [.integer(nowMS()), .text(task.runID)])
+            try db.query("UPDATE classification_jobs SET status='pending',attempts=max(0,attempts-1),next_attempt_at_ms=0,error_code=NULL WHERE id=? AND run_id=? AND status='running'", [.text(task.id), .text(task.runID)])
+        }
+    }
     public func save(_ edit: TransactionEdit) throws {
         guard !edit.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, edit.description.count <= 2048,
               edit.amountMinor != 0, edit.amountMinor != Int64.min, edit.notes.count <= 10000,

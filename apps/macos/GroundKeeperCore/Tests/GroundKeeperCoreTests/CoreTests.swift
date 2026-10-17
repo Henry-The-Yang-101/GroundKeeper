@@ -164,3 +164,66 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.testRows("SELECT * FROM category_assignments").count == 2)
     #expect(try await store.testRows("SELECT status FROM classification_jobs")[0].text("status") == "succeeded")
 }
+
+@Test func queueCountsDoNotEnqueueAndExcludeFinishedWork() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Test", currency: "CAD")
+    try await ingestMapped(store, id: "count-me")
+    #expect(try await store.unqueuedClassificationCount() == 1)
+    #expect(try await store.snapshot().pendingJobs == 0)
+    #expect(try await store.testRows("SELECT * FROM classification_jobs").isEmpty)
+    let model = String(repeating: "c", count: 64)
+    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.enqueueClassifications(modelID: model)
+    #expect(try await store.unqueuedClassificationCount() == 0)
+    #expect(try await store.snapshot().pendingJobs == 1)
+    let job = try await store.claimClassification(modelID: model)!
+    try await store.failClassification(job, code: "bad_input", retryable: false)
+    #expect(try await store.unqueuedClassificationCount() == 0)
+    #expect(try await store.snapshot().pendingJobs == 0)
+    #expect(try await store.snapshot().failedJobs == 1)
+    try await store.retryClassificationFailures()
+    #expect(try await store.snapshot().pendingJobs == 1)
+    let retry = try await store.claimClassification(modelID: model)!
+    try await store.completeClassification(retry, decision: ClassificationDecision(type: "expense", category: "dining", review: true))
+    #expect(try await store.unqueuedClassificationCount() == 0)
+    #expect(try await store.snapshot().pendingJobs == 0)
+}
+
+@Test func deliberateHandoffDoesNotExhaustRetriesOrAcceptLateReplies() async throws {
+    let (store, url) = try vault()
+    try await store.addAccount(name: "Test", currency: "CAD")
+    try await ingestMapped(store, id: "pause-me")
+    let model = String(repeating: "d", count: 64)
+    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.enqueueClassifications(modelID: model)
+    for _ in 0..<5 {
+        let job = try await store.claimClassification(modelID: model)!
+        try await store.releaseClassification(job)
+        try await store.releaseClassification(job) // idempotent
+        try await store.completeClassification(job, decision: ClassificationDecision(type: "expense", category: "dining", review: true))
+        #expect(try await store.testRows("SELECT attempts FROM classification_jobs")[0].number("attempts") == 0)
+        #expect(try await store.snapshot().transactions[0].origin == "system")
+    }
+    await store.close()
+    let nextOwner = try LedgerStore(url: url)
+    #expect(try await nextOwner.claimClassification(modelID: model) != nil)
+    #expect(try await nextOwner.integrityCheck())
+}
+
+@Test func deliveryInventoryExcludesTerminalsAndPreservesBackoff() async throws {
+    let (store, _) = try vault()
+    let payload = try capture("terminal", test: true)
+    try await store.ingestCapture(data: payload, deliveryPath: "done.json")
+    let key = contentHash(Data("done.json|\(contentHash(payload))".utf8))
+    #expect(try await store.captureDeliveryStates()[key]?.terminal == true)
+    let bad = Data("broken".utf8)
+    try await store.ingestCapture(data: bad, deliveryPath: "bad.json")
+    let badKey = contentHash(Data("bad.json|\(contentHash(bad))".utf8))
+    #expect(try await store.captureDeliveryStates()[badKey]?.terminal == false)
+    #expect(try await store.captureDeliveryStates()[badKey]!.nextAttemptMS > nowMS())
+    for _ in 0..<2 { try await store.ingestCapture(data: bad, deliveryPath: "bad.json", forceRetry: true) }
+    #expect(try await store.captureDeliveryStates()[badKey]?.terminal == true)
+    try await store.retryQueue()
+    #expect(try await store.captureDeliveryStates()[badKey]?.terminal == false)
+}
