@@ -62,7 +62,7 @@
 		A50000000000000000000001 /* GroundKeeper */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A90000000000000000000002;
-			buildPhases = (A70000000000000000000001 /* Sources */, A30000000000000000000001 /* Frameworks */, A80000000000000000000001 /* Resources */, C80000000000000000000002);
+			buildPhases = (A70000000000000000000001 /* Sources */, A30000000000000000000001 /* Frameworks */, A80000000000000000000001 /* Resources */, C80000000000000000000002, E80000000000000000000001);
 			buildRules = ();
 			dependencies = (C60000000000000000000002);
 			fileSystemSynchronizedGroups = (A20000000000000000000001 /* GroundKeeper */);
@@ -112,6 +112,8 @@
 		C80000000000000000000002 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices"; dstSubfolderSpec = 16; files = (C10000000000000000000001); name = "Embed Classifier XPC"; runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXCopyFilesBuildPhase section */
 /* Begin PBXShellScriptBuildPhase section */
+        E80000000000000000000001 = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/LaunchAgents/com.groundkeeper.macos.queue.plist"); outputPaths = ("$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchAgents/com.groundkeeper.macos.queue.plist"); name = "Embed queue launch agent"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\nmkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents\"\ncp \"$SRCROOT/LaunchAgents/com.groundkeeper.macos.queue.plist\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents/\"\n"; };
+
 		C80000000000000000000001 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = (); name = "Embed offline Python runtime"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\ncd \"$SRCROOT/../..\"\n\".venv/bin/python\" -m scripts.embed_classifier_runtime\n"; };
 /* End PBXShellScriptBuildPhase section */
 
@@ -181,7 +183,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -206,7 +208,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;

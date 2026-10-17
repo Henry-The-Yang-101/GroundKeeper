@@ -1,7 +1,7 @@
 import SwiftUI
 
-@main
 struct GroundKeeperApp: App {
+    @NSApplicationDelegateAdaptor(GroundKeeperLifecycle.self) private var lifecycle
     @State private var workspace = AppWorkspace()
     @AppStorage("appearance") private var appearance = AppAppearance.system
 
@@ -11,6 +11,7 @@ struct GroundKeeperApp: App {
                 .environment(workspace)
                 .preferredColorScheme(appearance.colorScheme)
                 .task {
+                    lifecycle.workspace = workspace
                     if CommandLine.arguments.contains("--classifier-smoke") { await ClassifierSmoke.run() }
                     else if CommandLine.arguments.contains("--ledger-smoke") { await LedgerSmoke.run() }
                     else { await workspace.start() }
@@ -43,5 +44,22 @@ struct GroundKeeperApp: App {
                 }
             }
         }
+    }
+}
+
+/// Finish cancellation and persist the job handoff before releasing the foreground lease.
+@MainActor final class GroundKeeperLifecycle: NSObject, NSApplicationDelegate {
+    weak var workspace: AppWorkspace?
+    private var terminating = false
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let workspace else { return .terminateNow }
+        guard !terminating else { return .terminateLater }
+        terminating = true
+        Task {
+            await workspace.stop()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 }

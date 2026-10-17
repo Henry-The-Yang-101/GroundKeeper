@@ -1,0 +1,124 @@
+import AppKit
+import ServiceManagement
+import GroundKeeperCore
+import Darwin
+
+/// Both entry points use the same signed executable, container and security-scoped bookmarks.
+/// The foreground lease requests handoff; the existing database lock remains authoritative.
+final class QueueProcessLease {
+    private let descriptor: Int32
+    init?() {
+        guard let root = try? VaultAccess.root() else { return nil }
+        let fd = Darwin.open(root.appendingPathComponent("foreground.ownerlock").path, O_CREAT | O_RDWR, 0o600)
+        guard fd >= 0 else { return nil }
+        guard flock(fd, LOCK_EX | LOCK_NB) == 0 else { Darwin.close(fd); return nil }
+        descriptor = fd
+    }
+    deinit { flock(descriptor, LOCK_UN); Darwin.close(descriptor) }
+    static var foregroundIsRunning: Bool { QueueProcessLease() == nil }
+}
+
+enum QueuePreferences {
+    static var mode: QueueProcessingMode {
+        guard let url = try? VaultAccess.root().appendingPathComponent("queue-processing.json"),
+              let data = try? Data(contentsOf: url), let mode = try? JSONDecoder().decode(QueueProcessingMode.self, from: data) else { return .whileOpen }
+        return mode
+    }
+    static func save(_ mode: QueueProcessingMode) throws {
+        let url = try VaultAccess.root().appendingPathComponent("queue-processing.json")
+        try JSONEncoder().encode(mode).write(to: url, options: .atomic)
+    }
+}
+
+enum QueueAgentHeartbeat {
+    private static var url: URL? { try? VaultAccess.root().appendingPathComponent("queue-agent-heartbeat.json") }
+    static func write() {
+        guard let url else { return }
+        let data = try? JSONEncoder().encode(Date().timeIntervalSince1970)
+        try? data?.write(to: url, options: .atomic)
+    }
+    static var lastSeen: TimeInterval {
+        guard let url, let data = try? Data(contentsOf: url), let time = try? JSONDecoder().decode(Double.self, from: data) else { return 0 }
+        return time
+    }
+    static func clear() { if let url { try? FileManager.default.removeItem(at: url) } }
+}
+
+@MainActor enum QueueBackgroundService {
+    static let service = SMAppService.agent(plistName: "com.groundkeeper.macos.queue.plist")
+    static var status: String {
+        switch service.status {
+        case .enabled:
+            Date().timeIntervalSince1970 - QueueAgentHeartbeat.lastSeen < 30
+                ? "Background service running"
+                : "Background service registered but not responding. Re-enable it or check app signing."
+        case .requiresApproval: "Allow GroundKeeper in System Settings → General → Login Items & Extensions."
+        case .notRegistered: "Background service is not enabled"
+        case .notFound: "Background service is missing from this app build"
+        @unknown default: "Background service status unavailable"
+        }
+    }
+    static func enable() async throws {
+        if service.status == .enabled {
+            try await service.unregister()
+            QueueAgentHeartbeat.clear()
+        }
+        try service.register()
+        guard service.status == .enabled else { return } // macOS may require user approval.
+        for _ in 0..<20 {
+            if Date().timeIntervalSince1970 - QueueAgentHeartbeat.lastSeen < 10 { return }
+            try await Task.sleep(for: .milliseconds(250))
+        }
+        throw LedgerError.unavailable("macOS registered the background service, but it did not start. This locally signed development build may need an Apple Development or Developer ID signing identity. Processing while the app is open and manual processing remain available.")
+    }
+    static func disable() async throws {
+        if service.status != .notRegistered && service.status != .notFound { try await service.unregister() }
+        QueueAgentHeartbeat.clear()
+    }
+}
+
+@MainActor enum QueueAgent {
+    static func run() async {
+        var lastHeartbeat = Date.distantPast
+        func heartbeat() {
+            if Date().timeIntervalSince(lastHeartbeat) >= 5 { QueueAgentHeartbeat.write(); lastHeartbeat = Date() }
+        }
+        defer { QueueAgentHeartbeat.clear() }
+        while !Task.isCancelled && QueuePreferences.mode == .background {
+            heartbeat()
+            if !QueueProcessLease.foregroundIsRunning {
+                // Synchronize bookmarks after the foreground app has released its lease.
+                UserDefaults.standard.synchronize()
+                let workspace = AppWorkspace(isBackgroundAgent: true)
+                await workspace.start()
+                while workspace.ready && !Task.isCancelled && QueuePreferences.mode == .background && !QueueProcessLease.foregroundIsRunning {
+                    heartbeat()
+                    do { try await Task.sleep(for: .seconds(1)) } catch { break }
+                }
+                await workspace.stop()
+            }
+            do { try await Task.sleep(for: .seconds(2)) } catch { break }
+        }
+    }
+}
+
+@main enum GroundKeeperEntry {
+    @MainActor static func main() {
+        #if DEBUG
+        if CommandLine.arguments.contains("--queue-smoke") {
+            Task { await QueueSmoke.run() }
+            dispatchMain()
+        }
+        #endif
+        if CommandLine.arguments.contains("--queue-agent") {
+            // Do not create NSApplication here: registering this process with Launch Services
+            // would make Finder reopen the headless agent instead of launching the UI.
+            Task { await QueueAgent.run(); exit(0) }
+            dispatchMain()
+        } else {
+            // Held until the UI process exits, including while model work is being cancelled.
+            let lease = QueueProcessLease()
+            withExtendedLifetime(lease) { GroundKeeperApp.main() }
+        }
+    }
+}

@@ -12,10 +12,11 @@ struct SyncView: View {
                 if let last = workspace.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
                 HStack {
                     Button("Connect folder…", action: workspace.selectFolder)
-                    Button(workspace.processing ? "Processing…" : "Sync now") { Task { await workspace.sync() } }.disabled(workspace.processing)
                     Button("Retry failed work", action: workspace.retryFailures)
                 }.disabled(!workspace.ready || workspace.saving)
-                Text("Checks every 15 seconds while the app is open. Files stay in iCloud; committed delivery IDs prevent re-importing them. Test captures never become transactions.").font(.caption).foregroundStyle(.secondary)
+                QueueControls()
+                Text(workspace.processingDescription).font(.caption).foregroundStyle(.secondary)
+                Text("Files stay in iCloud; committed delivery IDs prevent re-importing them. Test captures never become transactions.").font(.caption).foregroundStyle(.secondary)
             }
             Surface {
                 HStack {

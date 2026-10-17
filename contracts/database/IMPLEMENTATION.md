@@ -49,17 +49,31 @@ the loaded page. Analytics/planning examples are no longer exposed as live data.
 ## Capture queue
 
 In Sync, select the existing `GroundKeeper` folder or its `inbox` directory.
-The app stores a read-only security-scoped bookmark and polls every 15 seconds
-while open. It coordinates reads, requests downloads for iCloud placeholders,
+The app stores a read-only security-scoped bookmark. Settings controls automatic
+background processing, processing only while the app is open (the default), or
+manual processing. Automatic passes run every 15 seconds. It coordinates reads, requests downloads for iCloud placeholders,
 waits for stable file modification times, rejects symlinks, bounds JSON reads,
-and processes at most 200 changed files per scan. An in-memory metadata cache
+and processes at most 200 changed files per scan, draining the existing backlog
+in successive batches on a processing request. An in-memory metadata cache
 avoids rereading completed unchanged files; the database remains the authority
 after restart. Retry clears this optimization cache.
 
 Source files are **retained**, not moved or deleted. Imported/quarantined status
 is local database state. This avoids deleting the only source after a failed
-write. Queue removal/retention and unattended execution while the app is closed
-are not part of this implementation.
+write. Queue removal/retention is not part of this implementation.
+
+Read-only inventory counts pending files independently of processing and excludes
+persisted imported/quarantined deliveries even after restarting. Classification
+counts include eligible transactions that do not yet have jobs or a chosen model.
+Manual mode does not implicitly process after imports, folder selection, model
+selection or retries. A scheduler cancellation releases an in-flight classification
+job without consuming an attempt, and rejects a late result from its old run.
+
+An embedded SMAppService launch agent supports the background mode using the
+same signed executable/container. The foreground process holds a separate lease;
+the agent cancels and closes its writer before the foreground opens SQLite. The
+normal database ownership lock still enforces exclusion. See the macOS README
+for the observed ad-hoc signing limitation and tested versus unverified behavior.
 
 Capture parsing supports the observed version-2 `wallet_transaction_fields` and
 `notification_fields`, plus version-1 `separate_fields`. Opaque event IDs remain

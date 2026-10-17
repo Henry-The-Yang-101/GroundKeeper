@@ -11,6 +11,23 @@ import GroundKeeperCore
     var reviews: [ReviewRecord] = []
     var queue: [QueueRecord] = []
     var totalTransactions = 0
+    var processingMode = QueuePreferences.mode
+    var backgroundStatus = QueueBackgroundService.status
+    var changingProcessingMode = false
+    var pendingCaptures = 0
+    var waitingCaptures = 0
+    var unqueuedJobs = 0
+    var countError: String?
+    var countUpdatedAt: Date?
+    var queueCount: Int { pendingCaptures + pendingJobs + unqueuedJobs }
+    var processButtonTitle: String { if countError != nil { return "Process queue (count unavailable)" }; return processing ? "Processing… (\(queueCount))" : "Process queue (\(queueCount))" }
+    var processingDescription: String {
+        switch processingMode {
+        case .background: "Checks every 15 seconds, including after you quit GroundKeeper. Your Mac must be awake and you must be signed in."
+        case .whileOpen: "Checks every 15 seconds while GroundKeeper is running. Quitting the app stops processing."
+        case .manual: "Counts update automatically. Capture processing and classification run only when you click Process queue."
+        }
+    }
     var pendingJobs = 0
     var failedJobs = 0
     var page = 0
@@ -33,40 +50,54 @@ import GroundKeeperCore
     @ObservationIgnored private var folderBookmark: Data?
     @ObservationIgnored private var modelURL: URL?
     @ObservationIgnored private var loop: Task<Void, Never>?
+    @ObservationIgnored private var processingTask: Task<Void, Never>?
+    @ObservationIgnored private let isBackgroundAgent: Bool
+    init(isBackgroundAgent: Bool = false) { self.isBackgroundAgent = isBackgroundAgent }
     @ObservationIgnored private var classifying = false
     @ObservationIgnored private var started = false
     var reviewCount: Int { transactions.filter(\.needsReview).count + reviews.count }
     var ready: Bool { store != nil }
 
+    #if DEBUG
+    func configureQueueSmoke(store: LedgerStore, bookmark: Data, mode: QueueProcessingMode) {
+        self.store = store; folderBookmark = bookmark; processingMode = mode
+    }
+    #endif
     func start() async {
         guard !started else { return }; started = true
         do {
-            let opened = try await Task.detached(priority: .userInitiated) { try VaultAccess.open() }.value
+            var opened: (LedgerStore, URL)?
+            // A background pass cancels and releases its writer as soon as the UI lease appears.
+            for attempt in 0..<20 {
+                try Task.checkCancellation()
+                do { opened = try await Task.detached(priority: .userInitiated) { try VaultAccess.open() }.value; break }
+                catch LedgerError.ownedByAnotherProcess where !isBackgroundAgent && attempt < 19 {
+                    status = "Waiting for background processing to hand over…"
+                    try await Task.sleep(for: .milliseconds(500))
+                }
+            }
+            guard let opened else { return }
             store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
             folderBookmark = UserDefaults.standard.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
+            if UserDefaults.standard.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
-            if let bookmark = UserDefaults.standard.data(forKey: "classifierModelBookmark") {
-                do {
-                    var stale = false
-                    let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
-                    guard !stale else { throw LedgerError.unavailable("Select the model package again.") }
-                    try await loadModel(url)
-                } catch { classifierStatus = "Select the model package again to resume classification." }
-            }
             loop = Task { [weak self] in
                 while !Task.isCancelled {
-                    await self?.sync()
+                    guard let self else { break }
+                    await self.updateQueueCount()
+                    if self.processingMode.automaticallyProcesses { await self.sync(automatic: true) }
                     do { try await Task.sleep(for: .seconds(15)) } catch { break }
                 }
             }
-        } catch { status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
+        } catch is CancellationError { started = false } catch { status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
     }
     func refresh() async throws {
         guard let store else { return }
         let snapshot = try await store.snapshot(limit: 500, offset: page * 500)
         transactions = snapshot.transactions.map(Transaction.init)
         accounts = snapshot.accounts; reviews = snapshot.reviews; queue = snapshot.queue
+        unqueuedJobs = try await store.unqueuedClassificationCount()
         totalTransactions = snapshot.totalTransactions; pendingJobs = snapshot.pendingJobs; failedJobs = snapshot.failedJobs
     }
     func showTransactions(needingReview: Bool = false) {
@@ -89,11 +120,11 @@ import GroundKeeperCore
     func map(_ review: ReviewRecord, accountID: String) {
         perform {
             try await self.store?.confirmMapping(sourceID: review.sourceID, label: review.label, accountID: accountID)
-            try await self.refresh(); await self.classifyPending()
+            try await self.refresh(); await self.processIfAutomatic()
         }
     }
     func resolve(_ review: ReviewRecord, transactionID: String?) {
-        perform { try await self.store?.resolveMatch(eventID: review.eventID, transactionID: transactionID); try await self.refresh(); await self.classifyPending() }
+        perform { try await self.store?.resolveMatch(eventID: review.eventID, transactionID: transactionID); try await self.refresh(); await self.processIfAutomatic() }
     }
     func dismiss(_ review: ReviewRecord) {
         perform { try await self.store?.dismissReview(review.id); try await self.refresh() }
@@ -111,27 +142,92 @@ import GroundKeeperCore
         do {
             folderBookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             UserDefaults.standard.set(folderBookmark, forKey: "captureFolderBookmark"); folderName = url.lastPathComponent
-            Task { await folder.reset(); await sync() }
+            Task { await folder.reset(); await updateQueueCount(); await processIfAutomatic() }
         } catch { errorMessage = error.localizedDescription }
     }
-    func sync() async {
-        guard !processing, let store else { return }
-        processing = true; defer { processing = false }
+    func updateQueueCount() async {
+        guard let store else { return }
         do {
             if let folderBookmark {
-                let scan = try await folder.scan(bookmark: folderBookmark)
-                for entry in scan.files {
+                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: false)
+                pendingCaptures = scan.pending; waitingCaptures = scan.waiting
+            } else { pendingCaptures = 0; waitingCaptures = 0 }
+            try await refresh(); countError = nil; countUpdatedAt = Date()
+            backgroundStatus = QueueBackgroundService.status
+        } catch is CancellationError {} catch { countError = error.localizedDescription }
+    }
+    func processIfAutomatic() async {
+        if processingMode.automaticallyProcesses { await sync(automatic: true) }
+        else { await updateQueueCount() }
+    }
+    func sync(automatic: Bool = false) async {
+        guard !processing, store != nil, !changingProcessingMode, !Task.isCancelled,
+              !automatic || processingMode.automaticallyProcesses else { return }
+        processing = true
+        let task = Task { await self.processQueuePass() }
+        processingTask = task
+        await withTaskCancellationHandler { await task.value } onCancel: { task.cancel() }
+        processingTask = nil; processing = false
+    }
+    private func processQueuePass() async {
+        guard let store else { return }
+        do {
+            if let folderBookmark {
+                // Drain the files present at the start; retries respect their persisted deadlines.
+                var remaining = Int.max
+                repeat {
                     try Task.checkCancellation()
-                    try await store.ingestCapture(data: entry.data, deliveryPath: entry.path)
-                    if try await store.captureIsTerminal(path: entry.path, hash: contentHash(entry.data)) { await folder.acknowledge(entry) }
-                }
-                lastSync = Date(); status = scan.waiting == 0 ? "Capture folder checked" : "Waiting for \(scan.waiting) iCloud files"
+                    let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true)
+                    if remaining == Int.max { remaining = scan.pending }
+                    for entry in scan.files.prefix(remaining) {
+                        try Task.checkCancellation()
+                        try await store.ingestCapture(data: entry.data, deliveryPath: entry.path)
+                        remaining -= 1
+                    }
+                    lastSync = Date(); status = scan.waiting == 0 ? "Capture folder checked" : "Waiting for \(scan.waiting) iCloud files"
+                    if scan.files.count < 200 { break }
+                } while remaining > 0
             }
-            try await refresh(); await classifyPending()
-        } catch is CancellationError {} catch { status = "Sync needs attention"; errorMessage = error.localizedDescription }
+            try Task.checkCancellation()
+            try await refresh()
+            if pendingJobs + unqueuedJobs > 0 {
+                if model == nil { try await restoreModel() }
+                try Task.checkCancellation()
+                await classifyPending()
+            }
+            await updateQueueCount()
+        } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
+    }
+    private func restoreModel() async throws {
+        guard let bookmark = UserDefaults.standard.data(forKey: "classifierModelBookmark") else { return }
+        var stale = false
+        let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
+        guard !stale else { throw LedgerError.unavailable("Select the model package again.") }
+        try await loadModel(url)
+    }
+    func changeProcessingMode(_ mode: QueueProcessingMode) {
+        guard !changingProcessingMode, !saving else { return }
+        changingProcessingMode = true
+        Task {
+            defer { changingProcessingMode = false }
+            processingTask?.cancel(); await processingTask?.value
+            do {
+                // Persist before registering; launchd may start the helper immediately.
+                try QueuePreferences.save(mode); processingMode = mode
+                if mode == .background { try await QueueBackgroundService.enable() }
+                else { try await QueueBackgroundService.disable() }
+            } catch { errorMessage = error.localizedDescription }
+            backgroundStatus = QueueBackgroundService.status
+        }
+    }
+    func stop() async {
+        loop?.cancel(); processingTask?.cancel()
+        await loop?.value; await processingTask?.value
+        await client.shutdown()
+        await store?.close(); store = nil; started = false
     }
     func retryFailures() {
-        perform { try await self.store?.retryQueue(); try await self.store?.retryClassificationFailures(); await self.folder.reset(); await self.sync() }
+        perform { try await self.store?.retryQueue(); try await self.store?.retryClassificationFailures(); await self.folder.reset(); await self.updateQueueCount(); await self.processIfAutomatic() }
     }
     func selectModel() {
         guard !classifying, !processing else { return }
@@ -142,7 +238,7 @@ import GroundKeeperCore
             let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             try await self.loadModel(url)
             UserDefaults.standard.set(bookmark, forKey: "classifierModelBookmark")
-            await self.classifyPending()
+            await self.processIfAutomatic()
         }
     }
     private func loadModel(_ url: URL) async throws {
@@ -159,14 +255,19 @@ import GroundKeeperCore
         classifying = true; defer { classifying = false }
         do {
             try await store.enqueueClassifications(modelID: selectedModel.manifestSHA256)
-            // Yield after a small batch so capture polling and user operations remain responsive.
-            for _ in 0..<10 {
+            // Process the existing backlog; do not chase newly arriving work forever.
+            let limit = (try await store.snapshot(limit: 1)).pendingJobs
+            for _ in 0..<limit {
+                try Task.checkCancellation()
                 guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
                 do {
                     let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency),
                         model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
                     guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
                     try await store.completeClassification(job, decision: ClassificationDecision(type: decision.type, category: decision.category, review: decision.review))
+                } catch is CancellationError {
+                    try await store.releaseClassification(job)
+                    throw CancellationError()
                 } catch {
                     var code = "worker_unavailable", retryable = true
                     if case ClassifierBridgeError.worker(let workerCode, _) = error {
@@ -182,12 +283,12 @@ import GroundKeeperCore
                 }
             }
             try await refresh()
-        } catch { errorMessage = error.localizedDescription }
+        } catch is CancellationError {} catch { errorMessage = error.localizedDescription }
     }
     func importCSV(_ document: CSVDocument, mapping: CSVMapping, skipped: Set<Int>) async throws -> Int {
         guard let store else { throw LedgerError.unavailable("Open the vault first.") }
         let count = try await store.importCSV(document, mapping: mapping, skipped: skipped)
-        page = 0; try await refresh(); Task { await classifyPending() }; return count
+        page = 0; try await refresh(); Task { await processIfAutomatic() }; return count
     }
     func changePage(_ value: Int) { page = max(0, value); perform { try await self.refresh() } }
     private func perform(_ operation: @escaping @MainActor () async throws -> Void) {

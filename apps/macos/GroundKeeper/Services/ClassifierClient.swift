@@ -152,6 +152,10 @@ private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @uncheck
         old?.invalidationHandler = nil; old?.interruptionHandler = nil; old?.invalidate()
         for completion in completions { completion(.failure(ClassifierBridgeError.unavailable)) }
     }
+    func invalidate() {
+        lock.lock(); let current = connection; lock.unlock()
+        if let current { disconnected(expected: current) }
+    }
     func event(_ data: Data) {
         guard data.count <= 65536, let value = try? JSONDecoder().decode(ClassifierEvent.self, from: data) else { return }
         eventContinuation.yield(value)
@@ -205,6 +209,7 @@ actor ClassifierClient {
     private var categories = Set<String>()
     private var types = Set<String>()
     var events: AsyncStream<ClassifierEvent> { transport.events }
+    func shutdown() { transport.invalidate() }
 
     private func call(_ request: ClassifierRequest) async throws -> ClassifierResult {
         let data = try JSONEncoder().encode(request)

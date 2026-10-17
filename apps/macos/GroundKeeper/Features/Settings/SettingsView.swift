@@ -1,4 +1,6 @@
 import SwiftUI
+import GroundKeeperCore
+import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
@@ -12,6 +14,21 @@ struct SettingsView: View {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented)
+            }
+            Section("Queue processing") {
+                Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
+                    ForEach(QueueProcessingMode.allCases) { Text($0.title).tag($0) }
+                }.disabled(workspace.changingProcessingMode || workspace.saving)
+                Text(workspace.processingDescription).font(.caption).foregroundStyle(.secondary)
+                if workspace.processingMode == .background {
+                    Text(workspace.backgroundStatus).font(.caption)
+                    HStack {
+                        Button("Enable background service") { workspace.changeProcessingMode(.background) }
+                            .disabled(workspace.changingProcessingMode)
+                        Button("Open Login Items settings…") { SMAppService.openSystemSettingsLoginItems() }
+                    }
+                }
+                QueueControls()
             }
             Section {
                 LabeledContent("Storage", value: workspace.ready ? "SQLite · local Mac" : "Unavailable")
