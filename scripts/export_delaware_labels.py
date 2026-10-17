@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 
 from groundkeeper.laya_runtime import training_row
+from groundkeeper.policy import CATEGORIES, TYPES
 from groundkeeper.policy_v2 import messages_v2
 from scripts.prepare_delaware_labels import ROOT, EXTRA, audit, family_name, read, sha, validate, write
 from scripts.prepare_training import ALIASES, key
@@ -58,7 +59,7 @@ def text_identity(text, known):
     return canonical(stem or flat)
 
 
-def status():
+def status(spawned=None):
     result = {}
     for worker in range(1, 81):
         paths = sorted((ROOT / 'workers' / f'{worker:03d}').glob('labels_*.jsonl'))
@@ -66,19 +67,28 @@ def status():
     audits = {f'{w:03d}': len(read(ROOT / 'audits' / f'{w:03d}' / 'labels.jsonl'))
               for w in range(1, 81) if (ROOT / 'audits' / f'{w:03d}' / 'labels.jsonl').exists()}
     state = json.loads((ROOT / 'coordinator_state.json').read_text())
+    if spawned is not None:
+        if not 1 <= spawned <= 80:
+            raise ValueError('spawned must be in 1..80')
+        for w in range(1, spawned + 1):
+            state['workers'].setdefault(f'{w:03d}', {}).update({
+                'agent': f'/root/delaware_{w:03d}', 'model': 'gpt-6-luna',
+                'reasoning_effort': 'xhigh', 'spawn_confirmed': True})
     for w, n in result.items():
         if n:
             state['workers'].setdefault(w, {'agent': '/root/delaware_' + w})
             state['workers'][w].update({'primary_rows': n, 'audit_rows': audits.get(w, 0)})
     (ROOT / 'coordinator_state.json').write_text(json.dumps(state, indent=2) + '\n')
     print(json.dumps({'annotated_rows': sum(result.values()), 'audit_rows': sum(audits.values()),
+                      'confirmed_worker_spawns': sum(bool(r.get('spawn_confirmed')) for r in state['workers'].values()),
                       'complete_workers': sum(n == 100 for n in result.values()),
-                      'workers': {k: v for k, v in result.items() if v}}, indent=2))
+                      'workers_in_progress': {k: v for k, v in result.items() if 0 < v < 100}}, indent=2))
 
 
 def freeze():
-    out = ROOT / 'prepared'
-    if out.exists():
+    target = ROOT / 'prepared'
+    out = ROOT / '.prepared-staging'
+    if target.exists() or out.exists():
         raise FileExistsError('Preserve the frozen export; use a new version for changes')
     candidates = read(ROOT / 'candidates.jsonl')
     manifest = json.loads((ROOT / 'manifest.json').read_text())
@@ -100,6 +110,8 @@ def freeze():
                            'reasoning_effort': 'xhigh'} for r in read(ROOT / 'audits' / f'{worker:03d}' / 'labels.jsonl')]
     assert len(review_labels) == len({r['id'] for r in review_labels}) == 2000
     reviews = {r['id']: r for r in review_labels}
+    original = {r['id']: r for r in labels}
+    initial_agreements = sum(all(r[k] == original[r['id']][k] for k in ('type','category','review','disposition')) for r in review_labels)
     source = {r['id']: r for r in candidates}
     changes = json.loads((ROOT / 'pilot_adjudications.json').read_text())['overrides']
     audit_path = ROOT / 'audit_adjudications.json'
@@ -203,14 +215,21 @@ def freeze():
         'merchant_family_counts': {s: len(g) for s, g in family_sets.items()},
         'category_counts': dict(Counter(r['answer']['category'] for r in accepted)),
         'type_counts': dict(Counter(r['answer']['type'] for r in accepted)),
+        'categories_without_examples': sorted(set(CATEGORIES) - {r['answer']['category'] for r in accepted}),
+        'types_without_examples': sorted(set(TYPES) - {r['answer']['type'] for r in accepted}),
         'review_counts': dict(Counter(str(r['answer']['review']) for r in accepted)),
         'adjudications': len(fixes), 'merchant_family_audit': 'deterministic aliases plus three group clues unioned; not exhaustive ownership verification',
         'independent_audit_rows': len(review_labels),
+        'independent_audit_initial_exact_agreements': initial_agreements,
+        'independent_audit_initial_exact_agreement_rate': initial_agreements / len(review_labels),
         'independent_audit_sampling': '25 per primary worker; Other/financial/insurance/nonexpense prioritized, remaining hash-selected',
         'audit_disagreements_after_coordinator_corrections': len(disagreements),
         'unresolved_audit_disagreements_in_exports': 0,
         'family_overlap_between_splits': 0, 'known_holdout_or_diagnostic_overlap_in_exports': 0,
         'source': json.loads((ROOT / 'inventory_manifest.json').read_text()),
+        'policy_sha256': manifest['policy_sha256'],
+        'policy_additions_sha256': manifest['policy_additions_sha256'],
+        'worker_guide_sha256': sha('research/DELAWARE_LABELING_WORKER_GUIDE.md'),
         'sampling': manifest['selection'], 'representative_personal_banking_sample': False,
         'input_features': ['description', 'direction=unknown', 'currency=null'],
         'limitations': ['AI labels are weak supervision, not human gold.',
@@ -243,11 +262,88 @@ def freeze():
         'and diagnostic families are excluded. Old training families can enter only train. '
         'Unknown ownership relationships may remain; this is not an exhaustive corporate ownership audit.\n'
     )
+    (out / 'test.canonical.jsonl').chmod(0o400)
+    out.rename(target)
+    manifest.update({'status': report['status'], 'splits_frozen': True,
+                     'prepared_manifest_sha256': sha(target / 'manifest.json'),
+                     'final_group_audit_completed': 'conservative deterministic alias/identity union',
+                     'accepted': len(accepted), 'quarantined': len(quarantine)})
+    (ROOT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps({k: report[k] for k in ('accepted','quarantined','split_counts','category_counts')}, indent=2))
+
+
+def report():
+    prepared = ROOT / 'prepared'
+    data = json.loads((prepared / 'manifest.json').read_text())
+    base = str(prepared.resolve())
+    text = '# Delaware 8,000-description weak-label dataset\n\n'
+    text += (f"Completed **{data['primary_annotations']:,} primary annotations** with "
+             f"**{data['actual_primary_workers']} Luna 6 (`gpt-6-luna`) xhigh workers**, "
+             '100 distinct descriptions each in four packets of 25. '
+             f"There are **{data['independent_audit_rows']:,} additional blind second reviews**. "
+             '**Zero labels are human-confirmed. No training was started.**\n\n')
+    text += ('Both existing models were trained on the **same 2,077 unique synthetic, AI-reviewed transactions**. '
+             'Laya expands each transaction into three decision items (6,231 per epoch); '
+             'this does not mean 6,231 unique transactions. Its selected checkpoint is epoch 3. '
+             'Qwen v2 configuration also records 2,077 training rows. '
+             'See `experiments/laya/training_report.json` and `experiments/finetune/v2/training_config.json`.\n\n')
+    text += (f"Retained **{data['accepted']:,}** descriptions; quarantined **{data['quarantined']:,}**.\n\n"
+             '| Split | Transactions | Merchant families |\n|---|---:|---:|\n')
+    for split, n in data['split_counts'].items():
+        text += f"| {split} | {n:,} | {data['merchant_family_counts'][split]:,} |\n"
+    text += '\nQuarantine reasons:\n\n'
+    for reason, count in data['quarantine_reasons'].items():
+        text += f'- {reason}: {count:,}\n'
+    text += (f"\nBlind reviewers initially agreed on the complete decision and disposition for "
+             f"{data['independent_audit_initial_exact_agreements']:,}/{data['independent_audit_rows']:,} "
+             f"({data['independent_audit_initial_exact_agreement_rate']:.1%}). "
+             'This is AI agreement on an intentionally boundary-heavy sample, not accuracy. '
+             'Unresolved reviewed disagreements are excluded. Unreviewed rows remain weak labels.\n\n')
+    text += ('Family unions join provisional selection groups, annotator groups, recognized raw-text aliases '
+             'and independent reviewer groups. Known historical holdout and earlier 100-row diagnostic families '
+             'are quarantined; old training families can enter only training. '
+             'No recognized family crosses the new splits. Ownership aliases are not exhaustive.\n\n')
+    text += '## Files\n\n'
+    for filename, purpose in [('README.md','Export guide'),('manifest.json','Counts, provenance, limitations and hashes'),
+                              ('train.canonical.jsonl','Training records with evidence'),('valid.canonical.jsonl','Validation records with evidence'),
+                              ('train.qwen.jsonl','Qwen v2 training format'),('valid.qwen.jsonl','Qwen v2 validation format'),
+                              ('train.laya.jsonl','Laya training format'),('valid.laya.jsonl','Laya validation format'),
+                              ('all_annotations.jsonl','All 8,000 original primary annotations'),
+                              ('quarantine.jsonl','Rows excluded pending review or because of family overlap'),
+                              ('audit_disagreements.jsonl','Independent review disagreements')]:
+        text += f'- [{purpose}]({base}/{filename})\n'
+    text += ('\nThe new real test is `test.canonical.jsonl`, read-only and absent from trainer-facing exports. '
+             'Keep it outside training; obtain independent human review before using it as a gold accuracy benchmark.\n\n')
+    text += '## Coverage\n\n| Category | Retained rows |\n|---|---:|\n'
+    for category, n in sorted(data['category_counts'].items(), key=lambda x: str(x[0])):
+        text += f'| {category} | {n:,} |\n'
+    text += (f"\nCategories absent: {', '.join(data['categories_without_examples']) or 'none'}. "
+             f"Types absent: {', '.join(data['types_without_examples']) or 'none'}.\n\n")
+    text += ('## Provenance and limits\n\n'
+             'Exact published merchant strings from [Delaware official card expenditure data]'
+             '(https://data.delaware.gov/resource/nurt-5rqw.json), '
+             '[metadata](https://data.delaware.gov/api/views/nurt-5rqw.json). '
+             'The frozen inventory contains 436,557 distinct strings. Source categories, agencies, amounts, '
+             'and dates were not labeling features; input is description, unknown direction, and null currency. '
+             'Selection prioritizes merchant diversity and includes 75 targeted pilot rows; '
+             'it is not a uniform transaction sample. These are real institutional US card merchant descriptions, '
+             'not representative Canadian personal banking narrations.\n\n'
+             'The pilot caught ambiguous merchant titles. Public merchant-identity references included '
+             '[Business Insurance publication](https://www.businessinsurance.com/about/), '
+             '[The Notary Hotel](https://www.marriott.com/hotels/travel/phlak-the-notary-hotel-philadelphia-autograph-collection/), '
+             'and [Plumb’s reference software](https://plumbs.com/pricing/). '
+             'These establish merchant identity, not hidden purchase contents. Original labels and independent '
+             'pilot references remain preserved alongside separate coordinator adjudications.\n\n'
+             'Use this as weak supervision after inspecting labels and class balance. '
+             'It cannot establish production accuracy or resolve the contents of a mixed-retailer purchase.\n')
+    path = Path('research/DELAWARE_LABELED_DATASET_2026-10-17.md')
+    path.write_text(text)
+    print(path)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('phase', choices=['status','freeze'])
+    parser.add_argument('phase', choices=['status','freeze','report'])
+    parser.add_argument('--spawned', type=int, help='Coordinator records confirmed sequential worker spawns')
     args = parser.parse_args()
-    status() if args.phase == 'status' else freeze()
+    {'status': lambda: status(args.spawned), 'freeze': freeze, 'report': report}[args.phase]()
