@@ -1,0 +1,121 @@
+{
+  "reviewed_on": "2026-10-17",
+  "status": "awaiting_user_dataset_review",
+  "human_reviewed_groundkeeper_labels": 0,
+  "new_labels_assigned": 0,
+  "training_started": false,
+  "existing_sealed_tests_opened": false,
+  "bulk_corpus_saved": false,
+  "sources": [
+    {
+      "id": "bc_pcard_2026_apr_jun",
+      "kind": "official_institutional_card_merchant_text",
+      "publisher": "Government of British Columbia",
+      "dataset_id": "8d1df6c4-a342-4b4d-aca7-1daff643ed0f",
+      "resource_id": "4eb5acb8-8c52-4b96-b5cb-36d7ebe662f2",
+      "catalogue_url": "https://catalogue.data.gov.bc.ca/dataset/purchasing-card-transaction-account-expenditures",
+      "metadata_url": "https://catalogue.data.gov.bc.ca/api/3/action/package_show?id=purchasing-card-transaction-account-expenditures",
+      "resource_url": "https://catalogue.data.gov.bc.ca/dataset/8d1df6c4-a342-4b4d-aca7-1daff643ed0f/resource/4eb5acb8-8c52-4b96-b5cb-36d7ebe662f2/download/pcard-qpa-report-april-jun-2026.csv",
+      "publisher_license_title": "Open Government Licence - British Columbia",
+      "publisher_license_id": "2",
+      "publisher_license_url": "https://www2.gov.bc.ca/gov/content?id=A519A56BC2BF44E4A008B33FCF527F61",
+      "license_page_retrieved": false,
+      "resource_last_modified": "2026-08-18T22:25:53.962155",
+      "inspection": "One CSV fetched into memory with a 5 MB read bound and a 30-second network timeout; no raw file persisted",
+      "bytes": 2921809,
+      "sha256": "9c0fc1d88e0ccc489f100f41eb09d93db147366e50d9f2369792b9d1c61404e1",
+      "columns": ["Merchant", "Count", "Amount", "City", "Province", "Ministry"],
+      "rows": 38321,
+      "distinct_merchant_strings": 12497,
+      "distinct_merchant_families": null,
+      "empty_merchant_rows": 0,
+      "rows_with_count_one": 38321,
+      "negative_amount_rows": 1177,
+      "most_frequent_merchant": {"text": "Staples Professional/7", "rows": 2709},
+      "verified_personal_bank_export_fidelity": false,
+      "groundkeeper_labels_available": false,
+      "currency_field_present": false,
+      "transaction_date_field_present": false
+    },
+    {
+      "id": "delaware_state_employee_card_transactions",
+      "kind": "official_institutional_card_merchant_text",
+      "publisher": "Department of Finance, Division of Accounting",
+      "dataset_id": "nurt-5rqw",
+      "catalogue_url": "https://data.delaware.gov/Government-and-Finance/State-Employee-Credit-Card-Transactions/nurt-5rqw",
+      "metadata_url": "https://data.delaware.gov/api/views/nurt-5rqw.json",
+      "query_endpoint": "https://data.delaware.gov/resource/nurt-5rqw.json",
+      "publisher_license_title": "Public Domain",
+      "publisher_license_id": "PUBLIC_DOMAIN",
+      "rows_updated_at_unix": 1791729886,
+      "inspection": "Metadata, server-side aggregate queries and a 12-row public merchant preview; no full corpus downloaded",
+      "counts_query": {
+        "$select": "count(*) as rows,count(distinct merchant) as distinct_merchants,count(distinct cat_descr) as categories,min(trans_dt) as first_date,max(trans_dt) as last_date"
+      },
+      "counts_result": {
+        "rows": 2251316,
+        "distinct_merchants": 436557,
+        "categories": 504,
+        "first_date": "2014-05-07T00:00:00.000",
+        "last_date": "2026-09-28T00:00:00.000"
+      },
+      "recent_counts_query": {
+        "$select": "count(*) as rows,count(distinct merchant) as distinct_merchants,count(distinct cat_descr) as categories,min(trans_dt) as first_date,max(trans_dt) as last_date",
+        "$where": "trans_dt >= '2024-01-01T00:00:00'"
+      },
+      "recent_counts_result": {
+        "rows": 531100,
+        "distinct_merchants": 134980,
+        "categories": 249,
+        "first_date": "2024-01-01T00:00:00.000",
+        "last_date": "2026-09-28T00:00:00.000"
+      },
+      "boundary_source_category_query": {
+        "$select": "cat_descr,count(*) as rows",
+        "$where": "upper(cat_descr) like '%VETER%' OR upper(cat_descr) like '%LEGAL%' OR upper(cat_descr) like '%INSUR%' OR upper(cat_descr) like '%FINAN%' OR upper(cat_descr) like '%FEE%'",
+        "$group": "cat_descr",
+        "$order": "rows DESC",
+        "$limit": 15
+      },
+      "boundary_source_category_result": [
+        {"cat_descr": "Bridge And Road Fees Tolls", "rows": 6024},
+        {"cat_descr": "Insurance Sales Underwriting And Premiums", "rows": 2144},
+        {"cat_descr": "Veterinary Services", "rows": 1822},
+        {"cat_descr": "BRIDGE AND ROAD FEES TOLLS", "rows": 1184},
+        {"cat_descr": "Attorneys Legal Services", "rows": 724},
+        {"cat_descr": "VETERINARY SERVICES", "rows": 411},
+        {"cat_descr": "INSURANCE SALES UNDERWRITING AND PREMIUMS", "rows": 248},
+        {"cat_descr": "ATTORNEYS LEGAL SERVICES", "rows": 52},
+        {"cat_descr": "Direct Marketing-Insurance Services", "rows": 35},
+        {"cat_descr": "DIRECT MARKETING-INSURANCE SERVICES", "rows": 4}
+      ],
+      "source_category_meaning": "The category that the merchant identifies itself as to the credit card company",
+      "source_categories_are_groundkeeper_ground_truth": false,
+      "distinct_merchant_families": null,
+      "verified_personal_bank_export_fidelity": false
+    },
+    {
+      "id": "gbadedata_259k_unverified",
+      "catalogue_url": "https://github.com/gbadedata/transaction-classification",
+      "repository_tree_sha": "345b71fb12be6094f8561482df7e166af8887791",
+      "file_path": "data/bank_transactions.csv",
+      "file_size_from_github_tree": 26230899,
+      "csv_header_checked": ["client_id", "bank_id", "account_id", "txn_id", "txn_date", "description", "amount", "category"],
+      "publisher_reported_approximate_rows": 259000,
+      "origin_verified": false,
+      "data_license_verified": false,
+      "disposition": "not_selected_unverified_provenance_and_data_rights"
+    },
+    {
+      "id": "maaz_rbc_benchmark_unavailable",
+      "catalogue_url": "https://github.com/maaz-zaidi/transaction-classifier",
+      "repository_tree_sha": "5d569fad1daa61f23f7f05af9ad0846f919ee657",
+      "publisher_reported_unique_transactions": 505,
+      "publisher_reported_weighted_occurrences": 3113,
+      "evaluation_file": "data/real/openai_labeled.csv",
+      "public_data_file_available": false,
+      "independent_human_labels_verified": false,
+      "disposition": "not_selected_public_files_unavailable"
+    }
+  ]
+}
