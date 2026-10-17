@@ -128,6 +128,10 @@ def freeze():
     candidates = read(ROOT / 'candidates.jsonl')
     manifest = json.loads((ROOT / 'manifest.json').read_text())
     assert sha(ROOT / 'candidates.jsonl') == manifest['candidates_sha256']
+    assert sha(ROOT / 'merchant_inventory.json') == manifest['inventory_sha256']
+    inventory = {r.get('merchant', ''): int(r['occurrences']) for r in json.loads((ROOT / 'merchant_inventory.json').read_text())}
+    assert len(candidates) == len({r['input']['description'] for r in candidates}) == 8000
+    assert all(inventory.get(r['input']['description']) == r['source_occurrences'] for r in candidates)
     assert sha('experiments/finetune/LABELING_POLICY.md') == manifest['policy_sha256']
     assert sha('experiments/finetune/v2/POLICY_ADDITIONS.md') == manifest['policy_additions_sha256']
     registry = json.loads((ROOT / 'coordinator_state.json').read_text())['workers']
@@ -291,6 +295,7 @@ def freeze():
         'unresolved_audit_disagreements_in_exports': 0,
         'family_overlap_between_splits': 0, 'known_holdout_or_diagnostic_overlap_in_exports': 0,
         'source': json.loads((ROOT / 'inventory_manifest.json').read_text()),
+        'all_8000_descriptions_exactly_match_frozen_official_source': True,
         'policy_sha256': manifest['policy_sha256'],
         'policy_additions_sha256': manifest['policy_additions_sha256'],
         'old_training_records_sha256': sha(old_train_path),
