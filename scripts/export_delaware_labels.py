@@ -25,6 +25,38 @@ PARENT_ALIASES = {
     'federalexpress': 'fedex', 'fedexoffice': 'fedex',
     'notaryhotel': 'marriott', 'autographcollection': 'marriott',
     'autographnotaryhtl': 'marriott', 'hertrich': 'hertrich',
+    # Distinctive family aliases checked against official brand portfolios.
+    # Avoid bare ambiguous words such as Frys, Smiths, Element, or Comfort.
+    'frysfood': 'kroger', 'frysfooddrg': 'kroger', 'frysmarketplace': 'kroger',
+    'harristeeter': 'kroger', 'kingsoopers': 'kroger', 'picknsave': 'kroger',
+    'qfc': 'kroger', 'dillonsfood': 'kroger', 'smithsfood': 'kroger',
+    'tjmaxx': 'tjx', 'tkmaxx': 'tjx', 'marshalls': 'tjx',
+    'homegoods': 'tjx', 'homesense': 'tjx', 'sierratradingpost': 'tjx',
+    'grandhyatt': 'hyatt', 'parkhyatt': 'hyatt', 'andaz': 'hyatt',
+    'alofthotel': 'marriott', 'aloft': 'marriott', 'springhillsuites': 'marriott',
+    'springhillstes': 'marriott', 'towneplacesuites': 'marriott',
+    'lemeridien': 'marriott', 'renaissancehotel': 'marriott',
+    'fourpointsbysheraton': 'marriott', 'fourpointshotel': 'marriott',
+    'achotels': 'marriott', 'elementhotel': 'marriott',
+    'home2suites': 'hilton', 'waldorfastoria': 'hilton', 'conradhotel': 'hilton',
+    'hamptonhotel': 'hilton', 'hamptonbyhilton': 'hilton',
+    'ramada': 'wyndham', 'daysinn': 'wyndham', 'super8': 'wyndham',
+    'laquinta': 'wyndham', 'baymontinn': 'wyndham', 'microtelinn': 'wyndham',
+    'comfortinn': 'choicehotels', 'comfortsuites': 'choicehotels',
+    'qualityinn': 'choicehotels', 'sleepinn': 'choicehotels',
+    'econolodge': 'choicehotels', 'rodewayinn': 'choicehotels',
+    'mainstaysuites': 'choicehotels', 'clarionhotel': 'choicehotels',
+    'cambriahotel': 'choicehotels', 'woodspringsuites': 'choicehotels',
+}
+
+FAMILY_SOURCES = {
+    'kroger': 'https://www.thekrogerco.com/about/history/',
+    'tjx': 'https://www.tjx.com/company/about-tjx',
+    'hyatt': 'https://newsroom.hyatt.com/hyatt-hotels-corporation-fact-sheet',
+    'marriott': 'https://www.marriott.com/brands.mi',
+    'hilton': 'https://www.hilton.com/en/portal/travel-agents/gds-information/',
+    'wyndham': 'https://corporate.wyndhamhotels.com/our-brands/wyndham-hotels-resorts/',
+    'choicehotels': 'https://www.choicehotels.com/choice-brands',
 }
 
 
@@ -223,6 +255,8 @@ def freeze():
         'worker_registry': registry,
         'source_job_manifest': manifest,
         'source_exclusion_metadata_sha256': sha(ROOT / 'exclusion_metadata.json'),
+        'final_family_aliases': PARENT_ALIASES,
+        'additional_official_family_sources_checked_2026_10_17': FAMILY_SOURCES,
     }, indent=2) + '\n')
     write(out / 'quarantine.jsonl', quarantine)
     write(out / 'split_manifest.jsonl', [{k: r[k] for k in ('id','merchant_family','split','label_status')} for r in accepted])
@@ -340,6 +374,15 @@ def report():
              'and independent reviewer groups. Known historical holdout and earlier 100-row diagnostic families '
              'are quarantined; old training families can enter only training. '
              'No recognized family crosses the new splits. Ownership aliases are not exhaustive.\n\n')
+    text += ('Additional chain aliases were checked against official portfolios: '
+             '[Kroger](https://www.thekrogerco.com/about/history/), '
+             '[TJX](https://www.tjx.com/company/about-tjx), '
+             '[Hyatt](https://newsroom.hyatt.com/hyatt-hotels-corporation-fact-sheet), '
+             '[Marriott](https://www.marriott.com/brands.mi), '
+             '[Hilton](https://www.hilton.com/en/portal/travel-agents/gds-information/), '
+             '[Wyndham](https://corporate.wyndhamhotels.com/our-brands/wyndham-hotels-resorts/), '
+             'and [Choice](https://www.choicehotels.com/choice-brands). '
+             'These aliases affect splitting only; category labels remain based on the visible input.\n\n')
     text += '## Files\n\n'
     for filename, purpose in [('README.md','Export guide'),('manifest.json','Counts, provenance, limitations and hashes'),
                               ('train.canonical.jsonl','Training records with evidence'),('valid.canonical.jsonl','Validation records with evidence'),
