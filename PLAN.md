@@ -36,6 +36,17 @@ iPhone Wallet / CIBC alerts → GK Capture Shortcut → iCloud event queue
 - Save raw fields as immutable, versioned JSON using Shortcuts Dictionary
   serialization. Include a stable event ID, source, capture timestamp with
   offset, and available Wallet/bank payload fields. Keep phone capture simple.
+- At transaction capture, also attempt to obtain the phone's current location
+  and include an optional geotag in the iCloud event: latitude, longitude,
+  measurement timestamp and horizontal accuracy when available. Record whether
+  location was available, denied, unavailable, timed out or not requested.
+  Bound the attempt and save the transaction even when location fails. Verify
+  the actual Shortcuts fields and locked-phone behavior with real fixtures.
+- Treat the geotag as phone location at capture time; delayed bank notifications
+  may arrive elsewhere. Preserve candidate samples from each source and choose
+  one optional transaction display geotag with provenance/user override. Keep
+  location out of classifier/cloud inputs by default; provide capture opt-out,
+  removal and retention behavior covering queued/raw data and backups.
 - Verify actual Wallet Amount/currency and notification fields with real redacted
   fixtures. Trigger existence is assumed; payload availability while locked and
   delivery through Focus/Summary still need verification. Validate email/SMS as
@@ -95,6 +106,17 @@ Shared output: `type`, `category`, `review`.
 
 - Use 18 spending categories plus Uncategorized/Other fallbacks. Needs review is
   a separate status; subscription/recurrence and trip/business use are tags.
+- Store categories as expandable reference rows with stable IDs/codes, editable
+  names, optional parent categories and archival/replacement metadata. Adding a
+  category must not require an SQL table migration. Version model vocabularies
+  and policy separately; existing models do not automatically support new labels.
+- Retain append-only type/category assignment history per transaction part.
+  Record selection origin (user, model, Council, explicit rule, import or system),
+  timestamp, confirmation and superseded choice. AI selections reference the
+  exact model/provider/revision/adapter/runtime and policy through a saved run;
+  Council selections retain configuration, member decisions/weights and failures.
+  Accepting or correcting an AI suggestion appends a user-confirmed choice while
+  preserving the original suggestion. Reprocessing cannot overwrite that choice.
 - Keep income, refunds, transfers, card payments, loan principal, cash movements,
   and adjustments distinct. Refunds offset their original category when known;
   transfers/card payments do not count as new spending.
@@ -143,6 +165,12 @@ modes may send minimized transaction descriptions to Apple for inference.
 - Preserve raw events separately from canonical transactions. Match Wallet and
   bank events one-to-one using card/account mapping, amount, currency, time, and
   merchant evidence; validate source-specific windows on real alerts.
+- One transaction can retain several source events (Wallet, bank alert, posted
+  CSV row, manual entry) without multiplying spending. Deduplicate delivery by
+  stable source/event ID; quarantine changed content under the same ID. Reliable
+  source record IDs use account-scoped namespaces. Content hash, merchant,
+  location, date and amount are not unique purchase keys. Store link/merge/
+  not-duplicate decisions and preserve reversibility/history.
 - Match in both directions against new and existing unlinked events. Arrival
   order must not change the result. Separate Wallet purchases remain separate,
   including same-price repeats; use chronological/FIFO pairing for equal matches.
@@ -162,6 +190,13 @@ modes may send minimized transaction descriptions to Apple for inference.
   Support password/recovery-key unlock, Touch ID after persistence/fallback
   tests, and inactivity auto-lock. Keep the live
   database, keys, and models outside the synced queue and Git repository.
+- Proposed relational design: [database schema](contracts/database/SCHEMA.md)
+  and [executable SQL fixture](contracts/database/schema.sql). It covers raw
+  evidence, multi-source reconciliation, optional geotags, expandable categories,
+  model/Council/user provenance, monetary splits, imports/undo, review/audit,
+  planning/insights and operational records. It is a design artifact validated
+  with ordinary SQLite fixtures; app integration, migrations, SQLCipher and
+  service-level workflow invariants remain to be implemented and verified.
 - Proposed ownership: Swift app services own database access/migrations; Python
   workers receive classifier inputs and return decisions. Locked background
   workers write sealed staging without access to the live database key.
