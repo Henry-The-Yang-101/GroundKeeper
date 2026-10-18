@@ -1,5 +1,8 @@
 # Delaware Apple Cloud benchmark
 
+The first quota-limited result is documented in
+[DELAWARE_RESULTS_2026-10-17.md](DELAWARE_RESULTS_2026-10-17.md).
+
 Cloud with Broad World Knowledge enabled was verified in the live **GK
 Categorize Cloud** Shortcut on 2026-10-17. Text output, Follow Up off, and the
 existing `prompt.txt` are unchanged. No benchmark-driven prompt tuning is used.

@@ -1,0 +1,1950 @@
+{
+  "dataset_n": 672,
+  "completed_n": 140,
+  "valid_n": 139,
+  "invalid_outputs": 1,
+  "execution_errors": 1,
+  "all_completed_accuracy": {
+    "category_accuracy": 0.75,
+    "type_accuracy": 0.6714285714285714,
+    "review_accuracy": 0.7142857142857143,
+    "joint_accuracy": 0.45
+  },
+  "all_completed_metrics": {
+    "n": 140,
+    "joint_accuracy": 0.45,
+    "category_accuracy": 0.75,
+    "type_accuracy": 0.6714285714285714,
+    "review_accuracy": 0.7142857142857143,
+    "macro_f1_supported_categories": 0.5812302157657889,
+    "macro_f1_all_categories": 0.4428420691548868,
+    "per_category": {
+      "groceries": {
+        "precision": 0.75,
+        "recall": 0.6,
+        "f1": 0.6666666666666666,
+        "support": 5
+      },
+      "dining": {
+        "precision": 0.9473684210526315,
+        "recall": 0.9230769230769231,
+        "f1": 0.935064935064935,
+        "support": 39
+      },
+      "local_transport": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "vehicle": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "housing": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "utilities": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      "shopping": {
+        "precision": 0.7,
+        "recall": 0.5384615384615384,
+        "f1": 0.6086956521739131,
+        "support": 13
+      },
+      "medical": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6666666666666666,
+        "support": 2
+      },
+      "personal_care": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6666666666666666,
+        "support": 2
+      },
+      "fitness": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      "entertainment": {
+        "precision": 0.5,
+        "recall": 0.6,
+        "f1": 0.5454545454545454,
+        "support": 5
+      },
+      "software": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3
+      },
+      "education": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "support": 2
+      },
+      "travel": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1": 0.8,
+        "support": 6
+      },
+      "insurance": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "financial": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "taxes": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2
+      },
+      "gifts": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "uncategorized": {
+        "precision": 0.6923076923076923,
+        "recall": 0.8035714285714286,
+        "f1": 0.743801652892562,
+        "support": 56
+      },
+      "__none__": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      }
+    },
+    "automatic_acceptance_coverage": 0.0,
+    "automatically_accepted_errors": 0,
+    "automatically_accepted_error_rate": null,
+    "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+  },
+  "valid_output_metrics": {
+    "n": 139,
+    "joint_accuracy": 0.45323741007194246,
+    "category_accuracy": 0.7553956834532374,
+    "type_accuracy": 0.6762589928057554,
+    "review_accuracy": 0.7194244604316546,
+    "macro_f1_supported_categories": 0.6020635490991223,
+    "macro_f1_all_categories": 0.4587150850279027,
+    "per_category": {
+      "groceries": {
+        "precision": 0.75,
+        "recall": 0.6,
+        "f1": 0.6666666666666666,
+        "support": 5
+      },
+      "dining": {
+        "precision": 0.9473684210526315,
+        "recall": 0.9230769230769231,
+        "f1": 0.935064935064935,
+        "support": 39
+      },
+      "local_transport": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "vehicle": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "housing": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "utilities": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      "shopping": {
+        "precision": 0.7,
+        "recall": 0.5384615384615384,
+        "f1": 0.6086956521739131,
+        "support": 13
+      },
+      "medical": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "personal_care": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6666666666666666,
+        "support": 2
+      },
+      "fitness": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      "entertainment": {
+        "precision": 0.5,
+        "recall": 0.6,
+        "f1": 0.5454545454545454,
+        "support": 5
+      },
+      "software": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3
+      },
+      "education": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "support": 2
+      },
+      "travel": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1": 0.8,
+        "support": 6
+      },
+      "insurance": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "financial": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "taxes": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2
+      },
+      "gifts": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "uncategorized": {
+        "precision": 0.6923076923076923,
+        "recall": 0.8035714285714286,
+        "f1": 0.743801652892562,
+        "support": 56
+      },
+      "__none__": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      }
+    },
+    "automatic_acceptance_coverage": 0.0,
+    "automatically_accepted_errors": 0,
+    "automatically_accepted_error_rate": null,
+    "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+  },
+  "mean_latency_seconds": 1.3134223714354447,
+  "median_latency_seconds": 1.2967017084956751,
+  "real_data": true,
+  "reference_label_statuses": [
+    "ai_weak_label_not_human_confirmed"
+  ],
+  "human_confirmed_labels": 0,
+  "application_review_required": true,
+  "errors": [
+    {
+      "id": "de-real-001658",
+      "input": {
+        "description": "COOP-5240 ZH PFINGSTWEIDS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "groceries",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006517",
+      "input": {
+        "description": "FCD*FREUND CONTAINER",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001425",
+      "input": {
+        "description": "TST* FROZEN ROLLS CREAMER",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "groceries",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001673",
+      "input": {
+        "description": "PERRY'S EMBARACADE",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006714",
+      "input": {
+        "description": "BOWLERO WILMINGTON",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000519",
+      "input": {
+        "description": "PALMS TRADING COMPANY SAN",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004933",
+      "input": {
+        "description": "SQ *MUSE SKIN GYM LLC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "personal_care",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "personal_care",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007070",
+      "input": {
+        "description": "THE VARSITY INTERNET",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004456",
+      "input": {
+        "description": "GEORGETOWN UNIV LAW CTR",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "education",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "education",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003761",
+      "input": {
+        "description": "PINNACLE PROMOTIONS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003091",
+      "input": {
+        "description": "RECORDED BOOKS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000532",
+      "input": {
+        "description": "DIRECTPNEUMATICSCOM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001492",
+      "input": {
+        "description": "TST* WET WILLIES - RIVER",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004652",
+      "input": {
+        "description": "ATHLETIC.NET",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "fitness",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001951",
+      "input": {
+        "description": "TST* SALLY BELL S KITCHEN",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-005544",
+      "input": {
+        "description": "WOOLYTOWNPENNANT.COM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007269",
+      "input": {
+        "description": "OLIVE AND BASIL",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003599",
+      "input": {
+        "description": "BLACKWATER FALLS STATE PA",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004421",
+      "input": {
+        "description": "QR.IO GENERATOR",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006117",
+      "input": {
+        "description": "HOME PARAMOUNT-100",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001365",
+      "input": {
+        "description": "WWW.KROSSOVER.COM KROS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002537",
+      "input": {
+        "description": "ASHRAE",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004127",
+      "input": {
+        "description": "IPMA-HR",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000936",
+      "input": {
+        "description": "TST* JESTER KING BREWERY",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001646",
+      "input": {
+        "description": "MARKET 5280 DEN 560",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007091",
+      "input": {
+        "description": "THERAPY",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "medical",
+        "review": false
+      },
+      "prediction": null,
+      "status": "invalid_output"
+    },
+    {
+      "id": "de-real-003810",
+      "input": {
+        "description": "XFRD/FEELUNIQUE",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "personal_care",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006470",
+      "input": {
+        "description": "HAAGEN DAZS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003326",
+      "input": {
+        "description": "SEVILLE CLASSICS INC.",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002669",
+      "input": {
+        "description": "RONAN ENGINEERING CO",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004228",
+      "input": {
+        "description": "ADVANTAGE HOBBY",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003494",
+      "input": {
+        "description": "LASERCRAFTING.COM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001467",
+      "input": {
+        "description": "PAYPAL *TEACHERS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "education",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002824",
+      "input": {
+        "description": "SQ *LTS CHALLENGE COINS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007381",
+      "input": {
+        "description": "SPICE END",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "groceries",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004709",
+      "input": {
+        "description": "PESI INC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002197",
+      "input": {
+        "description": "BUFFER BUFFER AWESOME",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-005056",
+      "input": {
+        "description": "COACHCOMM LLC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007469",
+      "input": {
+        "description": "GRANICK SPORT INC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000854",
+      "input": {
+        "description": "DD DOORDASH ELRANCHOG",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006033",
+      "input": {
+        "description": "IMPERIAL THEATER",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007579",
+      "input": {
+        "description": "DNCR AQUARIUM FF POS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006252",
+      "input": {
+        "description": "GARDEN BAR - HASSALO",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006333",
+      "input": {
+        "description": "SQ *PASSEROS COFFEE ROAST",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003561",
+      "input": {
+        "description": "PAYPAL *ACADEMY COM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004155",
+      "input": {
+        "description": "TST* CYPRESS STREET PINT",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003227",
+      "input": {
+        "description": "CHARLES MOON PLUMBING",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "housing",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "housing",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-005311",
+      "input": {
+        "description": "OMNI CHICAGO",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "travel",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003034",
+      "input": {
+        "description": "KUTA SOFTWARE LLC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004508",
+      "input": {
+        "description": "PALETERIA Y NEVERIA TOCUM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001737",
+      "input": {
+        "description": "RAWLINGS SPORTING GOODS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "fitness",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007678",
+      "input": {
+        "description": "PERM-A-STORE",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004975",
+      "input": {
+        "description": "GEORGIA BOB S - PERRY",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-003640",
+      "input": {
+        "description": "AUSTIN AIR SYSTEMS LIMITE",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002714",
+      "input": {
+        "description": "BAIT N HOOK",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000707",
+      "input": {
+        "description": "COMMUNITY ASSOCIATION INS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "insurance",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004889",
+      "input": {
+        "description": "SMART AND FINAL 935",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "groceries",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "groceries",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001183",
+      "input": {
+        "description": "CHEMWORLD",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004774",
+      "input": {
+        "description": "SQ *A ACE BOSTON CAMBRIDG",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004616",
+      "input": {
+        "description": "EB DELAWARE TOURISM S",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002426",
+      "input": {
+        "description": "MUSIC TEACHERS NATIONA",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "education",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002579",
+      "input": {
+        "description": "DOWN SYNDROME ASSOCIAT",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001448",
+      "input": {
+        "description": "NATL ARCHIVES NRBPC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "taxes",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007674",
+      "input": {
+        "description": "TST* THE ATLANTIC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002652",
+      "input": {
+        "description": "FISHER'S BAKERY",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000241",
+      "input": {
+        "description": "FARMERS BASKET",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "groceries",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "groceries",
+        "review": false
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-007266",
+      "input": {
+        "description": "TOWN OF BARNSTABLE",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "taxes",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002286",
+      "input": {
+        "description": "TST* BAMBUZA - PDX C",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001280",
+      "input": {
+        "description": "CHEM SERVICE INC- ECOMM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002433",
+      "input": {
+        "description": "NESTLE THC MALL OF AMERIC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002204",
+      "input": {
+        "description": "BLUE FORCE GEAR INC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004916",
+      "input": {
+        "description": "MCC*MEDIACOM",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-006568",
+      "input": {
+        "description": "SEAVIEW - A DOLCE RESORT",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "travel",
+        "review": false
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-002815",
+      "input": {
+        "description": "TST* ARTISTRY",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-000399",
+      "input": {
+        "description": "SHOPEQUIPMENTPARTS",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-004048",
+      "input": {
+        "description": "SPITZ INC",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "prediction": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "de-real-001165",
+      "input": {
+        "description": "TONER CARTRIDGE DEPOT LL",
+        "direction": "unknown",
+        "currency": null
+      },
+      "gold": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "prediction": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "status": "ok"
+    }
+  ],
+  "by_source": {
+    "Delaware official institutional card merchant text": {
+      "n": 139,
+      "joint_accuracy": 0.45323741007194246,
+      "category_accuracy": 0.7553956834532374,
+      "type_accuracy": 0.6762589928057554,
+      "review_accuracy": 0.7194244604316546,
+      "macro_f1_supported_categories": 0.6020635490991223,
+      "macro_f1_all_categories": 0.4587150850279027,
+      "per_category": {
+        "groceries": {
+          "precision": 0.75,
+          "recall": 0.6,
+          "f1": 0.6666666666666666,
+          "support": 5
+        },
+        "dining": {
+          "precision": 0.9473684210526315,
+          "recall": 0.9230769230769231,
+          "f1": 0.935064935064935,
+          "support": 39
+        },
+        "local_transport": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        },
+        "vehicle": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        },
+        "housing": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        },
+        "utilities": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 1
+        },
+        "shopping": {
+          "precision": 0.7,
+          "recall": 0.5384615384615384,
+          "f1": 0.6086956521739131,
+          "support": 13
+        },
+        "medical": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        },
+        "personal_care": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666,
+          "support": 2
+        },
+        "fitness": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 1
+        },
+        "entertainment": {
+          "precision": 0.5,
+          "recall": 0.6,
+          "f1": 0.5454545454545454,
+          "support": 5
+        },
+        "software": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        },
+        "education": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "support": 2
+        },
+        "travel": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8,
+          "support": 6
+        },
+        "insurance": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "financial": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "taxes": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 2
+        },
+        "gifts": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "other": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "uncategorized": {
+          "precision": 0.6923076923076923,
+          "recall": 0.8035714285714286,
+          "f1": 0.743801652892562,
+          "support": 56
+        },
+        "__none__": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        }
+      },
+      "automatic_acceptance_coverage": 0.0,
+      "automatically_accepted_errors": 0,
+      "automatically_accepted_error_rate": null,
+      "acceptance_note": "No real held-out calibration exists; deployed model acceptance remains disabled."
+    }
+  },
+  "status": "stopped",
+  "stop_reason": "execution_error: Error: You have reached the usage limit for this model. Please try again later.",
+  "session_elapsed_seconds": 302.19625083300343,
+  "reference_kind": "Real public merchant descriptions with AI weak labels; no human-confirmed gold labels",
+  "evaluated_partition": "validation",
+  "planned_n": 672,
+  "remaining_n": 532,
+  "order_seed": 20261017,
+  "type_pairs_valid_outputs": {
+    "unknown -> unknown": 22,
+    "expense -> unknown": 42,
+    "expense -> expense": 72,
+    "unknown -> expense": 3
+  },
+  "service_model_version": "Not exposed or pinned by Shortcuts",
+  "observed_configuration": {
+    "model": "Cloud",
+    "broad_world_knowledge": true,
+    "output": "Text",
+    "follow_up": false
+  },
+  "reference_category_counts_on_completed": {
+    "uncategorized": 56,
+    "groceries": 5,
+    "dining": 39,
+    "entertainment": 5,
+    "personal_care": 2,
+    "education": 2,
+    "shopping": 13,
+    "software": 3,
+    "medical": 2,
+    "travel": 6,
+    "local_transport": 1,
+    "housing": 1,
+    "fitness": 1,
+    "vehicle": 1,
+    "taxes": 2,
+    "utilities": 1
+  },
+  "scorer_verified": "Four adapter/scorer tests passed; accuracy independently counted from saved responses; successful raw outputs reparsed; data/config/prompt hashes rechecked",
+  "scorer_sha256": "725ca36a0dbde5bb36a33afd9a60cf72a243c4be61493837b8b3254cb55c0618",
+  "full_set_accuracy_known": false,
+  "run_note": "First 10 outputs saved before a scorer-test repair; resumed without changing inference or repeating completed requests."
+}
