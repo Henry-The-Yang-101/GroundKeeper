@@ -29,7 +29,7 @@ def test_quota_error_is_preserved_without_fabricating_prediction(monkeypatch):
         subprocess.CompletedProcess(command, 1, "", "Too many incoming requests"))
     with pytest.raises(ShortcutExecutionError, match="Too many") as error:
         run_shortcut(INPUT)
-    assert error.value.detail["status"] == "execution_error"
+    assert error.value.detail["status"] == "rate_limited"
     assert not error.value.detail["valid_schema"]
 
 
@@ -59,3 +59,20 @@ def test_no_baseline_and_invalid_review_never_gets_credit():
     assert report["all_completed_metrics"]["review_accuracy"] == 0
     assert report["all_completed_metrics"]["macro_f1_supported_categories"] == 0
     assert report["real_data"] is True and report["human_confirmed_labels"] == 0
+
+
+def test_app_cancellation_reaps_shortcuts_child(monkeypatch):
+    class Child:
+        stopped = False
+        waited = False
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def poll(self): return -9 if self.stopped else None
+        def kill(self): self.stopped = True
+        def wait(self): self.waited = True
+    child = Child()
+    monkeypatch.setattr(subprocess, 'Popen', lambda *a, **k: child)
+    with pytest.raises(ShortcutExecutionError) as error:
+        run_shortcut(INPUT, cancelled=lambda: True)
+    assert error.value.detail['status'] == 'cancelled'
+    assert child.stopped and child.waited

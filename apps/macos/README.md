@@ -141,3 +141,41 @@ quitting, and handoff on reopening. A subsequent signed rebuild and helper
 re-registration passed as well. The signed XPC smoke test passed protocol,
 cancellation, MLX GPU and PyTorch MPS checks. Login/reboot behavior has not been
 tested by logging out or restarting this Mac.
+
+### Classifier providers
+
+Settings → Categorization lets you choose a Qwen or Laya data-only package, or
+explicitly enable an Apple Intelligence Shortcut by name. The saved provider is
+restored by foreground and background queue processing. Manual mode still waits
+for Process queue. No provider automatically falls back to another.
+
+The latest selected Qwen continuation is packaged locally at
+`.local/macos/models/qwen-delaware` (`qwen-delaware-v1-step5872`, v2 prompt).
+The prior `.local/macos/models/qwen` package remains available for rollback;
+Laya is `.local/macos/models/laya`. To reproduce the continuation package:
+
+```sh
+.venv/bin/python -m scripts.export_selected_qwen \
+  .local/macos/models/qwen .local/finetune/delaware-v1 \
+  .local/macos/models/qwen-delaware \
+  --training-config experiments/finetune/delaware-v1/training_config.json
+```
+
+The destination must not exist. Export checks the selected adapter hash and base
+weight hash, clones the base files, and verifies the complete output manifest.
+Training labels were weak labels; every app prediction continues to need review.
+
+The Shortcut receives only description, direction and currency. Its Use Model
+action determines the actual execution service; the app cannot attest which model
+a user-edited Shortcut calls. The database conservatively records this provider
+as cloud-capable (`execution=cloud`), with identity derived from the Shortcut name,
+policy and connector version, not a hash of Apple's model or Shortcut contents.
+Re-enable the provider after renaming a Shortcut. Apple quota/configuration errors
+leave jobs failed for explicit Retry failed; timeouts use the existing bounded
+retry policy. Cancellation kills/reaps the CLI child and releases the queue job;
+an action already dispatched inside Shortcuts may continue in Apple's service.
+Temporary input/output files are removed on normal completion, error or cancellation.
+
+Verification on this Mac: signed XPC reached `GK Categorize Cloud`, which returned
+Apple's model usage-limit error. A successful Apple Intelligence prediction must
+be checked after that quota resets. No sandbox entitlements were expanded.

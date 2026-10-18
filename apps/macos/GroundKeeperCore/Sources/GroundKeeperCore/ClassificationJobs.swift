@@ -2,11 +2,11 @@ import Foundation
 
 extension LedgerStore {
     public func registerModel(id: String, name: String, backend: String, policy: String, configuration: String) throws {
-        guard policy == "groundkeeper-18-v1", ["qwen_mlx", "laya_mps"].contains(backend), id.count == 64 else { throw LedgerError.invalid("Unsupported classifier identity.") }
+        guard policy == "groundkeeper-18-v1", ["qwen_mlx", "laya_mps", "apple_shortcut"].contains(backend), id.count == 64 else { throw LedgerError.invalid("Unsupported classifier identity.") }
         try db.transaction {
             let definition = try json(["policy": [policy], "categories": ["groceries","dining","local_transport","vehicle","housing","utilities","shopping","medical","personal_care","fitness","entertainment","software","education","travel","insurance","financial","taxes","gifts","other","uncategorized"]])
             try db.query("INSERT OR IGNORE INTO policy_versions(id,name,content_sha256,definition_json,created_at_ms) VALUES (?,?,?,?,?)", [.text(policy), .text(policy), .text(contentHash(Data(definition.utf8))), .text(definition), .integer(nowMS())])
-            try db.query("INSERT OR IGNORE INTO model_versions(id,provider,model_name,execution,package_sha256,configuration_json,created_at_ms) VALUES (?,?,?,'local',?,?,?)", [.text(id), .text(backend), .text(name), .text(id), .text(configuration), .integer(nowMS())])
+            try db.query("INSERT OR IGNORE INTO model_versions(id,provider,model_name,execution,package_sha256,configuration_json,created_at_ms) VALUES (?,?,?,?,?,?,?)", [.text(id), .text(backend), .text(name), .text(backend == "apple_shortcut" ? "cloud" : "local"), .text(id), .text(configuration), .integer(nowMS())])
             try db.query("UPDATE classification_jobs SET status='obsolete' WHERE model_id<>? AND status='pending'", [.text(id)])
             try db.query("INSERT INTO app_settings(key,value_json,updated_at_ms) VALUES ('classifier_model',?,?) ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json,updated_at_ms=excluded.updated_at_ms", [.text(try json(id)), .integer(nowMS())])
         }
@@ -19,6 +19,16 @@ extension LedgerStore {
                 JOIN category_assignments a ON a.id=p.current_assignment_id WHERE p.id=classification_jobs.part_id
                 AND (t.revision<>classification_jobs.input_revision OR t.state<>'active' OR a.confirmed_at_ms IS NOT NULL))
                 """)
+            // Returning to a provider should revive its superseded, still-eligible
+            // jobs; the uniqueness key otherwise prevents enqueueing them again.
+            try db.query("""
+                UPDATE classification_jobs SET status='pending',attempts=0,next_attempt_at_ms=0,run_id=NULL,error_code=NULL
+                WHERE model_id=? AND status='obsolete' AND EXISTS (
+                    SELECT 1 FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id
+                    JOIN category_assignments a ON a.id=p.current_assignment_id
+                    WHERE p.id=classification_jobs.part_id AND t.revision=classification_jobs.input_revision
+                    AND t.state='active' AND a.origin='system' AND a.confirmed_at_ms IS NULL)
+                """, [.text(modelID)])
             try db.query("""
                 INSERT OR IGNORE INTO classification_jobs(id,part_id,input_revision,model_id,status,next_attempt_at_ms,created_at_ms,updated_at_ms)
                 SELECT lower(hex(randomblob(16))),p.id,t.revision,?,'pending',0,?,?

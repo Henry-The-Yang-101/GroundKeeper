@@ -244,3 +244,15 @@ execution and notarization require a configured distribution identity.
 - [Apple cross-process file bookmarks](https://developer.apple.com/documentation/security/accessing-files-from-the-macos-app-sandbox)
 - [CPython isolated initialization](https://docs.python.org/3.12/c-api/init_config.html)
 - [MLX Metal APIs](https://ml-explore.github.io/mlx/build/html/python/metal.html)
+
+### Explicit Apple Shortcut provider
+
+`prepare_shortcut` accepts `shortcut_name` (1–128 characters, no control characters).
+It releases local GPU weights and returns the usual model identity with backend
+`apple_shortcut`, device `shortcut`. `classify` uses the same job/revision/policy/
+identity checks and strictly validated, review-required decision contract as local
+inference. The bundled Python adapter invokes `/usr/bin/shortcuts` without a shell,
+observes native cancellation and bounds response size. Errors expose safe codes
+(`shortcut_unavailable`, `shortcut_rate_limited`, `invalid_output`, or
+`deadline_exceeded`) rather than private input or dependency logs. No automatic
+local/cloud fallback exists. Only Settings explicitly selects this provider.

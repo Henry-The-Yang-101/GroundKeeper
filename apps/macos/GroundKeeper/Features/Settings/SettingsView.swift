@@ -40,8 +40,14 @@ struct SettingsView: View {
             Section {
                 LabeledContent("Model", value: workspace.classifierStatus)
                 Button("Choose local model package…", action: workspace.selectModel).disabled(!workspace.ready || workspace.processing || workspace.saving)
+                TextField("Apple Intelligence Shortcut", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
+                    .disabled(workspace.processing || workspace.saving)
+                Text("Using this provider sends description, direction and currency to the selected Shortcut. Its Use Model action controls whether Apple Intelligence runs on device or in the cloud. Check that action in Shortcuts before enabling.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Use Apple Intelligence Shortcut", action: workspace.useShortcut)
+                    .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
-                Text("Unconfirmed new transactions are sent to the local Python worker. Every result requires review. Confirmed choices are preserved. Cloud providers and Council are not enabled.")
+                Text("Choose a Qwen or Laya package for local inference, or explicitly enable the Shortcut above. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text("Categorization") }
             Section {

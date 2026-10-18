@@ -229,7 +229,7 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
                     if (prepare && [envelope[@"status"] isEqual:@"succeeded"]) {
                         [self.activePackage stopAccessingSecurityScopedResource]; self.activePackage=candidate; candidate=nil;
                     }
-                    if ([request[@"operation"] isEqual:@"release_model"]) {
+                    if ([request[@"operation"] isEqual:@"release_model"] || ([request[@"operation"] isEqual:@"prepare_shortcut"] && [envelope[@"status"] isEqual:@"succeeded"])) {
                         [self.activePackage stopAccessingSecurityScopedResource]; self.activePackage=nil;
                     }
                 }

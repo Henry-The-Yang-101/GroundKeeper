@@ -68,6 +68,7 @@ private struct ClassifierRequest: Encodable, Sendable {
     let requestID = UUID().uuidString
     let operation: String
     var timeoutMS = 60_000
+    var shortcutName: String?
     var packageBookmark: String?
     var jobID: String?
     var partID: String?
@@ -77,6 +78,7 @@ private struct ClassifierRequest: Encodable, Sendable {
     var input: ClassifierInput?
     enum CodingKeys: String, CodingKey {
         case protocolVersion = "protocol_version", requestID = "request_id", operation, timeoutMS = "timeout_ms"
+        case shortcutName = "shortcut_name"
         case packageBookmark = "package_bookmark", jobID = "job_id", partID = "part_id"
         case transactionRevision = "transaction_revision", policyVersion = "policy_version"
         case modelManifestSHA256 = "model_manifest_sha256", input
@@ -253,6 +255,13 @@ actor ClassifierClient {
         var request = ClassifierRequest(operation: "prepare_model")
         request.timeoutMS = timeoutMS; request.packageBookmark = bookmark.base64EncodedString()
         guard let model = try await call(request).model else { throw ClassifierBridgeError.invalidResponse }
+        return model
+    }
+    func prepareShortcut(name: String) async throws -> ClassifierModel {
+        _ = try await handshake()
+        var request = ClassifierRequest(operation: "prepare_shortcut")
+        request.shortcutName = name
+        guard let model = try await call(request).model, model.backend == "apple_shortcut" else { throw ClassifierBridgeError.invalidResponse }
         return model
     }
     func releaseModel() async throws { _ = try await call(ClassifierRequest(operation: "release_model")) }

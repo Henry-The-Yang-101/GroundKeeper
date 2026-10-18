@@ -39,6 +39,8 @@ import GroundKeeperCore
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
+    var shortcutName = UserDefaults.standard.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
+    var classifierProvider = UserDefaults.standard.string(forKey: "classifierProvider") ?? "local"
     var classifierStatus = "Choose a local model in Settings"
     var processing = false
     var saving = false
@@ -80,7 +82,8 @@ import GroundKeeperCore
             store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
             folderBookmark = UserDefaults.standard.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
-            if UserDefaults.standard.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
+            if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
+            else if UserDefaults.standard.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
             loop = Task { [weak self] in
                 while !Task.isCancelled {
@@ -161,7 +164,7 @@ import GroundKeeperCore
         else { await updateQueueCount() }
     }
     func sync(automatic: Bool = false) async {
-        guard !processing, store != nil, !changingProcessingMode, !Task.isCancelled,
+        guard !processing, !saving, store != nil, !changingProcessingMode, !Task.isCancelled,
               !automatic || processingMode.automaticallyProcesses else { return }
         processing = true
         let task = Task { await self.processQueuePass() }
@@ -199,6 +202,7 @@ import GroundKeeperCore
         } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
     }
     private func restoreModel() async throws {
+        if classifierProvider == "shortcut" { try await loadShortcut(name: UserDefaults.standard.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
         guard let bookmark = UserDefaults.standard.data(forKey: "classifierModelBookmark") else { return }
         var stale = false
         let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
@@ -230,20 +234,43 @@ import GroundKeeperCore
         perform { try await self.store?.retryQueue(); try await self.store?.retryClassificationFailures(); await self.folder.reset(); await self.updateQueueCount(); await self.processIfAutomatic() }
     }
     func selectModel() {
-        guard !classifying, !processing else { return }
+        guard !classifying, !processing, !saving else { return }
         let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
         panel.message = "Choose a verified GroundKeeper model package. Pending transactions will be classified locally."
         guard panel.runModal() == .OK, let url = panel.url else { return }
         perform {
             let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             try await self.loadModel(url)
+            self.classifierProvider = "local"
+            UserDefaults.standard.set("local", forKey: "classifierProvider")
             UserDefaults.standard.set(bookmark, forKey: "classifierModelBookmark")
             await self.processIfAutomatic()
         }
     }
+    func useShortcut() {
+        guard !processing, !saving else { return }
+        perform {
+            let name = self.shortcutName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { throw LedgerError.invalid("Enter a Shortcut name.") }
+            self.shortcutName = name
+            try await self.loadShortcut(name: name)
+            self.classifierProvider = "shortcut"
+            UserDefaults.standard.set(name, forKey: "classifierShortcutName")
+            UserDefaults.standard.set("shortcut", forKey: "classifierProvider")
+            await self.processIfAutomatic()
+        }
+    }
+    private func loadShortcut(name: String) async throws {
+        model = nil; modelURL = nil
+        let loaded = try await client.prepareShortcut(name: name)
+        try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend,
+            policy: loaded.policyVersion, configuration: String(decoding: JSONEncoder().encode(loaded), as: UTF8.self))
+        model = loaded; classifierStatus = "\(loaded.modelID) · Apple Shortcuts (may use cloud)"
+    }
     private func loadModel(_ url: URL) async throws {
         classifierStatus = "Verifying and loading model…"
         let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }
+        model = nil; modelURL = nil
         let loaded = try await client.prepareModel(at: url)
         let encoder = JSONEncoder(); encoder.outputFormatting = .sortedKeys
         try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend, policy: loaded.policyVersion,
@@ -275,6 +302,9 @@ import GroundKeeperCore
                         retryable = ["busy", "deadline_exceeded", "model_not_ready", "runtime_failed", "inference_failed"].contains(code)
                     }
                     try await store.failClassification(job, code: code, retryable: retryable)
+                    classifierStatus = error.localizedDescription
+                    errorMessage = error.localizedDescription
+                    if selectedModel.backend == "apple_shortcut" { model = nil }
                     if retryable, let url = modelURL {
                         // Reconnect and prepare without replaying an uncommitted job immediately.
                         do { try await loadModel(url) } catch { model = nil; classifierStatus = "Model unavailable — select it again to resume" }
