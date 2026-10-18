@@ -22,6 +22,9 @@ Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/RE
 
 ## Configure Apple development signing
 
+This is optional. The [free release build](../../docs/releases.md#local-release-build)
+uses ad hoc signing and requires no Apple account.
+
 1. Open Xcode → Settings → Apple Accounts and sign in to your Apple Account.
 2. Select your team → Manage Certificates. Create an **Apple Development**
    certificate if there is not already a usable one on this Mac. Keep its private
@@ -40,10 +43,9 @@ cache when that identity changes. The background agent is the app executable
 and therefore shares its identity. Bundle identifiers and the SQLite location
 are preserved.
 
-This configures development on your Mac. Public distribution and notarization
-are a separate setup using Developer ID Application signing. Certificate
-availability, team capabilities and successful background-service execution
-must be checked after the signed build; a successful registration is insufficient.
+This configures development on your Mac. The public release workflow uses ad hoc
+signing and does not notarize the app. Successful registration alone does not
+prove background execution; check the helper heartbeat.
 
 ## First use
 
@@ -66,7 +68,9 @@ identities prevent replay.
 
 ## Queue processing modes
 
-Settings → Queue processing offers three persisted choices:
+Source builds offer three persisted queue choices. The free ad hoc release
+offers while-open and manual processing; closed-app background mode is disabled
+after a replacement-build launch failure.
 
 - **Automatically in the background:** a sandboxed `SMAppService` launch agent
   processes work after the UI quits and at login, while the Mac is awake. macOS
@@ -93,18 +97,19 @@ lock prevents concurrent writers. Handoff cancels in-flight inference without
 consuming a retry and releases the Python worker before closing the database.
 Switching away from background mode unregisters the launch agent.
 
-**Signing:** background launches require a working signing identity. On this Mac,
-Xcode automatic signing created an Apple Development certificate for the Personal
-Team; the app, classifier and embedded native runtime now use it. The earlier
-ad-hoc launch-agent registration continued failing after the identity changed.
-The signed service uses `com.groundkeeper.macos.queue-processing`; enabling it
-unregisters the legacy `com.groundkeeper.macos.queue` service. The legacy plist is
-retained solely so Service Management can unregister it through the supported API.
-No system-wide background-task registry or security settings were reset.
+An initial ad hoc background diagnostic succeeded, but a replacement build was
+killed by macOS with `Launch Constraint Violation`. The free release disables
+closed-app background mode and converts a saved background preference to
+while-open processing. Its headless production entry point exits immediately.
+Closing the app window still leaves while-open processing active; quitting stops it.
 
-The app checks the helper heartbeat: registration alone is not considered proof
-that the helper is running. Keep using the private signing configuration for
-subsequent builds so updates retain the same Apple team identity.
+Source builds retain background support and heartbeat checks. A failed enable
+attempt restores the prior mode. The current service uses
+`com.groundkeeper.macos.queue-processing`; enabling it unregisters the legacy
+`com.groundkeeper.macos.queue` service. The legacy plist is retained for that
+supported cleanup. No system-wide registry or security setting is reset.
+See [release verification](../../docs/releases.md#local-verification-and-background-limits)
+for the diagnostic procedure and its limits.
 
 The live database is at
 `~/Library/Containers/com.groundkeeper.macos/Data/Library/Application Support/GroundKeeper/vault.sqlite`.

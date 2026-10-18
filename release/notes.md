@@ -1,7 +1,8 @@
 Apple silicon macOS prerelease. Requires macOS 26.2 or later.
 
 Download `GroundKeeper-arm64.dmg`, open it, and drag the app into Applications.
-Python and the inference libraries are included. Manual entry and CSV import
+The app is ad hoc-signed, not notarized. macOS may require **Privacy & Security >
+Open Anyway** on first launch. Python and the inference libraries are included. Manual entry and CSV import
 work without a model.
 
 For local classification, download all three model archive parts,
@@ -13,7 +14,11 @@ folder in Settings. Read `INSTALL.md` for the full procedure and
 Model versions: `qwen-delaware-v1-step5872` and `laya-epoch3`.
 Review every category suggestion. GPU inference and real iPhone capture still
 need testing on the target device; the hosted release checks cover the core
-tests, temporary ledger, signatures, and notarization.
+tests, temporary ledger, signatures, and the XPC/Python connection.
 
 `SHORTCUTS.md` explains the included Shortcut exports and capture setup.
 Storage currently uses unencrypted SQLite. Backup and recovery are planned.
+
+Closed-app background processing is disabled in this free release after macOS
+rejected an ad hoc update. Automatic processing while the app stays open and
+manual processing are available. Closing the window does not quit GroundKeeper.

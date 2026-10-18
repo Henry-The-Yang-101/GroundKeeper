@@ -20,9 +20,10 @@ duplicates, correct details, and confirm category suggestions.
 - Run Qwen through MLX or Laya through PyTorch MPS on your Mac. Every category
   suggestion requires review, and later model replies cannot replace a
   confirmed correction.
-- Choose when the queue runs: while the app is open, in the background, or
-  only when you click **Process queue**. Failed work has bounded retries and
-  a visible review path.
+- Choose automatic processing while the app is open or run it manually with
+  **Process queue**. Failed work has bounded retries and a visible review path.
+  Closed-app background processing is available in source builds but disabled
+  in the free release after macOS rejected an ad hoc update.
 
 An optional Apple Intelligence Shortcut provider is also wired into the queue.
 Enabling it sends the description, direction, and currency to the selected
@@ -64,15 +65,15 @@ The repository contains no bank login integration or native iPhone app.
 
 ## Install a release
 
-Pushes to `main` are configured to build a signed, notarized macOS prerelease
+Pushes to `main` are configured to build an ad hoc-signed macOS prerelease
 with the Python worker included. Each release also carries the selected Qwen
 and Laya model packages, available Shortcut exports, and setup instructions.
 Models are separate downloads so the app can be installed without them.
 
 See the [installation guide](docs/install.md) for the download and model setup
 steps. Release publication needs the one-time [maintainer setup](docs/releases.md)
-for signing credentials and model assets. Until that is complete, build from
-source below.
+for model assets. No paid Apple membership or signing credentials are required.
+Downloaded builds need the macOS **Open Anyway** step described in the guide.
 
 ## Build and try it
 

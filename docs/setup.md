@@ -12,8 +12,8 @@ offline once a model package is available.
   verified version. Open Xcode once to finish its installation and license setup.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) to install the
   pinned Python environments.
-- An Apple development signing identity if you want background queue processing.
-  Foreground development builds use ad hoc signing by default.
+- No Apple account is required for ad hoc builds. An Apple Development signing
+  identity is optional for local development.
 
 Check which Xcode the terminal will use:
 
@@ -144,16 +144,18 @@ evidence preserved.
 
 ## Background processing and signing
 
-Background mode uses an `SMAppService` launch agent and requires a working Apple
-development signing identity. Follow the
-[signing steps](../apps/macos/README.md#configure-apple-development-signing),
-then enable **Automatically in the background** in Settings. macOS may ask you
+Source builds expose background mode through an `SMAppService` launch agent.
+The free ad hoc release disables it after a replacement-build launch failure. Enable **Automatically in
+the background** in Settings. Apple development signing is optional; the
+[signing steps](../apps/macos/README.md#configure-apple-development-signing)
+cover that configuration. macOS may ask you
 to allow GroundKeeper in Login Items & Extensions.
 
 The helper runs while the Mac is awake and hands database ownership back to the
 foreground app when it opens. Local development checks covered quitting and
 reopening the app; login and reboot behavior still need a full device check.
-Public distribution and notarization require separate release signing.
+The free release uses ad hoc signatures and is not notarized. After an update,
+re-enable the service or reconnect folders if saved permissions stop working.
 
 ## Troubleshooting
 
@@ -164,7 +166,7 @@ Public distribution and notarization require separate release signing.
 | Xcode cannot find the macOS SDK | Select the full Xcode installation and complete its first launch. |
 | Model package rejected | Select the exported directory with `classifier.json`. A raw model folder or modified file set will fail verification. |
 | Transactions stay uncategorized | Choose a valid provider and check queue mode, pending work, and failures. Every successful suggestion still requires review. |
-| Background service is registered but idle | Check development signing, Login Items approval, and the helper status shown in Settings. Registration alone does not establish that it is running. |
+| Background service is registered but idle | Check Login Items approval, re-enable the service after updates, and check the helper status shown in Settings. Registration alone does not establish that it is running. |
 
 For changes to the core or worker, run the tests in the
 [root README](../README.md#development-and-tests). GPU, XPC, and background

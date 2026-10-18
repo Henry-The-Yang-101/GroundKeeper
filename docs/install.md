@@ -14,8 +14,14 @@ to use it.
 3. In Settings, add an account. Try a fictional manual transaction or CSV import
    before importing your own records.
 
-The release workflow publishes only after Developer ID signing and Apple
-notarization succeed. If no app release is listed yet, use the repository's
+The app is ad hoc-signed and is not notarized by Apple. macOS may block its
+first launch because the developer cannot be verified. If you trust the release,
+attempt to open the app, then open **System Settings > Privacy & Security** and
+choose **Open Anyway** for GroundKeeper. Follow the confirmation prompts.
+See [Apple's instructions](https://support.apple.com/en-ie/102445).
+Managed Macs may prevent this exception.
+
+If no app release is listed yet, use the repository's
 [source build guide](https://github.com/Henry-The-Yang-101/GroundKeeper/blob/main/docs/setup.md).
 
 ## Install the local models
@@ -59,9 +65,14 @@ The disk image's **Shortcuts** folder and each release include the available
 `SHORTCUTS.md` in the release downloads. Capture through iCloud and optional
 Apple Intelligence classification have separate setup steps.
 
-For automatic processing while the UI is closed, select **Automatically in the
-background** in Settings and allow GroundKeeper in macOS Login Items &
-Extensions if prompted. Processing requires the Mac to be awake.
+The free release supports automatic processing while GroundKeeper stays open,
+or manual **Process queue** runs. Closing its window does not quit the app.
+Closed-app background processing is disabled: a replacement ad hoc build was
+rejected by macOS launch constraints during testing. No Apple account is needed
+for the supported modes.
+
+After replacing the app, reconnect model or capture folders if macOS no longer
+accepts their saved permissions. Quit the previous version before replacing it.
 
 The ledger currently uses unencrypted SQLite in the app's sandbox container.
 Backup and recovery features are still planned.
