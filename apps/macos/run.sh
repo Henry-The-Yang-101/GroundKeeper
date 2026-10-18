@@ -7,12 +7,17 @@ derived_data="$repo_dir/.local/macos/DerivedData"
 
 (cd "$repo_dir" && .venv/bin/python -m scripts.prepare_classifier_runtime)
 
-xcodebuild -quiet \
-  -project "$script_dir/GroundKeeper.xcodeproj" \
-  -scheme GroundKeeper \
-  -configuration Debug \
-  -destination "platform=macOS,arch=$(uname -m)" \
-  -derivedDataPath "$derived_data" \
-  build
+build_args=(
+  -quiet
+  -project "$script_dir/GroundKeeper.xcodeproj"
+  -scheme GroundKeeper
+  -configuration Debug
+  -destination "platform=macOS,arch=$(uname -m)"
+  -derivedDataPath "$derived_data"
+)
+if [[ -f "$repo_dir/.local/macos/Signing.xcconfig" ]]; then
+  build_args+=(-allowProvisioningUpdates)
+fi
+xcodebuild "${build_args[@]}" build
 
 open "$derived_data/Build/Products/Debug/GroundKeeper.app"

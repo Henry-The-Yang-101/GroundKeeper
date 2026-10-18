@@ -19,6 +19,31 @@ The local Swift package `GroundKeeperCore` uses the system SQLite library and
 has no external package dependency. The XPC service embeds the existing pinned
 Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/README.md).
 
+## Configure Apple development signing
+
+1. Open Xcode → Settings → Apple Accounts and sign in to your Apple Account.
+2. Select your team → Manage Certificates. Create an **Apple Development**
+   certificate if there is not already a usable one on this Mac. Keep its private
+   key in Keychain; do not export or commit it.
+3. Copy `apps/macos/Signing.xcconfig.example` to
+   `.local/macos/Signing.xcconfig` and replace `YOUR_TEAM_ID` with your team ID.
+4. Rebuild with `./apps/macos/run.sh`, or open the Xcode project and build there.
+   The launcher allows Xcode to update development provisioning when the private
+   signing configuration is present.
+
+Both targets inherit `Signing.xcconfig`. Without the private override, builds
+remain ad-hoc signed. With it, the app and classifier use automatic Apple
+Development signing with the same team. The Python embedding step also signs
+native libraries with Xcode's resolved identity and invalidates its embedding
+cache when that identity changes. The background agent is the app executable
+and therefore shares its identity. Bundle identifiers and the SQLite location
+are preserved.
+
+This configures development on your Mac. Public distribution and notarization
+are a separate setup using Developer ID Application signing. Certificate
+availability, team capabilities and successful background-service execution
+must be checked after the signed build; a successful registration is insufficient.
+
 ## First use
 
 1. In Settings, add your real accounts and their currencies. There are no
