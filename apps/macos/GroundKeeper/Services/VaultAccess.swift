@@ -3,14 +3,27 @@ import GroundKeeperCore
 
 enum VaultAccess {
     static func root() throws -> URL {
+        if CommandLine.arguments.contains("--setup-preview") {
+            let root = FileManager.default.temporaryDirectory.appendingPathComponent("GroundKeeper-Setup-Preview-\(ProcessInfo.processInfo.processIdentifier)")
+            try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+            return root
+        }
         let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             .appendingPathComponent("GroundKeeper", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         return root
     }
-    static func open() throws -> (LedgerStore, URL) {
+    static var isEncrypted: Bool {
+        guard let url = try? root().appendingPathComponent("vault.sqlite"),
+              FileManager.default.fileExists(atPath: url.path) else { return false }
+        guard let file = try? FileHandle(forReadingFrom: url) else { return true }
+        defer { try? file.close() }
+        guard let header = try? file.read(upToCount: 16) else { return true }
+        return !header.isEmpty && !header.starts(with: Data("SQLite format 3\0".utf8))
+    }
+    static func open(passphrase: String? = nil) throws -> (LedgerStore, URL) {
         let url = try root().appendingPathComponent("vault.sqlite")
-        return (try LedgerStore(url: url), url)
+        return (try LedgerStore(url: url, passphrase: passphrase), url)
     }
 }
 
@@ -20,12 +33,12 @@ actor CaptureFolder {
     private var hashes: [String: (fingerprint: String, hash: String)] = [:]
     func reset() { hashes.removeAll() }
     /// Inventory is read-only. Only an explicit processing pass requests iCloud downloads.
-    func scan(bookmark: Data, store: LedgerStore, readFiles: Bool) async throws -> Scan {
+    func scan(bookmark: Data, store: LedgerStore, readFiles: Bool, exactFolder: Bool = false) async throws -> Scan {
         var stale = false
         let root = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
         guard !stale, root.startAccessingSecurityScopedResource() else { throw LedgerError.unavailable("Reconnect the capture folder to renew access.") }
         defer { root.stopAccessingSecurityScopedResource() }
-        let inbox = root.lastPathComponent == "inbox" ? root : root.appendingPathComponent("inbox", isDirectory: true)
+        let inbox = exactFolder || root.lastPathComponent == "inbox" ? root : root.appendingPathComponent("inbox", isDirectory: true)
         let keys: Set<URLResourceKey> = [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey, .ubiquitousItemDownloadingStatusKey]
         let urls = try FileManager.default.contentsOfDirectory(at: inbox, includingPropertiesForKeys: Array(keys), options: [])
             .filter { (!$0.lastPathComponent.hasPrefix(".") && $0.pathExtension.lowercased() == "json") || ($0.lastPathComponent.hasPrefix(".") && $0.lastPathComponent.lowercased().hasSuffix(".json.icloud")) }.sorted { $0.lastPathComponent < $1.lastPathComponent }

@@ -97,17 +97,17 @@ enum QueueAgentHeartbeat {
 
 @MainActor enum QueueAgent {
     static func run() async {
-        guard QueueBackgroundService.isSupported else { return }
+        guard QueueBackgroundService.isSupported, !VaultAccess.isEncrypted else { return }
         var lastHeartbeat = Date.distantPast
         func heartbeat() {
             if Date().timeIntervalSince(lastHeartbeat) >= 5 { QueueAgentHeartbeat.write(); lastHeartbeat = Date() }
         }
         defer { QueueAgentHeartbeat.clear() }
-        while !Task.isCancelled && QueuePreferences.mode == .background {
+        while !Task.isCancelled && QueuePreferences.mode == .background && !VaultAccess.isEncrypted {
             heartbeat()
             if !QueueProcessLease.foregroundIsRunning {
                 // Synchronize bookmarks after the foreground app has released its lease.
-                UserDefaults.standard.synchronize()
+                AppPreferences.defaults.synchronize()
                 let workspace = AppWorkspace(isBackgroundAgent: true)
                 await workspace.start()
                 while workspace.ready && !Task.isCancelled && QueuePreferences.mode == .background && !QueueProcessLease.foregroundIsRunning {

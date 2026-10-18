@@ -4,6 +4,9 @@ import SwiftUI
 import GroundKeeperCore
 
 @MainActor @Observable final class AppWorkspace {
+    var showingSetup = !AppPreferences.defaults.bool(forKey: "setupCompleted") || CommandLine.arguments.contains("--setup-preview")
+    var encrypted = VaultAccess.isEncrypted
+    var unlocking = false
     var selectedTab: AppTab? = .home
     var insightsSection: InsightsSection = .transactions
     var transactions: [Transaction] = []
@@ -39,8 +42,8 @@ import GroundKeeperCore
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
-    var shortcutName = UserDefaults.standard.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
-    var classifierProvider = UserDefaults.standard.string(forKey: "classifierProvider") ?? "local"
+    var shortcutName = AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
+    var classifierProvider = AppPreferences.defaults.string(forKey: "classifierProvider") ?? "local"
     var classifierStatus = "Choose a local model in Settings"
     var processing = false
     var saving = false
@@ -66,8 +69,11 @@ import GroundKeeperCore
     func configureQueueSmoke(store: LedgerStore, bookmark: Data, mode: QueueProcessingMode) {
         self.store = store; folderBookmark = bookmark; processingMode = mode
     }
-    func start() async {
-        guard !started else { return }; started = true
+    func start(passphrase: String? = nil) async {
+        guard !started else { return }
+        encrypted = VaultAccess.isEncrypted
+        guard !encrypted || passphrase != nil else { status = "Unlock your local vault"; return }
+        started = true
         do {
             if !QueueBackgroundService.isSupported && QueuePreferences.mode == .background {
                 try QueuePreferences.save(.whileOpen)
@@ -76,7 +82,7 @@ import GroundKeeperCore
             // A background pass cancels and releases its writer as soon as the UI lease appears.
             for attempt in 0..<20 {
                 try Task.checkCancellation()
-                do { opened = try await Task.detached(priority: .userInitiated) { try VaultAccess.open() }.value; break }
+                do { opened = try await Task.detached(priority: .userInitiated) { try VaultAccess.open(passphrase: passphrase) }.value; break }
                 catch LedgerError.ownedByAnotherProcess where !isBackgroundAgent && attempt < 19 {
                     status = "Waiting for background processing to hand over…"
                     try await Task.sleep(for: .milliseconds(500))
@@ -84,20 +90,64 @@ import GroundKeeperCore
             }
             guard let opened else { return }
             store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
-            folderBookmark = UserDefaults.standard.data(forKey: "captureFolderBookmark")
+            folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
-            if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
-            else if UserDefaults.standard.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
+            if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
+            else if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
+            else if AppPreferences.defaults.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
             loop = Task { [weak self] in
                 while !Task.isCancelled {
                     guard let self else { break }
                     await self.updateQueueCount()
-                    if self.processingMode.automaticallyProcesses { await self.sync(automatic: true) }
+                    if !self.showingSetup && self.processingMode.automaticallyProcesses { await self.sync(automatic: true) }
                     do { try await Task.sleep(for: .seconds(15)) } catch { break }
                 }
             }
         } catch is CancellationError { started = false } catch { status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
+    }
+    func unlock(passphrase: String? = nil, usingKeychain: Bool = false) async {
+        guard !unlocking else { return }; unlocking = true; defer { unlocking = false }
+        do {
+            let key = try await Task.detached(priority: .userInitiated) {
+                if usingKeychain { return try VaultKeychain.load() }
+                guard let passphrase, !passphrase.isEmpty else { throw LedgerError.invalid("Enter your vault passphrase.") }
+                return passphrase
+            }.value
+            await start(passphrase: key)
+            if !ready { errorMessage = "Could not unlock the vault. Check your passphrase and try again. No data was changed." }
+        } catch { errorMessage = error.localizedDescription }
+    }
+    func setEncryption(passphrase: String?, remember: Bool) async throws {
+        guard !saving, !processing, !changingProcessingMode, let store else { throw LedgerError.unavailable("Wait for the current operation to finish and unlock the vault first.") }
+        saving = true; defer { saving = false }
+        // Prevent a background launch from opening a newly encrypted vault without interaction.
+        if passphrase != nil && processingMode == .background {
+            try QueuePreferences.save(.whileOpen); processingMode = .whileOpen
+            try await QueueBackgroundService.disable()
+        }
+        try VaultKeychain.remove()
+        do { try await store.changeEncryption(to: passphrase) }
+        catch { encrypted = VaultAccess.isEncrypted; throw error }
+        encrypted = VaultAccess.isEncrypted
+        if remember, let passphrase {
+            do { try VaultKeychain.save(passphrase) }
+            catch { errorMessage = "Vault encryption was saved, but convenience unlock could not be enabled. Keep your new passphrase. " + error.localizedDescription }
+        }
+        status = encrypted ? "Encrypted local vault ready" : "Local database ready"
+    }
+    func lockVault() async {
+        guard encrypted, !saving, !changingProcessingMode else { return }
+        await stop()
+        transactions = []; accounts = []; reviews = []; queue = []; editor = nil; showingImportPreview = false
+        totalTransactions = 0; model = nil; status = "Unlock your local vault"
+    }
+    func finishSetup() {
+        guard ready else { return }
+        AppPreferences.defaults.set(true, forKey: "setupCompleted")
+        AppPreferences.defaults.removeObject(forKey: "setupStep")
+        showingSetup = false
+        Task { await processIfAutomatic() }
     }
     func refresh() async throws {
         guard let store else { return }
@@ -142,21 +192,44 @@ import GroundKeeperCore
         try await store?.correctCapture(eventID: review.eventID, description: description, amountMinor: minor, accountID: accountID, day: day)
         try await refresh()
     }
+    var hasCaptureFolder: Bool { AppPreferences.defaults.data(forKey: "captureFolderBookmark") != nil }
+    var captureFolderPath: String { AppPreferences.defaults.string(forKey: "captureFolderPath") ?? folderName }
     func selectFolder() {
         let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
-        panel.message = "Choose your GroundKeeper iCloud Drive folder, or its inbox folder."
+        panel.canCreateDirectories = true
+        panel.message = "Choose the folder where your iPhone Shortcut saves transaction JSON files. You can create a new folder here."
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try connectCaptureFolder(url, exact: true) } catch { errorMessage = error.localizedDescription }
+    }
+    func createDefaultCaptureFolder() {
+        let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
+        panel.prompt = "Create Inbox"
+        panel.message = "Select iCloud Drive. GroundKeeper will create Shortcuts/Groundkeeper/inbox inside it."
+        let home = NSHomeDirectoryForUser(NSUserName()) ?? NSHomeDirectory()
+        panel.directoryURL = URL(fileURLWithPath: home).appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
+        guard panel.runModal() == .OK, let root = panel.url else { return }
+        let access = root.startAccessingSecurityScopedResource(); defer { if access { root.stopAccessingSecurityScopedResource() } }
         do {
-            folderBookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            UserDefaults.standard.set(folderBookmark, forKey: "captureFolderBookmark"); folderName = url.lastPathComponent
-            Task { await folder.reset(); await updateQueueCount(); await processIfAutomatic() }
+            guard root.lastPathComponent == "com~apple~CloudDocs" else { throw LedgerError.invalid("Select iCloud Drive itself, or use Choose another folder for a custom destination.") }
+            let inbox = root.appendingPathComponent("Shortcuts/Groundkeeper/inbox", isDirectory: true)
+            try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
+            try connectCaptureFolder(inbox, exact: true)
         } catch { errorMessage = error.localizedDescription }
+    }
+    private func connectCaptureFolder(_ url: URL, exact: Bool) throws {
+        let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+        folderBookmark = bookmark
+        AppPreferences.defaults.set(bookmark, forKey: "captureFolderBookmark")
+        AppPreferences.defaults.set(exact, forKey: "captureFolderIsExact")
+        AppPreferences.defaults.set(url.path, forKey: "captureFolderPath")
+        folderName = url.lastPathComponent
+        Task { await folder.reset(); await updateQueueCount(); await processIfAutomatic() }
     }
     func updateQueueCount() async {
         guard let store else { return }
         do {
             if let folderBookmark {
-                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: false)
+                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: false, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
                 pendingCaptures = scan.pending; waitingCaptures = scan.waiting
             } else { pendingCaptures = 0; waitingCaptures = 0 }
             try await refresh(); countError = nil; countUpdatedAt = Date()
@@ -164,7 +237,7 @@ import GroundKeeperCore
         } catch is CancellationError {} catch { countError = error.localizedDescription }
     }
     func processIfAutomatic() async {
-        if processingMode.automaticallyProcesses { await sync(automatic: true) }
+        if !showingSetup && processingMode.automaticallyProcesses { await sync(automatic: true) }
         else { await updateQueueCount() }
     }
     func sync(automatic: Bool = false) async {
@@ -184,7 +257,7 @@ import GroundKeeperCore
                 var remaining = Int.max
                 repeat {
                     try Task.checkCancellation()
-                    let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true)
+                    let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
                     if remaining == Int.max { remaining = scan.pending }
                     for entry in scan.files.prefix(remaining) {
                         try Task.checkCancellation()
@@ -206,14 +279,16 @@ import GroundKeeperCore
         } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
     }
     private func restoreModel() async throws {
-        if classifierProvider == "shortcut" { try await loadShortcut(name: UserDefaults.standard.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
-        guard let bookmark = UserDefaults.standard.data(forKey: "classifierModelBookmark") else { return }
+        if classifierProvider == "manual" { return }
+        if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
+        guard let bookmark = AppPreferences.defaults.data(forKey: "classifierModelBookmark") else { return }
         var stale = false
         let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
         guard !stale else { throw LedgerError.unavailable("Select the model package again.") }
         try await loadModel(url)
     }
     func changeProcessingMode(_ mode: QueueProcessingMode) {
+        guard !(encrypted && mode == .background) else { errorMessage = "Encrypted vaults process while GroundKeeper is open and unlocked, or manually."; return }
         guard !changingProcessingMode, !saving else { return }
         guard mode != .background || QueueBackgroundService.isSupported else {
             errorMessage = QueueBackgroundService.unsupportedMessage; return
@@ -258,8 +333,8 @@ import GroundKeeperCore
             let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             try await self.loadModel(url)
             self.classifierProvider = "local"
-            UserDefaults.standard.set("local", forKey: "classifierProvider")
-            UserDefaults.standard.set(bookmark, forKey: "classifierModelBookmark")
+            AppPreferences.defaults.set("local", forKey: "classifierProvider")
+            AppPreferences.defaults.set(bookmark, forKey: "classifierModelBookmark")
             await self.processIfAutomatic()
         }
     }
@@ -271,8 +346,8 @@ import GroundKeeperCore
             self.shortcutName = name
             try await self.loadShortcut(name: name)
             self.classifierProvider = "shortcut"
-            UserDefaults.standard.set(name, forKey: "classifierShortcutName")
-            UserDefaults.standard.set("shortcut", forKey: "classifierProvider")
+            AppPreferences.defaults.set(name, forKey: "classifierShortcutName")
+            AppPreferences.defaults.set("shortcut", forKey: "classifierProvider")
             await self.processIfAutomatic()
         }
     }
@@ -282,6 +357,25 @@ import GroundKeeperCore
         try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend,
             policy: loaded.policyVersion, configuration: String(decoding: JSONEncoder().encode(loaded), as: UTF8.self))
         model = loaded; classifierStatus = "\(loaded.modelID) · Apple Shortcuts (may use cloud)"
+    }
+    func useInstalledModel(_ url: URL) {
+        guard !processing, !saving else { return }
+        perform {
+            try await self.loadModel(url)
+            let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+            AppPreferences.defaults.set(bookmark, forKey: "classifierModelBookmark")
+            AppPreferences.defaults.set("local", forKey: "classifierProvider")
+            self.classifierProvider = "local"
+            await self.processIfAutomatic()
+        }
+    }
+    func useManualCategorization() {
+        guard !processing, !saving else { return }
+        classifierProvider = "manual"; model = nil; modelURL = nil
+        AppPreferences.defaults.set("manual", forKey: "classifierProvider")
+        AppPreferences.defaults.removeObject(forKey: "classifierModelBookmark")
+        classifierStatus = "Manual categorization"
+        Task { await client.shutdown() }
     }
     private func loadModel(_ url: URL) async throws {
         classifierStatus = "Verifying and loading model…"
