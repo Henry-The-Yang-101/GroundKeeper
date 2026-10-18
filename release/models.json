@@ -1,0 +1,37 @@
+{
+  "format_version": 1,
+  "release_tag": "models-20261018",
+  "models": [
+    {
+      "directory": "qwen-delaware",
+      "backend": "qwen_mlx",
+      "model_id": "qwen-delaware-v1-step5872",
+      "manifest_sha256": "e9141393b4a6c12ff063b3049c2e50e65a8642b754ac8f3f8bb3942c028da4d0",
+      "parts": [
+        {
+          "name": "GroundKeeper-qwen-delaware.tar.gz.part001",
+          "bytes": 1900000000,
+          "sha256": "b48dfe8d1343950e6103fd69631b0ad8cfee98e9a84db241bf25a0215cbeca3d"
+        },
+        {
+          "name": "GroundKeeper-qwen-delaware.tar.gz.part002",
+          "bytes": 251980767,
+          "sha256": "12cb897217dfb701f6ccd291b22009f2970c32a59494a135d989a2f63d95b1e9"
+        }
+      ]
+    },
+    {
+      "directory": "laya",
+      "backend": "laya_mps",
+      "model_id": "laya-epoch3",
+      "manifest_sha256": "50da08d6d738f32a75e2e2fd3d21a2d70cdf8ae0bdd66b44f55954bbe0d9539f",
+      "parts": [
+        {
+          "name": "GroundKeeper-laya.tar.gz.part001",
+          "bytes": 1506976197,
+          "sha256": "bbf428745aefe696d0382559427374b35c22b982967874facff533191a5324e2"
+        }
+      ]
+    }
+  ]
+}
