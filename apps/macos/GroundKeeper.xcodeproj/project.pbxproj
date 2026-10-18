@@ -63,7 +63,7 @@
 		A50000000000000000000001 /* GroundKeeper */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A90000000000000000000002;
-			buildPhases = (A70000000000000000000001 /* Sources */, A30000000000000000000001 /* Frameworks */, A80000000000000000000001 /* Resources */, C80000000000000000000002, E80000000000000000000001);
+			buildPhases = (A70000000000000000000001 /* Sources */, A30000000000000000000001 /* Frameworks */, A80000000000000000000001 /* Resources */, C80000000000000000000002, E80000000000000000000001, E80000000000000000000002);
 			buildRules = ();
 			dependencies = (C60000000000000000000002);
 			fileSystemSynchronizedGroups = (A20000000000000000000001 /* GroundKeeper */);
@@ -113,6 +113,8 @@
 		C80000000000000000000002 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices"; dstSubfolderSpec = 16; files = (C10000000000000000000001); name = "Embed Classifier XPC"; runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXCopyFilesBuildPhase section */
 /* Begin PBXShellScriptBuildPhase section */
+        E80000000000000000000002 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = (); name = "Embed setup resources"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\ncd \"$SRCROOT/../..\"\n.venv/bin/python -m scripts.embed_setup_resources\n"; };
+
         E80000000000000000000001 = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/LaunchAgents/com.groundkeeper.macos.queue.plist", "$(SRCROOT)/LaunchAgents/com.groundkeeper.macos.queue-processing.plist"); outputPaths = ("$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchAgents/com.groundkeeper.macos.queue.plist", "$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchAgents/com.groundkeeper.macos.queue-processing.plist"); name = "Embed queue launch agent"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\nmkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents\"\ncp \"$SRCROOT/LaunchAgents/com.groundkeeper.macos.queue.plist\" \"$SRCROOT/LaunchAgents/com.groundkeeper.macos.queue-processing.plist\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents/\"\n"; };
 
 		C80000000000000000000001 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = (); name = "Embed offline Python runtime"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\ncd \"$SRCROOT/../..\"\n\".venv/bin/python\" -m scripts.embed_classifier_runtime\n"; };

@@ -7,8 +7,13 @@ struct GroundKeeperApp: App {
 
     var body: some Scene {
         Window("GroundKeeper", id: "main") {
-            RootView()
+            Group {
+                if workspace.encrypted && !workspace.ready { VaultUnlockView() }
+                else if workspace.showingSetup { SetupView() }
+                else { RootView() }
+            }
                 .environment(workspace)
+                .defaultAppStorage(AppPreferences.defaults)
                 .preferredColorScheme(appearance.colorScheme)
                 .task {
                     lifecycle.workspace = workspace
@@ -24,23 +29,23 @@ struct GroundKeeperApp: App {
                 Button("New Transaction…", systemImage: "plus") {
                     workspace.editor = Transaction()
                 }
-                .keyboardShortcut("n")
+                .keyboardShortcut("n").disabled(!workspace.ready || workspace.showingSetup)
             }
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") { workspace.selectedTab = .settings }
-                    .keyboardShortcut(",")
+                    .keyboardShortcut(",").disabled(!workspace.ready || workspace.showingSetup)
             }
             CommandGroup(after: .textEditing) {
                 Button("Find Transactions…") {
                     workspace.showTransactions()
                     workspace.focusTransactionSearch = true
                 }
-                .keyboardShortcut("f")
+                .keyboardShortcut("f").disabled(!workspace.ready || workspace.showingSetup)
             }
             CommandMenu("Navigate") {
                 ForEach(AppTab.allCases) { tab in
                     Button(tab.title) { workspace.selectedTab = tab }
-                        .keyboardShortcut(KeyEquivalent(tab.shortcut))
+                        .keyboardShortcut(KeyEquivalent(tab.shortcut)).disabled(!workspace.ready || workspace.showingSetup)
                 }
             }
         }

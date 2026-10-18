@@ -7,6 +7,10 @@ struct SettingsView: View {
     @AppStorage("appearance") private var appearance = AppAppearance.system
     @State private var accountName = ""
     @State private var currency = "CAD"
+    @State private var showingProtection = false
+    @State private var showingModels = false
+    @State private var showingPhoneGuide = false
+    @State private var installer = ModelInstaller()
     @State private var kind = "credit_card"
     var body: some View {
         Form {
@@ -17,7 +21,7 @@ struct SettingsView: View {
             }
             Section("Queue processing") {
                 Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
-                    ForEach(QueueProcessingMode.allCases.filter { $0 != .background || QueueBackgroundService.isSupported }) { Text($0.title).tag($0) }
+                    ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !workspace.encrypted) }) { Text($0.title).tag($0) }
                 }.disabled(workspace.changingProcessingMode || workspace.saving)
                 Text(workspace.processingDescription).font(.caption).foregroundStyle(.secondary)
                 if !QueueBackgroundService.isSupported {
@@ -34,14 +38,20 @@ struct SettingsView: View {
                 QueueControls()
             }
             Section {
-                LabeledContent("Storage", value: workspace.ready ? "SQLite · local Mac" : "Unavailable")
+                LabeledContent("Storage", value: workspace.ready ? (workspace.encrypted ? "SQLCipher · encrypted · local Mac" : "SQLite · unencrypted · local Mac") : "Unavailable")
                 Text(workspace.vaultPath).font(.caption).textSelection(.enabled)
-                Text("The database is stored locally in Application Support, outside iCloud Drive. Encryption and backup features are deferred.")
+                Text("The database is stored locally in Application Support, outside iCloud Drive. Original capture files keep their existing iCloud protection.")
                     .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Change vault protection…") { showingProtection = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
+                    if workspace.encrypted { Button("Lock vault") { Task { await workspace.lockVault() } }.disabled(workspace.saving || workspace.changingProcessingMode) }
+                }
+                if workspace.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(.secondary) }
                 if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
             } header: { Text("Local vault") }
             Section {
                 LabeledContent("Model", value: workspace.classifierStatus)
+                Button("Install models or choose a provider…") { showingModels = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
                 Button("Choose local model package…", action: workspace.selectModel).disabled(!workspace.ready || workspace.processing || workspace.saving)
                 TextField("Apple Intelligence Shortcut", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
                     .disabled(workspace.processing || workspace.saving)
@@ -65,10 +75,34 @@ struct SettingsView: View {
                     .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespaces).isEmpty)
                 Text("Confirm Wallet and bank card labels in Sync. Names and last-four digits alone do not establish account identity.").font(.caption).foregroundStyle(.secondary)
             } header: { Text("Accounts") }
+            Section("Setup and iPhone") {
+                Button("Review setup assistant…") { AppPreferences.defaults.set(0, forKey: "setupStep"); workspace.showingSetup = true }
+                    .disabled(workspace.processing || workspace.saving)
+                Button("iPhone Shortcuts and automation guide…") { showingPhoneGuide = true }
+                Button("Create standard iCloud inbox…", action: workspace.createDefaultCaptureFolder)
+                Button("Choose capture folder…", action: workspace.selectFolder)
+                Text(workspace.captureFolderPath).font(.caption).textSelection(.enabled)
+            }
             Section("GroundKeeper") {
                 Text("Local capture, import, reconciliation and classification")
                 Text("Analytics and planning will be added later.").foregroundStyle(.secondary)
             }
         }.formStyle(.grouped).frame(maxWidth: 850).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
+            .sheet(isPresented: $showingProtection) {
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("Vault protection").font(.largeTitle.bold())
+                    VaultProtectionView()
+                    HStack { Spacer(); Button("Done") { showingProtection = false }.disabled(workspace.saving) }
+                }.padding(32).frame(width: 580).interactiveDismissDisabled(workspace.saving)
+            }
+            .sheet(isPresented: $showingModels) {
+                VStack {
+                    ScrollView { ModelSetupView(installer: installer).padding(30) }
+                    HStack { Spacer(); Button("Done") { showingModels = false }.disabled(installer.busy || workspace.saving) }.padding()
+                }.frame(width: 720, height: 730).interactiveDismissDisabled(installer.busy || workspace.saving)
+            }
+            .sheet(isPresented: $showingPhoneGuide) {
+                VStack { ScrollView { PhoneSetupView().padding(30) }; Button("Done") { showingPhoneGuide = false }.padding() }.frame(width: 700, height: 700)
+            }
     }
 }
