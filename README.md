@@ -1,14 +1,17 @@
 # GroundKeeper
 
-GroundKeeper is a native macOS app for keeping track of personal spending.
-It brings together transactions captured by iPhone Shortcuts, imported bank
-statements, and manual entries in a local SQLite database. You can review
-possible duplicates, correct transaction details, and use a local model to
-suggest categories.
+GroundKeeper helps you take control of your spending while keeping your financial
+data grounded on your own devices. It combines automatic transaction tracking,
+accurate categorization powered by locally run AI models, and intelligent spending
+analysis. With no hosted GroundKeeper backend and no cloud AI required, you get
+clarity about your money while staying in control of the data behind it.
 
-The project is in active development. Transaction storage, import, review,
-and classification are implemented. Spending reports, budgets, encrypted
-storage, and backups are still planned.
+iPhone Shortcuts capture transactions and pass them to your Mac through files in
+your personal iCloud Drive, the only bridge between the two devices. Your Mac
+processes each file, saves the transaction locally, and removes the file from the
+transfer queue. Captures join imported bank statements and manual entries in a
+local SQLite database that stays on your Mac, where you can review possible
+duplicates, correct details, and confirm category suggestions.
 
 ## What you can do
 
