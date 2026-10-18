@@ -88,14 +88,18 @@ lock prevents concurrent writers. Handoff cancels in-flight inference without
 consuming a retry and releases the Python worker before closing the database.
 Switching away from background mode unregisters the launch agent.
 
-**Local development signing limitation:** on this Mac, launchd accepted the first
-ad-hoc build but rejected the rebuilt service with `OS_REASON_CODESIGNING`.
-No Apple signing identity is installed. The app checks the agent heartbeat and
-reports a registered-but-unresponsive service rather than treating registration
-as proof of execution. Use an Apple Development or Developer ID signing identity
-for dependable background service launches and updates. App-open and manual
-processing work with the current build. Do not reset system security settings or
-the global background-task registry to work around this development limitation.
+**Signing:** background launches require a working signing identity. On this Mac,
+Xcode automatic signing created an Apple Development certificate for the Personal
+Team; the app, classifier and embedded native runtime now use it. The earlier
+ad-hoc launch-agent registration continued failing after the identity changed.
+The signed service uses `com.groundkeeper.macos.queue-processing`; enabling it
+unregisters the legacy `com.groundkeeper.macos.queue` service. The legacy plist is
+retained solely so Service Management can unregister it through the supported API.
+No system-wide background-task registry or security settings were reset.
+
+The app checks the helper heartbeat: registration alone is not considered proof
+that the helper is running. Keep using the private signing configuration for
+subsequent builds so updates retain the same Apple team identity.
 
 The live database is at
 `~/Library/Containers/com.groundkeeper.macos/Data/Library/Application Support/GroundKeeper/vault.sqlite`.
@@ -132,6 +136,8 @@ when automating smoke checks.
 Queue verification: 12 core tests pass. The Debug queue smoke checks a 205-file
 inventory/drain, manual-mode gating, restart deduplication, automatic processing,
 retry backoff and CSV classification gating against temporary fictional data.
-A direct headless-agent probe verified database ownership after quitting and
-handoff on reopening. Rebuilt launchd execution remains blocked by the local
-ad-hoc signing limitation above; it is not claimed as a passed service test.
+The Apple-signed build also verified real launchd startup, database ownership after
+quitting, and handoff on reopening. A subsequent signed rebuild and helper
+re-registration passed as well. The signed XPC smoke test passed protocol,
+cancellation, MLX GPU and PyTorch MPS checks. Login/reboot behavior has not been
+tested by logging out or restarting this Mac.

@@ -113,7 +113,7 @@
 		C80000000000000000000002 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices"; dstSubfolderSpec = 16; files = (C10000000000000000000001); name = "Embed Classifier XPC"; runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXCopyFilesBuildPhase section */
 /* Begin PBXShellScriptBuildPhase section */
-        E80000000000000000000001 = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/LaunchAgents/com.groundkeeper.macos.queue.plist"); outputPaths = ("$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchAgents/com.groundkeeper.macos.queue.plist"); name = "Embed queue launch agent"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\nmkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents\"\ncp \"$SRCROOT/LaunchAgents/com.groundkeeper.macos.queue.plist\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents/\"\n"; };
+        E80000000000000000000001 = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/LaunchAgents/com.groundkeeper.macos.queue.plist", "$(SRCROOT)/LaunchAgents/com.groundkeeper.macos.queue-processing.plist"); outputPaths = ("$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchAgents/com.groundkeeper.macos.queue.plist", "$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchAgents/com.groundkeeper.macos.queue-processing.plist"); name = "Embed queue launch agent"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\nmkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents\"\ncp \"$SRCROOT/LaunchAgents/com.groundkeeper.macos.queue.plist\" \"$SRCROOT/LaunchAgents/com.groundkeeper.macos.queue-processing.plist\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents/\"\n"; };
 
 		C80000000000000000000001 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = (); name = "Embed offline Python runtime"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\ncd \"$SRCROOT/../..\"\n\".venv/bin/python\" -m scripts.embed_classifier_runtime\n"; };
 /* End PBXShellScriptBuildPhase section */
@@ -185,7 +185,7 @@
 				CODE_SIGN_IDENTITY = "$(GK_CODE_SIGN_IDENTITY)";
 				CODE_SIGN_STYLE = "$(GK_CODE_SIGN_STYLE)";
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -211,7 +211,7 @@
 				CODE_SIGN_IDENTITY = "$(GK_CODE_SIGN_IDENTITY)";
 				CODE_SIGN_STYLE = "$(GK_CODE_SIGN_STYLE)";
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;

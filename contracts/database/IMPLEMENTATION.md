@@ -73,7 +73,8 @@ An embedded SMAppService launch agent supports the background mode using the
 same signed executable/container. The foreground process holds a separate lease;
 the agent cancels and closes its writer before the foreground opens SQLite. The
 normal database ownership lock still enforces exclusion. See the macOS README
-for the observed ad-hoc signing limitation and tested versus unverified behavior.
+for Apple development signing setup, legacy agent migration, and tested versus
+unverified behavior.
 
 Capture parsing supports the observed version-2 `wallet_transaction_fields` and
 `notification_fields`, plus version-1 `separate_fields`. Opaque event IDs remain

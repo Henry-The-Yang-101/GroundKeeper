@@ -45,7 +45,12 @@ enum QueueAgentHeartbeat {
 }
 
 @MainActor enum QueueBackgroundService {
-    static let service = SMAppService.agent(plistName: "com.groundkeeper.macos.queue.plist")
+    // Retire the original ad-hoc registration before registering the stable Apple-signed service.
+    private static let legacyService = SMAppService.agent(plistName: "com.groundkeeper.macos.queue.plist")
+    static let service = SMAppService.agent(plistName: "com.groundkeeper.macos.queue-processing.plist")
+    private static func removeLegacyRegistration() async throws {
+        if legacyService.status != .notRegistered && legacyService.status != .notFound { try await legacyService.unregister() }
+    }
     static var status: String {
         switch service.status {
         case .enabled:
@@ -54,11 +59,15 @@ enum QueueAgentHeartbeat {
                 : "Background service registered but not responding. Re-enable it or check app signing."
         case .requiresApproval: "Allow GroundKeeper in System Settings → General → Login Items & Extensions."
         case .notRegistered: "Background service is not enabled"
-        case .notFound: "Background service is missing from this app build"
+        case .notFound:
+            FileManager.default.fileExists(atPath: Bundle.main.bundleURL.appendingPathComponent("Contents/Library/LaunchAgents/com.groundkeeper.macos.queue-processing.plist").path)
+                ? "Background service has not been registered"
+                : "Background service is missing from this app build"
         @unknown default: "Background service status unavailable"
         }
     }
     static func enable() async throws {
+        try await removeLegacyRegistration()
         if service.status == .enabled {
             try await service.unregister()
             QueueAgentHeartbeat.clear()
@@ -69,9 +78,10 @@ enum QueueAgentHeartbeat {
             if Date().timeIntervalSince1970 - QueueAgentHeartbeat.lastSeen < 10 { return }
             try await Task.sleep(for: .milliseconds(250))
         }
-        throw LedgerError.unavailable("macOS registered the background service, but it did not start. This locally signed development build may need an Apple Development or Developer ID signing identity. Processing while the app is open and manual processing remain available.")
+        throw LedgerError.unavailable("macOS registered the background service, but it did not start. Check the app signing identity and GroundKeeper’s permission in Login Items & Extensions. Processing while the app is open and manual processing remain available.")
     }
     static func disable() async throws {
+        try await removeLegacyRegistration()
         if service.status != .notRegistered && service.status != .notFound { try await service.unregister() }
         QueueAgentHeartbeat.clear()
     }
