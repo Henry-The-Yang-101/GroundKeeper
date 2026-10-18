@@ -1,0 +1,44 @@
+name: Core tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test runner
+        run: python -m pip install pytest==8.4.2
+      - name: Test schema and classifier contracts without model dependencies
+        # The fourth constraints test uses MLX and stays in the local macOS suite.
+        run: >-
+          python -m pytest -q
+          tests/test_database_schema.py
+          tests/test_worker.py
+          tests/test_constraints.py::test_every_complete_path_is_legal_and_all_legal_answers_are_reachable
+          tests/test_constraints.py::test_invalid_prefix_and_content_after_eos_fail_closed
+          tests/test_constraints.py::test_field_order_can_match_existing_training_without_changing_decisions
+          tests/test_laya_runtime.py
+
+  swift-core:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test the standalone ledger core
+        run: swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild

@@ -139,7 +139,7 @@ inferring purchase contents or motivation.
 - Include manually entered and CSV-imported transactions alongside captures,
   preserving source/batch provenance and conservative duplicate reconciliation.
   Date-only imports must not imply a known purchase time. Import previews,
-  mappings, row errors, and undo behavior are scoped in `PLAN.md`.
+  mappings, row errors, and undo behavior are scoped in [the roadmap](roadmap.md).
 - User category/type corrections override AI suggestions and survive future
   processing. Retain history, refresh affected summaries, and require an explicit
   separate action before turning one correction into a merchant-wide rule.

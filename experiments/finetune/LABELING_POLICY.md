@@ -1,7 +1,7 @@
 # GroundKeeper labeling policy v1
 
-Authority: `TRANSACTION_CATEGORIES.md` (18 categories), which supersedes the older
-10-category Laya examples in PLAN.md. This is a public-data experiment; no label
+Authority: [transaction category policy](../../docs/transaction-categories.md) (18 categories), which supersedes the older
+10-category Laya examples in the original plan. This is a public-data experiment; no label
 from an AI reviewer is called human-confirmed. Labels predict what is supported
 by the supplied input, not a hidden receipt or the source dataset's category.
 

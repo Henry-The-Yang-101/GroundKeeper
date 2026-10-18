@@ -26,24 +26,28 @@ Additional chain aliases were checked against official portfolios: [Kroger](http
 
 ## Files
 
-- [Export guide](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/README.md)
-- [Counts, provenance, limitations and hashes](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/manifest.json)
-- [Training records with evidence](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/train.canonical.jsonl)
-- [Validation records with evidence](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/valid.canonical.jsonl)
-- [Qwen v2 training format](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/train.qwen.jsonl)
-- [Qwen v2 validation format](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/valid.qwen.jsonl)
-- [Laya training format](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/train.laya.jsonl)
-- [Laya validation format](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/valid.laya.jsonl)
-- [All 8,000 original primary annotations](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/all_annotations.jsonl)
-- [Rows excluded pending review or because of family overlap](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/quarantine.jsonl)
-- [Independent review disagreements](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/prepared/audit_disagreements.jsonl)
+These paths identify generated local artifacts, which are excluded from Git.
+The [runbook](../experiments/finetune/delaware-v1/RUNBOOK.md) records their
+preparation and verification requirements.
+
+- Export guide: `.local/delaware-labeling-v1/prepared/README.md`
+- Counts, provenance, limitations and hashes: `.local/delaware-labeling-v1/prepared/manifest.json`
+- Training records with evidence: `.local/delaware-labeling-v1/prepared/train.canonical.jsonl`
+- Validation records with evidence: `.local/delaware-labeling-v1/prepared/valid.canonical.jsonl`
+- Qwen v2 training format: `.local/delaware-labeling-v1/prepared/train.qwen.jsonl`
+- Qwen v2 validation format: `.local/delaware-labeling-v1/prepared/valid.qwen.jsonl`
+- Laya training format: `.local/delaware-labeling-v1/prepared/train.laya.jsonl`
+- Laya validation format: `.local/delaware-labeling-v1/prepared/valid.laya.jsonl`
+- All 8,000 original primary annotations: `.local/delaware-labeling-v1/prepared/all_annotations.jsonl`
+- Rows excluded pending review or because of family overlap: `.local/delaware-labeling-v1/prepared/quarantine.jsonl`
+- Independent review disagreements: `.local/delaware-labeling-v1/prepared/audit_disagreements.jsonl`
 
 The new real test is `test.canonical.jsonl`, read-only and absent from trainer-facing exports. Keep it outside training; obtain independent human review before using it as a gold accuracy benchmark.
 
 ## Verification
 
-- qwen: export targets match canonical records; maximum sequence 479/512 tokens, no truncation. [Check result](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/verification/qwen.json).
-- laya: export targets match canonical records; maximum sequence 293/512 tokens, no truncation. [Check result](/Users/henryyang/Documents/Coding/Python/GroudKeeper/.local/delaware-labeling-v1/verification/laya.json).
+- qwen: export targets match canonical records; maximum sequence 479/512 tokens, no truncation. Check result: `.local/delaware-labeling-v1/verification/qwen.json`.
+- laya: export targets match canonical records; maximum sequence 293/512 tokens, no truncation. Check result: `.local/delaware-labeling-v1/verification/laya.json`.
 
 No inference or training was used in these checks; the new sealed test was not parsed.
 

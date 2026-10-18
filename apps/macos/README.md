@@ -1,13 +1,14 @@
 # GroundKeeper macOS application
 
-The SwiftUI app now uses **ordinary SQLite** in local Application Support.
-Capture ingestion, CSV import, reconciliation, transaction editing and local
-classification are connected. Analytics and encryption are deferred.
+The SwiftUI app uses ordinary SQLite in local Application Support.
+Capture ingestion, CSV import, reconciliation, transaction editing, and the
+classifier queue are connected. Analytics and encryption are deferred.
 
 ## Build and launch
 
 Requires Xcode and macOS 26.2+ on Apple silicon, matching the bundled MLX runtime.
-With the pinned Python runtime already staged:
+Follow the [setup guide](../../docs/setup.md) to install both pinned Python
+environments on a fresh checkout. Then build and launch with:
 
 ```sh
 ./apps/macos/run.sh
@@ -46,12 +47,16 @@ must be checked after the signed build; a successful registration is insufficien
 
 ## First use
 
-1. In Settings, add your real accounts and their currencies. There are no
-   invented default financial accounts or sample transactions in the live DB.
-2. Choose a verified local model package in Settings to enable classification.
-3. In Sync, connect the existing iCloud `GroundKeeper` folder or its `inbox`.
-4. Confirm captured card labels against accounts in Sync's review list. Import
-   CSV files with explicit date, amount/sign and column mapping.
+1. In Settings, add an account and its currency. The app starts with an empty
+   database. The [fictional CSV walkthrough](../../examples/README.md) provides
+   a first-run exercise.
+2. Add transactions manually or import a CSV with explicit date, amount/sign,
+   and column mapping. A classifier is optional for these workflows.
+3. Choose a verified local model package or explicitly enable an Apple
+   Intelligence Shortcut in Settings to try categorization.
+4. If you already use the capture Shortcut, connect the iCloud `GroundKeeper`
+   folder or its `inbox` from Sync. Confirm captured card labels against accounts
+   in Sync's review list. The iPhone capture export is not included in this repo.
 
 All classifier suggestions require review. Editing confirms an assignment and
 protects it from late classifier replies. Unknown notification formats can be
@@ -116,7 +121,7 @@ accounts, queue processing preferences and local model selection. The earlier ch
 remain source fixtures but are not exposed as live reports.
 
 Keyboard shortcuts: ⌘N adds a transaction, ⌘F opens transaction search, ⌘,
-opens Settings, and ⌘1–⌘4 selects a navigation tab.
+opens Settings, and ⌘1 through ⌘4 select a navigation tab.
 
 ## Verification
 
@@ -133,8 +138,8 @@ service access to the selected model. Smoke mode uses a separate temporary
 fictional database, never the primary database. Use a whole-process timeout
 when automating smoke checks.
 
-Queue verification: 12 core tests pass. The Debug queue smoke checks a 205-file
-inventory/drain, manual-mode gating, restart deduplication, automatic processing,
+Queue verification recorded on 2026-10-17: 12 core tests passed. The Debug queue
+smoke checked a 205-file inventory/drain, manual-mode gating, restart deduplication, automatic processing,
 retry backoff and CSV classification gating against temporary fictional data.
 The Apple-signed build also verified real launchd startup, database ownership after
 quitting, and handoff on reopening. A subsequent signed rebuild and helper
@@ -142,17 +147,18 @@ re-registration passed as well. The signed XPC smoke test passed protocol,
 cancellation, MLX GPU and PyTorch MPS checks. Login/reboot behavior has not been
 tested by logging out or restarting this Mac.
 
-### Classifier providers
+## Classifier providers
 
 Settings → Categorization lets you choose a Qwen or Laya data-only package, or
 explicitly enable an Apple Intelligence Shortcut by name. The saved provider is
 restored by foreground and background queue processing. Manual mode still waits
 for Process queue. No provider automatically falls back to another.
 
-The latest selected Qwen continuation is packaged locally at
+The selected Qwen continuation from 2026-10-18 is packaged locally at
 `.local/macos/models/qwen-delaware` (`qwen-delaware-v1-step5872`, v2 prompt).
 The prior `.local/macos/models/qwen` package remains available for rollback;
-Laya is `.local/macos/models/laya`. To reproduce the continuation package:
+Laya is `.local/macos/models/laya`. These ignored model artifacts are not included
+in a fresh clone. To export the continuation when those inputs are available:
 
 ```sh
 .venv/bin/python -m scripts.export_selected_qwen \

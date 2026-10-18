@@ -1,8 +1,8 @@
 # Delaware 8,000-row weak-labeling worker guide
 
-Repository: `/Users/henryyang/Documents/Coding/Python/GroudKeeper`.
+Run commands from the GroundKeeper repository root.
 Read `experiments/finetune/LABELING_POLICY.md`,
-`experiments/finetune/v2/POLICY_ADDITIONS.md`, and `TRANSACTION_CATEGORIES.md`.
+`experiments/finetune/v2/POLICY_ADDITIONS.md`, and [the category policy](../docs/transaction-categories.md).
 The existing type/category/review schema remains authoritative.
 
 ## Assignment and boundaries

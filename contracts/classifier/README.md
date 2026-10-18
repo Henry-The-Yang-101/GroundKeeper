@@ -1,18 +1,16 @@
 # Bundled classifier bridge
 
-**App integration update (2026-10-17):** The Swift app now owns a local SQLite
-ledger, durable classification jobs and review-required assignments. See the
-[application integration](../database/IMPLEMENTATION.md). The original bridge
-diagnostics and historical smoke measurements below remain useful in isolation.
-
 GroundKeeper's native app calls `com.groundkeeper.macos.classifier`, an embedded
 XPC service. A native Objective-C host embeds CPython; Python/MLX/PyTorch never
-load in the UI process. Swift owns SQLite and application state. This bridge
-does not connect the disposable UI transactions to a database.
+load in the UI process. Swift owns SQLite and application state, persists
+classification jobs, and saves results as assignments requiring review. See the
+[application integration](../database/IMPLEMENTATION.md) for transaction and
+retry behavior.
 
 ## Build and run
 
-On Apple silicon, with the pinned local source environments already installed:
+For a fresh checkout, follow the [setup guide](../../docs/setup.md) to install
+both pinned Python environments. Once they are installed:
 
 ```sh
 .venv/bin/python -m scripts.prepare_classifier_runtime
@@ -39,11 +37,11 @@ found the highest minimum in MLX's core/library at macOS 26.2. The app target is
 aligned with that floor. The older UI-only preview's macOS 14 minimum no longer
 describes the bundled classifier build. Validate this floor on runtime upgrades.
 
-In Settings → Local classifier diagnostics, check GPU support, select an exported
-model package, classify explicitly entered fictional text and release the model.
-No sample result is written to transaction storage. Automatic categorization,
-Apple cloud invocation, Council orchestration and durable job scheduling remain
-Swift application integration work.
+Settings > Categorization selects a local model package or an explicit Apple
+Intelligence Shortcut provider for the persistent queue. The selected processing
+mode controls when jobs run. Separate diagnostics can check GPU support and
+classify fictional text without writing a transaction. Council orchestration
+remains planned.
 
 ## Model packages
 
@@ -95,6 +93,7 @@ model manifest identity and model package format are separate versions.
 | `handshake` | None | Supported backends, policy, categories/types, bundled runtime versions, current model. No model is loaded. |
 | `gpu_probe` | None | Real small matrix calculations on MLX GPU and PyTorch MPS, with device and numerical result. |
 | `prepare_model` | `package_bookmark` | Verified `model` identity and `reused` flag. Same verified package reuses the loaded model. |
+| `prepare_shortcut` | `shortcut_name` | Selects the explicit Apple Shortcut provider and releases local model weights. |
 | `classify` | `job_id`, `part_id`, `transaction_revision`, `policy_version`, `model_manifest_sha256`, `input` | Decision, actual model identity and echoed job/part/revision. |
 | `release_model` | None | Releases model references and backend allocator caches. |
 
@@ -176,10 +175,10 @@ The client matches response ID, protocol, model identity and job/part/revision.
 Interruption/invalidation drains each continuation exactly once. Callback
 generation checks prevent a stale connection invalidation tearing down a new
 connection. No request is automatically replayed. After a restart, reconnect,
-handshake and prepare again. The future Swift job coordinator must persist
-jobs/attempts, use bounded retry policy and commit results idempotently only
-when the database revision/current assignment still permits them. This bridge
-does not itself write to SQLite or promise exactly-once inference.
+handshake and prepare again. The Swift job coordinator persists attempts, applies
+bounded retries, and commits results idempotently only when the database revision
+and current assignment still permit them. The bridge itself does not write to
+SQLite or promise exactly-once inference.
 
 ## Signing and isolation
 
@@ -188,11 +187,12 @@ vault, iCloud or Keychain entitlement. It authenticates its native peer by app
 identifier and the same Apple signing team in Release. Native libraries are
 signed with the service/app identity; Release retains library validation.
 
-Local Debug builds use ad hoc signatures with no Team ID. Debug therefore has
-an explicit library-validation exception and a peer-identifier-only requirement.
-Those development exceptions do not apply to Release. This Mac has no valid
-distribution signing identity configured, so notarized/same-team hardened
-distribution cannot be claimed from the local development smoke tests.
+Debug builds default to ad hoc signatures with no Team ID; a private signing
+configuration can enable Apple Development signing for the app and service.
+Debug retains an explicit library-validation exception and a peer-identifier-only
+requirement. Those development exceptions do not apply to Release. Public
+distribution and notarization require a separate distribution signing setup;
+the local development smoke tests do not verify that setup.
 Release also disables Xcode's injected debugging entitlements; its service has
 neither `get-task-allow` nor the library-validation exception.
 

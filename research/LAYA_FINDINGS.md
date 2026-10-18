@@ -4,7 +4,7 @@
 
 The first M0 probe used Laya 0.3.11 and PyTorch 2.14.0. This follow-up used Laya **0.3.21** with the **same English checkpoint**, `convaiinnovations/laya` at revision `55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`, on the same M4 Pro via `laya.load(local_snapshot, device="mps")`. Its model parameter stayed on `mps:0` after prediction. The original question and the same 12 merchant strings produced the same twelve top labels under both Laya versions.
 
-The 12 expected categories below were hand-assigned for this diagnostic. The first PRESTO input came from the supplied screenshot; its transaction-specific suffix is redacted in Git and stated only in the user-facing report. `SQ *BLUE BOTTLE` came from PLAN.md's proposed test; the other strings are hand-written merchant-like examples. **No real transaction history was evaluated.** A merchant can sell multiple types of goods, so the policy behind a label matters (for example, this test puts recurring Netflix under `bills`).
+The 12 expected categories below were hand-assigned for this diagnostic. The first PRESTO input came from the supplied screenshot; its transaction-specific suffix is redacted in Git and stated only in the user-facing report. `SQ *BLUE BOTTLE` came from the original plan's proposed test; the other strings are hand-written merchant-like examples. **No real transaction history was evaluated.** A merchant can sell multiple types of goods, so the policy behind a label matters (for example, this test puts recurring Netflix under `bills`).
 
 | Exact input sent to Laya | Expected | Ten-choice raw prediction | `answer_confidence` |
 | --- | --- | --- | ---: |

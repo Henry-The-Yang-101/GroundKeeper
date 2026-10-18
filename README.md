@@ -1,99 +1,143 @@
 # GroundKeeper
 
-GroundKeeper is scoped to a **macOS app**, **Apple Shortcuts on iPhone**, and
-**iCloud Drive** for exchanging files. There is no planned native iPhone app.
+GroundKeeper is a native macOS app for keeping track of personal spending.
+It brings together transactions captured by iPhone Shortcuts, imported bank
+statements, and manual entries in a local SQLite database. You can review
+possible duplicates, correct transaction details, and use a local model to
+suggest categories.
 
-The repository contains a native SwiftUI macOS app, Python classification code,
-model-training experiments, and research. The app provides a native sidebar,
-spending-chart previews, searchable and editable sample transactions, a CSV
-walkthrough, and appearance settings. Sample edits stay in memory; charts use
-fixed examples. Capture, storage, classification, and financial analysis are
-not connected yet.
+The project is in active development. Transaction storage, import, review,
+and classification are implemented. Spending reports, budgets, encrypted
+storage, and backups are still planned.
 
-Settings also provides local classifier diagnostics through a bundled XPC
-service with isolated Python, MLX Metal and PyTorch MPS. It can load a verified
-model package and classify explicitly entered sample text; it does not yet
-categorize or persist the transaction workspace. See the
-[classifier bridge guide](contracts/classifier/README.md). The bundled build
-currently requires Apple silicon and macOS 26.2+.
+## What you can do
 
-From the repository root, build and launch the app with:
+- Add accounts in CAD, USD, EUR, or GBP and record transactions manually.
+- Import a bank CSV, map its columns, and inspect invalid rows before saving.
+- Read captured transaction files from an iCloud Drive folder, resolve card
+  labels to accounts, and review possible matches with existing transactions.
+- Search, filter, edit, and soft-delete saved transactions. The transaction
+  list loads 500 rows per page; search and filters apply to the current page.
+- Run Qwen through MLX or Laya through PyTorch MPS on your Mac. Every category
+  suggestion requires review, and later model replies cannot replace a
+  confirmed correction.
+- Choose when the queue runs: while the app is open, in the background, or
+  only when you click **Process queue**. Failed work has bounded retries and
+  a visible review path.
+
+An optional Apple Intelligence Shortcut provider is also wired into the queue.
+Enabling it sends the description, direction, and currency to the selected
+Shortcut. Its **Use Model** action controls whether inference runs on device
+or in the cloud. Apple usage limits apply, and the app never switches providers
+automatically. See [provider setup and verification](docs/setup.md#choose-a-classifier).
+
+## How it works
+
+```mermaid
+flowchart TD
+    Phone["iPhone capture Shortcut"] --> Files["iCloud Drive JSON files"]
+    Files --> Core["Swift ingestion and reconciliation"]
+    CSV["Bank CSV / manual entry"] --> Core
+    Core --> DB[("Local SQLite")]
+    DB --> UI["SwiftUI review and editing"]
+    DB --> Jobs["Persistent classification jobs"]
+    Jobs --> XPC["Sandboxed XPC service"]
+    XPC --> Local["Qwen / MLX or Laya / MPS"]
+    XPC --> Optional["Optional Apple Shortcut"]
+    Local --> Review["Suggestions requiring review"]
+    Optional --> Review
+    Review --> DB
+```
+
+Swift owns the database, imports, and job queue. It stores money as integer
+minor units and keeps the original capture evidence separate from the
+transaction you edit. Delivery identities prevent replayed files from creating
+the same record again; possible purchase duplicates still require reconciliation.
+
+A bundled Objective-C XPC host runs CPython and the inference libraries outside
+the UI process. Local model packages have file hashes and a versioned manifest
+that the worker checks before loading. The classifier receives only the
+transaction description, direction, and currency. It has no database connection.
+
+iCloud transfers capture files. The live database stays in the Mac's sandbox
+container, outside iCloud Drive, and currently uses ordinary, unencrypted SQLite.
+The repository contains no bank login integration or native iPhone app.
+
+## Build and try it
+
+The full app requires an Apple silicon Mac, macOS 26.2 or later, full Xcode,
+and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+The bundled runtime pins CPython 3.12.9. Xcode 27.0 is the locally verified
+toolchain. This is a source build; the repository does not include a notarized
+installer or trained model weights.
+
+From a terminal with Xcode selected as the developer directory:
 
 ```sh
+git clone https://github.com/Henry-The-Yang-101/GroundKeeper.git
+cd GroundKeeper
+
+uv sync --locked --python 3.12.9
+uv venv --python .venv/bin/python .local/laya/.venv
+uv pip install --python .local/laya/.venv/bin/python -r experiments/laya/requirements.lock
+
 ./apps/macos/run.sh
 ```
 
-See the [macOS app guide](apps/macos/README.md) for Xcode setup.
+The first setup downloads Python and dependencies as needed. The launcher
+packages the pinned Python runtime, builds the app with Xcode, and opens it.
+Both Python environments are required by the current bundle, even if you only
+want to try manual entries or CSV import. Model weights are separate.
 
-## Current repository map
+For a first run, add a fictional CAD account in Settings and import
+[`examples/transactions.csv`](examples/transactions.csv) from Sync. The
+[sample walkthrough](examples/README.md) gives the column mapping and a short
+editing exercise. You can try this workflow without a model or iCloud connection;
+the sample records are saved in the app's normal local database.
 
-| Path | Purpose |
-| --- | --- |
-| [`apps/macos/`](apps/macos/README.md) | Native SwiftUI macOS app and Xcode project |
-| `groundkeeper/` | Existing Python classification, merchant, policy, and runtime code |
-| `scripts/` | Dataset preparation, training, evaluation, packaging, and status commands |
-| `tests/` | Existing Python tests |
-| `experiments/` | Versioned experiment configurations, annotations, reports, and results |
-| `research/` | Earlier research and feasibility probes |
-| `.local/` | Ignored model downloads, checkpoints, generated datasets, and run state |
-| `.private/` | Ignored location reserved for private development fixtures |
-| [`TRANSACTION_CATEGORIES.md`](TRANSACTION_CATEGORIES.md) | Spending categories, transaction types, and review semantics |
-| [`M0_SCOPE.md`](M0_SCOPE.md) | Capture assumptions, measured feasibility, and remaining checks |
-| [`PLAN.md`](PLAN.md) | Current product plan, classifier choices, architecture proposals, and delivery gates |
-| [`ANALYSIS_FEATURES.md`](ANALYSIS_FEATURES.md) | Graphs, budgets, goals, cash flow, and net-worth roadmap with data requirements |
-| [`contracts/database/SCHEMA.md`](contracts/database/SCHEMA.md) | SQLite schema and Swift integration, source reconciliation, category/model provenance, and service invariants |
-| [`contracts/classifier/README.md`](contracts/classifier/README.md) | Bundled XPC/Python classifier, runtime pins, model packages, GPU execution and verification |
+See the [setup guide](docs/setup.md) for Xcode selection, signing, local model
+packages, Apple Shortcuts, capture setup, and troubleshooting.
 
-`PLAN.md` reflects the current native macOS direction, with local Laya/Qwen,
-optional Apple Intelligence cloud via Shortcuts, and a weighted Council mode.
-It distinguishes product requirements from architecture proposals and open
-decisions.
+## Development and tests
 
-## Suggested organization
+The Swift core can be tested separately from the app and its ML runtime:
 
-Keep the Python package and its project configuration at the root for now.
-Organize new product work around these boundaries:
-
-```text
-GroudKeeper/
-  README.md
-  AGENTS.md
-  apps/
-    macos/                      # native app, Xcode project, reserved test folder
-  shortcuts/                    # proposed: iPhone capture exports and setup guide
-  contracts/                    # database design; iCloud event schema still planned
-  docs/                         # proposed: current architecture, setup, decisions
-  groundkeeper/                 # existing Python code
-  scripts/                      # existing command-line entry points
-  tests/                        # existing Python tests
-  experiments/                  # existing reproducible experimental evidence
-  research/                     # existing exploratory work
-  pyproject.toml
-  uv.lock
-  .local/                       # ignored generated artifacts
-  .private/                     # ignored private development data
+```sh
+swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
 ```
 
-Recommended next steps, without moving existing files in this initialization:
+After installing the Python project dependencies on Apple silicon:
 
-1. Put production iPhone capture `.shortcut` exports and their installation guide
-   in `shortcuts/`. Keep `experiments/apple-shortcuts/` as benchmark evidence:
-   its existing Shortcut performs cloud categorization, not iPhone capture.
-2. Define the iCloud Drive file contract in `contracts/` before connecting the
-   app and Shortcut. Include a schema version, stable event ID, timestamp,
-   source fields, and redacted examples. Treat the synced folder as a handoff;
-   keep the Mac's live database and model files outside it. Use the existing
-   queue/staging proposal as input, with delivery, retries, and deduplication
-   still to be specified and verified.
-3. Move current product documentation into `docs/` together with updates to
-   links and command references. Keep historical findings with their experiment.
-4. As scripts grow, group them by function (`data`, `training`, `evaluation`,
-   `packaging`). Migrate imports, command examples, tests, and automation paths
-   together; several current commands depend on repository-relative paths.
-5. Revisit a separate Python worker folder when the app-to-classifier interface
-   is implemented. For now, keeping `groundkeeper/`, `scripts/`, and the uv files
-   in place avoids a disruptive move during ongoing experiments.
+```sh
+.venv/bin/python -m pytest -q
+```
 
-iCloud runtime files belong in the user's configured iCloud Drive location,
-outside this Git repository. Version safe fixtures and aggregate results;
-keep real financial input and model artifacts out of Git.
+These tests cover parsing, database constraints, reconciliation, classification
+contracts, and experiment utilities. Model inference and signed background
+execution have separate [app smoke checks](apps/macos/README.md#verification).
+Benchmark reports distinguish synthetic or AI-labeled agreement from accuracy
+against independently reviewed transactions.
+
+[CI](.github/workflows/tests.yml) runs the standalone Swift core on macOS and
+the Python schema and classifier-contract tests on Linux. It does not download
+models or exercise GPU inference, iCloud, or signed app services.
+
+## Repository guide
+
+| Path | Contents |
+| --- | --- |
+| [`apps/macos/`](apps/macos/README.md) | SwiftUI app, XPC service, Swift core, and native tests |
+| [`groundkeeper/`](groundkeeper/) | Python classifier worker, policy, constrained decoding, and merchant utilities |
+| [`contracts/`](contracts/) | Database schema, classifier protocol, and runtime pins |
+| [`docs/`](docs/README.md) | Setup, roadmap, category policy, and historical notes |
+| [`examples/`](examples/README.md) | Fictional data for trying CSV import |
+| [`tests/`](tests/) | Python unit tests |
+| [`scripts/`](scripts/) | Runtime packaging, dataset preparation, training, and evaluation tools |
+| [`experiments/`](experiments/) | Experiment configurations, annotations, and measured results |
+| [`research/`](research/) | Dataset investigations and earlier feasibility work |
+
+Generated models, environments, checkpoints, and build output belong in ignored
+local directories. Private financial fixtures belong in `.private/` and must stay
+out of commits. The [roadmap](docs/roadmap.md) describes remaining product work;
+the [database implementation](contracts/database/IMPLEMENTATION.md) describes
+current behavior and its limits.

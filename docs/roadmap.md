@@ -1,8 +1,17 @@
-# GroundKeeper plan
+# GroundKeeper roadmap
 
-Updated: 2026-10-17. This is the current product direction. Architecture details
-remain proposals until verified; historical evidence stays in `research/`,
-`experiments/`, and [M0_SCOPE.md](M0_SCOPE.md).
+Product direction updated 2026-10-17; implementation status checked 2026-10-18.
+The app currently uses ordinary SQLite with capture ingestion, CSV import,
+reconciliation, editing, durable classification jobs, and configurable queue
+processing. Local models and an explicitly selected Apple Shortcut provider are
+connected. The latest app-to-Shortcut check reached Apple's usage limit;
+successful inference through that path still needs verification.
+
+Encryption, locked staging, backups, Council orchestration, and analytics below
+remain future work. Their proposed data flow does not describe the current
+unencrypted ledger. See the [current implementation](../contracts/database/IMPLEMENTATION.md)
+and [setup guide](setup.md) for working behavior. Historical evidence stays in
+`research/`, `experiments/`, and the [initial scope notes](history/m0-scope.md).
 
 ## Product and scope
 
@@ -20,12 +29,12 @@ app reconciles, categorizes, and displays them.
   savings goals, cash flow, net worth, and automatic insights, including repeated
   merchant spending. Start with spending graphs and calculated insights; stage
   features needing income, balances, or manual input as described in
-  [ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md).
+  [analytics roadmap](analytics-roadmap.md).
 - Receipt scanning and direct bank integrations remain outside the established
   MVP. Manual entries and CSV imports provide a way to fill capture gaps and
   load historical transactions; supported bank CSV formats remain to be chosen.
 
-## Capture and data flow
+## Planned capture and encrypted data flow
 
 ```text
 iPhone Wallet / CIBC alerts → GK Capture Shortcut → iCloud event queue
@@ -113,7 +122,7 @@ Settings will offer four modes:
 | Apple Intelligence Cloud | Invoke a Mac Apple Shortcut that accepts classifier input and returns decision JSON; requires internet and service availability. |
 | Council | Consult all three providers and choose a decision using weighted voting, with explicit disagreement and failure handling. |
 
-Every provider follows [TRANSACTION_CATEGORIES.md](TRANSACTION_CATEGORIES.md)
+Every provider follows [transaction category policy](transaction-categories.md)
 and `groundkeeper/policy.py`. Shared input: `description`, `direction`, `currency`.
 Shared output: `type`, `category`, `review`.
 
@@ -203,8 +212,8 @@ modes may send minimized transaction descriptions to Apple for inference.
   Support password/recovery-key unlock, Touch ID after persistence/fallback
   tests, and inactivity auto-lock. Keep the live
   database, keys, and models outside the synced queue and Git repository.
-- Proposed relational design: [database schema](contracts/database/SCHEMA.md)
-  and [executable SQL fixture](contracts/database/schema.sql). It covers raw
+- Proposed relational design: [database schema](../contracts/database/SCHEMA.md)
+  and [executable SQL fixture](../contracts/database/schema.sql). It covers raw
   evidence, multi-source reconciliation, optional geotags, expandable categories,
   model/Council/user provenance, monetary splits, imports/undo, review/audit,
   planning/insights and operational records. It is a design artifact validated
@@ -216,9 +225,10 @@ modes may send minimized transaction descriptions to Apple for inference.
 - The local classification bridge now has a bundled XPC target hosting isolated
   CPython, a Swift actor client and explicit Settings diagnostics. Qwen runs on
   MLX Metal; Laya runs on PyTorch MPS, with GPU availability required. See the
-  [bridge contract](contracts/classifier/README.md). The service has no database
-  access. Swift transaction/job integration, durable retries, cloud adapter,
-  Council orchestration and locked staging remain separate work. Release uses
+  [bridge contract](../contracts/classifier/README.md). The service has no database
+  access. Swift transaction/job integration, durable retries, and an explicit Apple
+  Shortcut adapter are implemented. Council orchestration and locked staging
+  remain future work. Release uses
   same-team signing/library validation; local ad hoc Debug has development-only
   exceptions. The pinned native runtime currently requires macOS 26.2+ and arm64.
 - Store transactions, raw events/import provenance, accounts/card mappings,
@@ -352,7 +362,7 @@ budgets/recurring costs, goals/cash flow, and net worth/debt.
 - Forecasts are estimates, repeated-payment suggestions need confirmation, and
   gaps are not proof of zero spending or canceled subscriptions.
 
-[ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md) retains expanded data requirements
+[analytics roadmap](analytics-roadmap.md) retains expanded data requirements
 and A1–A4 acceptance criteria; this plan includes the full feature roadmap.
 
 ## Native app and integration
@@ -369,17 +379,20 @@ progress, and items needing attention. Full insights will provide interactive
 time-series, category/merchant breakdowns, and comparisons, with drill-down to
 the underlying transactions. Savings and net-worth graphs require explicit
 contribution or balance data; captured spending alone cannot establish them.
-See [ANALYSIS_FEATURES.md](ANALYSIS_FEATURES.md) for chart designs, data needs,
+See [analytics roadmap](analytics-roadmap.md) for chart designs, data needs,
 calculation rules, and phased acceptance criteria.
 
 Keep views in `apps/macos/`, services in `groundkeeper/`, capture exports in
-`shortcuts/`, and experiments outside production app code. Define a versioned
-Swift/Python worker interface before integration. The native app supersedes the
-earlier FastAPI/localhost dashboard.
+the planned `shortcuts/` directory, and experiments outside production app code.
+The versioned Swift/Python worker interface is defined in the
+[classifier contract](../contracts/classifier/README.md). The native app
+supersedes the earlier FastAPI/localhost dashboard.
 
 ## Delivery gates
 
-The app shell and model experiments exist; the end-to-end product is not connected.
+Capture ingestion, CSV import, editing, SQLite persistence, and classification
+jobs are connected. The gates below still include work on real-device capture,
+encryption, analytics, recovery, and broader operational testing.
 
 | Gate | Completion evidence |
 | --- | --- |
@@ -392,8 +405,8 @@ The app shell and model experiments exist; the end-to-end product is not connect
 | M6: App MVP | Two weeks of capture, manual entry, CSV import, category correction, review, spending/repeated-merchant graphs, automatic calculated insights, sync, and settings without the CLI; insight evidence, refresh/dismissal, locking, failure indicators, and large-history checks work. Optional AI explanations must match calculated facts and respect provider/privacy choices. |
 
 Open decisions: final checkpoints/provider default; Council weights, thresholds,
-and partial-result behavior; Apple cloud variant/Shortcut setup; app-worker
-packaging; runtime paths/retention; auto-lock duration; supported CSV mappings;
+and partial-result behavior; Apple cloud variant/Shortcut setup; public app/model
+distribution; retention; auto-lock duration; supported CSV mappings;
 budget rollover; goal funding; balance entry/import formats; repeated-spending
 thresholds; insight sensitivity, ranking, and text-generation provider. CSV
 export and additional subcategories can follow the MVP.
