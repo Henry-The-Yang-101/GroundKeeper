@@ -46,3 +46,16 @@ def test_invalid_output_receives_no_accuracy_credit():
     assert report["all_completed_accuracy"]["joint_accuracy"] == .5
     assert report["valid_output_metrics"]["category_accuracy"] == 1
     assert report["invalid_outputs"] == 1
+    assert report["all_completed_metrics"]["category_accuracy"] == .5
+
+
+def test_no_baseline_and_invalid_review_never_gets_credit():
+    rows = [{"id": "a", "answer": ANSWER, "input": INPUT, "source": "public",
+             "origin": "real_public_card_data", "label_status": "ai_weak_label_not_human_confirmed"}]
+    records = [{"id": "a", "status": "invalid_output", "raw": "not JSON",
+                "valid_schema": False, "latency_seconds": 1}]
+    report = summarize(rows, records)
+    assert "full_qwen_metrics" not in report
+    assert report["all_completed_metrics"]["review_accuracy"] == 0
+    assert report["all_completed_metrics"]["macro_f1_supported_categories"] == 0
+    assert report["real_data"] is True and report["human_confirmed_labels"] == 0
