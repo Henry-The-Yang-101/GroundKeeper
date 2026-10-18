@@ -1,10 +1,6 @@
 # GroundKeeper
 
-GroundKeeper helps you take control of your spending while keeping your financial
-data grounded on your own devices. It combines automatic transaction tracking,
-accurate categorization powered by locally run AI models, and intelligent spending
-analysis. With no hosted GroundKeeper backend and no cloud AI required, you get
-clarity about your money while staying in control of the data behind it.
+GroundKeeper is a local-first system designed to automatically help you keep track of personal spending. The end-to-end system lies strictly within your own personal environment, with no external cloud server ever getting hands on your private transaction data. YOU are fully in control of your own private data.
 
 iPhone Shortcuts capture transactions and pass them to your Mac through files in
 your personal iCloud Drive, the only bridge between the two devices. Your Mac
