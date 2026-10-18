@@ -183,18 +183,29 @@ SQLite or promise exactly-once inference.
 ## Signing and isolation
 
 Both app and XPC service are sandboxed. The service has no network, App Group
-vault, iCloud or Keychain entitlement. It authenticates its native peer by app
-identifier and the same Apple signing team in Release. Native libraries are
-signed with the service/app identity; Release retains library validation.
+vault, iCloud, or Keychain entitlement. Native libraries are signed with the
+service/app identity.
 
-Debug builds default to ad hoc signatures with no Team ID; a private signing
-configuration can enable Apple Development signing for the app and service.
-Debug retains an explicit library-validation exception and a peer-identifier-only
-requirement. Those development exceptions do not apply to Release. Public
-distribution and notarization require a separate distribution signing setup;
-the local development smoke tests do not verify that setup.
-Release also disables Xcode's injected debugging entitlements; its service has
-neither `get-task-allow` nor the library-validation exception.
+The free release is ad hoc-signed. Before requests can reach Python, the client
+passes a transient read-only bookmark for its own app bundle. The worker accepts
+only the enclosing app's exact path, verifies both bundle signatures, and sets
+an XPC code-signing requirement for that app's code hash and identifier. A fresh
+32-byte per-connection nonce protects against messages queued before that
+requirement took effect. Requests with missing, guessed, or another connection's
+nonce are rejected before model loading. The bookmark grant is released after
+the identity check. This grants access to app code, not the ledger or home folder.
+
+Apple-signed builds retain the same-team requirement. Ad hoc Debug builds now
+use the same exact-host check as Release, replacing the former identifier-only
+fallback. Unsigned or damaged bundles fail closed.
+
+Ad hoc Release builds select `ClassifierService.AdHoc.entitlements`, which adds
+a library-validation exception only to the sandboxed worker. CPython and the ML
+libraries need it because ad hoc signatures have no shared Apple Team ID. The
+main app keeps library validation and both targets retain hardened runtime.
+Apple-signed Release builds default to the stricter service entitlement file.
+Neither Release configuration enables `get-task-allow`. Ad hoc releases are not
+notarized and do not establish a verified developer identity.
 
 ## Verification commands
 
@@ -233,10 +244,11 @@ evaluation; concurrent training and first-use compilation affect timing. The
 model packages are historical experimental models, not newly selected production
 checkpoints. Native logs are kept in the ignored `.local/macos/` workspace.
 
-The full Python suite passed 97 tests. Debug and Release builds passed, and both
-app bundles passed deep/strict code-signature verification. GPU/model inference
-was verified in the local Debug configuration; same-team hardened Release
-execution and notarization require a configured distribution identity.
+Those earlier model checks used Debug builds. The current free-release checks
+are documented in [release maintenance](../../docs/releases.md). The release
+workflow verifies the XPC connection without a GPU; full inference is a separate
+local check. Native identity tests use disposable apps to reject a different
+executable with the same bundle identifier, modified hosts, and unsigned code.
 
 ## Technical references
 

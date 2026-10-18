@@ -54,20 +54,24 @@ import GroundKeeperCore
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var processingTask: Task<Void, Never>?
     @ObservationIgnored private let isBackgroundAgent: Bool
-    init(isBackgroundAgent: Bool = false) { self.isBackgroundAgent = isBackgroundAgent }
+    init(isBackgroundAgent: Bool = false) {
+        self.isBackgroundAgent = isBackgroundAgent
+        if !QueueBackgroundService.isSupported && processingMode == .background { processingMode = .whileOpen }
+    }
     @ObservationIgnored private var classifying = false
     @ObservationIgnored private var started = false
     var reviewCount: Int { transactions.filter(\.needsReview).count + reviews.count }
     var ready: Bool { store != nil }
 
-    #if DEBUG
     func configureQueueSmoke(store: LedgerStore, bookmark: Data, mode: QueueProcessingMode) {
         self.store = store; folderBookmark = bookmark; processingMode = mode
     }
-    #endif
     func start() async {
         guard !started else { return }; started = true
         do {
+            if !QueueBackgroundService.isSupported && QueuePreferences.mode == .background {
+                try QueuePreferences.save(.whileOpen)
+            }
             var opened: (LedgerStore, URL)?
             // A background pass cancels and releases its writer as soon as the UI lease appears.
             for attempt in 0..<20 {
@@ -211,6 +215,10 @@ import GroundKeeperCore
     }
     func changeProcessingMode(_ mode: QueueProcessingMode) {
         guard !changingProcessingMode, !saving else { return }
+        guard mode != .background || QueueBackgroundService.isSupported else {
+            errorMessage = QueueBackgroundService.unsupportedMessage; return
+        }
+        let previousMode = processingMode
         changingProcessingMode = true
         Task {
             defer { changingProcessingMode = false }
@@ -220,7 +228,15 @@ import GroundKeeperCore
                 try QueuePreferences.save(mode); processingMode = mode
                 if mode == .background { try await QueueBackgroundService.enable() }
                 else { try await QueueBackgroundService.disable() }
-            } catch { errorMessage = error.localizedDescription }
+            } catch {
+                let failure = error.localizedDescription
+                if mode == .background {
+                    let fallback: QueueProcessingMode = previousMode == .background ? .whileOpen : previousMode
+                    try? QueuePreferences.save(fallback); processingMode = fallback
+                    try? await QueueBackgroundService.disable()
+                }
+                errorMessage = failure
+            }
             backgroundStatus = QueueBackgroundService.status
         }
     }

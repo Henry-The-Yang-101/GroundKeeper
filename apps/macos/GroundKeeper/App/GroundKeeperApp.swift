@@ -12,7 +12,7 @@ struct GroundKeeperApp: App {
                 .preferredColorScheme(appearance.colorScheme)
                 .task {
                     lifecycle.workspace = workspace
-                    if CommandLine.arguments.contains("--classifier-smoke") { await ClassifierSmoke.run() }
+                    if CommandLine.arguments.contains("--classifier-smoke") || CommandLine.arguments.contains("--classifier-connection-smoke") { await ClassifierSmoke.run() }
                     else if CommandLine.arguments.contains("--ledger-smoke") { await LedgerSmoke.run() }
                     else { await workspace.start() }
                 }

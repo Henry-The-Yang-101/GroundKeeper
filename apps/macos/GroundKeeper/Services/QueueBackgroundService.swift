@@ -45,6 +45,12 @@ enum QueueAgentHeartbeat {
 }
 
 @MainActor enum QueueBackgroundService {
+    // Ad hoc upgrades failed launchd's launch constraints in release testing.
+    // Keep foreground/manual processing available rather than advertising an idle agent.
+    static var isSupported: Bool {
+        Bundle.main.object(forInfoDictionaryKey: "GKDistributionChannel") as? String != "adhoc"
+    }
+    static let unsupportedMessage = "Background processing is unavailable in this build. Keep GroundKeeper open or process the queue manually."
     // Retire the original ad-hoc registration before registering the stable Apple-signed service.
     private static let legacyService = SMAppService.agent(plistName: "com.groundkeeper.macos.queue.plist")
     static let service = SMAppService.agent(plistName: "com.groundkeeper.macos.queue-processing.plist")
@@ -52,7 +58,8 @@ enum QueueAgentHeartbeat {
         if legacyService.status != .notRegistered && legacyService.status != .notFound { try await legacyService.unregister() }
     }
     static var status: String {
-        switch service.status {
+        guard isSupported else { return unsupportedMessage }
+        return switch service.status {
         case .enabled:
             Date().timeIntervalSince1970 - QueueAgentHeartbeat.lastSeen < 30
                 ? "Background service running"
@@ -67,6 +74,7 @@ enum QueueAgentHeartbeat {
         }
     }
     static func enable() async throws {
+        guard isSupported else { throw LedgerError.unavailable(unsupportedMessage) }
         try await removeLegacyRegistration()
         if service.status == .enabled {
             try await service.unregister()
@@ -89,6 +97,7 @@ enum QueueAgentHeartbeat {
 
 @MainActor enum QueueAgent {
     static func run() async {
+        guard QueueBackgroundService.isSupported else { return }
         var lastHeartbeat = Date.distantPast
         func heartbeat() {
             if Date().timeIntervalSince(lastHeartbeat) >= 5 { QueueAgentHeartbeat.write(); lastHeartbeat = Date() }
@@ -114,12 +123,14 @@ enum QueueAgentHeartbeat {
 
 @main enum GroundKeeperEntry {
     @MainActor static func main() {
-        #if DEBUG
+        if CommandLine.arguments.contains("--background-smoke") {
+            Task { await QueueSmoke.backgroundRegistration() }
+            dispatchMain()
+        }
         if CommandLine.arguments.contains("--queue-smoke") {
             Task { await QueueSmoke.run() }
             dispatchMain()
         }
-        #endif
         if CommandLine.arguments.contains("--queue-agent") {
             // Do not create NSApplication here: registering this process with Launch Services
             // would make Finder reopen the headless agent instead of launching the UI.

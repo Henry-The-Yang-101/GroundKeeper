@@ -1,5 +1,5 @@
-#if DEBUG
 import Foundation
+import ServiceManagement
 import GroundKeeperCore
 
 /// Exercises app scheduling and scanner inventory against fictional files and a temporary vault.
@@ -7,6 +7,9 @@ import GroundKeeperCore
     static func run() async {
         DispatchQueue.global().asyncAfter(deadline: .now() + 60) { exit(124) }
         do {
+            if CommandLine.arguments.contains("--adhoc-release-smoke") {
+                try check(!QueueBackgroundService.isSupported, "Ad hoc release is missing its background capability marker")
+            }
             let directory = FileManager.default.temporaryDirectory.appendingPathComponent("queue-smoke-" + UUID().uuidString)
             let inbox = directory.appendingPathComponent("inbox")
             try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
@@ -21,6 +24,12 @@ import GroundKeeperCore
             let bookmark = try inbox.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             let workspace = AppWorkspace()
             workspace.configureQueueSmoke(store: store, bookmark: bookmark, mode: .manual)
+            if !QueueBackgroundService.isSupported {
+                workspace.changeProcessingMode(.background)
+                try check(workspace.processingMode == .manual && workspace.errorMessage != nil, "Unavailable background mode changed preferences")
+                workspace.errorMessage = nil
+                print("adhoc_background_gate_verified")
+            }
             await workspace.processIfAutomatic()
             try check(workspace.countError == nil, workspace.countError ?? "inventory error")
             try check(workspace.queueCount == 205, "Inventory must include files beyond the 200-file batch")
@@ -51,12 +60,43 @@ import GroundKeeperCore
             try check(workspace.pendingJobs == 0 && workspace.unqueuedJobs == 1 && workspace.model == nil, "CSV import bypassed manual classification mode")
             try check(try await store.integrityCheck(), "Integrity check failed")
             await workspace.stop()
+            if CommandLine.arguments.contains("--background-smoke-agent") {
+                guard Bundle.main.bundleIdentifier == "com.groundkeeper.macos.queue-smoke" else {
+                    throw LedgerError.unavailable("Background diagnostics require an isolated test copy")
+                }
+                try Data("passed".utf8).write(to: backgroundResult, options: .atomic)
+            }
             print("queue_smoke_passed: manual inventory, 205-file drain, restart count, automatic mode, retry backoff, CSV gating")
             exit(0)
         } catch { print("queue_smoke_failed: \(error.localizedDescription)"); exit(1) }
+    }
+    private static var backgroundResult: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("groundkeeper-queue-smoke-result.txt")
+    }
+    static func backgroundRegistration() async {
+        // This path is available only in a disposable copy with a separate container
+        // and launchd label. It never registers or unregisters the user's real agent.
+        guard Bundle.main.bundleIdentifier == "com.groundkeeper.macos.queue-smoke" else { exit(2) }
+        let service = QueueBackgroundService.service
+        var passed = false
+        do {
+            try FileManager.default.createDirectory(at: backgroundResult.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? FileManager.default.removeItem(at: backgroundResult)
+            try service.register()
+            print("background_registration_status=\(service.status.rawValue)")
+            for _ in 0..<120 {
+                if (try? String(contentsOf: backgroundResult, encoding: .utf8)) == "passed" { passed = true; break }
+                try await Task.sleep(for: .milliseconds(250))
+            }
+        } catch { print("background_smoke_error: \(error.localizedDescription)") }
+        do { try await service.unregister() }
+        catch { print("background_smoke_cleanup_failed: \(error.localizedDescription)"); exit(1) }
+        try? FileManager.default.removeItem(at: backgroundResult)
+        print(passed ? "background_smoke_passed: launchd started the sandboxed app and processed the fictional queue" : "background_smoke_failed: agent did not finish; check Login Items approval and system logs")
+        exit(passed ? 0 : 1)
     }
     private static func check(_ condition: Bool, _ message: String) throws {
         if !condition { throw LedgerError.invalid(message) }
     }
 }
-#endif

@@ -11,8 +11,13 @@ import Foundation
         }
         let client = ClassifierClient()
         do {
+            try await verifyConnectionBoundary()
             let handshake = try await client.handshake()
             try await client.verifyProtocolErrors()
+            if CommandLine.arguments.contains("--classifier-connection-smoke") {
+                write(["event": "connection_smoke_passed", "runtime": handshake.runtime ?? [:]])
+                exit(0)
+            }
             let cancelled = Task { try await client.probeGPU() }
             cancelled.cancel()
             do { _ = try await cancelled.value; throw ClassifierBridgeError.invalidResponse }
@@ -34,7 +39,7 @@ import Foundation
                 let panel = NSOpenPanel()
                 panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
                 panel.directoryURL = url.deletingLastPathComponent()
-                panel.message = "Select the fictional smoke-test model package: \(url.lastPathComponent)"
+                panel.message = "Select the model package for this fictional-transaction test: \(url.lastPathComponent)"
                 guard panel.runModal() == .OK, let selected = panel.url else { throw CancellationError() }
                 do {
                     _ = try await client.prepareModel(at: selected, timeoutMS: 100)
@@ -64,6 +69,38 @@ import Foundation
             write(["event": "smoke_failed", "error": error.localizedDescription])
             exit(1)
         }
+    }
+    private static func verifyConnectionBoundary() async throws {
+        func connection() -> NSXPCConnection {
+            let value = NSXPCConnection(serviceName: "com.groundkeeper.macos.classifier")
+            value.remoteObjectInterface = NSXPCInterface(with: ClassifierXPCService.self)
+            value.activate()
+            return value
+        }
+        func rejected(_ connection: NSXPCConnection, nonce: String) async throws {
+            let data = try JSONSerialization.data(withJSONObject: ["protocol_version": 1,
+                "request_id": UUID().uuidString, "operation": "handshake", "connection_nonce": nonce])
+            let response: Data = try await withCheckedThrowingContinuation { continuation in
+                let proxy = connection.remoteObjectProxyWithErrorHandler { error in continuation.resume(throwing: error) } as! ClassifierXPCService
+                proxy.request(data) { continuation.resume(returning: $0) }
+            }
+            let object = try JSONSerialization.jsonObject(with: response) as? [String: Any]
+            guard (object?["error"] as? [String: Any])?["code"] as? String == "unauthorized" else {
+                throw ClassifierBridgeError.invalidResponse
+            }
+        }
+        let first = connection(), second = connection()
+        defer { first.invalidate(); second.invalidate() }
+        try await rejected(first, nonce: "guessed-before-authorization")
+        let bookmark = try Bundle.main.bundleURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        let nonce: String? = try await withCheckedThrowingContinuation { continuation in
+            let proxy = first.remoteObjectProxyWithErrorHandler { error in continuation.resume(throwing: error) } as! ClassifierXPCService
+            proxy.authorizeHost(bookmark) { continuation.resume(returning: $0) }
+        }
+        guard let nonce else { throw ClassifierBridgeError.unavailable }
+        try await rejected(first, nonce: "wrong-after-authorization")
+        try await rejected(second, nonce: nonce)
+        write(["event": "connection_boundary_verified"])
     }
     private static func write(_ object: [String: Any]) {
         if let data = try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) {

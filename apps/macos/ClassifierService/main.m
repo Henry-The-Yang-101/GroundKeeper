@@ -1,6 +1,6 @@
 #import "ClassifierService.h"
 #import <Python.h>
-#import <Security/Security.h>
+#import "ConnectionIdentity.h"
 #include <stdatomic.h>
 
 static const NSUInteger GKMaximumMessage = 65536;
@@ -54,6 +54,7 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
 @property(strong) NSMutableArray<GKJob *> *queue;
 @property(strong) NSMutableDictionary<NSString *,GKJob *> *pending;
 @property(strong) NSURL *activePackage;
+@property(strong) NSMapTable<NSXPCConnection *,NSString *> *authorized;
 @property BOOL pythonReady;
 @property BOOL attemptedPython;
 @end
@@ -61,6 +62,7 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
 @implementation GKService
 - (instancetype)init {
     if ((self=[super init])) {
+        _authorized=[NSMapTable weakToStrongObjectsMapTable];
         _condition=[NSCondition new]; _queue=[NSMutableArray new]; _pending=[NSMutableDictionary new];
         NSThread *thread=[[NSThread alloc] initWithTarget:self selector:@selector(inferenceLoop) object:nil];
         thread.name=@"GroundKeeper inference";
@@ -70,23 +72,9 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
     return self;
 }
 - (BOOL)listener:(NSXPCListener *)listener shouldAcceptNewConnection:(NSXPCConnection *)connection {
-    // launchd scopes the embedded service; also authenticate the connecting code.
-    SecCodeRef ownCode=NULL;
-    SecStaticCodeRef staticCode=NULL;
-    CFDictionaryRef signing=NULL;
-    OSStatus status=SecCodeCopySelf(kSecCSDefaultFlags,&ownCode);
-    if (status==errSecSuccess) status=SecCodeCopyStaticCode(ownCode,kSecCSDefaultFlags,&staticCode);
-    if (status==errSecSuccess) status=SecCodeCopySigningInformation(staticCode,kSecCSSigningInformation,&signing);
-    NSString *team=signing ? ((__bridge NSDictionary *)signing)[(__bridge NSString *)kSecCodeInfoTeamIdentifier] : nil;
-    NSString *requirementText=nil;
-    if (team.length) requirementText=[NSString stringWithFormat:@"anchor apple generic and identifier \"com.groundkeeper.macos\" and certificate leaf[subject.OU] = \"%@\"",team];
-#if DEBUG
-    // Local ad hoc builds have no Team ID; release always requires the team match.
-    if (!team.length) requirementText=@"identifier \"com.groundkeeper.macos\"";
-#endif
-    if (ownCode) CFRelease(ownCode); if (staticCode) CFRelease(staticCode); if (signing) CFRelease(signing);
-    if (!requirementText) return NO;
-    [connection setCodeSigningRequirement:requirementText];
+    // Only the bounded authorization method is usable until a code requirement
+    // and fresh connection nonce have been established. The worker's sandbox
+    // needs a transient read grant to inspect the enclosing app's signature.
     connection.exportedInterface=[NSXPCInterface interfaceWithProtocol:@protocol(GKClassifierService)];
     connection.exportedObject=self;
     connection.remoteObjectInterface=[NSXPCInterface interfaceWithProtocol:@protocol(GKClassifierEvents)];
@@ -95,11 +83,40 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
     connection.invalidationHandler=^{
         GKService *service=weakSelf;
         [service.condition lock];
+        if (weakConnection) [service.authorized removeObjectForKey:weakConnection];
         for (GKJob *job in service.pending.allValues) if (job.connection==weakConnection) atomic_store(&job->cancelled,true);
         [service.condition unlock];
     };
     [connection resume];
     return YES;
+}
+- (void)authorizeHost:(NSData *)bookmark withReply:(void (^)(NSString *))reply {
+    NSXPCConnection *connection=NSXPCConnection.currentConnection;
+    if (!connection || bookmark.length>GKMaximumMessage) { reply(nil); return; }
+    [self.condition lock];
+    NSString *nonce=[self.authorized objectForKey:connection];
+    if (nonce) { [self.condition unlock]; reply(nonce); return; }
+    BOOL stale=NO;
+    NSURL *host=[NSURL URLByResolvingBookmarkData:bookmark options:NSURLBookmarkResolutionWithoutUI
+        relativeToURL:nil bookmarkDataIsStale:&stale error:NULL];
+    NSURL *expected=NSBundle.mainBundle.bundleURL.URLByDeletingLastPathComponent.URLByDeletingLastPathComponent.URLByDeletingLastPathComponent;
+    NSString *requirement=nil;
+    if (host && !stale && [host.URLByStandardizingPath.path isEqualToString:expected.URLByStandardizingPath.path]) {
+        requirement=GKHostRequirement(NSBundle.mainBundle.bundleURL);
+    }
+    [host stopAccessingSecurityScopedResource];
+    unsigned char random[32];
+    if (requirement && SecRandomCopyBytes(kSecRandomDefault,sizeof(random),random)==errSecSuccess) {
+        // The requirement protects subsequent messages. A random nonce returned
+        // only afterward prevents requests queued before authentication from
+        // reaching Python, even if they already passed XPC's receive checks.
+        [connection setCodeSigningRequirement:requirement];
+        nonce=[[NSData dataWithBytes:random length:sizeof(random)] base64EncodedStringWithOptions:0];
+        [self.authorized setObject:nonce forKey:connection];
+    }
+    [self.condition unlock];
+    reply(nonce);
+    if (!nonce) [connection invalidate];
 }
 - (void)request:(NSData *)encodedRequest withReply:(void (^)(NSData *))reply {
     if (encodedRequest.length>GKMaximumMessage) { reply(failure(nil,@"message_too_large",@"Request exceeds 64 KiB")); return; }
@@ -109,6 +126,11 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
         reply(failure(nil,@"invalid_request",@"Expected an identified JSON request")); return;
     }
     NSString *requestID=request[@"request_id"];
+    [self.condition lock];
+    NSString *nonce=[self.authorized objectForKey:NSXPCConnection.currentConnection];
+    BOOL authenticated=nonce && [nonce isEqual:request[@"connection_nonce"]];
+    [self.condition unlock];
+    if (!authenticated) { reply(failure(requestID,@"unauthorized",@"Authenticate this connection before requesting work")); return; }
     id timeout=request[@"timeout_ms"] ?: @60000;
     if (![timeout isKindOfClass:NSNumber.class] || [timeout doubleValue]<100 || [timeout doubleValue]>120000
         || !isfinite([timeout doubleValue])) {

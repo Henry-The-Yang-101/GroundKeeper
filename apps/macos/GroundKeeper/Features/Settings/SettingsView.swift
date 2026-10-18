@@ -17,9 +17,12 @@ struct SettingsView: View {
             }
             Section("Queue processing") {
                 Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
-                    ForEach(QueueProcessingMode.allCases) { Text($0.title).tag($0) }
+                    ForEach(QueueProcessingMode.allCases.filter { $0 != .background || QueueBackgroundService.isSupported }) { Text($0.title).tag($0) }
                 }.disabled(workspace.changingProcessingMode || workspace.saving)
                 Text(workspace.processingDescription).font(.caption).foregroundStyle(.secondary)
+                if !QueueBackgroundService.isSupported {
+                    Text(QueueBackgroundService.unsupportedMessage).font(.caption).foregroundStyle(.secondary)
+                }
                 if workspace.processingMode == .background {
                     Text(workspace.backgroundStatus).font(.caption)
                     HStack {

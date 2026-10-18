@@ -1,6 +1,7 @@
 @preconcurrency import Foundation
 
 @objc(GKClassifierService) protocol ClassifierXPCService {
+    func authorizeHost(_ bookmark: Data, withReply reply: @escaping (String?) -> Void)
     func request(_ data: Data, withReply reply: @escaping (Data) -> Void)
     func cancel(_ requestID: String, withReply reply: @escaping (Bool) -> Void)
 }
@@ -175,7 +176,8 @@ private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @uncheck
         finish(id, .failure(CancellationError()))
     }
     func send(_ data: Data, id: String, timeoutMS: Int) async throws -> Data {
-        try await withTaskCancellationHandler {
+        let hostBookmark = try Bundle.main.bundleURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        return try await withTaskCancellationHandler {
             try Task.checkCancellation()
             return try await withCheckedThrowingContinuation { continuation in
                 let service = connect()
@@ -198,7 +200,20 @@ private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @uncheck
                 }) as? ClassifierXPCService else {
                     finish(id, .failure(ClassifierBridgeError.unavailable)); return
                 }
-                proxy.request(data) { [weak self] result in self?.finish(id, .success(result)) }
+                proxy.authorizeHost(hostBookmark) { [weak self] nonce in
+                    guard let self else { return }
+                    guard let nonce,
+                          var request = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                        self.finish(id, .failure(ClassifierBridgeError.unavailable)); return
+                    }
+                    self.lock.lock(); let active = self.pending[id] != nil; self.lock.unlock()
+                    guard active else { return }
+                    request["connection_nonce"] = nonce
+                    guard let authenticated = try? JSONSerialization.data(withJSONObject: request) else {
+                        self.finish(id, .failure(ClassifierBridgeError.invalidResponse)); return
+                    }
+                    proxy.request(authenticated) { [weak self] result in self?.finish(id, .success(result)) }
+                }
                 if Task.isCancelled { cancel(id) }
             }
         } onCancel: { self.cancel(id) }
