@@ -1,6 +1,6 @@
 import Foundation
 import CryptoKit
-import SQLite3
+import SQLCipher
 import Darwin
 
 public enum LedgerError: Error, LocalizedError, Sendable {
@@ -38,26 +38,66 @@ extension Dictionary where Key == String, Value == SQLValue {
 final class Database {
     private var handle: OpaquePointer?
     private var ownerLock: Int32 = -1
-    init(url: URL) throws {
+    private let url: URL
+    init(url: URL, passphrase: String? = nil) throws {
+        self.url = url
         ownerLock = Darwin.open(url.path + ".ownerlock", O_CREAT | O_RDWR, 0o600)
         guard ownerLock >= 0, flock(ownerLock, LOCK_EX | LOCK_NB) == 0 else {
             if ownerLock >= 0 { Darwin.close(ownerLock) }; ownerLock = -1
             throw LedgerError.ownedByAnotherProcess
         }
+        do { try openConnection(passphrase: passphrase) } catch { close(); throw error }
+    }
+    private func openConnection(passphrase: String?) throws {
         let rc = sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, nil)
         guard rc == SQLITE_OK else { close(); throw LedgerError.storage(rc) }
         do {
+            guard !(try query("PRAGMA cipher_version")).isEmpty else { throw LedgerError.unavailable("SQLCipher is unavailable. The vault was not opened.") }
+            if let passphrase {
+                guard !passphrase.isEmpty else { throw LedgerError.invalid("Enter the vault passphrase.") }
+                guard !passphrase.contains("\0"), passphrase.utf8.count <= 1024 else { throw LedgerError.invalid("Invalid passphrase length or characters.") }
+                // PRAGMA does not accept bindings; quote the literal and never log SQL.
+                try executeScript("PRAGMA key='\(passphrase.replacingOccurrences(of: "'", with: "''"))'")
+            }
             _ = try query("SELECT count(*) FROM sqlite_master")
             sqlite3_busy_timeout(handle, 3000)
             try executeScript("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA temp_store=MEMORY;")
             guard try query("PRAGMA foreign_keys").first?.number("foreign_keys") == 1 else { throw LedgerError.unavailable("Foreign keys could not be enabled.") }
             try migrate()
-        } catch { close(); throw error }
+        } catch { if let handle { sqlite3_close(handle); self.handle = nil }; throw error }
     }
     deinit { close() }
     func close() {
         if let handle { sqlite3_close(handle); self.handle = nil }
         if ownerLock >= 0 { flock(ownerLock, LOCK_UN); Darwin.close(ownerLock); ownerLock = -1 }
+    }
+    /// Export to a sibling file, validate it, then atomically replace the vault under its owner lock.
+    /// The header is the source of truth, so a crash cannot leave a separate mode flag out of sync.
+    func changeEncryption(to passphrase: String?) throws {
+        if let passphrase, (passphrase.count < 12 || passphrase.utf8.count > 1024 || passphrase.contains("\0")) { throw LedgerError.invalid("Use a passphrase of at least 12 characters.") }
+        let staging = url.deletingLastPathComponent().appendingPathComponent(".vault-conversion-\(UUID().uuidString).sqlite")
+        defer { for suffix in ["", "-wal", "-shm", ".ownerlock"] { try? FileManager.default.removeItem(atPath: staging.path + suffix) } }
+        try query("ATTACH DATABASE ? AS converted KEY ?", [.text(staging.path), .text(passphrase ?? "")])
+        do {
+            try query("SELECT sqlcipher_export('converted')")
+            guard try query("PRAGMA converted.integrity_check").first?.text("integrity_check") == "ok" else { throw LedgerError.unavailable("The converted vault did not pass validation.") }
+            try query("DETACH DATABASE converted")
+        } catch { _ = try? query("DETACH DATABASE converted"); throw error }
+        let verification = try Database(url: staging, passphrase: passphrase)
+        guard try verification.query("PRAGMA integrity_check").first?.text("integrity_check") == "ok",
+              try verification.query("PRAGMA foreign_key_check").isEmpty else {
+            verification.close(); throw LedgerError.unavailable("The converted vault did not pass validation.")
+        }
+        try verification.executeScript("PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE;")
+        verification.close()
+        // Remove WAL dependencies before replacing the main file. No other process can open this vault.
+        try executeScript("PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE;")
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: staging.path)
+        // fsync the completed copy before the atomic replacement.
+        let file = try FileHandle(forWritingTo: staging); try file.synchronize(); try file.close()
+        guard Darwin.rename(staging.path, url.path) == 0 else { throw LedgerError.unavailable("Could not replace the vault. The original was retained.") }
+        if let handle { sqlite3_close(handle); self.handle = nil }
+        try openConnection(passphrase: passphrase)
     }
     func executeScript(_ sql: String) throws {
         let rc = sqlite3_exec(handle, sql, nil, nil, nil)
