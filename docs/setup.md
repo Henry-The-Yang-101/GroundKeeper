@@ -1,8 +1,9 @@
 # Setup
 
-Run commands from the repository root. The first build needs internet access to
-install dependencies. The packaged local classifiers can run offline once a
-model package is available.
+For a compiled app, follow the [release installation guide](install.md).
+For a source build, run commands from the repository root. The first build needs
+internet access to install dependencies. The packaged local classifiers can run
+offline once a model package is available.
 
 ## Requirements
 
@@ -87,9 +88,10 @@ select a directory containing `classifier.json` and its model files. The worker
 checks the file set, sizes, hashes, policy, and package format before loading.
 Qwen runs on MLX; Laya runs on PyTorch MPS. Each package is limited to 3 GB.
 
-Trained GroundKeeper packages are local development artifacts and are not
-included in this repository. A fresh clone can run the ledger and CSV workflow
-without them. A raw Hugging Face download is not yet an app package.
+The release workflow attaches the pinned Qwen and Laya packages as separate
+[release downloads](install.md#install-the-local-models). They are not stored in
+Git. A fresh clone can run the ledger and CSV workflow without them. A raw
+Hugging Face download is not yet an app package.
 
 If you already have a verified experimental package, the
 [classifier package guide](../contracts/classifier/README.md#model-packages)
@@ -101,7 +103,7 @@ their dataset requirements.
 
 ### Apple Intelligence through Shortcuts
 
-1. Import [`GK Categorize Cloud.shortcut`](../experiments/apple-shortcuts/GK%20Categorize%20Cloud.shortcut)
+1. Import [`GK Categorize Cloud.shortcut`](../shortcuts/GK%20Categorize%20Cloud.shortcut)
    into the macOS Shortcuts app.
 2. Inspect its **Use Model** action. The export was configured for Cloud with
    Broad World Knowledge enabled, Text output, and Follow Up disabled. Your Mac
@@ -128,10 +130,11 @@ then confirm captured card labels against your accounts in the review list.
 Source files remain in iCloud after import. Persisted delivery identities prevent
 re-importing unchanged files.
 
-The iPhone capture Shortcut is not yet distributed in this repository. The
-export under `experiments/apple-shortcuts/` classifies text on the Mac; it does
-not install iPhone capture automation. CSV and manual entry are the complete
-starting paths for a new checkout. Existing capture users can consult the
+The iPhone capture exports are pending because Apple's export service failed.
+The [Shortcuts guide](../shortcuts/README.md) documents setup for existing
+installations and the exports still needed. The included classifier files
+classify text on the Mac; they do not install iPhone capture automation. CSV and
+manual entry are the complete starting paths for a new checkout. Existing capture users can consult the
 [accepted envelope types](../apps/macos/GroundKeeperCore/Sources/GroundKeeperCore/Models.swift)
 and [ingestion behavior](../contracts/database/IMPLEMENTATION.md).
 

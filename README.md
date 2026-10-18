@@ -63,13 +63,25 @@ iCloud transfers capture files. The live database stays in the Mac's sandbox
 container, outside iCloud Drive, and currently uses ordinary, unencrypted SQLite.
 The repository contains no bank login integration or native iPhone app.
 
+## Install a release
+
+Pushes to `main` are configured to build a signed, notarized macOS prerelease
+with the Python worker included. Each release also carries the selected Qwen
+and Laya model packages, available Shortcut exports, and setup instructions.
+Models are separate downloads so the app can be installed without them.
+
+See the [installation guide](docs/install.md) for the download and model setup
+steps. Release publication needs the one-time [maintainer setup](docs/releases.md)
+for signing credentials and model assets. Until that is complete, build from
+source below.
+
 ## Build and try it
 
 The full app requires an Apple silicon Mac, macOS 26.2 or later, full Xcode,
 and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 The bundled runtime pins CPython 3.12.9. Xcode 27.0 is the locally verified
-toolchain. This is a source build; the repository does not include a notarized
-installer or trained model weights.
+toolchain. Installers and model archives are distributed through GitHub Releases;
+large generated binaries are kept out of the source repository.
 
 From a terminal with Xcode selected as the developer directory:
 
@@ -130,6 +142,8 @@ models or exercise GPU inference, iCloud, or signed app services.
 | [`groundkeeper/`](groundkeeper/) | Python classifier worker, policy, constrained decoding, and merchant utilities |
 | [`contracts/`](contracts/) | Database schema, classifier protocol, and runtime pins |
 | [`docs/`](docs/README.md) | Setup, roadmap, category policy, and historical notes |
+| [`shortcuts/`](shortcuts/README.md) | Apple Intelligence exports and capture setup |
+| [`release/`](release/) | Pinned model catalog, notices, and release notes |
 | [`examples/`](examples/README.md) | Fictional data for trying CSV import |
 | [`tests/`](tests/) | Python unit tests |
 | [`scripts/`](scripts/) | Runtime packaging, dataset preparation, training, and evaluation tools |

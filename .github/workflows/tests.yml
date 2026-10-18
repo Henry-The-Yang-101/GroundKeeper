@@ -34,6 +34,7 @@ jobs:
           tests/test_constraints.py::test_invalid_prefix_and_content_after_eos_fail_closed
           tests/test_constraints.py::test_field_order_can_match_existing_training_without_changing_decisions
           tests/test_laya_runtime.py
+          tests/test_release_models.py
 
   swift-core:
     runs-on: macos-15

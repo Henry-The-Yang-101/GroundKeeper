@@ -1,6 +1,9 @@
 # Documentation
 
-Start with [setup](setup.md) to build the app and try it with fictional data.
+Start with [installation](install.md) for a release app, or [setup](setup.md)
+to build from source and try it with fictional data.
+[Release maintenance](releases.md) covers the automatic build and signing setup.
+The [Shortcuts guide](../shortcuts/README.md) covers the included exports.
 The [macOS guide](../apps/macos/README.md) covers queue processing, development
 signing, and app smoke checks.
 

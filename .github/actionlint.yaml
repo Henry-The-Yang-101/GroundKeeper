@@ -1,0 +1,4 @@
+# GitHub's hosted Xcode 27 arm64 image is newer than actionlint's label list.
+# https://github.com/actions/runner-images#available-images
+self-hosted-runner:
+  labels: [xcode-27]
