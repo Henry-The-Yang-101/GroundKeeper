@@ -15,6 +15,7 @@ struct RootView: View {
                     ToolbarItem(placement: .automatic) {
                         Text(workspace.ready ? "Local vault" : "Opening vault")
                             .font(.caption).foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
                             .help(workspace.status)
                     }
                     ToolbarItem(placement: .primaryAction) {

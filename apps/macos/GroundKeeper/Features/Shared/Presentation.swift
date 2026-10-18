@@ -88,6 +88,7 @@ struct UnavailableFeature: View {
         } description: {
             Text(description).frame(maxWidth: 380)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
