@@ -107,26 +107,17 @@ Those commands require existing checkpoint and manifest files under `.local/`.
 The [experiment index](README.md#experiments) links to training procedures and
 their dataset requirements.
 
-### Apple Intelligence through Shortcuts
+### Native Apple Private Cloud Compute
 
-1. Import [`GK Categorize Cloud.shortcut`](../shortcuts/GK%20Categorize%20Cloud.shortcut)
-   into the macOS Shortcuts app.
-2. Inspect its **Use Model** action. The export was configured for Cloud with
-   Broad World Knowledge enabled, Text output, and Follow Up disabled. Your Mac
-   must support the selected Apple Intelligence action and have it enabled.
-3. In **Settings > Categorization**, enter the installed Shortcut's exact name
-   and click **Use Apple Intelligence Shortcut**.
-4. Process a fictional transaction first and review the result or reported error.
+On macOS 27, select **Use Apple Private Cloud Compute** in setup or Settings.
+This calls Foundation Models directly from Swift and uses the user's daily Apple
+allowance. No classifier Shortcut or Python provider is involved. The app must
+have Apple's approved PCC entitlement; default/free ad hoc builds display this
+requirement and keep local/manual options available.
 
-Only description, direction, and currency are sent to the Shortcut. Its contents
-determine which service receives them. GroundKeeper records this provider as
-cloud-capable and never silently falls back to it from a local model.
-
-The direct CLI benchmark produced predictions, but the latest signed app
-integration check reached Apple's usage limit. A successful prediction through
-the app still needs verification after that limit resets. Quota or configuration
-errors require **Retry failed work**; the app does not invent a category when a
-provider fails. See the [benchmark notes](../experiments/apple-shortcuts/README.md).
+See [native PCC setup, signing, quota handling and verification](apple-private-cloud-compute.md).
+The public API has no Broad World Knowledge toggle. No web-search tool or silent
+fallback is added. Try a fictional transaction first in an entitled build.
 
 ## iPhone capture and iCloud
 
@@ -136,7 +127,7 @@ then confirm captured card labels against your accounts in the review list.
 Source files remain in iCloud after import. Persisted delivery identities prevent
 re-importing unchanged files.
 
-The app bundles signed capture and classifier Shortcuts, with install/share
+The app bundles signed capture Shortcuts, with install/share
 buttons and a phone setup guide. You must create personal automations and select
 cards/folder permissions on the receiving iPhone. See the
 [Shortcuts guide](../shortcuts/README.md) and the

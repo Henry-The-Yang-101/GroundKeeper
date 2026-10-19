@@ -16,7 +16,7 @@ build_args=(
   -derivedDataPath "$derived_data"
 )
 if [[ -f "$repo_dir/.local/macos/Signing.xcconfig" ]]; then
-  build_args+=(-allowProvisioningUpdates GK_APP_ENTITLEMENTS=GroundKeeper.Keychain.entitlements)
+  build_args+=(-allowProvisioningUpdates "GK_APP_ENTITLEMENTS=${GK_APP_ENTITLEMENTS:-GroundKeeper.Keychain.entitlements}")
 fi
 xcodebuild "${build_args[@]}" build
 

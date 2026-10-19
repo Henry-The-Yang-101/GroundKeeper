@@ -1,45 +1,26 @@
 # Apple Shortcuts setup
 
-GroundKeeper uses Shortcuts for two separate tasks: capturing transaction events
-on iPhone, and optionally classifying descriptions with Apple Intelligence on
-Mac. Local Qwen and Laya classification do not require Shortcuts.
+GroundKeeper uses Shortcuts to capture transaction events on iPhone. All Mac
+categorization is separate: Qwen/Laya run in the local worker, and Apple Private
+Cloud Compute uses native Swift. See [native PCC setup](../docs/apple-private-cloud-compute.md).
 
-## Included installers
+## Included capture installers
 
 | File | Purpose |
 | --- | --- |
 | [GroundKeeper Capture Transaction.shortcut](GroundKeeper%20Capture%20Transaction.shortcut) | Shared iPhone capture writer |
 | [GroundKeeper Wallet Automation.shortcut](GroundKeeper%20Wallet%20Automation.shortcut) | Wallet transaction adapter; pass automation input |
 | [GroundKeeper CIBC Automation.shortcut](GroundKeeper%20CIBC%20Automation.shortcut) | Optional experimental notification adapter |
-| [GK Categorize Cloud.shortcut](GK%20Categorize%20Cloud.shortcut) | Apple Intelligence Cloud classification |
-| [GK Categorize On-Device.shortcut](GK%20Categorize%20On-Device.shortcut) | Experimental on-device configuration |
 
-Open a `.shortcut` file to import it. Inspect **Use Model** after importing:
-the model selector determines where inference runs, regardless of the file or
-Shortcut name. If both imports have the same internal name, rename one before
-configuring the app. Your Mac must support and enable the selected Apple
-Intelligence action.
-
-For the Cloud configuration, use Text output, enable Broad World Knowledge,
-and disable Follow Up. In GroundKeeper's **Settings > Categorization**, enter
-the installed Shortcut's exact name, click **Use Apple Intelligence Shortcut**,
-and process a fictional transaction.
-
-GroundKeeper sends only description, direction, and currency. Cloud inference
-can send that text to Apple's service. The app validates the returned
-`type`, `category`, and `review` fields and requires review of every suggestion.
-It never switches from a local model to this provider automatically.
-
-Cloud usage limits can stop processing. The latest signed app check hit that
-limit; a successful app-to-Shortcut prediction still needs verification.
-The on-device export failed the output contract frequently in the recorded
-benchmark and is included for experiments, not recommended for routine use.
-See the [benchmark report](https://github.com/Henry-The-Yang-101/GroundKeeper/blob/main/experiments/apple-shortcuts/README.md).
+The repository also retains `GK Categorize Cloud.shortcut` and
+`GK Categorize On-Device.shortcut` for historical experiments. They are no longer
+app providers or bundled app installers. The previous benchmark does not validate
+native PCC. See the [historical benchmark report](../experiments/apple-shortcuts/README.md).
 
 ## iPhone capture setup
 
 The app’s first-launch assistant and Settings include install/share buttons for
-the signed capture writer, Wallet adapter, and Cloud classifier. Use Shortcuts
+the signed capture writer and Wallet adapter. Use Shortcuts
 iCloud sync or AirDrop to get them onto your iPhone. Install the shared writer
 before the adapters. The CIBC adapter is available separately as an experiment.
 
@@ -92,7 +73,7 @@ The script converts each source to a binary `.shortcut` and uses Apple’s
 “People Who Know Me” exports; they contain the exporter’s contact verification
 metadata. The signed files in this folder use Apple’s shareable signing chain.
 
-The app build bundles the catalog and every `.shortcut` from this folder. Source
+The app build bundles the catalog and the `GroundKeeper*.shortcut` capture installers from this folder. Source
 checks verify variable references, unique-file generation, and the absence of
 personal folder permissions and trigger selections. Signing and import were
 checked on Mac. A synthetic CLI writer run timed out on this machine; real

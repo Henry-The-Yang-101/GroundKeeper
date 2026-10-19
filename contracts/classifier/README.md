@@ -1,6 +1,6 @@
 # Bundled classifier bridge
 
-GroundKeeper's native app calls `com.groundkeeper.macos.classifier`, an embedded
+For Qwen and Laya, GroundKeeper's native app calls `com.groundkeeper.macos.classifier`, an embedded
 XPC service. A native Objective-C host embeds CPython; Python/MLX/PyTorch never
 load in the UI process. Swift owns SQLite and application state, persists
 classification jobs, and saves results as assignments requiring review. See the
@@ -38,7 +38,7 @@ aligned with that floor. The older UI-only preview's macOS 14 minimum no longer
 describes the bundled classifier build. Validate this floor on runtime upgrades.
 
 Settings > Categorization selects a local model package or an explicit Apple
-Intelligence Shortcut provider for the persistent queue. The selected processing
+Private Cloud Compute provider implemented directly in Swift for the persistent queue. The selected processing
 mode controls when jobs run. Separate diagnostics can check GPU support and
 classify fictional text without writing a transaction. Council orchestration
 remains planned.
@@ -93,7 +93,6 @@ model manifest identity and model package format are separate versions.
 | `handshake` | None | Supported backends, policy, categories/types, bundled runtime versions, current model. No model is loaded. |
 | `gpu_probe` | None | Real small matrix calculations on MLX GPU and PyTorch MPS, with device and numerical result. |
 | `prepare_model` | `package_bookmark` | Verified `model` identity and `reused` flag. Same verified package reuses the loaded model. |
-| `prepare_shortcut` | `shortcut_name` | Selects the explicit Apple Shortcut provider and releases local model weights. |
 | `classify` | `job_id`, `part_id`, `transaction_revision`, `policy_version`, `model_manifest_sha256`, `input` | Decision, actual model identity and echoed job/part/revision. |
 | `release_model` | None | Releases model references and backend allocator caches. |
 
@@ -257,14 +256,10 @@ executable with the same bundle identifier, modified hosts, and unsigned code.
 - [CPython isolated initialization](https://docs.python.org/3.12/c-api/init_config.html)
 - [MLX Metal APIs](https://ml-explore.github.io/mlx/build/html/python/metal.html)
 
-### Explicit Apple Shortcut provider
+### Native Apple provider boundary
 
-`prepare_shortcut` accepts `shortcut_name` (1–128 characters, no control characters).
-It releases local GPU weights and returns the usual model identity with backend
-`apple_shortcut`, device `shortcut`. `classify` uses the same job/revision/policy/
-identity checks and strictly validated, review-required decision contract as local
-inference. The bundled Python adapter invokes `/usr/bin/shortcuts` without a shell,
-observes native cancellation and bounds response size. Errors expose safe codes
-(`shortcut_unavailable`, `shortcut_rate_limited`, `invalid_output`, or
-`deadline_exceeded`) rather than private input or dependency logs. No automatic
-local/cloud fallback exists. Only Settings explicitly selects this provider.
+Apple PCC runs entirely in Swift using macOS 27 Foundation Models. The worker
+advertises only Qwen/Laya and rejects the retired `prepare_shortcut` operation.
+The app's XPC client also rejects cloud backend requests before dispatch. The
+legacy Python Shortcut adapter is excluded from the worker bundle. See
+[native PCC data, signing and quota handling](../../docs/apple-private-cloud-compute.md).

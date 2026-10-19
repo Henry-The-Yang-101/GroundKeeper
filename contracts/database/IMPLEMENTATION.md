@@ -40,8 +40,8 @@ app creates its database at:
 
 The live database is never placed in iCloud. Python receives only the existing
 description/direction/currency contract and job/revision/model identity. It has
-no database connection. Settings can explicitly select an Apple Intelligence
-Shortcut provider, which receives the same three input fields and is recorded
+no database connection. Settings can explicitly select a native Apple Private Cloud Compute
+provider, which receives the same three input fields and is recorded
 as cloud-capable. Council orchestration remains planned.
 
 The UI now loads persisted transactions, adds accounts, saves confirmed manual
@@ -119,10 +119,10 @@ silently merged; advanced FX/tip/hold reconciliation remains manual.
 
 ## Classifier scheduling
 
-Choose a verified model package or explicitly enable an Apple Intelligence
-Shortcut in Settings. The selected provider is retained across launches.
+Choose a verified model package or explicitly enable native Apple Private Cloud Compute
+in Settings. The selected provider is retained across launches.
 Unconfirmed system assignments enqueue one job per part/revision/
-model. Each attempt records frozen input and exact model identity before XPC
+model. Each attempt records frozen input and exact model identity before provider
 execution. Successful suggestions append assignment history and always require
 review. Completion checks the transaction revision and current confirmation
 state in the same commit; stale results remain evidence but cannot overwrite
@@ -132,8 +132,8 @@ Failures use at most three attempts with bounded backoff. Service interruptions
 can reconnect/reprepare; failed jobs have an explicit retry action. On restart,
 unfinished runs are marked interrupted and jobs are retried or exhausted based
 on their attempt count. Classification is sequential in batches of ten between
-capture scans. Local providers use the bundled GPU runtime. The Shortcut provider
-invokes the named Shortcut only after explicit selection in Settings and follows
+capture scans. Local providers use the bundled GPU runtime. The native Swift PCC provider
+invokes Apple only after explicit selection in Settings and follows
 the same queue processing mode. Quota and configuration errors need an explicit
 retry; providers never fall back to one another.
 
