@@ -49,7 +49,9 @@ import Security
     static func classify(_ input: ClassifierInput) async throws -> ClassificationDecision {
         try Task.checkCancellation()
         _ = try prepare()
-        let prompt = try NativeClassificationPolicy.input(description: input.description, direction: input.direction, currency: input.currency)
+        let prompt: String
+        do { prompt = try NativeClassificationPolicy.input(description: input.description, direction: input.direction, currency: input.currency) }
+        catch { throw AppleCloudError(code: "invalid_input", message: "This transaction exceeds the classifier input limits. Review it manually.", retryable: false) }
         guard #available(macOS 27.0, *) else { throw AppleCloudError.unavailable }
         do {
             return try await withThrowingTaskGroup(of: ClassificationDecision.self) { group in
