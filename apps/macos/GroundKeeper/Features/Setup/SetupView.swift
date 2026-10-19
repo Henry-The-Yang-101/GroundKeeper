@@ -58,7 +58,7 @@ struct SetupView: View {
             VaultProtectionView(onboarding: true)
             if protectionChosen { Label(workspace.encrypted ? "Encrypted vault selected" : "Unencrypted vault selected", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
         case 2:
-            header("sparkles", "Intelligence,\nwhere you want it.", "Install local models, choose Apple Intelligence Cloud, or categorize by hand. You are in control of where your transaction text goes.")
+            header("sparkles", "Intelligence,\nwhere you want it.", "Install local models, choose Apple Private Cloud Compute, or categorize by hand. You are in control of where your transaction text goes.")
             ModelSetupView(installer: installer)
         case 3:
             header("icloud.fill", "From your iPhone.\nTo your Mac.", "Choose an iCloud Drive inbox for the transaction files your iPhone captures. Both devices must use the same Apple Account and have iCloud Drive enabled.")
@@ -127,11 +127,7 @@ struct PhoneSetupView: View {
             Text("On iPhone, edit GroundKeeper Capture Transaction. Set its Save File action to the same iCloud inbox selected here, turn off Ask Where to Save, and grant folder access. For a custom folder, update the Shortcut’s destination too.").foregroundStyle(.secondary)
             Text("3. Create a Wallet automation").font(.headline)
             Text("Open Shortcuts → Automation → + → Transaction. Choose your cards and Run Immediately. Add Run Shortcut → GroundKeeper Wallet Automation and pass the transaction input. Check the merchant, amount, and card variables on your phone; available fields vary by iOS and card.").foregroundStyle(.secondary)
-            Text("4. Add Apple Intelligence, if selected").font(.headline)
-            if let url = SetupResources.shortcut("GK Categorize Cloud") {
-                HStack { Button("Install Apple Intelligence Shortcut") { NSWorkspace.shared.open(url) }; ShareLink(item: url) { Text("Send to iPhone") } }
-            }
-            Text("The classifier runs on your Mac when GroundKeeper processes the queue. Shortcuts sync can also make it available on your phone. Inspect Use Model: Cloud, Broad World Knowledge on, Text output, Follow Up off. Enable it explicitly under Intelligence or Settings.").foregroundStyle(.secondary)
+            Text("Apple Intelligence categorization runs natively on your Mac. No Apple Intelligence Shortcut or phone automation is required for it.").foregroundStyle(.secondary)
             if let url = SetupResources.shortcut("GroundKeeper CIBC Automation") {
                 DisclosureGroup("Optional: CIBC notification adapter (experimental)") {
                     VStack(alignment: .leading, spacing: 10) {
@@ -140,7 +136,7 @@ struct PhoneSetupView: View {
                     }.padding(.top, 8)
                 }
             }
-            Text("5. Check a sample capture").font(.headline)
+            Text("4. Check a sample capture").font(.headline)
             Text("Run a fictional sample, confirm a JSON file appears in the inbox, then check Sync on your Mac. A real Wallet purchase and locked-phone delivery need a separate test. CIBC notification capture is experimental; leave it off until its input and trigger are verified on your phone.").foregroundStyle(.secondary)
             Link("Apple’s Shortcuts guide", destination: URL(string: "https://support.apple.com/guide/shortcuts/welcome/ios")!)
         }.fixedSize(horizontal: false, vertical: true)

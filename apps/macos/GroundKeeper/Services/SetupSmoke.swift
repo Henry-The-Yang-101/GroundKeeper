@@ -34,7 +34,7 @@ import GroundKeeperCore
             } else { print("protected_keychain_unavailable_in_this_signing_configuration; passphrase_lifecycle_passed") }
             let catalog = try ModelCatalog.bundled()
             guard catalog.models.count == 2 else { throw LedgerError.invalid("Model catalog missing.") }
-            for name in ["GroundKeeper Capture Transaction", "GroundKeeper Wallet Automation", "GK Categorize Cloud"] {
+            for name in ["GroundKeeper Capture Transaction", "GroundKeeper Wallet Automation"] {
                 guard SetupResources.shortcut(name) != nil else { throw LedgerError.invalid("Bundled Shortcut missing.") }
             }
             await workspace.stop()

@@ -24,7 +24,8 @@ def main():
             subprocess.run(["/usr/bin/rsync", "-a", "--delete", str(DEST / folder) + "/", str(target) + "/"], check=True)
     worker = bundle / "Resources/Worker/groundkeeper"
     worker.mkdir(parents=True, exist_ok=True)
-    for name in ("__init__.py", "worker.py", "policy.py", "policy_v2.py", "constraints.py", "laya_runtime.py", "apple_shortcuts.py"):
+    (worker / "apple_shortcuts.py").unlink(missing_ok=True)
+    for name in ("__init__.py", "worker.py", "policy.py", "policy_v2.py", "constraints.py", "laya_runtime.py"):
         shutil.copy2(ROOT / "groundkeeper" / name, worker / name)
     shutil.copy2(DEST / "runtime-lock.json", bundle / "Resources/runtime-lock.json")
     if embed:

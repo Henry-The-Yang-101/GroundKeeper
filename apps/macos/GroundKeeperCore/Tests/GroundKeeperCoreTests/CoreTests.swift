@@ -228,22 +228,22 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.captureDeliveryStates()[badKey]?.terminal == false)
 }
 
-@Test func switchingToShortcutReplacesPendingLocalJobs() async throws {
+@Test func switchingToNativePCCReplacesPendingLocalJobs() async throws {
     let (store, _) = try vault()
     try await store.addAccount(name: "Fixture", currency: "CAD")
     try await ingestMapped(store, id: "provider-switch")
-    let local = String(repeating: "a", count: 64), shortcut = String(repeating: "b", count: 64)
+    let local = String(repeating: "a", count: 64), cloud = String(repeating: "b", count: 64)
     try await store.registerModel(id: local, name: "Local", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
     try await store.enqueueClassifications(modelID: local)
-    try await store.registerModel(id: shortcut, name: "Fixture Shortcut", backend: "apple_shortcut", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: cloud, name: "Fixture PCC", backend: "apple_pcc", policy: "groundkeeper-18-v1", configuration: "{}")
     #expect(try await store.claimClassification(modelID: local) == nil)
     try await store.registerModel(id: local, name: "Local", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
     try await store.enqueueClassifications(modelID: local)
     let revived = try await store.claimClassification(modelID: local)!
     try await store.releaseClassification(revived)
-    try await store.registerModel(id: shortcut, name: "Fixture Shortcut", backend: "apple_shortcut", policy: "groundkeeper-18-v1", configuration: "{}")
-    try await store.enqueueClassifications(modelID: shortcut)
-    let job = try await store.claimClassification(modelID: shortcut)!
+    try await store.registerModel(id: cloud, name: "Fixture PCC", backend: "apple_pcc", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.enqueueClassifications(modelID: cloud)
+    let job = try await store.claimClassification(modelID: cloud)!
     try await store.completeClassification(job, decision: ClassificationDecision(type: "expense", category: "dining", review: true))
     #expect(try await store.snapshot().transactions[0].category == "dining")
     #expect(try await store.integrityCheck())

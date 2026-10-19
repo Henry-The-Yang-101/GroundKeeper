@@ -130,12 +130,12 @@ class Worker:
             if not isinstance(request_id, str) or not 1 <= len(request_id) <= 128:
                 raise WorkerError("invalid_request", "Invalid request ID")
             operation = request.get("operation")
-            if operation not in ("handshake", "prepare_model", "prepare_shortcut", "classify", "release_model", "gpu_probe"):
+            if operation not in ("handshake", "prepare_model", "classify", "release_model", "gpu_probe"):
                 raise WorkerError("unsupported_operation", "Unsupported operation")
             _check(cancelled)
             if operation == "handshake":
                 result = {"policy_version": POLICY_VERSION, "categories": list(CATEGORIES), "types": list(TYPES),
-                          "backends": ["qwen_mlx", "laya_mps", "apple_shortcut"], "gpu_required": True,
+                          "backends": ["qwen_mlx", "laya_mps"], "gpu_required": True,
                           "loaded_model": self.identity,
                           "runtime": {p: importlib.metadata.version(p) for p in ("mlx", "mlx-lm", "torch", "laya")}}
             elif operation == "gpu_probe":
@@ -143,18 +143,6 @@ class Worker:
             elif operation == "release_model":
                 self.release()
                 result = {"released": True}
-            elif operation == "prepare_shortcut":
-                name = request.get("shortcut_name")
-                if not isinstance(name, str) or not name.strip() or len(name) > 128 or any(ord(c) < 32 for c in name):
-                    raise WorkerError("invalid_request", "Choose a valid Shortcut name")
-                self.release()
-                from .apple_shortcuts import AppleShortcutCategorizer
-                self.model = AppleShortcutCategorizer(name)
-                self.manifest = {"backend": "apple_shortcut"}
-                digest = hashlib.sha256(json.dumps([POLICY_VERSION, "apple_shortcut", name, 1]).encode()).hexdigest()
-                self.identity = {"model_id": name, "backend": "apple_shortcut", "manifest_sha256": digest,
-                                 "policy_version": POLICY_VERSION, "device": "shortcut"}
-                result = {"model": self.identity}
             elif operation == "prepare_model":
                 if package_root is None:
                     raise WorkerError("invalid_package", "A native-authorized package directory is required")
@@ -258,14 +246,6 @@ class Worker:
         _check(cancelled)
         if self.manifest["backend"] == "qwen_mlx":
             answer = self.qwen(inputs, cancelled)
-        elif self.manifest["backend"] == "apple_shortcut":
-            from .apple_shortcuts import ShortcutExecutionError
-            try:
-                answer = self.model.suggest(inputs, cancelled=cancelled)
-            except ShortcutExecutionError as error:
-                code = {"timeout": "deadline_exceeded", "cancelled": "cancelled",
-                        "invalid_output": "invalid_output", "rate_limited": "shortcut_rate_limited"}.get(error.detail["status"], "shortcut_unavailable")
-                raise WorkerError(code, "Apple Shortcut could not complete; check its configuration in Shortcuts") from None
         else:
             import torch
             with torch.inference_mode():
