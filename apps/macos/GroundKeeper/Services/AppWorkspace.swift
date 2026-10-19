@@ -49,7 +49,8 @@ import GroundKeeperCore
     var saving = false
     var model: ClassifierModel?
     var lastSync: Date?
-    @ObservationIgnored private var store: LedgerStore?
+    // Views observe readiness through this reference, including setup resumed on a later page.
+    private var store: LedgerStore?
     @ObservationIgnored private let client = ClassifierClient()
     @ObservationIgnored private let folder = CaptureFolder()
     @ObservationIgnored private var folderBookmark: Data?
