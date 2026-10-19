@@ -26,6 +26,13 @@ import Foundation
             guard probe.mlx?.value == 32, probe.laya?.value == 32 else { throw ClassifierBridgeError.invalidResponse }
             write(["event": "gpu_verified", "runtime": handshake.runtime ?? [:],
                    "mlx_device": probe.mlx?.device ?? "", "torch_device": probe.laya?.device ?? ""])
+            if CommandLine.arguments.contains("--shortcut-smoke") {
+                let model = try await client.prepareShortcut(name: "GK Categorize Cloud")
+                let result = try await client.classify(ClassifierInput(description: "TIM HORTONS", direction: "debit", currency: "CAD"),
+                    model: model, partID: "synthetic-shortcut", revision: 1, jobID: "synthetic-shortcut")
+                write(["event": "shortcut_verified", "type": result.decision?.type ?? "", "category": result.decision?.category ?? "none"])
+                try await client.releaseModel()
+            }
             if let index = CommandLine.arguments.firstIndex(of: "--classifier-model-picker"),
                CommandLine.arguments.indices.contains(index + 1) {
                 let url = URL(fileURLWithPath: CommandLine.arguments[index + 1], isDirectory: true)

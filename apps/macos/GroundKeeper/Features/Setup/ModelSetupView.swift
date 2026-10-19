@@ -36,7 +36,17 @@ struct ModelSetupView: View {
             else { Text(installer.status).font(.callout).foregroundStyle(.secondary) }
             if let error = installer.error { Text(error).foregroundStyle(.red) }
             Divider()
-            AppleCloudProviderControls()
+            Label("Apple Intelligence Cloud", systemImage: "apple.intelligence").font(.title3.bold())
+            Text("No local model download needed. The included Shortcut uses Cloud with Broad World Knowledge. Description, direction, and currency go to the Shortcut and may be processed by Apple’s cloud service. Internet access, a compatible Mac, and Apple Intelligence are required; usage limits can apply.")
+                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Button("Install Cloud Shortcut") { SetupResources.openShortcut("GK Categorize Cloud") }
+                Button("Use Apple Intelligence Cloud", action: workspace.useShortcut).disabled(workspace.saving || !workspace.ready)
+            }
+            TextField("Installed Shortcut name", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
+                .textFieldStyle(.roundedBorder).disabled(workspace.saving)
+            Text("In Shortcuts, check Use Model → Cloud, Broad World Knowledge on, Text output, and Follow Up off. Your installed Shortcut controls where inference runs.")
+                .font(.callout).foregroundStyle(.secondary)
             Divider()
             HStack { Button("Use manual categorization", action: workspace.useManualCategorization).disabled(workspace.saving || workspace.processing)
                 Spacer(); Text(workspace.classifierStatus).font(.caption).foregroundStyle(.secondary) }
@@ -52,27 +62,4 @@ enum SetupResources {
         return url
     }
     @MainActor static func openShortcut(_ name: String) { if let url = shortcut(name) { NSWorkspace.shared.open(url) } }
-}
-
-/// Reused in onboarding and Settings; refresh quota while visible without issuing inference requests.
-struct AppleCloudProviderControls: View {
-    @Environment(AppWorkspace.self) private var workspace
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 15)) { _ in
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Apple Private Cloud Compute", systemImage: "apple.intelligence").font(.title3.bold())
-                Text("Categorize with Apple’s server model on macOS 27. Only description, direction, and currency are sent to Private Cloud Compute. No local model download or classifier Shortcut is needed.")
-                    .foregroundStyle(.secondary)
-                Text("Uses your daily Apple allowance. Availability depends on Apple Intelligence, internet access, and an approved PCC build. The native model does not offer the Shortcut’s Broad World Knowledge option.")
-                    .font(.callout).foregroundStyle(.secondary)
-                if let reason = AppleCloudClassifier.unavailableReason { Text(reason).font(.callout).foregroundStyle(.secondary) }
-                Text(AppleCloudClassifier.quotaStatus).font(.callout)
-                HStack {
-                    Button("Use Apple Private Cloud Compute", action: workspace.useAppleCloud)
-                        .disabled(workspace.saving || workspace.processing || !workspace.ready || AppleCloudClassifier.unavailableReason != nil)
-                    if AppleCloudClassifier.hasQuotaOptions { Button("Apple access options", action: AppleCloudClassifier.showQuotaOptions) }
-                }
-            }.fixedSize(horizontal: false, vertical: true)
-        }
-    }
 }

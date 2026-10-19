@@ -29,7 +29,7 @@ def test_handshake_without_loading_ml_libraries(monkeypatch):
     monkeypatch.setattr("importlib.metadata.version", lambda name: "test")
     worker = Worker()
     result = worker.handle(request())
-    assert result["result"]["backends"] == ["qwen_mlx", "laya_mps"]
+    assert result["result"]["backends"] == ["qwen_mlx", "laya_mps", "apple_shortcut"]
     assert result["result"]["loaded_model"] is None
     assert result["result"]["gpu_required"] is True
 
@@ -193,7 +193,32 @@ def test_partial_load_releases_tensors_before_clearing_cache(monkeypatch, tmp_pa
     assert cleared == [backend]
 
 
-def test_worker_rejects_removed_shortcut_provider():
-    result = Worker().handle(request('prepare_shortcut', shortcut_name='Private fixture'))
-    assert result['error']['code'] == 'unsupported_operation'
-    assert 'Private fixture' not in json.dumps(result)
+def test_shortcut_provider_preserves_identity_and_requires_review(monkeypatch):
+    monkeypatch.setattr('groundkeeper.apple_shortcuts.run_shortcut',
+        lambda *a, **k: ({'type': 'expense', 'category': 'dining', 'review': False}, {}))
+    worker = Worker()
+    model = worker.handle(request('prepare_shortcut', shortcut_name='Fixture'))['result']['model']
+    values = dict(policy_version=POLICY_VERSION, model_manifest_sha256=model['manifest_sha256'],
+                  part_id='part', job_id='job', transaction_revision=2,
+                  input={'description': 'Fictional cafe', 'direction': 'debit', 'currency': 'CAD'})
+    result = worker.handle(request('classify', **values))['result']
+    assert result['decision']['review'] is True
+    assert result['job_id'] == 'job' and result['transaction_revision'] == 2
+    assert result['model'] == model
+    other = worker.handle(request('prepare_shortcut', shortcut_name='Other'))['result']['model']
+    assert other['manifest_sha256'] != model['manifest_sha256']
+    assert worker.handle(request('classify', **values))['error']['code'] == 'model_mismatch'
+
+
+def test_shortcut_error_does_not_expose_private_logs(monkeypatch):
+    from groundkeeper.apple_shortcuts import ShortcutExecutionError
+    def fail(*a, **k):
+        raise ShortcutExecutionError('private input', {'status': 'execution_error'})
+    monkeypatch.setattr('groundkeeper.apple_shortcuts.run_shortcut', fail)
+    worker = Worker()
+    model = worker.handle(request('prepare_shortcut', shortcut_name='Fixture'))['result']['model']
+    result = worker.handle(request('classify', policy_version=POLICY_VERSION,
+        model_manifest_sha256=model['manifest_sha256'], part_id='p', job_id='j', transaction_revision=1,
+        input={'description': 'Private merchant', 'direction': 'debit', 'currency': 'CAD'}))
+    assert result['error']['code'] == 'shortcut_unavailable'
+    assert 'private' not in json.dumps(result).lower()

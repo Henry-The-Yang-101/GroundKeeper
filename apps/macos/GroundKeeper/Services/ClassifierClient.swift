@@ -69,6 +69,7 @@ private struct ClassifierRequest: Encodable, Sendable {
     let requestID = UUID().uuidString
     let operation: String
     var timeoutMS = 60_000
+    var shortcutName: String?
     var packageBookmark: String?
     var jobID: String?
     var partID: String?
@@ -78,6 +79,7 @@ private struct ClassifierRequest: Encodable, Sendable {
     var input: ClassifierInput?
     enum CodingKeys: String, CodingKey {
         case protocolVersion = "protocol_version", requestID = "request_id", operation, timeoutMS = "timeout_ms"
+        case shortcutName = "shortcut_name"
         case packageBookmark = "package_bookmark", jobID = "job_id", partID = "part_id"
         case transactionRevision = "transaction_revision", policyVersion = "policy_version"
         case modelManifestSHA256 = "model_manifest_sha256", input
@@ -244,8 +246,7 @@ actor ClassifierClient {
     func handshake() async throws -> ClassifierResult {
         let result = try await call(ClassifierRequest(operation: "handshake"))
         guard result.policyVersion == Self.policyVersion, let categories = result.categories,
-              let types = result.types, categories.contains("uncategorized"), types.contains("unknown"),
-              Set(result.backends ?? []) == Set(["qwen_mlx", "laya_mps"]) else {
+              let types = result.types, categories.contains("uncategorized"), types.contains("unknown") else {
             throw ClassifierBridgeError.invalidResponse
         }
         self.categories = Set(categories); self.types = Set(types)
@@ -253,13 +254,11 @@ actor ClassifierClient {
     }
     func probeGPU() async throws -> ClassifierResult { try await call(ClassifierRequest(operation: "gpu_probe")) }
     func verifyProtocolErrors() async throws {
-        for operation in ["unknown_operation", "prepare_shortcut"] {
-            do {
-                _ = try await call(ClassifierRequest(operation: operation))
-                throw ClassifierBridgeError.invalidResponse
-            } catch ClassifierBridgeError.worker(let code, _) {
-                guard code == "unsupported_operation" else { throw ClassifierBridgeError.invalidResponse }
-            }
+        do {
+            _ = try await call(ClassifierRequest(operation: "unknown_operation"))
+            throw ClassifierBridgeError.invalidResponse
+        } catch ClassifierBridgeError.worker(let code, _) {
+            guard code == "unsupported_operation" else { throw ClassifierBridgeError.invalidResponse }
         }
     }
     func prepareModel(at url: URL, timeoutMS: Int = 120_000) async throws -> ClassifierModel {
@@ -273,10 +272,16 @@ actor ClassifierClient {
         guard let model = try await call(request).model else { throw ClassifierBridgeError.invalidResponse }
         return model
     }
+    func prepareShortcut(name: String) async throws -> ClassifierModel {
+        _ = try await handshake()
+        var request = ClassifierRequest(operation: "prepare_shortcut")
+        request.shortcutName = name
+        guard let model = try await call(request).model, model.backend == "apple_shortcut" else { throw ClassifierBridgeError.invalidResponse }
+        return model
+    }
     func releaseModel() async throws { _ = try await call(ClassifierRequest(operation: "release_model")) }
     func classify(_ input: ClassifierInput, model: ClassifierModel, partID: String, revision: Int,
                   jobID: String = UUID().uuidString) async throws -> ClassifierResult {
-        guard ["qwen_mlx", "laya_mps"].contains(model.backend) else { throw ClassifierBridgeError.invalidResponse }
         if categories.isEmpty { _ = try await handshake() }
         var request = ClassifierRequest(operation: "classify")
         request.partID = partID; request.jobID = jobID; request.transactionRevision = revision

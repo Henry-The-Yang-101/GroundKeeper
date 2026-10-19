@@ -42,6 +42,7 @@ import GroundKeeperCore
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
+    var shortcutName = AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
     var classifierProvider = AppPreferences.defaults.string(forKey: "classifierProvider") ?? (AppPreferences.defaults.data(forKey: "classifierModelBookmark") == nil ? "manual" : "local")
     var classifierStatus = "Manual categorization until you choose a provider"
     var processing = false
@@ -92,13 +93,7 @@ import GroundKeeperCore
             folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
             if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
-            else if classifierProvider == "shortcut" {
-                // A changed execution route needs an explicit new choice; never silently activate cloud.
-                classifierProvider = "manual"
-                AppPreferences.defaults.set("manual", forKey: "classifierProvider")
-                AppPreferences.defaults.removeObject(forKey: "classifierShortcutName")
-                classifierStatus = "Apple Shortcut provider retired. Choose native Private Cloud Compute in Settings."
-            } else if classifierProvider == "apple_pcc" { classifierStatus = "Apple Private Cloud Compute · native Swift" }
+            else if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
             else if AppPreferences.defaults.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
             loop = Task { [weak self] in
@@ -286,7 +281,7 @@ import GroundKeeperCore
     }
     private func restoreModel() async throws {
         if classifierProvider == "manual" { return }
-        if classifierProvider == "apple_pcc" { try await loadAppleCloud(); return }
+        if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
         guard let bookmark = AppPreferences.defaults.data(forKey: "classifierModelBookmark") else { return }
         var stale = false
         let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
@@ -344,22 +339,25 @@ import GroundKeeperCore
             await self.processIfAutomatic()
         }
     }
-    func useAppleCloud() {
+    func useShortcut() {
         guard !processing, !saving else { return }
         perform {
-            try await self.loadAppleCloud()
-            self.classifierProvider = "apple_pcc"
-            AppPreferences.defaults.set("apple_pcc", forKey: "classifierProvider")
+            let name = self.shortcutName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { throw LedgerError.invalid("Enter a Shortcut name.") }
+            self.shortcutName = name
+            try await self.loadShortcut(name: name)
+            self.classifierProvider = "shortcut"
+            AppPreferences.defaults.set(name, forKey: "classifierShortcutName")
+            AppPreferences.defaults.set("shortcut", forKey: "classifierProvider")
             await self.processIfAutomatic()
         }
     }
-    private func loadAppleCloud() async throws {
-        let loaded = try AppleCloudClassifier.prepare()
-        await client.shutdown()
+    private func loadShortcut(name: String) async throws {
         model = nil; modelURL = nil
+        let loaded = try await client.prepareShortcut(name: name)
         try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend,
             policy: loaded.policyVersion, configuration: String(decoding: JSONEncoder().encode(loaded), as: UTF8.self))
-        model = loaded; classifierStatus = "Apple Private Cloud Compute · native Swift"
+        model = loaded; classifierStatus = "\(loaded.modelID) · Apple Shortcuts (may use cloud)"
     }
     func useInstalledModel(_ url: URL) {
         guard !processing, !saving else { return }
@@ -392,10 +390,6 @@ import GroundKeeperCore
     }
     private func classifyPending() async {
         guard !classifying, let store, let selectedModel = model else { return }
-        if selectedModel.backend == AppleCloudClassifier.backend {
-            do { try AppleCloudClassifier.checkRequestAvailability() }
-            catch { classifierStatus = error.localizedDescription; return }
-        }
         classifying = true; defer { classifying = false }
         do {
             try await store.enqueueClassifications(modelID: selectedModel.manifestSHA256)
@@ -405,17 +399,10 @@ import GroundKeeperCore
                 try Task.checkCancellation()
                 guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
                 do {
-                    let input = ClassifierInput(description: job.description, direction: job.direction, currency: job.currency)
-                    let decision: ClassificationDecision
-                    if selectedModel.backend == AppleCloudClassifier.backend {
-                        decision = try await AppleCloudClassifier.classify(input)
-                    } else {
-                        let result = try await client.classify(input, model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
-                        guard let output = result.decision else { throw ClassifierBridgeError.invalidResponse }
-                        decision = ClassificationDecision(type: output.type, category: output.category, review: output.review)
-                    }
-                    try Task.checkCancellation()
-                    try await store.completeClassification(job, decision: decision)
+                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency),
+                        model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
+                    guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
+                    try await store.completeClassification(job, decision: ClassificationDecision(type: decision.type, category: decision.category, review: decision.review))
                 } catch is CancellationError {
                     try await store.releaseClassification(job)
                     throw CancellationError()
@@ -425,10 +412,10 @@ import GroundKeeperCore
                         code = workerCode
                         retryable = ["busy", "deadline_exceeded", "model_not_ready", "runtime_failed", "inference_failed"].contains(code)
                     }
-                    if let cloud = error as? AppleCloudError { code = cloud.code; retryable = cloud.retryable }
                     try await store.failClassification(job, code: code, retryable: retryable)
                     classifierStatus = error.localizedDescription
                     errorMessage = error.localizedDescription
+                    if selectedModel.backend == "apple_shortcut" { model = nil }
                     if retryable, let url = modelURL {
                         // Reconnect and prepare without replaying an uncommitted job immediately.
                         do { try await loadModel(url) } catch { model = nil; classifierStatus = "Model unavailable — select it again to resume" }

@@ -17,8 +17,7 @@ struct GroundKeeperApp: App {
                 .preferredColorScheme(appearance.colorScheme)
                 .task {
                     lifecycle.workspace = workspace
-                    if CommandLine.arguments.contains("--pcc-smoke") { await AppleCloudSmoke.run() }
-                    else if CommandLine.arguments.contains("--setup-smoke") { await SetupSmoke.run() }
+                    if CommandLine.arguments.contains("--setup-smoke") { await SetupSmoke.run() }
                     else if CommandLine.arguments.contains("--classifier-smoke") || CommandLine.arguments.contains("--classifier-connection-smoke") { await ClassifierSmoke.run() }
                     else if CommandLine.arguments.contains("--ledger-smoke") { await LedgerSmoke.run() }
                     else { await workspace.start() }

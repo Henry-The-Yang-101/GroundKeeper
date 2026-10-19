@@ -9,9 +9,6 @@ destination.mkdir(parents=True, exist_ok=True)
 shutil.copy2(root / "release/models.json", destination / "models.json")
 shutil.copy2(root / "release/MODEL-NOTICES.txt", destination / "MODEL-NOTICES.txt")
 shutil.copy2(root / "release/SQLCIPHER-LICENSE.md", destination / "SQLCIPHER-LICENSE.md")
-# Remove retired classifier installers from incremental app builds.
-for obsolete in destination.glob("GK Categorize*.shortcut"):
-    obsolete.unlink()
-for source in (root / "shortcuts").glob("GroundKeeper*.shortcut"):
+for source in (root / "shortcuts").glob("*.shortcut"):
     shutil.copy2(source, destination / source.name)
 shutil.copy2(root / "shortcuts/README.md", destination / "Shortcuts Guide.md")
