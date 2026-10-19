@@ -67,7 +67,7 @@ import GroundKeeperCore
     var ready: Bool { store != nil }
 
     func configureQueueSmoke(store: LedgerStore, bookmark: Data, mode: QueueProcessingMode) {
-        self.store = store; folderBookmark = bookmark; processingMode = mode
+        self.store = store; folderBookmark = bookmark; processingMode = mode; showingSetup = false
     }
     func start(passphrase: String? = nil) async {
         guard !started else { return }

@@ -16,7 +16,7 @@ app="$build_root/DerivedData/Build/Products/Release/GroundKeeper.app"
 xcodebuild -quiet -project apps/macos/GroundKeeper.xcodeproj -scheme GroundKeeper \
   -configuration Release -destination 'platform=macOS,arch=arm64' \
   -derivedDataPath "$build_root/DerivedData" \
-  GK_APP_ENTITLEMENTS=GroundKeeper.entitlements \
+  GK_APP_ENTITLEMENTS=GroundKeeper.AdHoc.entitlements \
   GK_CLASSIFIER_RELEASE_ENTITLEMENTS=ClassifierService/ClassifierService.AdHoc.entitlements \
   GK_CODE_SIGN_IDENTITY=- GK_CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual \
@@ -34,7 +34,7 @@ info['GKDistributionChannel'] = 'adhoc'
 path.write_bytes(plistlib.dumps(info))
 PYINFO
 codesign --force --sign - --timestamp=none --options runtime \
-  --entitlements apps/macos/GroundKeeper.entitlements "$app"
+  --entitlements apps/macos/GroundKeeper.AdHoc.entitlements "$app"
 codesign --verify --deep --strict --verbose=2 "$app"
 codesign -dv --verbose=4 "$app" 2> "$build_root/signature.txt"
 grep -Fx "Signature=adhoc" "$build_root/signature.txt" >/dev/null
@@ -47,6 +47,8 @@ test -f "$app/Contents/XPCServices/GroundKeeperClassifier.xpc/Contents/Framework
 import subprocess, sys
 for mode in ('--ledger-smoke', '--queue-smoke', '--classifier-connection-smoke'):
     subprocess.run([sys.argv[1], mode, "--adhoc-release-smoke"], check=True, timeout=180)
+subprocess.run([sys.argv[1], '--setup-preview', '--setup-smoke', '--adhoc-release-smoke'],
+               check=True, timeout=120)
 PY
 
 image_root="$(mktemp -d "$build_root/image.XXXXXX")"

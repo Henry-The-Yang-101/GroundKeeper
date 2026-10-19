@@ -62,7 +62,7 @@ verify its integrity, there are hints on how to do that in the
 ## Contacting The SQLite Developers
 
 The preferred way to ask questions or make comments about SQLite or to
-report bugs against SQLite is to visit the 
+report bugs against SQLite is to visit the
 [SQLite Forum](https://sqlite.org/forum) at <https://sqlite.org/forum/>.
 Anonymous postings are permitted.
 
@@ -73,7 +73,7 @@ email to drh at sqlite dot org.
 ## Public Domain
 
 The SQLite source code is in the public domain.  See
-<https://sqlite.org/copyright.html> for details. 
+<https://sqlite.org/copyright.html> for details.
 
 Because SQLite is in the public domain, we do not normally accept pull
 requests, because if we did take a pull request, the changes in that
@@ -209,7 +209,7 @@ Build using Makefile.msc.  Example:
         nmake /f Makefile.msc devtest
         nmake /f Makefile.msc releasetest
         nmake /f Makefile.msc sqlite3_analyzer.exe
- 
+
 There are many other makefile targets.  See comments in Makefile.msc for
 details.
 
@@ -229,7 +229,7 @@ command-line to enable new compile-time options.  For example:
   *  **test/** - This directory and its subdirectories contains code used
      for testing.  Files that end in "`.test`" are TCL scripts that run
      tests using an augmented TCL interpreter named "testfixture".  Use
-     a command like "`make testfixture`" (unix) or 
+     a command like "`make testfixture`" (unix) or
      "`nmake /f Makefile.msc testfixture.exe`" (windows) to build that
      augmented TCL interpreter, then run individual tests using commands like
      "`testfixture test/main.test`".  This test/ subdirectory also contains
@@ -251,7 +251,7 @@ command-line to enable new compile-time options.  For example:
      "ext/misc/" subdirectory contains an assortment of one-file extensions,
      many of which are omitted from the SQLite core, but which are included
      in the [SQLite CLI](https://sqlite.org/cli.html).
-     
+
   *  **doc/** - Some documentation files about SQLite internals are found
      here.  Note, however, that the primary documentation designed for
      application developers and users of SQLite is in a completely separate
@@ -436,7 +436,7 @@ you can be confident that your source tree is authentic and unadulterated.
 Details on the format for the `manifest` files are available
 [on the Fossil website](https://fossil-scm.org/home/doc/trunk/www/fileformat.wiki#manifest).
 
-The process of checking source code authenticity is automated by the 
+The process of checking source code authenticity is automated by the
 makefile:
 
 >   make verify-source

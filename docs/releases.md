@@ -38,10 +38,12 @@ Do not tell users to disable Gatekeeper globally.
 
 The worker accepts an ad hoc peer only if its code hash matches the enclosing
 app. A transient bookmark grants read access to that app bundle for the identity
-check; a fresh connection token blocks requests queued before authentication. Its bundled Python and ML libraries need a library-validation exception
-because ad hoc signatures have no Team ID. This entitlement is scoped to the
-sandboxed worker; the main app keeps library validation. Model packages still
-reject executable code and verify their data files before loading.
+check; a fresh connection token blocks requests queued before authentication.
+Its bundled Python and ML libraries need a library-validation exception in the
+sandboxed worker because ad hoc signatures have no Team ID. The ad hoc main app
+also needs this exception for its bundled SQLCipher framework. Provisioned main
+app builds retain library validation and re-sign SQLCipher with the app identity.
+Model packages still reject executable code and verify their data files before loading.
 
 ## Upload the model assets once
 
