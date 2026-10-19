@@ -62,12 +62,12 @@ installers, and the next installation removes abandoned staging directories.
 Extraction has a five-minute deadline. Existing installed versions are never
 overwritten. A complete multi-gigabyte download was not repeated for this change.
 
-Apple Private Cloud Compute needs no Qwen/Laya download or classifier Shortcut.
-On macOS 27, the native Swift provider uses the user's daily Apple allowance.
-An approved PCC entitlement is also required; unavailable builds explain the
-requirement. Only description, direction and currency are sent. The public API
-has no Broad World Knowledge toggle. Every suggestion requires review and
-providers never fall back automatically. See [native PCC setup](apple-private-cloud-compute.md).
+Apple Intelligence Cloud needs no Qwen/Laya download. Install the bundled
+`GK Categorize Cloud` Shortcut, inspect Use Model → Cloud, enable Broad World
+Knowledge, choose Text output and disable Follow Up. Then explicitly activate
+that provider. Only description, direction and currency are sent. Device
+compatibility, Apple Intelligence availability, and usage limits apply. Every
+suggestion requires review; providers never fall back to cloud automatically.
 Manual categorization remains available throughout.
 
 ## iCloud and iPhone
@@ -107,4 +107,4 @@ smoke checks. The full assistant was walked through in the disposable preview.
 Primary implementation references: [SQLCipher integration](https://www.zetetic.net/sqlcipher/sqlcipher-apple-community/),
 [SQLCipher export API](https://www.zetetic.net/sqlcipher/sqlcipher-api/),
 [Apple Keychain user presence](https://developer.apple.com/documentation/localauthentication/accessing-keychain-items-with-face-id-or-touch-id),
-and [native Apple PCC](https://developer.apple.com/documentation/foundationmodels/adding-server-side-intelligence-with-private-cloud-compute).
+and [Apple Intelligence in Shortcuts](https://support.apple.com/en-gb/guide/iphone/iph78c41eaf8/ios).

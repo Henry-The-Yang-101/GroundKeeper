@@ -49,7 +49,6 @@ for mode in ('--ledger-smoke', '--queue-smoke', '--classifier-connection-smoke')
     subprocess.run([sys.argv[1], mode, "--adhoc-release-smoke"], check=True, timeout=180)
 subprocess.run([sys.argv[1], '--setup-preview', '--setup-smoke', '--adhoc-release-smoke'],
                check=True, timeout=120)
-subprocess.run([sys.argv[1], '--setup-preview', '--pcc-smoke'], check=True, timeout=120)
 PY
 
 image_root="$(mktemp -d "$build_root/image.XXXXXX")"

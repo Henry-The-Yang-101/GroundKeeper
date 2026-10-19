@@ -6,6 +6,3 @@ DEVELOPMENT_TEAM = YOUR_TEAM_ID
 
 // Protected Keychain convenience unlock requires the provisioned app identity.
 GK_APP_ENTITLEMENTS = GroundKeeper.Keychain.entitlements
-
-// After Apple approves PCC and the provisioning profile includes the capability:
-// GK_APP_ENTITLEMENTS = GroundKeeper.PCC.entitlements

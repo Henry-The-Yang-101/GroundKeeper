@@ -56,7 +56,7 @@ prove background execution; check the helper heartbeat.
 2. Add transactions manually or import a CSV with explicit date, amount/sign,
    and column mapping. A classifier is optional for these workflows.
 3. Choose a verified local model package or explicitly enable an Apple
-   Private Cloud Compute provider in Settings to try categorization.
+   Intelligence Shortcut in Settings to try categorization.
 4. If you already use the capture Shortcut, connect the iCloud `GroundKeeper`
    folder or its `inbox` from Sync. Confirm captured card labels against accounts
    in Sync's review list. The iPhone capture export is not included in this repo.
@@ -156,7 +156,7 @@ tested by logging out or restarting this Mac.
 ## Classifier providers
 
 Settings → Categorization lets you choose a Qwen or Laya data-only package, or
-explicitly enable native Apple Private Cloud Compute on macOS 27. The saved provider is
+explicitly enable an Apple Intelligence Shortcut by name. The saved provider is
 restored by foreground and background queue processing. Manual mode still waits
 for Process queue. No provider automatically falls back to another.
 
@@ -177,8 +177,17 @@ The destination must not exist. Export checks the selected adapter hash and base
 weight hash, clones the base files, and verifies the complete output manifest.
 Training labels were weak labels; every app prediction continues to need review.
 
-Apple PCC receives only description, direction and currency through Foundation
-Models in Swift. Python is reserved for local Qwen/Laya. Availability, quota,
-managed entitlement setup, migration, and current verification limits are in
-[the native PCC guide](../../docs/apple-private-cloud-compute.md). Every result
-requires review; no automatic provider fallback is enabled.
+The Shortcut receives only description, direction and currency. Its Use Model
+action determines the actual execution service; the app cannot attest which model
+a user-edited Shortcut calls. The database conservatively records this provider
+as cloud-capable (`execution=cloud`), with identity derived from the Shortcut name,
+policy and connector version, not a hash of Apple's model or Shortcut contents.
+Re-enable the provider after renaming a Shortcut. Apple quota/configuration errors
+leave jobs failed for explicit Retry failed; timeouts use the existing bounded
+retry policy. Cancellation kills/reaps the CLI child and releases the queue job;
+an action already dispatched inside Shortcuts may continue in Apple's service.
+Temporary input/output files are removed on normal completion, error or cancellation.
+
+Verification on this Mac: signed XPC reached `GK Categorize Cloud`, which returned
+Apple's model usage-limit error. A successful Apple Intelligence prediction must
+be checked after that quota resets. No sandbox entitlements were expanded.

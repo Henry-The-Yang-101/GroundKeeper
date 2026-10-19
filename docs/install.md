@@ -28,7 +28,7 @@ If no app release is listed yet, use the repository's
 
 The setup assistant can download and install Qwen, Laya, or both directly.
 Choose the installed model to activate it. You can skip downloads and use Apple
-Private Cloud Compute (macOS 27 and an approved PCC build) or manual categorization. Allow at least 9 GB of free space
+Intelligence Cloud or manual categorization. Allow at least 9 GB of free space
 for both installations.
 
 For manual installation, models are separate downloads on the same release. The app works for manual
@@ -84,6 +84,3 @@ the app’s sandbox container. Touch ID / Mac password convenience unlock needs
 a provisioned Keychain identity and is unavailable in the free ad hoc build.
 Encrypted vaults process while open and unlocked, or manually. See
 [setup and vault protection](onboarding.md). Backup and recovery tooling is still planned.
-
-Native Apple categorization requires an Apple-approved PCC entitlement, which
-the free ad hoc release does not carry. See [native PCC availability](apple-private-cloud-compute.md).
