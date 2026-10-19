@@ -71,6 +71,18 @@ final class Database {
         if let handle { sqlite3_close(handle); self.handle = nil }
         if ownerLock >= 0 { flock(ownerLock, LOCK_UN); Darwin.close(ownerLock); ownerLock = -1 }
     }
+    func verifyPassphrase(_ passphrase: String) throws {
+        guard !passphrase.isEmpty, !passphrase.contains("\0"), passphrase.utf8.count <= 1024 else { throw LedgerError.invalid("Enter your current vault passphrase.") }
+        var verification: OpaquePointer?
+        let result = sqlite3_open_v2(url.path, &verification, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, nil)
+        defer { if let verification { sqlite3_close(verification) } }
+        guard result == SQLITE_OK else { throw LedgerError.storage(result) }
+        let key = "PRAGMA key='\(passphrase.replacingOccurrences(of: "'", with: "''"))'"
+        guard sqlite3_exec(verification, key, nil, nil, nil) == SQLITE_OK,
+              sqlite3_exec(verification, "SELECT count(*) FROM sqlite_master", nil, nil, nil) == SQLITE_OK else {
+            throw LedgerError.invalid("The current vault passphrase is incorrect.")
+        }
+    }
     /// Export to a sibling file, validate it, then atomically replace the vault under its owner lock.
     /// The header is the source of truth, so a crash cannot leave a separate mode flag out of sync.
     func changeEncryption(to passphrase: String?) throws {

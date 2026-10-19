@@ -29,6 +29,9 @@ struct ModelSetupView: View {
                     .disabled(installer.busy || models.allSatisfy { installer.installed[$0.id] != nil })
                 Button("Choose existing package…", action: workspace.selectModel).disabled(workspace.saving || !workspace.ready || installer.busy)
             }
+            if let notices = Bundle.main.resourceURL?.appendingPathComponent("Setup/MODEL-NOTICES.txt") {
+                Button("Model licenses and notices") { NSWorkspace.shared.open(notices) }.font(.caption)
+            }
             if installer.busy { HStack { ProgressView().controlSize(.small); Text(installer.status); Button("Cancel", action: installer.cancel) } }
             else { Text(installer.status).font(.callout).foregroundStyle(.secondary) }
             if let error = installer.error { Text(error).foregroundStyle(.red) }

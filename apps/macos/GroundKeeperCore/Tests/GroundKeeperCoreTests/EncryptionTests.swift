@@ -21,6 +21,8 @@ import Testing
     #expect(throws: LedgerError.self) { try LedgerStore(url: url, passphrase: "incorrect") }
     let reopened = try LedgerStore(url: url, passphrase: first)
     #expect(try await reopened.snapshot().reviews.count == before.reviews.count)
+    try await reopened.verifyPassphrase(first)
+    await #expect(throws: LedgerError.self) { try await reopened.verifyPassphrase("wrong-current-passphrase") }
     try await reopened.changeEncryption(to: "another sufficiently long passphrase")
     await reopened.close()
     #expect(throws: LedgerError.self) { try LedgerStore(url: url, passphrase: first) }

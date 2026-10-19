@@ -27,7 +27,7 @@ struct SetupView: View {
                     page
                 }.frame(maxWidth: 660, alignment: .leading).padding(.horizontal, 48).padding(.vertical, 36)
                     .frame(maxWidth: .infinity)
-            }
+            }.id(step)
             Divider()
             HStack {
                 Button("Back") { savedStep = step - 1 }.disabled(step == 0 || workspace.saving || installer.busy)
@@ -132,6 +132,14 @@ struct PhoneSetupView: View {
                 HStack { Button("Install Apple Intelligence Shortcut") { NSWorkspace.shared.open(url) }; ShareLink(item: url) { Text("Send to iPhone") } }
             }
             Text("The classifier runs on your Mac when GroundKeeper processes the queue. Shortcuts sync can also make it available on your phone. Inspect Use Model: Cloud, Broad World Knowledge on, Text output, Follow Up off. Enable it explicitly under Intelligence or Settings.").foregroundStyle(.secondary)
+            if let url = SetupResources.shortcut("GroundKeeper CIBC Automation") {
+                DisclosureGroup("Optional: CIBC notification adapter (experimental)") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Only use this if your iPhone offers a suitable notification trigger and exposes the expected fields. Enable it deliberately after testing; it is not required for Wallet capture.").foregroundStyle(.secondary)
+                        ShareLink(item: url) { Label("Send CIBC adapter to iPhone", systemImage: "square.and.arrow.up") }
+                    }.padding(.top, 8)
+                }
+            }
             Text("5. Check a sample capture").font(.headline)
             Text("Run a fictional sample, confirm a JSON file appears in the inbox, then check Sync on your Mac. A real Wallet purchase and locked-phone delivery need a separate test. CIBC notification capture is experimental; leave it off until its input and trigger are verified on your phone.").foregroundStyle(.secondary)
             Link("Apple’s Shortcuts guide", destination: URL(string: "https://support.apple.com/guide/shortcuts/welcome/ios")!)

@@ -3,3 +3,6 @@
 GK_CODE_SIGN_IDENTITY = Apple Development
 GK_CODE_SIGN_STYLE = Automatic
 DEVELOPMENT_TEAM = YOUR_TEAM_ID
+
+// Protected Keychain convenience unlock requires the provisioned app identity.
+GK_APP_ENTITLEMENTS = GroundKeeper.Keychain.entitlements

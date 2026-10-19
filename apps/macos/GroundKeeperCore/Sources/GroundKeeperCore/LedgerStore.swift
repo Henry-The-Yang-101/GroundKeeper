@@ -18,6 +18,7 @@ public actor LedgerStore {
         try db.query("PRAGMA integrity_check").first?.text("integrity_check") == "ok" && db.query("PRAGMA foreign_key_check").isEmpty
     }
     public func close() { db.close() }
+    public func verifyPassphrase(_ passphrase: String) throws { try db.verifyPassphrase(passphrase) }
     public func changeEncryption(to passphrase: String?) throws { try db.changeEncryption(to: passphrase) }
     public func addAccount(name: String, currency: String, kind: String = "credit_card") throws {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty, name.count <= 100, ExactMoney.currencies.contains(currency),

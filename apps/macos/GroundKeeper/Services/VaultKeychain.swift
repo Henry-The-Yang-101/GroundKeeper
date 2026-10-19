@@ -11,6 +11,11 @@ enum VaultKeychain {
          kSecAttrAccount as String: "local-vault-passphrase",
          kSecUseDataProtectionKeychain as String: true]
     }
+    static var isSupported: Bool {
+        guard let task = SecTaskCreateFromSelf(nil),
+              let value = SecTaskCopyValueForEntitlement(task, "com.apple.application-identifier" as CFString, nil) as? String else { return false }
+        return value.contains(".com.groundkeeper.")
+    }
     static var isEnabled: Bool { AppPreferences.defaults.bool(forKey: "vaultConvenienceUnlock") }
     static func remove() throws {
         let code = SecItemDelete(identity as CFDictionary)

@@ -16,6 +16,7 @@ app="$build_root/DerivedData/Build/Products/Release/GroundKeeper.app"
 xcodebuild -quiet -project apps/macos/GroundKeeper.xcodeproj -scheme GroundKeeper \
   -configuration Release -destination 'platform=macOS,arch=arm64' \
   -derivedDataPath "$build_root/DerivedData" \
+  GK_APP_ENTITLEMENTS=GroundKeeper.entitlements \
   GK_CLASSIFIER_RELEASE_ENTITLEMENTS=ClassifierService/ClassifierService.AdHoc.entitlements \
   GK_CODE_SIGN_IDENTITY=- GK_CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual \

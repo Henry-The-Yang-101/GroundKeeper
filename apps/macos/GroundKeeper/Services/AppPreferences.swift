@@ -3,7 +3,8 @@ import Foundation
 /// Preview runs use a disposable vault and separate preferences; they never reconfigure the real ledger.
 enum AppPreferences {
     static let isSetupPreview = CommandLine.arguments.contains("--setup-preview")
-    static let defaults: UserDefaults = {
+    // Foundation documents UserDefaults as thread-safe. The reference is immutable.
+    nonisolated(unsafe) static let defaults: UserDefaults = {
         guard isSetupPreview else { return .standard }
         let preferences = UserDefaults(suiteName: "com.groundkeeper.setup-preview.\(ProcessInfo.processInfo.processIdentifier)")!
         preferences.set(false, forKey: "setupCompleted")

@@ -1,6 +1,7 @@
 // Shared by the app and embedded classifier. The default remains a local ad-hoc build.
 GK_CODE_SIGN_IDENTITY = -
 GK_CODE_SIGN_STYLE = Manual
+GK_APP_ENTITLEMENTS = GroundKeeper.entitlements
 GK_CLASSIFIER_RELEASE_ENTITLEMENTS = ClassifierService/ClassifierService.entitlements
 
 // Machine-specific team/certificate settings are intentionally excluded from Git.

@@ -182,7 +182,7 @@
             baseConfigurationReference = F10000000000000000000001;
 			buildSettings = {
 				ARCHS = arm64;
-				CODE_SIGN_ENTITLEMENTS = GroundKeeper.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(GK_APP_ENTITLEMENTS)";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "$(GK_CODE_SIGN_IDENTITY)";
 				CODE_SIGN_STYLE = "$(GK_CODE_SIGN_STYLE)";
@@ -195,7 +195,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = GroundKeeper;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.groundkeeper.macos;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+                PRODUCT_BUNDLE_IDENTIFIER = com.groundkeeper.macos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -208,7 +209,7 @@
 			buildSettings = {
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				ARCHS = arm64;
-				CODE_SIGN_ENTITLEMENTS = GroundKeeper.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(GK_APP_ENTITLEMENTS)";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "$(GK_CODE_SIGN_IDENTITY)";
 				CODE_SIGN_STYLE = "$(GK_CODE_SIGN_STYLE)";
@@ -221,7 +222,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = GroundKeeper;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.groundkeeper.macos;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+                PRODUCT_BUNDLE_IDENTIFIER = com.groundkeeper.macos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;

@@ -43,8 +43,8 @@ import GroundKeeperCore
     var vaultPath = ""
     var folderName = "Not connected"
     var shortcutName = AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
-    var classifierProvider = AppPreferences.defaults.string(forKey: "classifierProvider") ?? "local"
-    var classifierStatus = "Choose a local model in Settings"
+    var classifierProvider = AppPreferences.defaults.string(forKey: "classifierProvider") ?? (AppPreferences.defaults.data(forKey: "classifierModelBookmark") == nil ? "manual" : "local")
+    var classifierStatus = "Manual categorization until you choose a provider"
     var processing = false
     var saving = false
     var model: ClassifierModel?
@@ -104,10 +104,10 @@ import GroundKeeperCore
                     do { try await Task.sleep(for: .seconds(15)) } catch { break }
                 }
             }
-        } catch is CancellationError { started = false } catch { status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
+        } catch is CancellationError { await store?.close(); store = nil; started = false } catch { await store?.close(); store = nil; status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
     }
     func unlock(passphrase: String? = nil, usingKeychain: Bool = false) async {
-        guard !unlocking else { return }; unlocking = true; defer { unlocking = false }
+        guard !unlocking else { return }; unlocking = true; errorMessage = nil; defer { unlocking = false }
         do {
             let key = try await Task.detached(priority: .userInitiated) {
                 if usingKeychain { return try VaultKeychain.load() }
@@ -118,15 +118,16 @@ import GroundKeeperCore
             if !ready { errorMessage = "Could not unlock the vault. Check your passphrase and try again. No data was changed." }
         } catch { errorMessage = error.localizedDescription }
     }
-    func setEncryption(passphrase: String?, remember: Bool) async throws {
+    func setEncryption(passphrase: String?, remember: Bool, currentPassphrase: String = "") async throws {
         guard !saving, !processing, !changingProcessingMode, let store else { throw LedgerError.unavailable("Wait for the current operation to finish and unlock the vault first.") }
         saving = true; defer { saving = false }
+        if encrypted { try await store.verifyPassphrase(currentPassphrase) }
         // Prevent a background launch from opening a newly encrypted vault without interaction.
         if passphrase != nil && processingMode == .background {
             try QueuePreferences.save(.whileOpen); processingMode = .whileOpen
             try await QueueBackgroundService.disable()
         }
-        try VaultKeychain.remove()
+        if VaultKeychain.isEnabled { try VaultKeychain.remove() }
         do { try await store.changeEncryption(to: passphrase) }
         catch { encrypted = VaultAccess.isEncrypted; throw error }
         encrypted = VaultAccess.isEncrypted
