@@ -70,10 +70,7 @@ OS build, not a fabricated model-weight hash.
 
 ## Verification
 
-Validated locally with Xcode 27: Debug/Release builds, 20 Swift core tests,
-38 focused Python tests, and native-provider/XPC/queue smoke checks. The setup UI
-was checked with PCC unavailable; Continue remains usable after a resumed vault
-opens. Swift core tests cover input boundaries,
+The native provider builds with Xcode 27. Swift core tests cover input boundaries,
 policy validation, review enforcement, provider switching, cloud provenance and
 quota-failure retry behavior. Python worker tests reject `prepare_shortcut` and
 advertise only `qwen_mlx`/`laya_mps`. Historical Shortcut benchmark scripts remain

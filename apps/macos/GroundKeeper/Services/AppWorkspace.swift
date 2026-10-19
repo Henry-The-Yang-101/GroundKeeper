@@ -48,8 +48,7 @@ import GroundKeeperCore
     var saving = false
     var model: ClassifierModel?
     var lastSync: Date?
-    // Views observe readiness through this reference, including setup resumed on a later page.
-    private var store: LedgerStore?
+    @ObservationIgnored private var store: LedgerStore?
     @ObservationIgnored private let client = ClassifierClient()
     @ObservationIgnored private let folder = CaptureFolder()
     @ObservationIgnored private var folderBookmark: Data?
@@ -287,11 +286,7 @@ import GroundKeeperCore
     }
     private func restoreModel() async throws {
         if classifierProvider == "manual" { return }
-        if classifierProvider == "apple_pcc" {
-            do { try await loadAppleCloud() }
-            catch let error as AppleCloudError { classifierStatus = error.message }
-            return
-        }
+        if classifierProvider == "apple_pcc" { try await loadAppleCloud(); return }
         guard let bookmark = AppPreferences.defaults.data(forKey: "classifierModelBookmark") else { return }
         var stale = false
         let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
