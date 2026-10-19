@@ -11,8 +11,8 @@ to use it.
    stores model assets for the build workflow.
 2. Download `GroundKeeper-arm64.dmg`, open it, and drag GroundKeeper into
    Applications. Eject the disk image and open the installed app.
-3. In Settings, add an account. Try a fictional manual transaction or CSV import
-   before importing your own records.
+3. Follow the setup assistant to choose protection, categorization, capture, and
+   an account. Try a fictional manual transaction or CSV import first.
 
 The app is ad hoc-signed and is not notarized by Apple. macOS may block its
 first launch because the developer cannot be verified. If you trust the release,
@@ -26,7 +26,12 @@ If no app release is listed yet, use the repository's
 
 ## Install the local models
 
-Models are separate downloads on the same release. The app works for manual
+The setup assistant can download and install Qwen, Laya, or both directly.
+Choose the installed model to activate it. You can skip downloads and use Apple
+Intelligence Cloud or manual categorization. Allow at least 9 GB of free space
+for both installations.
+
+For manual installation, models are separate downloads on the same release. The app works for manual
 entry and CSV import without them. Download these files into one folder:
 
 - Every `GroundKeeper-*.tar.gz.part*` file, including both Qwen parts.
@@ -74,5 +79,8 @@ for the supported modes.
 After replacing the app, reconnect model or capture folders if macOS no longer
 accepts their saved permissions. Quit the previous version before replacing it.
 
-The ledger currently uses unencrypted SQLite in the app's sandbox container.
-Backup and recovery features are still planned.
+The ledger supports unencrypted SQLite or passphrase-protected SQLCipher in
+the app’s sandbox container. Touch ID / Mac password convenience unlock needs
+a provisioned Keychain identity and is unavailable in the free ad hoc build.
+Encrypted vaults process while open and unlocked, or manually. See
+[setup and vault protection](onboarding.md). Backup and recovery tooling is still planned.

@@ -1,8 +1,9 @@
 # Swift application integration
 
-Implemented 2026-10-17. The current application uses **ordinary SQLite**, as
-requested. SQLCipher, Keychain key storage, encryption and unlock flows are
-deferred. The encryption sections of the original design describe future work.
+Implemented 2026-10-17; encryption/setup added 2026-10-18. The application now
+uses SQLCipher 4.19.0 with a user choice of ordinary unencrypted SQLite or a
+passphrase-encrypted vault. Provisioned builds support opt-in Keychain
+convenience unlock. See [setup and protection](../../docs/onboarding.md).
 
 ## Schema audit
 
@@ -50,7 +51,8 @@ the loaded page. Analytics/planning examples are no longer exposed as live data.
 
 ## Capture queue
 
-In Sync, select the existing `GroundKeeper` folder or its `inbox` directory.
+In setup or Sync, select the exact capture directory. Existing saved bookmarks
+for a parent `GroundKeeper` folder retain their original `inbox` resolution.
 The app stores a read-only security-scoped bookmark. Settings controls automatic
 background processing, processing only while the app is open (the default), or
 manual processing. Automatic passes run every 15 seconds. It coordinates reads, requests downloads for iCloud placeholders,
@@ -71,7 +73,8 @@ Manual mode does not implicitly process after imports, folder selection, model
 selection or retries. A scheduler cancellation releases an in-flight classification
 job without consuming an attempt, and rejects a late result from its old run.
 
-An embedded SMAppService launch agent supports the background mode using the
+Encrypted vaults pause background processing and require an interactive unlock.
+An embedded SMAppService launch agent supports the unencrypted background mode using the
 same signed executable/container. The foreground process holds a separate lease;
 the agent cancels and closes its writer before the foreground opens SQLite. The
 normal database ownership lock still enforces exclusion. See the macOS README

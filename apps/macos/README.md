@@ -1,8 +1,9 @@
 # GroundKeeper macOS application
 
-The SwiftUI app uses ordinary SQLite in local Application Support.
+The SwiftUI app offers ordinary SQLite or SQLCipher encryption in local Application Support.
 Capture ingestion, CSV import, reconciliation, transaction editing, and the
-classifier queue are connected. Analytics and encryption are deferred.
+classifier queue are connected. First launch walks through protection, optional models,
+iCloud capture and phone setup. Analytics is deferred. See [setup and protection](../../docs/onboarding.md).
 
 ## Build and launch
 
@@ -16,8 +17,8 @@ environments on a fresh checkout. Then build and launch with:
 
 The app is built at
 `.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app`.
-The local Swift package `GroundKeeperCore` uses the system SQLite library and
-has no external package dependency. The XPC service embeds the existing pinned
+The local Swift package `GroundKeeperCore` pins Zetetic’s official SQLCipher
+4.19.0 package. It also opens ordinary SQLite when no passphrase is supplied. The XPC service embeds the existing pinned
 Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/README.md).
 
 ## Configure Apple development signing

@@ -62,7 +62,9 @@ package; the build does not download or train a model.
 
 ## First run
 
-1. Open Settings and add an account with its currency.
+1. Complete the first-launch assistant: choose vault protection, optional models,
+   an iCloud capture folder, phone setup, and an account. You can skip model
+   downloads and phone setup. Return through **Settings > Review setup assistant**.
 2. Leave queue processing at **Only while GroundKeeper is open**, or select
    **Only when I click Process queue** for manual control.
 3. Add a transaction with Command-N, or import a CSV from Sync. The
@@ -76,14 +78,18 @@ records you add all persist in the same local database:
 ~/Library/Containers/com.groundkeeper.macos/Data/Library/Application Support/GroundKeeper/vault.sqlite
 ```
 
-It currently uses unencrypted SQLite. Encryption, recovery, and backup features
-are planned. Keep the live database outside iCloud Drive.
+Choose unencrypted SQLite or SQLCipher with a passphrase. Provisioned builds
+also offer Touch ID / Mac password convenience unlock. Keep the live database
+outside iCloud Drive. Backup and recovery tooling is still planned; keep your
+passphrase safe. See [vault protection and setup](onboarding.md).
 
 ## Choose a classifier
 
 ### Local Qwen or Laya
 
-In **Settings > Categorization**, click **Choose local model package** and
+In setup or **Settings > Install models or choose a provider**, install Qwen,
+Laya, or both. Downloads use the bundled release catalog and verify every part
+before extraction. To use an existing package, click **Choose local model package** and
 select a directory containing `classifier.json` and its model files. The worker
 checks the file set, sizes, hashes, policy, and package format before loading.
 Qwen runs on MLX; Laya runs on PyTorch MPS. Each package is limited to 3 GB.
@@ -130,11 +136,10 @@ then confirm captured card labels against your accounts in the review list.
 Source files remain in iCloud after import. Persisted delivery identities prevent
 re-importing unchanged files.
 
-The iPhone capture exports are pending because Apple's export service failed.
-The [Shortcuts guide](../shortcuts/README.md) documents setup for existing
-installations and the exports still needed. The included classifier files
-classify text on the Mac; they do not install iPhone capture automation. CSV and
-manual entry are the complete starting paths for a new checkout. Existing capture users can consult the
+The app bundles signed capture and classifier Shortcuts, with install/share
+buttons and a phone setup guide. You must create personal automations and select
+cards/folder permissions on the receiving iPhone. See the
+[Shortcuts guide](../shortcuts/README.md) and the
 [accepted envelope types](../apps/macos/GroundKeeperCore/Sources/GroundKeeperCore/Models.swift)
 and [ingestion behavior](../contracts/database/IMPLEMENTATION.md).
 
