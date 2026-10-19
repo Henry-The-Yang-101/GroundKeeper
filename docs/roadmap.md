@@ -279,6 +279,7 @@ budgets/recurring costs, goals/cash flow, and net worth/debt.
 | Automatic insights | Proactively surface meaningful spending patterns and changes using local calculations/rules, with optional AI explanations; evidence-linked summaries on Home and Full insights. |
 | Merchant and repeated spending | Identify frequently visited merchants; purchase counts, total/net spend, average ticket, typical gap between purchases, and frequency changes; ranked bars, spend/visit trends, and transaction timelines. |
 | Habits and distribution | Day-of-week patterns, largest purchases, transaction-size distributions, and an optional calendar heatmap, with drill-down to individual entries. |
+| Optional receipt OCR | Later, opt-in on-device extraction of receipt fields and line items, with user-confirmed purchase matching and item/category splits; preserve source evidence and avoid counting linked receipts as new purchases. See [receipt OCR scope](analytics-roadmap.md#optional-receipt-ocr). |
 | Budget limits | Overall/category caps for weekly/monthly/yearly/custom periods, remaining allowance, overage, optional warnings, actual-versus-limit bars, spending pace, and budget history. |
 | Recurring bills/subscriptions | Suggest repeating payments for confirmation, support manual cadence, show upcoming-payment timelines, monthly recurring totals, and price-history lines. |
 | Cash flow | Income and outflow bars, observed surplus trend, and optional waterfall; distinguish spending from internal transfers, debt principal, and cash movements. |

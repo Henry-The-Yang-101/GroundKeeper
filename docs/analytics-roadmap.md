@@ -1,6 +1,6 @@
 # GroundKeeper analysis features
 
-Scope proposal, updated 2026-10-17. Graphs are part of the product; the roadmap below
+Scope proposal, updated 2026-10-19. Graphs are part of the product; the roadmap below
 separates spending analysis supported by captures from planning features that
 need additional data. Nothing in this document is implemented yet.
 
@@ -14,6 +14,7 @@ need additional data. Nothing in this document is implemented yet.
 | Automatic insights | Automatically surface meaningful patterns using local calculations/rules, optionally summarized by AI; refresh after data changes and support dismiss/snooze. | Evidence-linked summary with supporting trend/comparison and transaction drill-down. | Reconciled data, coverage checks, and tested thresholds; A1 baseline, optional AI after validation. |
 | Merchant and habit analysis | Which merchants cost the most? How often do I visit, what is the average purchase, and which days are expensive? | Ranked merchant bars; transaction-size distribution; optional calendar heatmap. | Normalized merchants and timestamps; A1/A2. |
 | Repeated merchant spending | How many separate purchases did I make at the same merchant, how much did they total, and is the frequency increasing? Optional user-defined notices. | Purchase-count/spend trends; transaction timeline; ranked frequency bars. | Reconciled purchases and confirmed merchant aliases; A1/A2. |
+| Optional receipt OCR | Opt in to extracting merchant, date, total, tax, and available line items from receipt images; confirm matches to existing purchases and proposed item/category splits. | Reviewed item/category breakdowns and receipt-backed transaction drill-down. | User-supplied receipts, on-device OCR, field review, and confirmed transaction links; later, optional. |
 | Budget limits | How much remains in my overall/category budget? Set weekly, monthly, yearly, or custom-period limits and optional alerts. | Actual-versus-limit bars; cumulative spend versus planned pace; history of under/over budget. | User budget definitions and transactions; A2. |
 | Recurring bills/subscriptions | What repeats, when might it recur, and did the price change? Suggest patterns for confirmation; allow manual schedules. | Upcoming-payment timeline; monthly recurring-cost bars; price-history line. | Merchant history plus confirmed cadence/amount; A2. |
 | Cash flow | What income came in and expenses went out? Separate ordinary spending from debt principal, cash movements, and internal transfers. | Income/outflow bars with observed surplus line; optional waterfall. | Reviewed income and outflow coverage; A3. |
@@ -34,6 +35,25 @@ user-defined frequency/spend thresholds and link to the underlying entries.
 Provide tested defaults for automatic discovery without requiring setup; compare
 visit frequency and average purchase size over equivalent periods without
 inferring purchase contents or motivation.
+
+## Optional receipt OCR
+
+- Planned, opt-in feature; ordinary capture, CSV import, and spending analysis
+  remain usable without receipts. Prefer Apple's Vision framework for on-device
+  text recognition; this is a proposed implementation, not an existing capability.
+- Extract available merchant, date, currency, subtotal, tax, total, and line items.
+  Preserve the original image, recognized text, extraction version, and available
+  confidence information as source evidence. Missing or uncertain fields require
+  review; never infer purchase contents from a merchant name alone.
+- Suggest a link to an existing transaction before creating a new purchase;
+  matching totals/dates alone do not establish identity. User confirmation is
+  required for links, field corrections, and item/category splits. OCR does not
+  overwrite confirmed transaction data automatically.
+- Count the canonical purchase once. Item splits must reconcile to its settled
+  amount, accounting for tax, tips, discounts, and currency differences where
+  present. Unresolved differences remain visible and cannot silently change
+  spending totals. Keep OCR local and make receipt storage/retention explicit;
+  any iCloud transfer uses the user's chosen capture folder.
 
 ## Automatic insight generation
 
