@@ -36,7 +36,6 @@ struct TransactionsView: View {
                         .accessibilityLabel("Search transactions")
                     Toggle("Needs review", isOn: $workspace.reviewOnly)
                         .toggleStyle(.button)
-                        .tint(workspace.reviewOnly ? AppStyle.controlAccent : AppStyle.accent)
                         .help("Show only transactions that need your input")
                 }
                 HStack {

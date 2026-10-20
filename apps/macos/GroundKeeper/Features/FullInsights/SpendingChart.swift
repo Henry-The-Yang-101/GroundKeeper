@@ -17,7 +17,6 @@ struct SpendingChart: View {
                 HStack {
                     SectionHeading(title: "Daily spending", detail: "CAD")
                     Toggle("Table", isOn: $showTable).toggleStyle(.button)
-                        .tint(showTable ? AppStyle.controlAccent : AppStyle.accent)
                         .help("Show the exact chart values in a table")
                 }
             }
