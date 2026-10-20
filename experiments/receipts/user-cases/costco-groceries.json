@@ -1,0 +1,24 @@
+{
+  "id": "user-costco-groceries-v1",
+  "label_source": "User explicitly specified groceries; not inferred from merchant name",
+  "expected": {
+    "type": "expense",
+    "category": "groceries"
+  },
+  "input": {
+    "description": "RETAIL PURCHASE [identifier] COSTCO WHOLESAL",
+    "direction": "debit",
+    "currency": "CAD"
+  },
+  "receipt_ocr": {
+    "producer": "apple_shortcuts",
+    "text": "COSTCO\nEWHOLESALE\n***********Bottom of Basket***********\n1872053 STARBURST\n23.99H\n[identifier] /1872053\n5.00-H\n***********BOB Count 1 **************\n245504 DOUGHNUTS 15\n10.99\n9339999 KS GRANOLA\n14.99\nH\n6696621 VITAFUSION\n17.99 H\n1830902 MACARONS\n18.99\n1632980 KD SNACK CUP\n12.99\n[identifier] /1632980\n3.00-\n1950554 F1 BROWNIE\n18.99\n1279456 KS COMPLETE\n13.99 H\n3699282 BAREBONES\n19.99\n2066220 CH CHIRKEN\n16.99\n107725 TZATZIKI\n9.99\n453777 CIN IST 1.3K\n10.99\n2099498 T9D/453777\n3.00-\n1801478\nKAISIN BRAN\n9.99\n253039 CORO GRAPES\n8.99\n5276 RED GRAPES\n10.79\n[identifier] / 5276\n3.00-\n421,444 BEN BASMATI\n12.99\nSUBTOTAL\nTAX\n219.64\n**** TOTAL\n8.57\nCASH\n22821\n0.00"
+  },
+  "provenance": {
+    "source": "User-supplied receipt photograph and transaction screenshot, October 20, 2026",
+    "privacy": "Images, membership identifier, location lines and exact bank reference remain outside Git; live run overrides the redacted description from a private file",
+    "ocr": "Actual Extract Text from Image output; OCR spelling preserved after privacy redaction",
+    "receipt_transaction_amount_match": false,
+    "association": "User paired these examples for classification testing; receipt-to-payment matching is not established"
+  }
+}

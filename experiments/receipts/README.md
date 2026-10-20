@@ -85,3 +85,7 @@ selection rationale independently from inference inputs.
 The full prompt/response and OCR logs remain in `.local/receipts`, while committed
 results contain model identities, image and input hashes, decisions and metrics.
 The files are evaluation artifacts, not training data or a production ledger.
+
+Additional user-labeled examples live in [user-cases](user-cases/README.md).
+They retain observed model failures and remain separate from the original
+20-case pilot's published scores.

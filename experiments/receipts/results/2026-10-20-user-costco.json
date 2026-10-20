@@ -1,0 +1,105 @@
+{
+  "case_id": "user-costco-groceries-v1",
+  "expected_category": "groceries",
+  "label_source": "User-specified",
+  "ocr": {
+    "status": "ok",
+    "elapsed_ms": 542.7239999989979
+  },
+  "comparison": "Same exact screenshot description, debit direction and CAD currency in both variants; receipt OCR added only to the enriched variant",
+  "receipt_privacy": "Actual Shortcuts OCR with membership and location lines removed and long identifiers redacted before inference",
+  "amount_match": false,
+  "amount_match_note": "The supplied receipt and transaction amounts differ. Amounts are not in the classifier contract, so this check is recorded separately and this pair does not establish a valid ledger attachment.",
+  "models": {
+    "qwen": {
+      "case_id": "user-costco-groceries-v1",
+      "case_sha256": "11f9e73522c4ce5c86e06c167195505fdeeaa407b0b43ea8ff992f6daf3434d3",
+      "expected": {
+        "type": "expense",
+        "category": "groceries"
+      },
+      "model": {
+        "model_id": "qwen-delaware-v1-step5872",
+        "backend": "qwen_mlx",
+        "manifest_sha256": "e9141393b4a6c12ff063b3049c2e50e65a8642b754ac8f3f8bb3942c028da4d0",
+        "policy_version": "groundkeeper-18-v1",
+        "device": "mlx_gpu"
+      },
+      "private_description_override": true,
+      "ocr_producer": "apple_shortcuts",
+      "privacy": "Receipt and input text omitted; identifying fields redacted from committed fixture",
+      "results": [
+        {
+          "variant": "description_only",
+          "status": "succeeded",
+          "decision": {
+            "type": "expense",
+            "category": "shopping",
+            "review": true
+          },
+          "error": null,
+          "input_sha256": "fc4a7482e3d39a6102f31b5d68e3ad49c6b8caae56b398f171a1d5cb7a11bb71",
+          "matches_expected": false
+        },
+        {
+          "variant": "ocr_context",
+          "status": "succeeded",
+          "decision": {
+            "type": "expense",
+            "category": "shopping",
+            "review": true
+          },
+          "error": null,
+          "input_sha256": "6ffad583793a5b263e732912c51041a95b04be2e3b541298e409031d193c5fc0",
+          "matches_expected": false
+        }
+      ],
+      "scope": "One user-labeled case; not an accuracy-rate estimate"
+    },
+    "apple": {
+      "case_id": "user-costco-groceries-v1",
+      "case_sha256": "11f9e73522c4ce5c86e06c167195505fdeeaa407b0b43ea8ff992f6daf3434d3",
+      "expected": {
+        "type": "expense",
+        "category": "groceries"
+      },
+      "model": {
+        "model_id": "GK Categorize Cloud",
+        "backend": "apple_shortcut",
+        "manifest_sha256": "87bffbb9c97d2ff9a4936343d376ba8e2409b154611886524e8e9864a13b2c8a",
+        "policy_version": "groundkeeper-18-v1",
+        "device": "shortcut"
+      },
+      "private_description_override": true,
+      "ocr_producer": "apple_shortcuts",
+      "privacy": "Receipt and input text omitted; identifying fields redacted from committed fixture",
+      "results": [
+        {
+          "variant": "description_only",
+          "status": "succeeded",
+          "decision": {
+            "type": "expense",
+            "category": "shopping",
+            "review": true
+          },
+          "error": null,
+          "input_sha256": "fc4a7482e3d39a6102f31b5d68e3ad49c6b8caae56b398f171a1d5cb7a11bb71",
+          "matches_expected": false
+        },
+        {
+          "variant": "ocr_context",
+          "status": "succeeded",
+          "decision": {
+            "type": "expense",
+            "category": "shopping",
+            "review": true
+          },
+          "error": null,
+          "input_sha256": "6ffad583793a5b263e732912c51041a95b04be2e3b541298e409031d193c5fc0",
+          "matches_expected": false
+        }
+      ],
+      "scope": "One user-labeled case; not an accuracy-rate estimate"
+    }
+  }
+}
