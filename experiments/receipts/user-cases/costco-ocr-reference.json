@@ -1,0 +1,111 @@
+{
+  "id": "costco-ocr-reference-v1",
+  "source": "Assistant manual visual transcription of the user-provided photograph; not an independently annotated OCR benchmark",
+  "privacy": "No membership, location, bank reference or original image included",
+  "items": [
+    {
+      "sku": "1872053",
+      "name": "STARBURST",
+      "price_cents": 2399
+    },
+    {
+      "sku": "245504",
+      "name": "DOUGHNUTS 15",
+      "price_cents": 1099
+    },
+    {
+      "sku": "9339999",
+      "name": "KS GRANOLA",
+      "price_cents": 1499
+    },
+    {
+      "sku": "6696621",
+      "name": "VITAFUSION",
+      "price_cents": 1799
+    },
+    {
+      "sku": "1830902",
+      "name": "MACARONS",
+      "price_cents": 1899
+    },
+    {
+      "sku": "1632980",
+      "name": "KD SNACK CUP",
+      "price_cents": 1299
+    },
+    {
+      "sku": "1950554",
+      "name": "F1 BROWNIE",
+      "price_cents": 1899
+    },
+    {
+      "sku": "1279456",
+      "name": "KS COMPLETE",
+      "price_cents": 1399
+    },
+    {
+      "sku": "3699282",
+      "name": "BAREBONES",
+      "price_cents": 1999
+    },
+    {
+      "sku": "2066220",
+      "name": "CH CHICKEN",
+      "price_cents": 1699
+    },
+    {
+      "sku": "107725",
+      "name": "TZATZIKI",
+      "price_cents": 999
+    },
+    {
+      "sku": "453777",
+      "name": "CIN TST 1.3K",
+      "price_cents": 1099
+    },
+    {
+      "sku": "1801478",
+      "name": "RAISIN BRAN",
+      "price_cents": 999
+    },
+    {
+      "sku": "253039",
+      "name": "CORO GRAPES",
+      "price_cents": 899
+    },
+    {
+      "sku": "5276",
+      "name": "RED GRAPES",
+      "price_cents": 1079
+    },
+    {
+      "sku": "421444",
+      "name": "BEN BASMATI",
+      "price_cents": 1299
+    }
+  ],
+  "discounts": [
+    {
+      "sku": "1872053",
+      "amount_cents": -500
+    },
+    {
+      "sku": "1632980",
+      "amount_cents": -300
+    },
+    {
+      "sku": "453777",
+      "amount_cents": -300
+    },
+    {
+      "sku": "5276",
+      "amount_cents": -300
+    }
+  ],
+  "footer_cents": {
+    "SUBTOTAL": 21964,
+    "TAX": 857,
+    "TOTAL": 22821,
+    "CASH": 0
+  }
+}

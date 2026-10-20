@@ -1,0 +1,824 @@
+{
+  "reference": "costco-ocr-reference-v1",
+  "shortcuts": {
+    "item_count": 16,
+    "sku_matches": 16,
+    "exact_name_matches": 13,
+    "next_price_matches": 16,
+    "discount_matches": 4,
+    "items": [
+      {
+        "sku": "1872053",
+        "expected_name": "STARBURST",
+        "observed_name": "STARBURST",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 2399,
+        "observed_next_price_cents": 2399,
+        "next_price_matches": true
+      },
+      {
+        "sku": "245504",
+        "expected_name": "DOUGHNUTS 15",
+        "observed_name": "DOUGHNUTS 15",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1099,
+        "observed_next_price_cents": 1099,
+        "next_price_matches": true
+      },
+      {
+        "sku": "9339999",
+        "expected_name": "KS GRANOLA",
+        "observed_name": "KS GRANOLA",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1499,
+        "observed_next_price_cents": 1499,
+        "next_price_matches": true
+      },
+      {
+        "sku": "6696621",
+        "expected_name": "VITAFUSION",
+        "observed_name": "VITAFUSION",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1799,
+        "observed_next_price_cents": 1799,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1830902",
+        "expected_name": "MACARONS",
+        "observed_name": "MACARONS",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1899,
+        "observed_next_price_cents": 1899,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1632980",
+        "expected_name": "KD SNACK CUP",
+        "observed_name": "KD SNACK CUP",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1299,
+        "observed_next_price_cents": 1299,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1950554",
+        "expected_name": "F1 BROWNIE",
+        "observed_name": "F1 BROWNIE",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1899,
+        "observed_next_price_cents": 1899,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1279456",
+        "expected_name": "KS COMPLETE",
+        "observed_name": "KS COMPLETE",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1399,
+        "observed_next_price_cents": 1399,
+        "next_price_matches": true
+      },
+      {
+        "sku": "3699282",
+        "expected_name": "BAREBONES",
+        "observed_name": "BAREBONES",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1999,
+        "observed_next_price_cents": 1999,
+        "next_price_matches": true
+      },
+      {
+        "sku": "2066220",
+        "expected_name": "CH CHICKEN",
+        "observed_name": "CH CHIRKEN",
+        "sku_present": true,
+        "name_exact": false,
+        "expected_price_cents": 1699,
+        "observed_next_price_cents": 1699,
+        "next_price_matches": true
+      },
+      {
+        "sku": "107725",
+        "expected_name": "TZATZIKI",
+        "observed_name": "TZATZIKI",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 999,
+        "observed_next_price_cents": 999,
+        "next_price_matches": true
+      },
+      {
+        "sku": "453777",
+        "expected_name": "CIN TST 1.3K",
+        "observed_name": "CIN IST 1.3K",
+        "sku_present": true,
+        "name_exact": false,
+        "expected_price_cents": 1099,
+        "observed_next_price_cents": 1099,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1801478",
+        "expected_name": "RAISIN BRAN",
+        "observed_name": "KAISIN BRAN",
+        "sku_present": true,
+        "name_exact": false,
+        "expected_price_cents": 999,
+        "observed_next_price_cents": 999,
+        "next_price_matches": true
+      },
+      {
+        "sku": "253039",
+        "expected_name": "CORO GRAPES",
+        "observed_name": "CORO GRAPES",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 899,
+        "observed_next_price_cents": 899,
+        "next_price_matches": true
+      },
+      {
+        "sku": "5276",
+        "expected_name": "RED GRAPES",
+        "observed_name": "RED GRAPES",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1079,
+        "observed_next_price_cents": 1079,
+        "next_price_matches": true
+      },
+      {
+        "sku": "421444",
+        "expected_name": "BEN BASMATI",
+        "observed_name": "BEN BASMATI",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1299,
+        "observed_next_price_cents": 1299,
+        "next_price_matches": true
+      }
+    ],
+    "discounts": [
+      {
+        "sku": "1872053",
+        "expected_cents": -500,
+        "observed_cents": -500,
+        "matches": true
+      },
+      {
+        "sku": "1632980",
+        "expected_cents": -300,
+        "observed_cents": -300,
+        "matches": true
+      },
+      {
+        "sku": "453777",
+        "expected_cents": -300,
+        "observed_cents": -300,
+        "matches": true
+      },
+      {
+        "sku": "5276",
+        "expected_cents": -300,
+        "observed_cents": -300,
+        "matches": true
+      }
+    ],
+    "footer": {
+      "SUBTOTAL": {
+        "label_present": true,
+        "expected_cents": 21964,
+        "expected_decimal_literal_present": true,
+        "next_line": "TAX",
+        "literal_next_value_cents": null,
+        "adjacent_pair_matches": false
+      },
+      "TAX": {
+        "label_present": true,
+        "expected_cents": 857,
+        "expected_decimal_literal_present": true,
+        "next_line": "219.64",
+        "literal_next_value_cents": 21964,
+        "adjacent_pair_matches": false
+      },
+      "TOTAL": {
+        "label_present": true,
+        "expected_cents": 22821,
+        "expected_decimal_literal_present": false,
+        "next_line": "8.57",
+        "literal_next_value_cents": 857,
+        "adjacent_pair_matches": false
+      },
+      "CASH": {
+        "label_present": true,
+        "expected_cents": 0,
+        "expected_decimal_literal_present": true,
+        "next_line": "22821",
+        "literal_next_value_cents": null,
+        "adjacent_pair_matches": false
+      }
+    },
+    "limits": "SKU/next-price and label/next-line diagnostics on this reference; not a production structured receipt parser"
+  },
+  "native": {
+    "item_count": 16,
+    "sku_matches": 16,
+    "exact_name_matches": 13,
+    "next_price_matches": 16,
+    "discount_matches": 4,
+    "items": [
+      {
+        "sku": "1872053",
+        "expected_name": "STARBURST",
+        "observed_name": "STARBURST",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 2399,
+        "observed_next_price_cents": 2399,
+        "next_price_matches": true
+      },
+      {
+        "sku": "245504",
+        "expected_name": "DOUGHNUTS 15",
+        "observed_name": "DOUGHNUTS 15",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1099,
+        "observed_next_price_cents": 1099,
+        "next_price_matches": true
+      },
+      {
+        "sku": "9339999",
+        "expected_name": "KS GRANOLA",
+        "observed_name": "KS GRANOLA",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1499,
+        "observed_next_price_cents": 1499,
+        "next_price_matches": true
+      },
+      {
+        "sku": "6696621",
+        "expected_name": "VITAFUSION",
+        "observed_name": "VITAFUSION",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1799,
+        "observed_next_price_cents": 1799,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1830902",
+        "expected_name": "MACARONS",
+        "observed_name": "MACARONS",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1899,
+        "observed_next_price_cents": 1899,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1632980",
+        "expected_name": "KD SNACK CUP",
+        "observed_name": "KD SNACK CUP",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1299,
+        "observed_next_price_cents": 1299,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1950554",
+        "expected_name": "F1 BROWNIE",
+        "observed_name": "F1 BROWNIE",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1899,
+        "observed_next_price_cents": 1899,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1279456",
+        "expected_name": "KS COMPLETE",
+        "observed_name": "KS COMPLETE",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1399,
+        "observed_next_price_cents": 1399,
+        "next_price_matches": true
+      },
+      {
+        "sku": "3699282",
+        "expected_name": "BAREBONES",
+        "observed_name": "BAREBONES",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1999,
+        "observed_next_price_cents": 1999,
+        "next_price_matches": true
+      },
+      {
+        "sku": "2066220",
+        "expected_name": "CH CHICKEN",
+        "observed_name": "CH CHIRKEN",
+        "sku_present": true,
+        "name_exact": false,
+        "expected_price_cents": 1699,
+        "observed_next_price_cents": 1699,
+        "next_price_matches": true
+      },
+      {
+        "sku": "107725",
+        "expected_name": "TZATZIKI",
+        "observed_name": "TZATZIKI",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 999,
+        "observed_next_price_cents": 999,
+        "next_price_matches": true
+      },
+      {
+        "sku": "453777",
+        "expected_name": "CIN TST 1.3K",
+        "observed_name": "CIN IST 1.3K",
+        "sku_present": true,
+        "name_exact": false,
+        "expected_price_cents": 1099,
+        "observed_next_price_cents": 1099,
+        "next_price_matches": true
+      },
+      {
+        "sku": "1801478",
+        "expected_name": "RAISIN BRAN",
+        "observed_name": "KAISIN BRAN",
+        "sku_present": true,
+        "name_exact": false,
+        "expected_price_cents": 999,
+        "observed_next_price_cents": 999,
+        "next_price_matches": true
+      },
+      {
+        "sku": "253039",
+        "expected_name": "CORO GRAPES",
+        "observed_name": "CORO GRAPES",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 899,
+        "observed_next_price_cents": 899,
+        "next_price_matches": true
+      },
+      {
+        "sku": "5276",
+        "expected_name": "RED GRAPES",
+        "observed_name": "RED GRAPES",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1079,
+        "observed_next_price_cents": 1079,
+        "next_price_matches": true
+      },
+      {
+        "sku": "421444",
+        "expected_name": "BEN BASMATI",
+        "observed_name": "BEN BASMATI",
+        "sku_present": true,
+        "name_exact": true,
+        "expected_price_cents": 1299,
+        "observed_next_price_cents": 1299,
+        "next_price_matches": true
+      }
+    ],
+    "discounts": [
+      {
+        "sku": "1872053",
+        "expected_cents": -500,
+        "observed_cents": -500,
+        "matches": true
+      },
+      {
+        "sku": "1632980",
+        "expected_cents": -300,
+        "observed_cents": -300,
+        "matches": true
+      },
+      {
+        "sku": "453777",
+        "expected_cents": -300,
+        "observed_cents": -300,
+        "matches": true
+      },
+      {
+        "sku": "5276",
+        "expected_cents": -300,
+        "observed_cents": -300,
+        "matches": true
+      }
+    ],
+    "footer": {
+      "SUBTOTAL": {
+        "label_present": true,
+        "expected_cents": 21964,
+        "expected_decimal_literal_present": true,
+        "next_line": "TAX",
+        "literal_next_value_cents": null,
+        "adjacent_pair_matches": false
+      },
+      "TAX": {
+        "label_present": true,
+        "expected_cents": 857,
+        "expected_decimal_literal_present": true,
+        "next_line": "219.64",
+        "literal_next_value_cents": 21964,
+        "adjacent_pair_matches": false
+      },
+      "TOTAL": {
+        "label_present": true,
+        "expected_cents": 22821,
+        "expected_decimal_literal_present": false,
+        "next_line": "8.57",
+        "literal_next_value_cents": 857,
+        "adjacent_pair_matches": false
+      },
+      "CASH": {
+        "label_present": true,
+        "expected_cents": 0,
+        "expected_decimal_literal_present": true,
+        "next_line": "22821",
+        "literal_next_value_cents": null,
+        "adjacent_pair_matches": false
+      }
+    },
+    "limits": "SKU/next-price and label/next-line diagnostics on this reference; not a production structured receipt parser"
+  },
+  "native_tables_detected": 1,
+  "classifier_context": {
+    "truncated": false,
+    "bytes": 567,
+    "audit": {
+      "item_count": 16,
+      "sku_matches": 16,
+      "exact_name_matches": 13,
+      "next_price_matches": 16,
+      "discount_matches": 4,
+      "items": [
+        {
+          "sku": "1872053",
+          "expected_name": "STARBURST",
+          "observed_name": "STARBURST",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 2399,
+          "observed_next_price_cents": 2399,
+          "next_price_matches": true
+        },
+        {
+          "sku": "245504",
+          "expected_name": "DOUGHNUTS 15",
+          "observed_name": "DOUGHNUTS 15",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1099,
+          "observed_next_price_cents": 1099,
+          "next_price_matches": true
+        },
+        {
+          "sku": "9339999",
+          "expected_name": "KS GRANOLA",
+          "observed_name": "KS GRANOLA",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1499,
+          "observed_next_price_cents": 1499,
+          "next_price_matches": true
+        },
+        {
+          "sku": "6696621",
+          "expected_name": "VITAFUSION",
+          "observed_name": "VITAFUSION",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1799,
+          "observed_next_price_cents": 1799,
+          "next_price_matches": true
+        },
+        {
+          "sku": "1830902",
+          "expected_name": "MACARONS",
+          "observed_name": "MACARONS",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1899,
+          "observed_next_price_cents": 1899,
+          "next_price_matches": true
+        },
+        {
+          "sku": "1632980",
+          "expected_name": "KD SNACK CUP",
+          "observed_name": "KD SNACK CUP",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1299,
+          "observed_next_price_cents": 1299,
+          "next_price_matches": true
+        },
+        {
+          "sku": "1950554",
+          "expected_name": "F1 BROWNIE",
+          "observed_name": "F1 BROWNIE",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1899,
+          "observed_next_price_cents": 1899,
+          "next_price_matches": true
+        },
+        {
+          "sku": "1279456",
+          "expected_name": "KS COMPLETE",
+          "observed_name": "KS COMPLETE",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1399,
+          "observed_next_price_cents": 1399,
+          "next_price_matches": true
+        },
+        {
+          "sku": "3699282",
+          "expected_name": "BAREBONES",
+          "observed_name": "BAREBONES",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1999,
+          "observed_next_price_cents": 1999,
+          "next_price_matches": true
+        },
+        {
+          "sku": "2066220",
+          "expected_name": "CH CHICKEN",
+          "observed_name": "CH CHIRKEN",
+          "sku_present": true,
+          "name_exact": false,
+          "expected_price_cents": 1699,
+          "observed_next_price_cents": 1699,
+          "next_price_matches": true
+        },
+        {
+          "sku": "107725",
+          "expected_name": "TZATZIKI",
+          "observed_name": "TZATZIKI",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 999,
+          "observed_next_price_cents": 999,
+          "next_price_matches": true
+        },
+        {
+          "sku": "453777",
+          "expected_name": "CIN TST 1.3K",
+          "observed_name": "CIN IST 1.3K",
+          "sku_present": true,
+          "name_exact": false,
+          "expected_price_cents": 1099,
+          "observed_next_price_cents": 1099,
+          "next_price_matches": true
+        },
+        {
+          "sku": "1801478",
+          "expected_name": "RAISIN BRAN",
+          "observed_name": "KAISIN BRAN",
+          "sku_present": true,
+          "name_exact": false,
+          "expected_price_cents": 999,
+          "observed_next_price_cents": 999,
+          "next_price_matches": true
+        },
+        {
+          "sku": "253039",
+          "expected_name": "CORO GRAPES",
+          "observed_name": "CORO GRAPES",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 899,
+          "observed_next_price_cents": 899,
+          "next_price_matches": true
+        },
+        {
+          "sku": "5276",
+          "expected_name": "RED GRAPES",
+          "observed_name": "RED GRAPES",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1079,
+          "observed_next_price_cents": 1079,
+          "next_price_matches": true
+        },
+        {
+          "sku": "421444",
+          "expected_name": "BEN BASMATI",
+          "observed_name": "BEN BASMATI",
+          "sku_present": true,
+          "name_exact": true,
+          "expected_price_cents": 1299,
+          "observed_next_price_cents": 1299,
+          "next_price_matches": true
+        }
+      ],
+      "discounts": [
+        {
+          "sku": "1872053",
+          "expected_cents": -500,
+          "observed_cents": -500,
+          "matches": true
+        },
+        {
+          "sku": "1632980",
+          "expected_cents": -300,
+          "observed_cents": -300,
+          "matches": true
+        },
+        {
+          "sku": "453777",
+          "expected_cents": -300,
+          "observed_cents": -300,
+          "matches": true
+        },
+        {
+          "sku": "5276",
+          "expected_cents": -300,
+          "observed_cents": -300,
+          "matches": true
+        }
+      ],
+      "footer": {
+        "SUBTOTAL": {
+          "label_present": true,
+          "expected_cents": 21964,
+          "expected_decimal_literal_present": true,
+          "next_line": "TAX",
+          "literal_next_value_cents": null,
+          "adjacent_pair_matches": false
+        },
+        "TAX": {
+          "label_present": true,
+          "expected_cents": 857,
+          "expected_decimal_literal_present": true,
+          "next_line": "219.64",
+          "literal_next_value_cents": 21964,
+          "adjacent_pair_matches": false
+        },
+        "TOTAL": {
+          "label_present": false,
+          "expected_cents": 22821,
+          "expected_decimal_literal_present": false,
+          "next_line": null,
+          "literal_next_value_cents": null,
+          "adjacent_pair_matches": false
+        },
+        "CASH": {
+          "label_present": true,
+          "expected_cents": 0,
+          "expected_decimal_literal_present": true,
+          "next_line": "22821",
+          "literal_next_value_cents": null,
+          "adjacent_pair_matches": false
+        }
+      },
+      "limits": "SKU/next-price and label/next-line diagnostics on this reference; not a production structured receipt parser"
+    }
+  },
+  "production_structure": "Plain OCR transcript plus table count; table cells and normalized receipt fields are not preserved",
+  "native_layout": {
+    "table_count": 1,
+    "row_count": 25,
+    "items": [
+      {
+        "sku": "1872053",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "245504",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "9339999",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "6696621",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "1830902",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "1632980",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "1950554",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "1279456",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "3699282",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "2066220",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "107725",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "453777",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "1801478",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "253039",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "5276",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      },
+      {
+        "sku": "421444",
+        "present_in_table": true,
+        "same_row_price_matches": true
+      }
+    ],
+    "item_skus_in_tables": 16,
+    "same_row_price_matches": 16,
+    "footer_rows": [
+      [
+        "SUBTOTAL",
+        ""
+      ],
+      [
+        "TAX",
+        "219.64"
+      ],
+      [
+        "**** TOTAL",
+        "8.57"
+      ],
+      [
+        "CASH",
+        "22821\n0.00"
+      ]
+    ]
+  },
+  "prior_classifier_input_hashes_verified": {
+    "qwen": {
+      "description_only": true,
+      "ocr_context": true
+    },
+    "apple": {
+      "description_only": true,
+      "ocr_context": true
+    }
+  },
+  "scope": "One assistant-transcribed receipt; diagnostic assertions, not a population OCR accuracy rate",
+  "runtime": {
+    "shortcuts": {
+      "status": "ok",
+      "elapsed_ms": 751.229916990269
+    },
+    "native_elapsed_ms": 583.553583
+  },
+  "rerun_difference": "Shortcuts corrected EWHOLESALE to WHOLESALE; item/price/discount/footer findings unchanged"
+}

@@ -42,6 +42,11 @@ items, define handling of predominantly grocery baskets, and be evaluated on
 held-out cases rather than optimized solely to make this example pass. No
 prompts, weights or category rules were changed during this test.
 
+The subsequent [OCR audit](COSTCO-OCR-AUDIT.md) checked all visible items,
+discounts, totals and native table cells. Item evidence survived, but the footer
+was misaligned and the grand total lost its decimal point. Those are recorded
+extraction defects, separately from the categorization miss.
+
 The receipt total and transaction amount differ. This test uses the pair only
 to evaluate the requested category. It does not prove they belong to the same
 purchase, create a ledger attachment, or change either monetary amount. The
