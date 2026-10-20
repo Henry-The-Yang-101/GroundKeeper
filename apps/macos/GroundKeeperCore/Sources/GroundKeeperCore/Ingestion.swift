@@ -16,6 +16,10 @@ extension LedgerStore {
         try db.query("INSERT OR IGNORE INTO queue_items(id,relative_path,content_sha256,state,first_seen_at_ms) VALUES (?,?,?,'discovered',?)", [.text(queueID), .text(deliveryPath), .text(hash), .integer(nowMS())])
         try db.query("UPDATE queue_items SET attempt_count=attempt_count+1,last_attempt_at_ms=? WHERE id=?", [.integer(nowMS()), .text(queueID)])
         do {
+            if let header = try? JSONSerialization.jsonObject(with: data) as? [String: Any], header["source"] as? String == "receipt_attachment" {
+                try ingestReceipt(data: data, queueID: queueID, hash: hash)
+                return
+            }
             let envelope = try CaptureParser.decode(data)
             let (captured, offset) = try CaptureParser.timestamp(envelope.capturedAt)
             try db.transaction {
@@ -128,6 +132,7 @@ extension LedgerStore {
             let observation = try db.query("SELECT posted_on FROM event_observations WHERE id=?", [.text(observationID)]).first!
             try db.query("UPDATE transactions SET lifecycle='posted',posted_on=?,revision=revision+1,updated_at_ms=? WHERE id=?", [.optional(observation["posted_on"]?.string), .integer(nowMS()), .text(transactionID)])
         }
+        try resolveReceiptLinks()
     }
     func externalReference(_ observation: Observation, eventID: String, transactionID: String, sourceID: String) throws {
         if let external = observation.externalID {

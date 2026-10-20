@@ -151,7 +151,7 @@ class Worker:
                 from .apple_shortcuts import AppleShortcutCategorizer
                 self.model = AppleShortcutCategorizer(name)
                 self.manifest = {"backend": "apple_shortcut"}
-                digest = hashlib.sha256(json.dumps([POLICY_VERSION, "apple_shortcut", name, 1]).encode()).hexdigest()
+                digest = hashlib.sha256(json.dumps([POLICY_VERSION, "apple_shortcut", name, "receipt-context-v1"]).encode()).hexdigest()
                 self.identity = {"model_id": name, "backend": "apple_shortcut", "manifest_sha256": digest,
                                  "policy_version": POLICY_VERSION, "device": "shortcut"}
                 result = {"model": self.identity}
@@ -289,7 +289,7 @@ class Worker:
         builder = messages_v2 if self.manifest.get("prompt_version") == "v2" else messages
         prompt = self.tokenizer.apply_chat_template(builder(inputs), tokenize=True,
             add_generation_prompt=True, enable_thinking=False, return_dict=False)
-        if len(prompt) > 512:
+        if len(prompt) > (2048 if "receipt_context" in inputs else 512):
             raise WorkerError("input_too_large", "Tokenized input exceeds model context policy")
         chunks = []
         with mx.stream(mx.gpu):

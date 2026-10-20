@@ -8,8 +8,12 @@ Explicit credited payroll/benefits/earnings/interest=>income,null. Cash adjustme
 
 def messages_v2(inputs, answer=None):
     validate_input(inputs)
-    result = [{'role':'system','content':SYSTEM_V2},
-              {'role':'user','content':json.dumps(inputs,separators=(',',':'),ensure_ascii=False)}]
+    if 'receipt_context' in inputs:
+        from .receipts import receipt_messages
+        result = receipt_messages(inputs, SYSTEM_V2)
+    else:
+        result = [{'role':'system','content':SYSTEM_V2},
+                  {'role':'user','content':json.dumps(inputs,separators=(',',':'),ensure_ascii=False)}]
     if answer is not None:
         validate_answer(answer)
         canonical = {key:answer[key] for key in ('type','category','review')}

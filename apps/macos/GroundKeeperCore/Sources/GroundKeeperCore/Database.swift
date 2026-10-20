@@ -22,9 +22,10 @@ func json<T: Encodable>(_ value: T) throws -> String {
     return String(decoding: try encoder.encode(value), as: UTF8.self)
 }
 enum SQLValue: Sendable {
-    case text(String), integer(Int64), null
+    case text(String), integer(Int64), blob(Data), null
     var string: String? { if case .text(let value) = self { return value }; return nil }
     var int: Int64? { if case .integer(let value) = self { return value }; return nil }
+    var data: Data? { if case .blob(let value) = self { return value }; return nil }
     static func optional(_ value: String?) -> Self { value.map(Self.text) ?? .null }
     static func optional(_ value: Int64?) -> Self { value.map(Self.integer) ?? .null }
 }
@@ -127,6 +128,7 @@ final class Database {
             switch value {
             case .text(let text): result = text.withCString { sqlite3_bind_text(statement, index, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
             case .integer(let number): result = sqlite3_bind_int64(statement, index, number)
+            case .blob(let data): result = data.withUnsafeBytes { sqlite3_bind_blob(statement, index, $0.baseAddress, Int32(data.count), unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
             case .null: result = sqlite3_bind_null(statement, index)
             }
             guard result == SQLITE_OK else { throw LedgerError.storage(result) }
@@ -142,6 +144,9 @@ final class Database {
                 switch sqlite3_column_type(statement, column) {
                 case SQLITE_INTEGER: row[name] = .integer(sqlite3_column_int64(statement, column))
                 case SQLITE_NULL: row[name] = .null
+                case SQLITE_BLOB:
+                    let size = Int(sqlite3_column_bytes(statement, column))
+                    row[name] = .blob(sqlite3_column_blob(statement, column).map { Data(bytes: $0, count: size) } ?? Data())
                 default: row[name] = .text(String(cString: sqlite3_column_text(statement, column)))
                 }
             }
@@ -159,10 +164,10 @@ final class Database {
         if !exists, !(try query("SELECT name FROM sqlite_master WHERE type='table'")).isEmpty {
             throw LedgerError.unavailable("This is not a GroundKeeper vault. It was not changed.")
         }
-        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 2 {
+        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 3 {
             throw LedgerError.unavailable("This vault requires a newer GroundKeeper version.")
         }
-        for (version, name) in [(1, "001-schema"), (2, "002-processing")] {
+        for (version, name) in [(1, "001-schema"), (2, "002-processing"), (3, "003-receipts")] {
             guard let url = Bundle.module.url(forResource: name, withExtension: "sql") else { throw LedgerError.unavailable("Missing bundled migration.") }
             let data = try Data(contentsOf: url), checksum = contentHash(data)
             if exists, let applied = try query("SELECT checksum FROM schema_migrations WHERE version=?", [.integer(Int64(version))]).first {

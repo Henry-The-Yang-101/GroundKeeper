@@ -162,7 +162,11 @@ class LocalLayaCategorizer:
 
     def predict(self, inputs):
         validate_input(inputs)
-        result = self.agent.predict(inputs, QUESTIONS, max_len=MAX_LEN, head_max_len=HEAD_MAX_LEN)
+        from .receipts import laya_receipt_state, RECEIPT_INSTRUCTIONS
+        questions = QUESTIONS
+        if "receipt_context" in inputs:
+            questions = {key: {**value, "instructions": value["instructions"] + " " + RECEIPT_INSTRUCTIONS} for key, value in QUESTIONS.items()}
+        result = self.agent.predict(laya_receipt_state(inputs), questions, max_len=1024 if "receipt_context" in inputs else MAX_LEN, head_max_len=768 if "receipt_context" in inputs else HEAD_MAX_LEN)
         return decode(result["answers"])
 
     def suggest(self, inputs):

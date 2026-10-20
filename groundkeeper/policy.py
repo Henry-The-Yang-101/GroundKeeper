@@ -10,7 +10,7 @@ Expense categories: groceries=supermarkets; dining=restaurants/meal delivery; lo
 Credit alone is not income/refund. Payment rail is not purpose/own transfer. Unsplit mortgage/installments => unknown. Nonexpense category=null; unknown=>uncategorized. Refund needs original category; otherwise null,review=true. Mixed retail=>shopping,review=true. Unspecified pharmacy/digital bills=>uncategorized. No hidden gift intent. Purpose beats subscription. Uncertainty/uncategorized=>review=true.'''
 
 def validate_input(value):
-    if set(value) != {'description','direction','currency'}:
+    if not isinstance(value, dict) or set(value) not in ({'description','direction','currency'}, {'description','direction','currency','receipt_context'}):
         raise ValueError('Unexpected or missing input fields')
     if not isinstance(value['description'],str) or not value['description'].strip():
         raise ValueError('Empty description')
@@ -18,6 +18,9 @@ def validate_input(value):
         raise ValueError('Invalid direction')
     if value['currency'] is not None and (not isinstance(value['currency'],str) or len(value['currency'])!=3 or not value['currency'].isupper()):
         raise ValueError('Invalid currency')
+    if 'receipt_context' in value:
+        from .receipts import validate_context
+        validate_context(value['receipt_context'])
     return value
 
 def validate_answer(value):
@@ -33,6 +36,11 @@ def validate_answer(value):
 
 def messages(inputs,answer=None):
     validate_input(inputs)
+    if 'receipt_context' in inputs:
+        from .receipts import receipt_messages
+        result = receipt_messages(inputs, SYSTEM)
+        if answer is not None: result.append({'role':'assistant','content':json.dumps(validate_answer(answer),separators=(',',':'))})
+        return result
     result=[{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps(inputs,separators=(',',':'),ensure_ascii=False)}]
     if answer is not None:result.append({'role':'assistant','content':json.dumps(validate_answer(answer),separators=(',',':'))})
     return result

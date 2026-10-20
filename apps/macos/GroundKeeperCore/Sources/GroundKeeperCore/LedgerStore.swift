@@ -64,7 +64,7 @@ public actor LedgerStore {
         Int(try db.query("""
             SELECT count(*) AS n FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id
             JOIN category_assignments a ON a.id=p.current_assignment_id
-            WHERE t.state='active' AND a.origin='system' AND a.confirmed_at_ms IS NULL
+            WHERE t.state='active' AND (a.origin='system' OR (a.origin='model' AND EXISTS(SELECT 1 FROM receipt_captures r WHERE r.transaction_id=t.id))) AND a.confirmed_at_ms IS NULL
             AND NOT EXISTS(SELECT 1 FROM classification_jobs j WHERE j.part_id=p.id
               AND j.input_revision=t.revision AND j.status<>'obsolete'
               AND (j.model_id=json_extract((SELECT value_json FROM app_settings WHERE key='classifier_model'),'$')
