@@ -164,10 +164,10 @@ final class Database {
         if !exists, !(try query("SELECT name FROM sqlite_master WHERE type='table'")).isEmpty {
             throw LedgerError.unavailable("This is not a GroundKeeper vault. It was not changed.")
         }
-        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 3 {
+        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 4 {
             throw LedgerError.unavailable("This vault requires a newer GroundKeeper version.")
         }
-        for (version, name) in [(1, "001-schema"), (2, "002-processing"), (3, "003-receipts")] {
+        for (version, name) in [(1, "001-schema"), (2, "002-processing"), (3, "003-receipts"), (4, "004-capture-details")] {
             guard let url = Bundle.module.url(forResource: name, withExtension: "sql") else { throw LedgerError.unavailable("Missing bundled migration.") }
             let data = try Data(contentsOf: url), checksum = contentHash(data)
             if exists, let applied = try query("SELECT checksum FROM schema_migrations WHERE version=?", [.integer(Int64(version))]).first {

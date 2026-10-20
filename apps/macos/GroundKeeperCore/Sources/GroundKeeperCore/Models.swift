@@ -50,6 +50,8 @@ public struct CaptureEnvelope: Codable, Sendable {
     public let source: String
     public let capturedAt: String
     public let app: String?
+    public let note: String?
+    let receipt: ReceiptEnvelope.Payload?
     public let inputShape: String?
     public let isTest: Bool?
     public let title: String?, subtitle: String?, body: String?
@@ -57,7 +59,7 @@ public struct CaptureEnvelope: Codable, Sendable {
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version", eventID = "event_id", source, capturedAt = "captured_at", app
         case inputShape = "input_shape", isTest = "is_test", title, subtitle, body, merchant, amount
-        case cardOrPass = "card_or_pass", name, transaction
+        case cardOrPass = "card_or_pass", name, transaction, note, receipt
     }
     var sourceKind: String { source == "wallet_transaction" ? "apple_wallet" : "bank_notification" }
     var sourceID: String { "capture:" + contentHash(Data("\(sourceKind)|\(app ?? "")".utf8)) }

@@ -4,12 +4,19 @@ import GroundKeeperCore
 struct ReceiptEvidenceView: View {
     @Environment(AppWorkspace.self) private var workspace
     let transactionID: String
+    @State private var notes: [CaptureNote] = []
     @State private var records: [ReceiptRecord] = []
     @State private var images: [String: NSImage] = [:]
     @State private var error: String?
     @State private var busy = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            ForEach(notes) { note in
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Captured note · \(note.app)").font(.headline)
+                    Text(note.text).textSelection(.enabled)
+                }
+            }
             if records.isEmpty { Text("No receipt is attached to this purchase.").foregroundStyle(AppStyle.muted) }
             ForEach(records) { receipt in
                 DisclosureGroup("Receipt · \(receipt.imageState == "stored" ? "image saved" : receipt.imageState == "pending" ? "waiting for image" : "text")") {
@@ -36,6 +43,7 @@ struct ReceiptEvidenceView: View {
     }
     private func load() async {
         do {
+            notes = try await workspace.captureNotes(transactionID: transactionID)
             records = try await workspace.receiptRecords(transactionID: transactionID)
             for receipt in records where receipt.imageState == "stored" {
                 if let data = try await workspace.receiptImage(id: receipt.id), let image = NSImage(data: data) { images[receipt.id] = image }

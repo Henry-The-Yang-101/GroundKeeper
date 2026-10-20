@@ -301,6 +301,7 @@ import GroundKeeperCore
             try await self.refresh()
         }
     }
+    func captureNotes(transactionID: String) async throws -> [CaptureNote] { try await store?.captureNotes(transactionID: transactionID) ?? [] }
     func receiptRecords(transactionID: String) async throws -> [ReceiptRecord] { try await store?.receipts(transactionID: transactionID) ?? [] }
     func receiptImage(id: String) async throws -> Data? { try await store?.receiptImage(id: id) }
     func reprocessReceipt(id: String) async throws {

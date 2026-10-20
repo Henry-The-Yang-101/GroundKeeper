@@ -164,3 +164,21 @@ persisted review-required assignment smoke check. The primary local database was
 initialized empty, with both migrations and successful integrity/foreign-key
 checks. The user's iCloud folder and financial account mappings still require
 selection in the app; no real transactions were imported during validation.
+
+## Capture notes and combined capture envelopes
+
+Migration 004 adds `capture_notes`, keyed by immutable raw event identity. Schema
+4 payment envelopes may carry a `note` and/or nested `receipt`. Ingestion validates
+all supplied details before storing anything, then commits the payment, note and
+receipt evidence in one database transaction. Duplicate deliveries do not append
+evidence; changed bytes under an existing event ID remain collisions.
+
+Captured notes are separate from editable `transactions.notes` and appear in the
+Mac's **Notes & receipts…** sheet. They follow active event-to-transaction links,
+including delayed account mapping and bank/Wallet reconciliation. Test captures
+cannot supply notes or receipts to live purchases. Notes remain local evidence
+and are not added to classifier requests. Inline receipts use the same OCR, image
+retry, revision and explicit cloud-consent rules as schema 3 attachments.
+
+Earlier migrations and capture formats remain supported. Filename text has no
+role in identity, parsing or matching; the importer accepts any JSON basename.

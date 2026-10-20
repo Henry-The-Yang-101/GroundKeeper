@@ -96,7 +96,7 @@ struct TransactionsView: View {
                 .contextMenu(forSelectionType: Transaction.ID.self) { ids in
                     if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
                         Button("Edit transaction…") { workspace.editor = transaction }
-                        Button("Receipts…") { receiptTransaction = transaction }
+                        Button("Notes & receipts…") { receiptTransaction = transaction }
                         Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
                     }
                 } primaryAction: { ids in
@@ -158,7 +158,7 @@ struct TransactionsView: View {
         .sheet(item: $receiptTransaction) { transaction in
             VStack(alignment: .leading, spacing: 16) {
                 Text(transaction.merchant).font(VaultTypography.sheet)
-                Text("Receipt evidence stays with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(AppStyle.muted)
+                Text("Captured notes and receipts stay with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(AppStyle.muted)
                 ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack { Spacer(); Button("Done") { receiptTransaction = nil } }
             }.padding(24).frame(width: 650, height: 650).vaultSheet()
@@ -182,7 +182,7 @@ struct TransactionsView: View {
     private var selectionActions: some View {
         HStack(spacing: 10) {
             Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
-            Button("Receipts…") { receiptTransaction = selectedTransaction }
+            Button("Notes & receipts…") { receiptTransaction = selectedTransaction }
             Button("Edit…") { workspace.editor = selectedTransaction }.keyboardShortcut("e", modifiers: .command)
         }.disabled(selectedTransaction == nil).fixedSize()
     }

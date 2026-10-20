@@ -11,22 +11,22 @@ public struct ReceiptContext: Codable, Sendable, Equatable {
         version = "receipt-context-v1"; self.text = text; self.truncated = truncated; self.evidenceSHA256 = evidenceSHA256
     }
 }
-struct ReceiptEnvelope: Decodable {
+struct ReceiptEnvelope: Codable, Sendable {
     let schemaVersion: Int, eventID: String, source: String, capturedAt: String
     let target: Target
     let receipt: Payload
     let isTest: Bool?
-    struct Target: Decodable {
+    struct Target: Codable, Sendable {
         let source: String, app: String, eventID: String
         enum CodingKeys: String, CodingKey { case source, app, eventID = "event_id" }
         var sourceID: String { "capture:" + contentHash(Data("\(source == "wallet_transaction" ? "apple_wallet" : "bank_notification")|\(app)".utf8)) }
     }
-    struct Payload: Decodable {
+    struct Payload: Codable, Sendable {
         let ocr: OCR
         let image: Image?
     }
-    struct OCR: Decodable { let producer: String, text: String }
-    struct Image: Decodable { let path: String; let sha256: String? }
+    struct OCR: Codable, Sendable { let producer: String, text: String }
+    struct Image: Codable, Sendable { let path: String; let sha256: String? }
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version", eventID = "event_id", source, capturedAt = "captured_at", target, receipt, isTest = "is_test"
     }
@@ -36,20 +36,23 @@ struct ReceiptEnvelope: Decodable {
         guard value.schemaVersion == 3, value.source == "receipt_attachment",
               validID(value.eventID), validID(value.target.eventID),
               ["wallet_transaction", "bank_notification"].contains(value.target.source),
-              !value.target.app.isEmpty, value.target.app.utf8.count <= 128,
-              ["apple_shortcuts", "apple_vision", "apple_vision_documents", "user_text"].contains(value.receipt.ocr.producer),
-              value.receipt.ocr.text.utf8.count <= 32_768, !value.receipt.ocr.text.contains("\0"),
-              !value.receipt.ocr.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || value.receipt.image != nil else {
+              !value.target.app.isEmpty, value.target.app.utf8.count <= 128 else { throw LedgerError.invalid("invalid_receipt") }
+        try validate(value.receipt)
+        _ = try CaptureParser.timestamp(value.capturedAt)
+        return value
+    }
+    static func validate(_ receipt: Payload) throws {
+        guard ["apple_shortcuts", "apple_vision", "apple_vision_documents", "user_text"].contains(receipt.ocr.producer),
+              receipt.ocr.text.utf8.count <= 32_768, !receipt.ocr.text.contains("\0"),
+              !receipt.ocr.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || receipt.image != nil else {
             throw LedgerError.invalid("invalid_receipt")
         }
-        if let image = value.receipt.image {
+        if let image = receipt.image {
             guard image.path.range(of: "^assets/[A-Za-z0-9_-]{1,128}\\.(jpg|jpeg|png|heic)$", options: .regularExpression) != nil,
                   image.sha256 == nil || image.sha256!.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil else {
                 throw LedgerError.invalid("invalid_receipt_image")
             }
         }
-        _ = try CaptureParser.timestamp(value.capturedAt)
-        return value
     }
     static func validID(_ value: String) -> Bool {
         !value.isEmpty && value.utf8.count <= 128 && !value.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) }

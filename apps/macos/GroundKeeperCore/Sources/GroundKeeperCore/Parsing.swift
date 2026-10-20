@@ -48,9 +48,19 @@ enum CaptureParser {
     static func decode(_ data: Data) throws -> CaptureEnvelope {
         guard data.count <= 65_536 else { throw LedgerError.invalid("capture_too_large") }
         let value = try JSONDecoder().decode(CaptureEnvelope.self, from: data)
-        guard [1, 2].contains(value.schemaVersion), !value.eventID.isEmpty, value.eventID.count <= 128,
+        guard [1, 2, 4].contains(value.schemaVersion), !value.eventID.isEmpty, value.eventID.count <= 128,
               ["wallet_transaction", "bank_notification", "test_notification"].contains(value.source),
               value.source != "test_notification" || value.isTest == true else { throw LedgerError.invalid("unsupported_capture") }
+        guard value.schemaVersion == 4 || (value.note == nil && value.receipt == nil) else {
+            throw LedgerError.invalid("unsupported_capture_details")
+        }
+        if let note = value.note {
+            guard note.utf8.count <= 10_000, !note.contains("\0"),
+                  !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw LedgerError.invalid("invalid_capture_note")
+            }
+        }
+        if let receipt = value.receipt { try ReceiptEnvelope.validate(receipt) }
         return value
     }
     static func timestamp(_ value: String) throws -> (Int64, Int) {

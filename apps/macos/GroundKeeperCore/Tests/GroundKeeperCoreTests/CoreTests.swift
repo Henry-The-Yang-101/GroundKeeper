@@ -46,7 +46,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
 @Test func migrationsAndPlainSQLite() async throws {
     let (store, url) = try vault()
     #expect(try await store.integrityCheck())
-    #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 3)
+    #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 4)
     let bytes = try Data(contentsOf: url)
     #expect(bytes.starts(with: Data("SQLite format 3".utf8)))
     #expect(throws: (any Error).self) { try LedgerStore(url: url) }
