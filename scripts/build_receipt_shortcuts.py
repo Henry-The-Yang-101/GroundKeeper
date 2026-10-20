@@ -57,7 +57,7 @@ class Workflow:
 
     def put(self, dictionary, key, value):
         return self.add("setvalueforkey", WFDictionary=token(dictionary), WFDictionaryKey=key,
-                        WFDictionaryValue=token(value))
+                        WFDictionaryValue=text(value))
 
     def menu(self, prompt, items):
         group = str(uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{self.name}/menu/{len(self.actions)}")).upper()
@@ -88,10 +88,11 @@ def main():
     w.actions.extend(actions)
     saved = w.setvar("Saved Event", envelope)
     source = w.get(saved, "source")
+    source["Aggrandizements"] = [{"CoercionItemClass": "WFStringContentItem", "Type": "WFCoercionVariableAggrandizement"}]
     group = str(uuid.uuid5(uuid.NAMESPACE_URL, "groundkeeper/writer/receipt-schema")).upper()
     w.add("conditional", GroupingIdentifier=group, WFControlFlowMode=0, WFCondition=4,
           WFConditionalActionString="receipt_attachment", WFInput={"Type": "Variable", "Variable": token(source)})
-    version = w.add("number", WFNumberActionNumber=3)
+    version = w.add("number", WFNumberActionNumber="3")
     updated = w.put(saved, "schema_version", version)
     w.setvar("Saved Event", updated)
     w.add("conditional", GroupingIdentifier=group, WFControlFlowMode=2)
@@ -99,7 +100,7 @@ def main():
     filename = {"Value": {"string": "\ufffc.json", "attachmentsByRange": {"{0, 1}": variable("Event ID")}}, "WFSerializationType": "WFTextTokenString"}
     named = w.add("setitemname", WFInput=token(serialized), WFName=filename)
     w.add("documentpicker.save", WFAskWhereToSave=True, WFSaveFileOverwrite=False, WFInput=token(named))
-    w.add("output", WFOutput=token(saved))
+    w.add("output", WFOutput=text(saved))
     w.save()
 
     wallet_path = ROOT / "GroundKeeper Wallet Automation.plist"
@@ -155,7 +156,7 @@ def main():
     event = r.put(event, "target", variable("Receipt Target"))
     event = r.put(event, "receipt", variable("Receipt Payload"))
     result = r.run("GroundKeeper Capture Transaction", event)
-    r.add("output", WFOutput=token(result))
+    r.add("output", WFOutput=text(result))
     r.save()
 
     later = Workflow("GroundKeeper Attach Receipt Later", writer)

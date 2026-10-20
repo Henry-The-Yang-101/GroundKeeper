@@ -55,3 +55,14 @@ def test_wallet_saves_before_optional_receipt_and_ocr_uses_native_action():
     actions = receipt["WFWorkflowActions"]
     assert any(a["WFWorkflowActionParameters"].get("WFMenuItems") == ["Text only", "Keep image"] for a in actions)
     assert any(a["WFWorkflowActionParameters"].get("WFDictionaryKey") == "target" for a in actions)
+
+
+def test_dynamic_text_parameters_use_native_text_token_serialization():
+    # Attachment tokens import without an error but render blank in these fields.
+    for path in ROOT.glob("*.plist"):
+        for action in plistlib.loads(path.read_bytes())["WFWorkflowActions"]:
+            params = action["WFWorkflowActionParameters"]
+            for key in ("WFDictionaryValue", "WFOutput"):
+                value = params.get(key)
+                if isinstance(value, dict):
+                    assert value["WFSerializationType"] == "WFTextTokenString", (path.name, key)

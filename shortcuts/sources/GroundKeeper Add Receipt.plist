@@ -621,15 +621,23 @@
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>Type</key>
-						<string>ActionOutput</string>
-						<key>OutputUUID</key>
-						<string>3A6A5E30-D1B7-51BB-A702-CE66C16900B1</string>
-						<key>OutputName</key>
-						<string>Result</string>
+						<key>string</key>
+						<string>￼</string>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>ActionOutput</string>
+								<key>OutputUUID</key>
+								<string>3A6A5E30-D1B7-51BB-A702-CE66C16900B1</string>
+								<key>OutputName</key>
+								<string>Result</string>
+							</dict>
+						</dict>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenAttachment</string>
+					<string>WFTextTokenString</string>
 				</dict>
 			</dict>
 		</dict>
@@ -949,15 +957,23 @@
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>Type</key>
-						<string>ActionOutput</string>
-						<key>OutputUUID</key>
-						<string>5D1B0A2E-BA0D-5DF3-A99A-5B606C6EB31E</string>
-						<key>OutputName</key>
-						<string>Result</string>
+						<key>string</key>
+						<string>￼</string>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>ActionOutput</string>
+								<key>OutputUUID</key>
+								<string>5D1B0A2E-BA0D-5DF3-A99A-5B606C6EB31E</string>
+								<key>OutputName</key>
+								<string>Result</string>
+							</dict>
+						</dict>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenAttachment</string>
+					<string>WFTextTokenString</string>
 				</dict>
 			</dict>
 		</dict>
@@ -986,15 +1002,23 @@
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>Type</key>
-						<string>ActionOutput</string>
-						<key>OutputUUID</key>
-						<string>7963579F-1DF8-50B6-9282-77939801F568</string>
-						<key>OutputName</key>
-						<string>Result</string>
+						<key>string</key>
+						<string>￼</string>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>ActionOutput</string>
+								<key>OutputUUID</key>
+								<string>7963579F-1DF8-50B6-9282-77939801F568</string>
+								<key>OutputName</key>
+								<string>Result</string>
+							</dict>
+						</dict>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenAttachment</string>
+					<string>WFTextTokenString</string>
 				</dict>
 			</dict>
 		</dict>
@@ -1131,13 +1155,21 @@
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>Type</key>
-						<string>Variable</string>
-						<key>VariableName</key>
-						<string>Receipt Target</string>
+						<key>string</key>
+						<string>￼</string>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>Variable</string>
+								<key>VariableName</key>
+								<string>Receipt Target</string>
+							</dict>
+						</dict>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenAttachment</string>
+					<string>WFTextTokenString</string>
 				</dict>
 			</dict>
 		</dict>
@@ -1168,13 +1200,21 @@
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>Type</key>
-						<string>Variable</string>
-						<key>VariableName</key>
-						<string>Receipt Payload</string>
+						<key>string</key>
+						<string>￼</string>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>Variable</string>
+								<key>VariableName</key>
+								<string>Receipt Payload</string>
+							</dict>
+						</dict>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenAttachment</string>
+					<string>WFTextTokenString</string>
 				</dict>
 			</dict>
 		</dict>
@@ -1221,15 +1261,23 @@
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>Type</key>
-						<string>ActionOutput</string>
-						<key>OutputUUID</key>
-						<string>EE261615-E8C4-5ACA-A2AF-0E786F799AB7</string>
-						<key>OutputName</key>
-						<string>Result</string>
+						<key>string</key>
+						<string>￼</string>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>ActionOutput</string>
+								<key>OutputUUID</key>
+								<string>EE261615-E8C4-5ACA-A2AF-0E786F799AB7</string>
+								<key>OutputName</key>
+								<string>Result</string>
+							</dict>
+						</dict>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenAttachment</string>
+					<string>WFTextTokenString</string>
 				</dict>
 			</dict>
 		</dict>

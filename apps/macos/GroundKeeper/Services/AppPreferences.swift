@@ -2,7 +2,8 @@ import Foundation
 
 /// Preview runs use a disposable vault and separate preferences; they never reconfigure the real ledger.
 enum AppPreferences {
-    static let isSetupPreview = CommandLine.arguments.contains("--setup-preview")
+    static let isReceiptSmoke = CommandLine.arguments.contains("--receipt-smoke") || Bundle.main.object(forInfoDictionaryKey: "GKReceiptSmoke") as? Bool == true
+    static let isSetupPreview = CommandLine.arguments.contains("--setup-preview") || isReceiptSmoke
     // Foundation documents UserDefaults as thread-safe. The reference is immutable.
     nonisolated(unsafe) static let defaults: UserDefaults = {
         guard isSetupPreview else { return .standard }

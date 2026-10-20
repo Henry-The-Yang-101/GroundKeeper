@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import shutil
+import subprocess
 
 root = Path(__file__).resolve().parents[1]
 destination = Path(os.environ["TARGET_BUILD_DIR"]) / os.environ["UNLOCALIZED_RESOURCES_FOLDER_PATH"] / "Setup"
@@ -12,3 +13,13 @@ shutil.copy2(root / "release/SQLCIPHER-LICENSE.md", destination / "SQLCIPHER-LIC
 for source in (root / "shortcuts").glob("*.shortcut"):
     shutil.copy2(source, destination / source.name)
 shutil.copy2(root / "shortcuts/README.md", destination / "Shortcuts Guide.md")
+
+# Xcode can refresh loose worker files during an incremental Copy Files step
+# while retaining the previous XPC resource seal. Copy the complete signed
+# product, including CodeResources, before the host app is signed.
+service = Path(os.environ["TARGET_BUILD_DIR"]) / "GroundKeeperClassifier.xpc"
+embedded = destination.parents[1] / "XPCServices" / service.name
+embedded.mkdir(parents=True, exist_ok=True)
+subprocess.run(["/usr/bin/rsync", "-a", "--delete", str(service) + "/", str(embedded) + "/"], check=True)
+if os.environ.get("CODE_SIGNING_ALLOWED") != "NO":
+    subprocess.run(["/usr/bin/codesign", "--verify", "--strict", str(embedded)], check=True)

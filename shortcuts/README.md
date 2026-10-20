@@ -35,8 +35,9 @@ can send that text to Apple's service. Images never enter classifier requests. T
 `type`, `category`, and `review` fields and requires review of every suggestion.
 It never switches from a local model to this provider automatically.
 
-Cloud usage limits can stop processing. The latest signed app check hit that
-limit; a successful app-to-Shortcut prediction still needs verification.
+Cloud usage limits can stop processing. An earlier signed app check hit that
+limit. The receipt pilot completed 40 direct worker-to-Shortcut calls: 39 valid
+responses and one invalid output. This is separate from app-level provider testing.
 The on-device export failed the output contract frequently in the recorded
 benchmark and is included for experiments, not recommended for routine use.
 See the [benchmark report](https://github.com/Henry-The-Yang-101/GroundKeeper/blob/main/experiments/apple-shortcuts/README.md).
@@ -53,6 +54,9 @@ or device-specific automation references. Adapters read **Shortcut Input**;
 create the personal automation on your phone and pass its transaction or
 notification input to the adapter. If the shared writer is not resolved by name,
 reselect it in the adapter’s **Run Shortcut** action.
+Check every Run Shortcut target after importing: Wallet → Capture Transaction
+and Add Receipt; Add Receipt → GK Receipt OCR and Capture Transaction; Attach
+Receipt Later → Add Receipt. Select the installed helper explicitly if necessary.
 
 1. Enable iCloud Drive and Shortcuts sync on both devices. Reuse
    `iCloud Drive/Shortcuts/Groundkeeper/inbox` as the capture destination.
@@ -135,8 +139,12 @@ The script converts each source to a binary `.shortcut` and uses Apple’s
 metadata. The signed files in this folder use Apple’s shareable signing chain.
 
 The app build bundles the catalog and every `.shortcut` from this folder. Source
-checks verify variable references, unique-file generation, and the absence of
-personal folder permissions and trigger selections. Signing and import were
-checked on Mac. A synthetic CLI writer run timed out on this machine; real
-Wallet input, output typing, folder permissions, and locked-phone delivery still
-need device verification before relying on unattended capture.
+checks verify variable references, native text-token serialization, unique-file
+generation, and the absence of personal folder permissions and trigger selections.
+Signing and import were checked on Mac. Isolated native writer and receipt action
+checks produced schema 2 payments and schema 3 nested receipt JSON accepted by
+the importer. The receipt check inlined helper actions and omitted Save File;
+nested Run Shortcut execution stalled on this Mac even after selecting helpers.
+Real Wallet input, helper chaining on iPhone, folder permissions, cancellation,
+and locked-phone delivery still need device verification before unattended use.
+See the [receipt pilot](../experiments/receipts/README.md) for measured results.
