@@ -25,7 +25,10 @@ xcodebuild -version
 If `xcode-select` points to Command Line Tools instead of your full Xcode
 installation, select Xcode in **Xcode > Settings > Locations > Command Line
 Tools**. The standalone Swift core targets macOS 14 or later, but that does not
-lower the full app's macOS requirement.
+lower the full app's macOS requirement. Building the core requires Xcode 26 or
+later for the receipt OCR APIs in the macOS 26 SDK; runtime availability checks
+select the older OCR API on earlier macOS versions. The core CI job selects
+Xcode 26.2 explicitly because the macOS 15 runner defaults to Xcode 16.4.
 
 ## Install dependencies and build
 

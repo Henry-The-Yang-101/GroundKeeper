@@ -39,7 +39,15 @@ jobs:
   swift-core:
     runs-on: macos-15
     timeout-minutes: 10
+    env:
+      # ReceiptOCR needs the macOS 26 SDK, even with a runtime availability check.
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
+      - name: Show Swift toolchain and SDK
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun --sdk macosx --show-sdk-version
       - name: Test the standalone ledger core
         run: swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
