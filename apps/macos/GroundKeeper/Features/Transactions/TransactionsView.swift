@@ -36,6 +36,7 @@ struct TransactionsView: View {
                         .accessibilityLabel("Search transactions")
                     Toggle("Needs review", isOn: $workspace.reviewOnly)
                         .toggleStyle(.button)
+                        .tint(workspace.reviewOnly ? AppStyle.controlAccent : AppStyle.accent)
                         .help("Show only transactions that need your input")
                 }
                 HStack {
@@ -51,71 +52,77 @@ struct TransactionsView: View {
                         Button("Clear filters", action: clearFilters).buttonStyle(.borderless)
                     }
                 }.labelsHidden()
-            }.padding(20)
+            }.padding(20).fixedSize(horizontal: false, vertical: true)
             Divider()
-            Table(filteredTransactions, selection: $selectedID, sortOrder: $sortOrder) {
-                TableColumn("Date", value: \Transaction.date) { transaction in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(transaction.date, format: .dateTime.month(.abbreviated).day())
-                        Text(transaction.date, format: .dateTime.year()).font(.caption)
-                    }
-                    .foregroundStyle(.secondary)
-                    .accessibilityElement(children: .combine)
-                }.width(min: 65, ideal: 80, max: 95)
-                TableColumn("Transaction", value: \Transaction.merchant) { transaction in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(transaction.merchant).fontWeight(.medium)
-                        Text(transaction.account).font(.caption).foregroundStyle(.secondary)
-                    }.padding(.vertical, 15)
-                }.width(min: 140, ideal: 190)
-                TableColumn("Category / type") { transaction in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(transaction.kind.usesCategory ? transaction.category.rawValue : transaction.kind.rawValue)
-                            .lineLimit(1).help(transaction.category.rawValue)
-                        if transaction.needsReview {
-                            Label("Needs review", systemImage: "circle.dashed")
-                                .font(.caption).foregroundStyle(.secondary)
-                        } else if transaction.kind == .refund {
-                            Text("Refund").font(.caption).foregroundStyle(.secondary)
+            // Bound the native table to the space left by the header and footer.
+            // Its intrinsic height must not expand the split view beyond the window.
+            GeometryReader { geometry in
+                Table(filteredTransactions, selection: $selectedID, sortOrder: $sortOrder) {
+                    TableColumn("Date", value: \Transaction.date) { transaction in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(transaction.date, format: .dateTime.month(.abbreviated).day())
+                            Text(transaction.date, format: .dateTime.year()).font(.caption)
                         }
-                    }
-                }.width(min: 120, ideal: 190)
-                TableColumn("Amount", value: \Transaction.amount) { transaction in
-                    VStack(alignment: .trailing, spacing: 3) {
-                        Text(transaction.formattedAmount).monospacedDigit()
-                        Text(transaction.currency).font(.caption2).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity, alignment: .trailing)
-                }.width(min: 100, ideal: 110, max: 150)
-            }
-            .scrollContentBackground(.hidden)
-            .background(AppStyle.surface)
-            .contextMenu(forSelectionType: Transaction.ID.self) { ids in
-                if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
-                    Button("Edit transaction…") { workspace.editor = transaction }
-                    Button("Receipts…") { receiptTransaction = transaction }
-                    Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
+                        .foregroundStyle(AppStyle.muted)
+                        .accessibilityElement(children: .combine)
+                    }.width(min: 65, ideal: 80, max: 95)
+                    TableColumn("Transaction", value: \Transaction.merchant) { transaction in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
+                            Text(transaction.account).font(.caption).foregroundStyle(AppStyle.muted)
+                        }.padding(.vertical, 15)
+                    }.width(min: 140, ideal: 190)
+                    TableColumn("Category / type") { transaction in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(transaction.kind.usesCategory ? transaction.category.rawValue : transaction.kind.rawValue)
+                                .lineLimit(1).help(transaction.category.rawValue)
+                            if transaction.needsReview {
+                                Label("Needs review", systemImage: "circle.dashed")
+                                    .font(.caption).foregroundStyle(AppStyle.muted)
+                            } else if transaction.kind == .refund {
+                                Text("Refund").font(.caption).foregroundStyle(AppStyle.muted)
+                            }
+                        }
+                    }.width(min: 120, ideal: 190)
+                    TableColumn("Amount", value: \Transaction.amount) { transaction in
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(transaction.formattedAmount).monospacedDigit()
+                            Text(transaction.currency).font(.caption2).foregroundStyle(AppStyle.muted)
+                        }.frame(maxWidth: .infinity, alignment: .trailing)
+                    }.width(min: 100, ideal: 110, max: 150)
                 }
-            } primaryAction: { ids in
-                if let id = ids.first { workspace.editor = workspace.transactions.first { $0.id == id } }
-            }
-            .overlay {
-                if filteredTransactions.isEmpty {
-                    ContentUnavailableView {
-                        Label {
-                            Text(hasFilters ? "No matching transactions" : "No transactions yet").font(VaultTypography.section)
-                        } icon: {
-                            Image(systemName: hasFilters ? "magnifyingglass" : "tray").foregroundStyle(AppStyle.accent)
-                        }
-                    } description: {
-                        Text(hasFilters ? "Try a different search or clear your filters." : "Import or add a transaction.")
-                    } actions: {
-                        if hasFilters {
-                            Button("Clear filters", action: clearFilters)
-                        } else {
-                            Button("Add transaction") { workspace.editor = Transaction() }
+                .scrollContentBackground(.hidden)
+                .alternatingRowBackgrounds(.disabled)
+                .background(AppStyle.surface)
+                .contextMenu(forSelectionType: Transaction.ID.self) { ids in
+                    if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
+                        Button("Edit transaction…") { workspace.editor = transaction }
+                        Button("Receipts…") { receiptTransaction = transaction }
+                        Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
+                    }
+                } primaryAction: { ids in
+                    if let id = ids.first { workspace.editor = workspace.transactions.first { $0.id == id } }
+                }
+                .overlay {
+                    if filteredTransactions.isEmpty {
+                        ContentUnavailableView {
+                            Label {
+                                Text(hasFilters ? "No matching transactions" : "No transactions yet").font(VaultTypography.section)
+                            } icon: {
+                                Image(systemName: hasFilters ? "magnifyingglass" : "tray").foregroundStyle(AppStyle.accent)
+                            }
+                        } description: {
+                            Text(hasFilters ? "Try a different search or clear your filters." : "Import or add a transaction.")
+                        } actions: {
+                            if hasFilters {
+                                Button("Clear filters", action: clearFilters)
+                            } else {
+                                Button("Add transaction") { workspace.editor = Transaction() }
+                            }
                         }
                     }
                 }
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
             Divider()
             ViewThatFits(in: .horizontal) {
@@ -125,7 +132,9 @@ struct TransactionsView: View {
                     HStack { Spacer(); selectionActions }
                 }
             }.padding(.horizontal, 20).padding(.vertical, 12)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(AppStyle.pageBackground)
         .task(id: workspace.focusTransactionSearch) {
             guard workspace.focusTransactionSearch else { return }
@@ -150,7 +159,7 @@ struct TransactionsView: View {
         .sheet(item: $receiptTransaction) { transaction in
             VStack(alignment: .leading, spacing: 16) {
                 Text(transaction.merchant).font(VaultTypography.sheet)
-                Text("Receipt evidence stays with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(.secondary)
+                Text("Receipt evidence stays with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(AppStyle.muted)
                 ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack { Spacer(); Button("Done") { receiptTransaction = nil } }
             }.padding(24).frame(width: 650, height: 650).vaultSheet()

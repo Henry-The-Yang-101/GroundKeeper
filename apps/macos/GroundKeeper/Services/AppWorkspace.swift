@@ -4,7 +4,7 @@ import SwiftUI
 import GroundKeeperCore
 
 @MainActor @Observable final class AppWorkspace {
-    var showingSetup = !AppPreferences.defaults.bool(forKey: "setupCompleted") || CommandLine.arguments.contains("--setup-preview")
+    var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: "setupCompleted") || CommandLine.arguments.contains("--setup-preview"))
     var encrypted = VaultAccess.isEncrypted
     var unlocking = false
     var selectedTab: AppTab? = .home
@@ -93,6 +93,11 @@ import GroundKeeperCore
             }
             guard let opened else { return }
             store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
+            if InterfacePreview.isEnabled {
+                try await InterfacePreview.seed(opened.0)
+                status = "Preview vault · fictional transactions"
+                processingMode = .manual
+            }
             shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? false
             folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }

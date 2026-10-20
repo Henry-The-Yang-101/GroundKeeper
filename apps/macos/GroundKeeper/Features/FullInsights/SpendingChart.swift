@@ -17,6 +17,7 @@ struct SpendingChart: View {
                 HStack {
                     SectionHeading(title: "Daily spending", detail: "CAD")
                     Toggle("Table", isOn: $showTable).toggleStyle(.button)
+                        .tint(showTable ? AppStyle.controlAccent : AppStyle.accent)
                         .help("Show the exact chart values in a table")
                 }
             }
@@ -85,7 +86,7 @@ struct SpendingChart: View {
                         } else {
                             Text("Hover over a bar for the exact amount, or switch to Table.")
                         }
-                    }.font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    }.font(.caption).foregroundStyle(AppStyle.muted).monospacedDigit()
                 }
             }
         }

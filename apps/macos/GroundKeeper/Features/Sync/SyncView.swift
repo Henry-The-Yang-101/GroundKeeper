@@ -8,15 +8,15 @@ struct SyncView: View {
             PageHeading(title: "Sync", subtitle: "Capture on your iPhone. Review on your Mac.")
             Surface {
                 SectionHeading(title: "iCloud capture folder", detail: workspace.folderName)
-                Text(workspace.status).foregroundStyle(.secondary)
+                Text(workspace.status).foregroundStyle(AppStyle.muted)
                 if let last = workspace.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
                 HStack {
                     Button("Connect folder…", action: workspace.selectFolder)
                     Button("Retry failed work", action: workspace.retryFailures)
                 }.disabled(!workspace.ready || workspace.saving)
                 QueueControls()
-                Text(workspace.processingDescription).font(.caption).foregroundStyle(.secondary)
-                Text("Files stay in iCloud; committed delivery IDs prevent re-importing them. Test captures never become transactions.").font(.caption).foregroundStyle(.secondary)
+                Text(workspace.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
+                Text("Files stay in iCloud; committed delivery IDs prevent re-importing them. Test captures never become transactions.").font(.caption).foregroundStyle(AppStyle.muted)
             }
             Surface {
                 HStack {
@@ -27,7 +27,7 @@ struct SyncView: View {
             }
             Surface {
                 SectionHeading(title: "Review captures", detail: "\(workspace.reviews.count) open items shown")
-                if workspace.reviews.isEmpty { Text("No capture issues to review.").foregroundStyle(.secondary) }
+                if workspace.reviews.isEmpty { Text("No capture issues to review.").foregroundStyle(AppStyle.muted) }
                 ForEach(workspace.reviews) { review in
                     CaptureReviewRow(review: review)
                     Divider()
@@ -35,11 +35,15 @@ struct SyncView: View {
             }
             Surface {
                 SectionHeading(title: "Activity", detail: "\(workspace.pendingJobs) classification jobs pending · \(workspace.failedJobs) failed")
+                if workspace.queue.isEmpty {
+                    Label("No recent capture activity", systemImage: "tray")
+                        .foregroundStyle(AppStyle.muted)
+                }
                 ForEach(workspace.queue) { item in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(item.path).lineLimit(1)
-                            if !item.error.isEmpty { Text(item.error.replacingOccurrences(of: "_", with: " ")).font(.caption).foregroundStyle(.secondary) }
+                            if !item.error.isEmpty { Text(item.error.replacingOccurrences(of: "_", with: " ")).font(.caption).foregroundStyle(AppStyle.muted) }
                         }
                         Spacer()
                         Text("\(item.state) · \(item.attempts) attempts").font(.caption)
@@ -57,7 +61,7 @@ private struct CaptureReviewRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(review.description.isEmpty ? "Unparsed capture" : review.description).fontWeight(.medium)
-            Text(review.reason.replacingOccurrences(of: "_", with: " ")).font(.callout).foregroundStyle(.secondary)
+            Text(review.reason.replacingOccurrences(of: "_", with: " ")).font(.callout).foregroundStyle(AppStyle.muted)
             if !review.label.isEmpty { Text("Card label: \(review.label)").font(.caption) }
             if ["account_mapping_required", "currency_required"].contains(review.reason) {
                 HStack {
@@ -97,7 +101,7 @@ private struct CaptureCorrection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Correct capture details").font(VaultTypography.sheet)
-            Text("Original source evidence is preserved. Enter a negative amount for money out, positive for money in.").foregroundStyle(.secondary)
+            Text("Original source evidence is preserved. Enter a negative amount for money out, positive for money in.").foregroundStyle(AppStyle.muted)
             Form {
                 TextField("Description", text: $description)
                 TextField("Signed amount", text: $amount)

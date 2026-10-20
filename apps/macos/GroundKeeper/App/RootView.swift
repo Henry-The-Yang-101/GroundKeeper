@@ -5,32 +5,38 @@ struct RootView: View {
 
     var body: some View {
         @Bindable var workspace = workspace
-        NavigationSplitView {
-            SidebarView(selection: $workspace.selectedTab, reviewCount: workspace.reviewCount)
-                .navigationSplitViewColumnWidth(min: 220, ideal: 230, max: 280)
-        } detail: {
-            selectedPage
-                .navigationTitle(workspace.selectedTab?.title ?? "Home")
-                .toolbar {
-                    ToolbarItem(placement: .automatic) {
-                        Label(workspace.ready ? "Local vault" : "Opening vault", systemImage: "internaldrive")
-                            .font(.caption).foregroundStyle(AppStyle.muted)
-                            .padding(.horizontal, 10)
-                            .help(workspace.status)
-                    }
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            workspace.editor = Transaction()
-                        } label: {
-                            Label("Add transaction", systemImage: "plus")
+        // A native Table's ideal size can otherwise expand the entire split view
+        // beyond the host window. Read the proposal here instead of screen bounds.
+        GeometryReader { geometry in
+            NavigationSplitView {
+                SidebarView(selection: $workspace.selectedTab, reviewCount: workspace.reviewCount)
+                    .navigationSplitViewColumnWidth(min: 220, ideal: 230, max: 280)
+            } detail: {
+                selectedPage
+                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                    .navigationTitle(workspace.selectedTab?.title ?? "Home")
+                    .toolbar {
+                        ToolbarItem(placement: .automatic) {
+                            Label(workspace.ready ? "Local vault" : "Opening vault", systemImage: "internaldrive")
+                                .font(.caption).foregroundStyle(AppStyle.muted)
+                                .padding(.horizontal, 10)
+                                .help(workspace.status)
                         }
-                        .help("Add a transaction (⌘N)")
-                        .disabled(!workspace.ready)
+                        ToolbarItem(placement: .primaryAction) {
+                            Button {
+                                workspace.editor = Transaction()
+                            } label: {
+                                Label("Add transaction", systemImage: "plus")
+                            }
+                            .help("Add a transaction (⌘N)")
+                            .disabled(!workspace.ready)
+                        }
                     }
-                }
+            }
+            .navigationSplitViewStyle(.balanced)
+            .background(AppStyle.pageBackground)
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
-        .navigationSplitViewStyle(.balanced)
-        .background(AppStyle.pageBackground)
         .frame(minWidth: 760, minHeight: 560)
         .overlay(alignment: .bottom) { WorkspaceFeedbackView() }
         .sheet(item: $workspace.editor) { transaction in

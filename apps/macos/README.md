@@ -5,6 +5,37 @@ Capture ingestion, CSV import, reconciliation, transaction editing, and the
 classifier queue are connected. First launch walks through protection, optional models,
 iCloud capture and phone setup. Analytics is deferred. See [setup and protection](../../docs/onboarding.md).
 
+## Brass vault interface
+
+The app uses Fraunces for headings and the macOS system font for controls,
+transaction text, and tabular amounts. Fraunces is bundled for offline use with
+its SIL Open Font License in `GroundKeeper/Resources/Fonts`. The shared palette
+in `VaultTheme.swift` and the asset catalog supports System, Light, Dark, and
+increased contrast. Light mode uses parchment and bronze; dark mode uses
+graphite and pale brass.
+
+Button presses, row hover states, changing counts, setup steps, and successful
+saves have short, scoped feedback animations. They honor macOS Reduce Motion.
+Native tables, menus, keyboard shortcuts, sheets, and focus handling remain in
+place.
+
+For a populated UI walkthrough after building Debug, quit that build and run:
+
+```sh
+open -n .local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app \
+  --args --setup-preview --ui-preview
+```
+
+Both flags are required. This Debug-only fixture uses a fresh temporary vault
+and separate preferences, seeds five fictional transactions, selects manual
+processing, and does not connect a capture folder or provider. Ordinary launches
+continue to use the real vault. To inspect an empty onboarding step instead, use
+`--setup-preview --setup-preview-step 0` (steps 0–6).
+
+Visual verification should cover both appearances, minimum-width windows,
+sidebar visibility, long merchant names, review filtering, empty search results,
+editing and save feedback, imports, receipts, and Settings sheets.
+
 ## Build and launch
 
 Requires Xcode and macOS 26.2+ on Apple silicon, matching the bundled MLX runtime.

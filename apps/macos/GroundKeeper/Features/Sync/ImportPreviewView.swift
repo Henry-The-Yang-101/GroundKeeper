@@ -21,10 +21,10 @@ struct ImportPreviewView: View {
             Text("Import bank CSV").font(VaultTypography.sheet)
             if let result {
                 Label(result, systemImage: "checkmark.circle")
-                Text("Possible matches are in Sync → Review captures. Categories remain suggestions until you confirm them.").foregroundStyle(.secondary)
+                Text("Possible matches are in Sync → Review captures. Categories remain suggestions until you confirm them.").foregroundStyle(AppStyle.muted)
                 Spacer()
             } else if let document {
-                Text("\(document.filename) · \(document.rows.count) rows").foregroundStyle(.secondary)
+                Text("\(document.filename) · \(document.rows.count) rows").foregroundStyle(AppStyle.muted)
                 if !reviewing {
                     Form {
                         column("Date", selection: $mapping.dateColumn, document: document)
@@ -52,14 +52,14 @@ struct ImportPreviewView: View {
                             VStack(alignment: .leading) {
                                 Text(row.description.isEmpty ? "Missing description" : row.description)
                                 Text(row.error ?? "\(row.day) · \(Decimal(row.amountMinor ?? 0) / 100) \(mapping.currency)")
-                                    .font(.caption).foregroundStyle(row.error == nil ? Color.secondary : Color.red)
+                                    .font(.caption).foregroundStyle(row.error == nil ? AppStyle.muted : Color.red)
                             }
                         }
                     }
                     if rows.count > 200 { Text("Showing the first 200 rows. Validation covers the entire file.").font(.caption) }
                 }
             } else {
-                Text("Choose a UTF-8 CSV with a header row. Add your real accounts in Settings first.").foregroundStyle(.secondary)
+                Text("Choose a UTF-8 CSV with a header row. Add your real accounts in Settings first.").foregroundStyle(AppStyle.muted)
                 Picker("Delimiter", selection: $delimiter) { Text("Comma").tag(","); Text("Semicolon").tag(";"); Text("Tab").tag("\t") }
                 Button("Choose CSV…", action: choose)
                 Spacer()

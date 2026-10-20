@@ -124,7 +124,7 @@ struct Metric: View {
     let value: String
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(label).font(.caption).foregroundStyle(AppStyle.muted)
             Text(value).font(.title3.weight(.medium)).monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(reduceMotion ? nil : VaultMotion.feedback, value: value)

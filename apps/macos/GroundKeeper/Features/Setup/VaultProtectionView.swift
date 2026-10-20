@@ -18,20 +18,20 @@ struct VaultProtectionView: View {
             Picker("Vault protection", selection: $encrypt) {
                 Text("Encrypted with SQLCipher").tag(true)
                 Text("Unencrypted SQLite").tag(false)
-            }.pickerStyle(.segmented)
+            }.pickerStyle(.segmented).tint(AppStyle.controlAccent)
             Text(encrypt ? "Protect your local database with a passphrase. Unlock it when you open GroundKeeper, then process and review your transactions as usual." : "Store your transactions in a standard SQLite database on this Mac. Anyone who can read that file can read its contents.")
-                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             if workspace.encrypted { SecureField("Current vault passphrase", text: $currentPassphrase) }
             if encrypt {
                 SecureField(workspace.encrypted ? "New passphrase (at least 12 characters)" : "Passphrase (at least 12 characters)", text: $passphrase)
                 SecureField("Confirm passphrase", text: $confirmation)
                 Toggle("Also unlock with Touch ID or my Mac password", isOn: $remember).disabled(!VaultKeychain.isSupported)
-                if !VaultKeychain.isSupported { Text("Convenience unlock requires a build provisioned for Keychain access. Passphrase encryption works in this build.").font(.caption).foregroundStyle(.secondary) }
+                if !VaultKeychain.isSupported { Text("Convenience unlock requires a build provisioned for Keychain access. Passphrase encryption works in this build.").font(.caption).foregroundStyle(AppStyle.muted) }
                 Text("Your passphrase is the recovery key. Keep it somewhere safe: GroundKeeper cannot reset it. Convenience unlock stores it in this Mac’s protected Keychain and asks you to authenticate.")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.callout).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             }
             Text("This choice applies to the local vault. Original capture files in iCloud Drive, exported files, and earlier backups keep their existing protection. Encrypted vaults process only while the app is open and unlocked.")
-                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(.callout).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             if let error { Text(error).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             HStack {
                 Button(workspace.saving ? "Saving…" : encrypt ? (workspace.encrypted ? "Change passphrase" : "Encrypt my vault") : "Use unencrypted SQLite") {
@@ -66,7 +66,7 @@ struct VaultUnlockView: View {
         VStack(spacing: 24) {
             Image(systemName: "lock.shield.fill").font(.system(size: 72)).foregroundStyle(.tint)
             Text("Your vault is locked.").font(VaultTypography.welcome)
-            Text("Unlock to see your transactions and resume processing.").foregroundStyle(.secondary)
+            Text("Unlock to see your transactions and resume processing.").foregroundStyle(AppStyle.muted)
             SecureField("Vault passphrase", text: $passphrase).textFieldStyle(.roundedBorder).frame(width: 340)
                 .onSubmit { unlock() }
             HStack {
@@ -79,7 +79,7 @@ struct VaultUnlockView: View {
             }
             if let error = workspace.errorMessage { Text(error).foregroundStyle(.red).frame(maxWidth: 440) }
             Text("Your vault stays on this Mac. Use the passphrase you chose during setup.")
-                .font(.callout).foregroundStyle(.secondary)
+                .font(.callout).foregroundStyle(AppStyle.muted)
         }.padding(50).frame(maxWidth: .infinity, maxHeight: .infinity).frame(minWidth: 760, minHeight: 600)
             .background(AppStyle.pageBackground)
             .onDisappear { passphrase = "" }

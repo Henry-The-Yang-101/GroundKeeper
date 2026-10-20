@@ -51,7 +51,7 @@ struct TransactionEditor: View {
                     Text(original.merchant.isEmpty ? "Add transaction" : "Edit transaction")
                         .font(VaultTypography.sheet)
                     Text("Saved to your local database")
-                        .font(.callout).foregroundStyle(.secondary)
+                        .font(.callout).foregroundStyle(AppStyle.muted)
                 }
                 Spacer()
             }.padding(24)

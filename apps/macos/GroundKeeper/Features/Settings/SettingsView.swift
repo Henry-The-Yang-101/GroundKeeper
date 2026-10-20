@@ -17,16 +17,16 @@ struct SettingsView: View {
             VaultFormSection("Appearance") {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented)
+                }.pickerStyle(.segmented).tint(AppStyle.controlAccent)
                 Text("Brass vault · Fraunces headings").font(.caption).foregroundStyle(AppStyle.muted)
             }
             VaultFormSection("Queue processing") {
                 Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
                     ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !workspace.encrypted) }) { Text($0.title).tag($0) }
                 }.disabled(workspace.changingProcessingMode || workspace.saving)
-                Text(workspace.processingDescription).font(.caption).foregroundStyle(.secondary)
+                Text(workspace.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
                 if !QueueBackgroundService.isSupported {
-                    Text(QueueBackgroundService.unsupportedMessage).font(.caption).foregroundStyle(.secondary)
+                    Text(QueueBackgroundService.unsupportedMessage).font(.caption).foregroundStyle(AppStyle.muted)
                 }
                 if workspace.processingMode == .background {
                     Text(workspace.backgroundStatus).font(.caption)
@@ -42,12 +42,12 @@ struct SettingsView: View {
                 LabeledContent("Storage", value: workspace.ready ? (workspace.encrypted ? "SQLCipher · encrypted · local Mac" : "SQLite · unencrypted · local Mac") : "Unavailable")
                 Text(workspace.vaultPath).font(.caption).textSelection(.enabled)
                 Text("The database is stored locally in Application Support, outside iCloud Drive. Original capture files keep their existing iCloud protection.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(AppStyle.muted)
                 HStack {
                     Button("Change vault protection…") { showingProtection = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
                     if workspace.encrypted { Button("Lock vault") { Task { await workspace.lockVault() } }.disabled(workspace.saving || workspace.changingProcessingMode) }
                 }
-                if workspace.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(.secondary) }
+                if workspace.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(AppStyle.muted) }
                 if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
             } header: { Text("Local vault").font(VaultTypography.section) }
             Section {
@@ -57,16 +57,16 @@ struct SettingsView: View {
                 TextField("Apple Intelligence Shortcut", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
                     .disabled(workspace.processing || workspace.saving)
                 Text("Using this provider sends description, direction and currency to the selected Shortcut. Its Use Model action controls whether Apple Intelligence runs on device or in the cloud. Check that action in Shortcuts before enabling.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(AppStyle.muted)
                 Toggle("Include receipt text with Apple Intelligence", isOn: Binding(get: { workspace.shareReceiptContextWithApple }, set: workspace.setReceiptSharing))
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 Text("Off by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(AppStyle.muted)
                 Button("Use Apple Intelligence Shortcut", action: workspace.useShortcut)
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
                 Text("Choose a Qwen or Laya package for local inference, or explicitly enable the Shortcut above. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Categorization").font(VaultTypography.section) }
             Section {
                 ForEach(workspace.accounts) { account in LabeledContent(account.name, value: account.currency) }
@@ -78,7 +78,7 @@ struct SettingsView: View {
                 }
                 Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
                     .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespaces).isEmpty)
-                Text("Confirm Wallet and bank card labels in Sync. Names and last-four digits alone do not establish account identity.").font(.caption).foregroundStyle(.secondary)
+                Text("Confirm Wallet and bank card labels in Sync. Names and last-four digits alone do not establish account identity.").font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Accounts").font(VaultTypography.section) }
             VaultFormSection("Setup and iPhone") {
                 Button("Review setup assistant…") { AppPreferences.defaults.set(0, forKey: "setupStep"); workspace.showingSetup = true }
@@ -90,7 +90,7 @@ struct SettingsView: View {
             }
             VaultFormSection("GroundKeeper") {
                 Text("Local capture, import, reconciliation and classification")
-                Text("Analytics and planning will be added later.").foregroundStyle(.secondary)
+                Text("Analytics and planning will be added later.").foregroundStyle(AppStyle.muted)
             }
         }.formStyle(.grouped).scrollContentBackground(.hidden)
             .safeAreaInset(edge: .top, spacing: 0) {

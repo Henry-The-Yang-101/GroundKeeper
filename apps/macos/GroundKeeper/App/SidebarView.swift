@@ -8,14 +8,24 @@ struct SidebarView: View {
         List(selection: $selection) {
             Section("Workspace") {
                 ForEach(AppTab.allCases.filter { $0 != .settings }) { tab in
-                    Label(tab.title, systemImage: tab.symbol(isSelected: selection == tab))
+                    Label {
+                        Text(tab.title).foregroundStyle(AppStyle.text)
+                    } icon: {
+                        Image(systemName: tab.symbol(isSelected: selection == tab))
+                            .foregroundStyle(selection == tab ? AppStyle.accent : AppStyle.muted)
+                    }
                         .badge(tab == .home ? reviewCount : 0)
                         .tag(tab)
                         .help("\(tab.title) (⌘\(String(tab.shortcut)))")
                 }
             }
             Section {
-                Label("Settings", systemImage: "gearshape").tag(AppTab.settings)
+                Label {
+                    Text("Settings").foregroundStyle(AppStyle.text)
+                } icon: {
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(selection == .settings ? AppStyle.accent : AppStyle.muted)
+                }.tag(AppTab.settings)
             }
         }
         .listStyle(.sidebar)
@@ -29,6 +39,7 @@ struct SidebarView: View {
                     .foregroundStyle(AppStyle.accent)
                     .accessibilityHidden(true)
                 Text("GroundKeeper").font(VaultTypography.wordmark)
+                    .lineLimit(1).minimumScaleFactor(0.8)
                     .foregroundStyle(AppStyle.text)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

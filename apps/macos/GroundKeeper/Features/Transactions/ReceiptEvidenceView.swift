@@ -10,13 +10,13 @@ struct ReceiptEvidenceView: View {
     @State private var busy = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if records.isEmpty { Text("No receipt is attached to this purchase.").foregroundStyle(.secondary) }
+            if records.isEmpty { Text("No receipt is attached to this purchase.").foregroundStyle(AppStyle.muted) }
             ForEach(records) { receipt in
                 DisclosureGroup("Receipt · \(receipt.imageState == "stored" ? "image saved" : receipt.imageState == "pending" ? "waiting for image" : "text")") {
                     VStack(alignment: .leading, spacing: 10) {
                         if let image = images[receipt.id] { Image(nsImage: image).resizable().scaledToFit().frame(maxHeight: 280) }
                         Text(receipt.text).font(.caption.monospaced()).textSelection(.enabled)
-                        Text(receipt.producer).font(.caption2).foregroundStyle(.secondary)
+                        Text(receipt.producer).font(.caption2).foregroundStyle(AppStyle.muted)
                         if receipt.imageState == "stored" {
                             Button("Read image again on this Mac") {
                                 busy = true
@@ -27,7 +27,7 @@ struct ReceiptEvidenceView: View {
                                 }
                             }.disabled(busy || workspace.processing)
                         }
-                        if receipt.imageState == "invalid" { Text("The image could not be imported. Receipt text is retained.").font(.caption).foregroundStyle(.secondary) }
+                        if receipt.imageState == "invalid" { Text("The image could not be imported. Receipt text is retained.").font(.caption).foregroundStyle(AppStyle.muted) }
                     }
                 }
             }

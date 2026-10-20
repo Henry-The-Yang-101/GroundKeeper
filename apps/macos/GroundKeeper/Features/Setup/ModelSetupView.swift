@@ -13,7 +13,7 @@ struct ModelSetupView: View {
                         Image(systemName: model.id == "laya" ? "leaf" : "cpu").font(.title).foregroundStyle(.tint)
                         Text(model.title).font(VaultTypography.section)
                         Text(model.id == "laya" ? "A focused local classifier, running on your Mac." : "Local language-model suggestions, running on your Mac.")
-                            .foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundStyle(AppStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
                         Text(ByteCountFormatter.string(fromByteCount: model.downloadBytes, countStyle: .file) + " download").font(.caption)
                         if let url = installer.installed[model.id] {
                             Button("Use \(model.title)") { workspace.useInstalledModel(url) }.disabled(workspace.saving || !workspace.ready)
@@ -34,12 +34,12 @@ struct ModelSetupView: View {
                 Button("Model licenses and notices") { NSWorkspace.shared.open(notices) }.font(.caption)
             }
             if installer.busy { HStack { ProgressView().controlSize(.small); Text(installer.status); Button("Cancel", action: installer.cancel) } }
-            else { Text(installer.status).font(.callout).foregroundStyle(.secondary) }
+            else { Text(installer.status).font(.callout).foregroundStyle(AppStyle.muted) }
             if let error = installer.error { Text(error).foregroundStyle(.red) }
             Divider()
             Label("Apple Intelligence Cloud", systemImage: "apple.intelligence").font(VaultTypography.section)
             Text("No local model download needed. The included Shortcut uses Cloud with Broad World Knowledge. Description, direction, and currency go to the Shortcut and may be processed by Apple’s cloud service. Internet access, a compatible Mac, and Apple Intelligence are required; usage limits can apply.")
-                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button("Install Cloud Shortcut") { SetupResources.openShortcut("GK Categorize Cloud") }
                 Button("Use Apple Intelligence Cloud", action: workspace.useShortcut).disabled(workspace.saving || !workspace.ready)
@@ -47,12 +47,12 @@ struct ModelSetupView: View {
             TextField("Installed Shortcut name", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
                 .textFieldStyle(.roundedBorder).disabled(workspace.saving)
             Text("In Shortcuts, check Use Model → Cloud, Broad World Knowledge on, Text output, and Follow Up off. Your installed Shortcut controls where inference runs.")
-                .font(.callout).foregroundStyle(.secondary)
+                .font(.callout).foregroundStyle(AppStyle.muted)
             Divider()
             HStack { Button("Use manual categorization", action: workspace.useManualCategorization).disabled(workspace.saving || workspace.processing)
-                Spacer(); Text(workspace.classifierStatus).font(.caption).foregroundStyle(.secondary) }
+                Spacer(); Text(workspace.classifierStatus).font(.caption).foregroundStyle(AppStyle.muted) }
             Text("Every model suggestion needs your review. You can change providers in Settings; GroundKeeper never switches to cloud automatically.")
-                .font(.callout).foregroundStyle(.secondary)
+                .font(.callout).foregroundStyle(AppStyle.muted)
         }.onAppear { installer.discover() }
     }
 }

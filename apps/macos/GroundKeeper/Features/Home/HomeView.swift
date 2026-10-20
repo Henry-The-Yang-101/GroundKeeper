@@ -15,7 +15,7 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 10) { actions }
                 }
                 if workspace.accounts.isEmpty {
-                    Text("Start by adding an account in Settings, then connect your capture folder in Sync.").foregroundStyle(.secondary)
+                    Text("Start by adding an account in Settings, then connect your capture folder in Sync.").foregroundStyle(AppStyle.muted)
                 }
             }
             Surface {
@@ -40,7 +40,10 @@ struct HomeView: View {
 
     @ViewBuilder private var actions: some View {
         Button("View transactions") { workspace.showTransactions() }.buttonStyle(.brass)
-        Button("Review captures (\(workspace.reviews.count))") { workspace.selectedTab = .sync }
+        Button("Review transactions") { workspace.showTransactions(needingReview: true) }
+        if !workspace.reviews.isEmpty {
+            Button("Review captures (\(workspace.reviews.count))") { workspace.selectedTab = .sync }
+        }
         Button("Import CSV…") { workspace.showingImportPreview = true }.disabled(workspace.accounts.isEmpty)
     }
 }
