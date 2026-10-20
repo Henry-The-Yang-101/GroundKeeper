@@ -37,7 +37,7 @@ def test_writer_prompts_for_receiving_users_folder_and_preserves_unique_filename
     workflow = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())
     actions = workflow["WFWorkflowActions"]
     assert actions[-1]["WFWorkflowActionIdentifier"] == "is.workflow.actions.output"
-    save = next(i for i, action in enumerate(actions) if action["WFWorkflowActionIdentifier"] == "is.workflow.actions.documentpicker.save")
+    save = max(i for i, action in enumerate(actions) if action["WFWorkflowActionIdentifier"] == "is.workflow.actions.documentpicker.save")
     assert actions[save]["WFWorkflowActionParameters"]["WFAskWhereToSave"] is True
     assert actions[save-1]["WFWorkflowActionParameters"]["WFName"]["Value"]["string"].endswith(".json")
     assert len([a for a in actions if a["WFWorkflowActionIdentifier"] == "is.workflow.actions.number.random"]) == 2
@@ -45,16 +45,59 @@ def test_writer_prompts_for_receiving_users_folder_and_preserves_unique_filename
     assert {"schema_version", "event_id", "captured_at", "input_shape"} <= keys
 
 
-def test_wallet_saves_before_optional_receipt_and_ocr_uses_native_action():
-    wallet = plistlib.loads((ROOT / "GroundKeeper Wallet Automation.plist").read_bytes())
-    names = [a["WFWorkflowActionParameters"].get("WFWorkflowName") for a in wallet["WFWorkflowActions"]]
-    assert names[-2:] == ["GroundKeeper Capture Transaction", "GroundKeeper Add Receipt"]
+def test_adapters_use_one_writer_and_receipts_remain_optional():
+    for name in ("Wallet", "CIBC"):
+        workflow = plistlib.loads((ROOT / f"GroundKeeper {name} Automation.plist").read_bytes())
+        calls = [a["WFWorkflowActionParameters"].get("WFWorkflowName") for a in workflow["WFWorkflowActions"]]
+        assert calls == [None, "GroundKeeper Capture Transaction"]
     ocr = plistlib.loads((ROOT / "GK Receipt OCR.plist").read_bytes())
     assert ocr["WFWorkflowActions"][0]["WFWorkflowActionIdentifier"] == "is.workflow.actions.extracttextfromimage"
-    receipt = plistlib.loads((ROOT / "GroundKeeper Add Receipt.plist").read_bytes())
-    actions = receipt["WFWorkflowActions"]
-    assert any(a["WFWorkflowActionParameters"].get("WFMenuItems") == ["Text only", "Keep image"] for a in actions)
-    assert any(a["WFWorkflowActionParameters"].get("WFDictionaryKey") == "target" for a in actions)
+    actions = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
+    menus = [a["WFWorkflowActionParameters"].get("WFMenuItems") for a in actions]
+    assert ["Add receipt", "Add note", "Skip adding receipt"] in menus
+    assert ["Add note", "Save transaction"] in menus
+    assert ["Add receipt", "Skip adding receipt"] in menus
+    assert ["Text only", "Keep image"] in menus
+    assert not any("and note" in choice.lower() for menu in menus if menu for choice in menu)
+    # No save can execute before the final optional-details menu ends.
+    last_menu = max(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    saves = [i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".documentpicker.save")]
+    assert len(saves) == 2  # Optional image, then one combined capture JSON.
+    assert min(saves) > last_menu
+    assert saves[-1] == len(actions) - 2
+    # Cancellation/no-output guards stop before the final JSON write.
+    guards = [a["WFWorkflowActionParameters"] for a in actions[:saves[-1]] if a["WFWorkflowActionIdentifier"].endswith(".conditional")]
+    assert sum(g.get("WFCondition") == 101 for g in guards) >= 10
+
+
+def test_filename_structure_and_safe_components():
+    import re
+    actions = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
+    filename = actions[-3]["WFWorkflowActionParameters"]["WFName"]["Value"]
+    assert filename["string"] == "\ufffc_\ufffc_CAPTURE_\ufffc.json"
+    assert [v.get("VariableName") for v in list(filename["attachmentsByRange"].values())[:2]] == ["Filename Description", "Filename App"]
+    replacements = [a["WFWorkflowActionParameters"] for a in actions if a["WFWorkflowActionIdentifier"].endswith(".text.replace")]
+    safe = next(p for p in replacements if p["WFReplaceTextFind"] == "[^A-Za-z0-9_-]")
+    for description in ("Coffee Shop", "Store / Online: Order", "A\nB\tC", "../Cafe", "🦊 café"):
+        result = re.sub(safe["WFReplaceTextFind"], safe["WFReplaceTextReplace"], description)
+        assert re.fullmatch(r"[A-Za-z0-9_-]+", result)
+    assert any(a["WFWorkflowActionParameters"].get("WFDateFormat") == "yyyy-MM-dd_HH-mm-ss-SSS" for a in actions)
+
+
+def test_generator_is_repeatable(tmp_path, monkeypatch):
+    import importlib.util
+    import shutil
+    spec = importlib.util.spec_from_file_location("capture_builder", ROOT.parents[1] / "scripts/build_receipt_shortcuts.py")
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    for path in ROOT.glob("*.plist"):
+        shutil.copy(path, tmp_path / path.name)
+    monkeypatch.setattr(builder, "ROOT", tmp_path)
+    builder.main()
+    first = {p.name: p.read_bytes() for p in tmp_path.glob("*.plist")}
+    builder.main()
+    assert first == {p.name: p.read_bytes() for p in tmp_path.glob("*.plist")}
+    assert first == {p.name: p.read_bytes() for p in ROOT.glob("*.plist")}
 
 
 def test_dynamic_text_parameters_use_native_text_token_serialization():
@@ -66,3 +109,13 @@ def test_dynamic_text_parameters_use_native_text_token_serialization():
                 value = params.get(key)
                 if isinstance(value, dict):
                     assert value["WFSerializationType"] == "WFTextTokenString", (path.name, key)
+
+
+def test_native_replace_and_match_use_text_token_fields():
+    for path in ROOT.glob("*.plist"):
+        for action in plistlib.loads(path.read_bytes())["WFWorkflowActions"]:
+            params = action["WFWorkflowActionParameters"]
+            if action["WFWorkflowActionIdentifier"].endswith(".text.replace"):
+                assert params["WFInput"]["WFSerializationType"] == "WFTextTokenString"
+            if action["WFWorkflowActionIdentifier"].endswith(".text.match"):
+                assert params["text"]["WFSerializationType"] == "WFTextTokenString"

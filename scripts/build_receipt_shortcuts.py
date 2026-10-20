@@ -77,90 +77,237 @@ class Workflow:
         (ROOT / (self.name + ".plist")).write_bytes(plistlib.dumps(self.data, sort_keys=False))
 
 
+def formatted(*parts):
+    string, attachments = "", {}
+    for part in parts:
+        if isinstance(part, str):
+            string += part
+        else:
+            attachments[f"{{{len(string)}, 1}}"] = part
+            string += "\ufffc"
+    return {"Value": {"string": string, "attachmentsByRange": attachments}, "WFSerializationType": "WFTextTokenString"}
+
+
+def condition(w, value, code=100, equals=None):
+    group = str(uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{w.name}/if/{len(w.actions)}")).upper()
+    value = copy.deepcopy(value)
+    value["Aggrandizements"] = [{"CoercionItemClass": "WFStringContentItem", "Type": "WFCoercionVariableAggrandizement"}]
+    params = dict(GroupingIdentifier=group, WFControlFlowMode=0, WFCondition=code,
+                  WFInput={"Type": "Variable", "Variable": token(value)})
+    if equals is not None:
+        params["WFConditionalActionString"] = equals
+    w.add("conditional", **params)
+    return group
+
+
+def endif(w, group):
+    w.add("conditional", GroupingIdentifier=group, WFControlFlowMode=2)
+
+
+def require(w, value, message):
+    # Does not have any value. Cancellation/no output must never fall through to Save File.
+    group = condition(w, value, 101)
+    w.add("alert", WFAlertActionTitle="Capture not saved", WFAlertActionMessage=message, WFAlertActionCancelButtonShown=False)
+    w.add("exit")
+    endif(w, group)
+
+
+def replace(w, value, pattern, replacement):
+    return w.add("text.replace", WFInput=text(value), WFReplaceTextFind=pattern,
+                 WFReplaceTextReplace=replacement, WFReplaceTextRegularExpression=True,
+                 WFReplaceTextCaseSensitive=True)
+
+
+def bounded(w, value, maximum, message):
+    # Bound Unicode characters conservatively; the serialized envelope check
+    # also accounts for JSON escaping. Reject overlong input without truncation.
+    matched = w.add("text.match", text=text(value), WFMatchTextPattern=f"(?s)^.{{1,{maximum}}}$")
+    require(w, matched, message)
+
+
+def add_note(w):
+    note = w.add("ask", WFInputType="Text", WFAskActionPrompt="What was this transaction for?")
+    note = replace(w, note, r"^\s+|\s+$", "")
+    require(w, note, "Enter a note, or cancel and run the capture again to skip it.")
+    bounded(w, note, 2000, "Use a note of at most 2,000 characters.")
+    w.setvar("Saved Event", w.put(variable("Saved Event"), "note", note))
+
+
+def collect_receipt(w):
+    menu = w.menu("Add a receipt", ["Take photo", "Choose image"])
+    w.branch(menu, "Take photo")
+    photo = w.add("takephoto", WFPhotoCount=1, WFShowCamera=True, WFCameraDevice="Back")
+    w.setvar("Receipt Photo", photo)
+    w.branch(menu, "Choose image")
+    photo = w.add("selectphotos", WFSelectMultiplePhotos=False)
+    w.setvar("Receipt Photo", photo)
+    w.endmenu(menu)
+    require(w, variable("Receipt Photo"), "No receipt image was selected.")
+    recognized = w.run("GK Receipt OCR", variable("Receipt Photo"))
+    w.setvar("Receipt Text", recognized)
+    has_text = condition(w, variable("Receipt Text"))
+    bounded(w, variable("Receipt Text"), 8000, "The recognized receipt text is too long.")
+    endif(w, has_text)
+    payload = w.put(w.dictionary({}), "ocr", w.dictionary({"producer": "apple_shortcuts", "text": variable("Receipt Text")}))
+    w.setvar("Receipt Payload", payload)
+    keep = w.menu("Keep the receipt image too?", ["Text only", "Keep image"])
+    w.branch(keep, "Text only")
+    nonblank = replace(w, variable("Receipt Text"), r"^\s+|\s+$", "")
+    require(w, nonblank, "No text was recognized. Run again and choose Keep image.")
+    w.branch(keep, "Keep image")
+    converted = w.add("image.convert", WFInput=token(variable("Receipt Photo")), WFImageFormat="JPEG", WFImageCompressionQuality=0.85, WFImagePreserveMetadata=False)
+    require(w, converted, "The receipt could not be converted to JPEG.")
+    w.setvar("Receipt JPEG", converted)
+    digest = w.add("hash", WFInput=token(converted), WFHashType="SHA256")
+    w.setvar("Receipt Filename", w.add("gettext", WFTextActionText=formatted(digest, ".jpg")))
+    path = w.add("gettext", WFTextActionText=formatted("assets/", digest, ".jpg"))
+    payload = w.put(variable("Receipt Payload"), "image", w.dictionary({"path": path}))
+    w.setvar("Receipt Payload", payload)
+    w.endmenu(keep)
+    # No disk writes here: even the image waits until all later menus finish.
+    w.setvar("Saved Event", w.put(variable("Saved Event"), "receipt", variable("Receipt Payload")))
+
+
+def optional_details(w):
+    menu = w.menu("Add details to this transaction", ["Add receipt", "Add note", "Skip adding receipt"])
+    w.branch(menu, "Add receipt")
+    collect_receipt(w)
+    more = w.menu("Receipt added. Add a note?", ["Add note", "Save transaction"])
+    w.branch(more, "Add note")
+    add_note(w)
+    w.branch(more, "Save transaction")
+    w.add("nothing")
+    w.endmenu(more)
+    w.branch(menu, "Add note")
+    add_note(w)
+    more = w.menu("Note added. Add a receipt?", ["Add receipt", "Skip adding receipt"])
+    w.branch(more, "Add receipt")
+    collect_receipt(w)
+    w.branch(more, "Skip adding receipt")
+    w.add("nothing")
+    w.endmenu(more)
+    w.branch(menu, "Skip adding receipt")
+    w.add("nothing")
+    w.endmenu(menu)
+
+
+def save_image(w):
+    group = condition(w, variable("Receipt JPEG"))
+    image = w.add("setitemname", WFInput=token(variable("Receipt JPEG")), WFName=text(variable("Receipt Filename")))
+    saved = w.add("documentpicker.save", WFInput=token(image), WFAskWhereToSave=True, WFSaveFileOverwrite=False)
+    require(w, saved, "The receipt image was not saved. No capture JSON was created.")
+    endif(w, group)
+
+
+def filename(w, description, app, date):
+    # Restrict each descriptive component to a bounded filesystem-safe subset.
+    # Whitespace, path separators and punctuation become underscores.
+    for name, value in [("Filename Description", description), ("Filename App", app)]:
+        value = replace(w, value, r"[^A-Za-z0-9_-]", "_")
+        value = replace(w, value, r"^(.{60}).*$", "$1")
+        require(w, value, "The transaction description and app are required.")
+        w.setvar(name, value)
+    stamp = w.add("format.date", WFDate=text(date), WFDateFormatStyle="Custom", WFDateFormat="yyyy-MM-dd_HH-mm-ss-SSS")
+    return formatted(variable("Filename Description"), "_", variable("Filename App"), "_CAPTURE_", stamp, ".json")
+
+
 def main():
     writer_path = ROOT / "GroundKeeper Capture Transaction.plist"
     writer = plistlib.loads(writer_path.read_bytes())
-    # Existing writer's first 20 actions establish a fresh ID and capture time.
+    # Stable native ID/time prelude retained from the reviewed original writer.
     actions = writer["WFWorkflowActions"][:20]
-    writer["WFWorkflowActions"] = actions
-    envelope = output(actions[-1]["WFWorkflowActionParameters"]["UUID"], "Dictionary")
+    actions[16]["WFWorkflowActionParameters"]["WFNumberActionNumber"] = "4"
     w = Workflow("GroundKeeper Capture Transaction", writer)
     w.actions.extend(actions)
-    saved = w.setvar("Saved Event", envelope)
+    saved = w.setvar("Saved Event", output(actions[-1]["WFWorkflowActionParameters"]["UUID"], "Dictionary"))
+    # Initialize image variables on every invocation, including no-receipt runs.
+    empty = w.add("nothing")
+    w.setvar("Receipt JPEG", empty)
+    w.setvar("Receipt Filename", empty)
     source = w.get(saved, "source")
-    source["Aggrandizements"] = [{"CoercionItemClass": "WFStringContentItem", "Type": "WFCoercionVariableAggrandizement"}]
-    group = str(uuid.uuid5(uuid.NAMESPACE_URL, "groundkeeper/writer/receipt-schema")).upper()
-    w.add("conditional", GroupingIdentifier=group, WFControlFlowMode=0, WFCondition=4,
-          WFConditionalActionString="receipt_attachment", WFInput={"Type": "Variable", "Variable": token(source)})
+    group = condition(w, source, 4, "receipt_attachment")
     version = w.add("number", WFNumberActionNumber="3")
-    updated = w.put(saved, "schema_version", version)
-    w.setvar("Saved Event", updated)
-    w.add("conditional", GroupingIdentifier=group, WFControlFlowMode=2)
+    w.setvar("Saved Event", w.put(saved, "schema_version", version))
+    description = w.get(saved, "capture_description")
+    require(w, description, "Select an original payment with a transaction description.")
+    w.setvar("Capture Description", description)
+    target = w.get(saved, "target")
+    w.setvar("Capture App", w.get(target, "app"))
+    w.add("conditional", GroupingIdentifier=group, WFControlFlowMode=1)
+    wallet = condition(w, source, 4, "wallet_transaction")
+    w.setvar("Capture Description", w.get(saved, "merchant"))
+    amount = w.get(saved, "amount")
+    require(w, amount, "The Wallet transaction amount is missing.")
+    w.add("conditional", GroupingIdentifier=wallet, WFControlFlowMode=1)
+    bank = condition(w, source, 4, "bank_notification")
+    w.setvar("Capture Description", w.get(saved, "subtitle"))
+    require(w, w.get(saved, "body"), "The bank notification body is missing.")
+    w.add("conditional", GroupingIdentifier=bank, WFControlFlowMode=1)
+    w.add("alert", WFAlertActionTitle="Capture not saved", WFAlertActionMessage="Unsupported transaction source.", WFAlertActionCancelButtonShown=False)
+    w.add("exit")
+    endif(w, bank)
+    endif(w, wallet)
+    require(w, variable("Capture Description"), "The transaction description is missing.")
+    w.setvar("Capture App", w.get(saved, "app"))
+    require(w, variable("Capture App"), "The source app is missing.")
+    optional_details(w)
+    endif(w, group)
+    name = filename(w, variable("Capture Description"), variable("Capture App"), output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date"))
     serialized = w.add("detect.text", WFInput=token(saved))
-    filename = {"Value": {"string": "\ufffc.json", "attachmentsByRange": {"{0, 1}": variable("Event ID")}}, "WFSerializationType": "WFTextTokenString"}
-    named = w.add("setitemname", WFInput=token(serialized), WFName=filename)
+    w.setvar("Capture JSON", serialized)
+    # Conservative cap: <=16k Unicode characters fit within 64KiB UTF-8.
+    bounded(w, serialized, 16000, "The capture is too large. Use a shorter note or receipt.")
+    save_image(w)
+    named = w.add("setitemname", WFInput=token(variable("Capture JSON")), WFName=name)
     w.add("documentpicker.save", WFAskWhereToSave=True, WFSaveFileOverwrite=False, WFInput=token(named))
     w.add("output", WFOutput=text(saved))
     w.save()
 
-    wallet_path = ROOT / "GroundKeeper Wallet Automation.plist"
-    wallet = plistlib.loads(wallet_path.read_bytes())
-    wallet["WFWorkflowActions"] = wallet["WFWorkflowActions"][:2]
-    first = wallet["WFWorkflowActions"][-1]["WFWorkflowActionParameters"]["UUID"]
-    wallet["WFWorkflowActions"].append({"WFWorkflowActionIdentifier": "is.workflow.actions.runworkflow", "WFWorkflowActionParameters": {
-        "UUID": str(uuid.uuid5(uuid.NAMESPACE_URL, "groundkeeper/wallet/add-receipt")).upper(),
-        "WFWorkflowName": "GroundKeeper Add Receipt", "WFWorkflow": {"isSelf": False, "workflowName": "GroundKeeper Add Receipt"},
-        "WFInput": token(output(first, "Shortcut Result"))}})
-    wallet_path.write_bytes(plistlib.dumps(wallet, sort_keys=False))
+    # Both adapters use the same writer, which now owns all optional menus.
+    for name in ("GroundKeeper Wallet Automation", "GroundKeeper CIBC Automation"):
+        path = ROOT / (name + ".plist")
+        adapter = plistlib.loads(path.read_bytes())
+        adapter["WFWorkflowActions"] = adapter["WFWorkflowActions"][:2]
+        path.write_bytes(plistlib.dumps(adapter, sort_keys=False))
 
+    # Standalone later attachment still writes schema 3 and never another payment.
     r = Workflow("GroundKeeper Add Receipt", writer)
     payment = r.setvar("Payment", r.add("detect.dictionary", WFInput=token({"Type": "ExtensionInput"})))
-    # Only this explicit capture is targeted; do not search by amount or use a global last-payment variable.
+    for key in ("source", "app", "event_id"):
+        require(r, r.get(payment, key), "Select the original payment capture JSON.")
+    source = r.get(payment, "source")
+    group = condition(r, source, 4, "wallet_transaction")
+    r.setvar("Capture Description", r.get(payment, "merchant"))
+    r.add("conditional", GroupingIdentifier=group, WFControlFlowMode=1)
+    bank = condition(r, source, 4, "bank_notification")
+    r.setvar("Capture Description", r.get(payment, "subtitle"))
+    r.add("conditional", GroupingIdentifier=bank, WFControlFlowMode=1)
+    r.add("exit")
+    endif(r, bank)
+    endif(r, group)
     target = r.dictionary({key: r.get(payment, key) for key in ("source", "app", "event_id")})
-    r.setvar("Receipt Target", target)
-    menu = r.menu("Add a receipt for this payment? Your payment is already saved.", ["Skip", "Take photo", "Choose image"])
+    event = r.dictionary({"source": "receipt_attachment", "app": "Shortcuts", "capture_description": variable("Capture Description")})
+    event = r.put(event, "target", target)
+    r.setvar("Saved Event", event)
+    menu = r.menu("Add a receipt to this saved payment?", ["Add receipt", "Skip"])
     r.branch(menu, "Skip")
     r.add("exit")
-    r.branch(menu, "Take photo")
-    photo = r.add("takephoto", WFPhotoCount=1, WFShowCamera=True, WFCameraDevice="Back")
-    r.setvar("Receipt Photo", photo)
-    r.branch(menu, "Choose image")
-    photo = r.add("selectphotos", WFSelectMultiplePhotos=False)
-    r.setvar("Receipt Photo", photo)
+    r.branch(menu, "Add receipt")
+    empty = r.add("nothing")
+    r.setvar("Receipt JPEG", empty)
+    r.setvar("Receipt Filename", empty)
+    collect_receipt(r)
     r.endmenu(menu)
-    recognized = r.run("GK Receipt OCR", variable("Receipt Photo"))
-    r.setvar("Receipt Text", recognized)
-    ocr = r.dictionary({"producer": "apple_shortcuts", "text": variable("Receipt Text")})
-    payload = r.dictionary({})
-    payload = r.put(payload, "ocr", ocr)
-    r.setvar("Receipt Payload", payload)
-    keep = r.menu("Keep a receipt image in iCloud and your Mac vault? Text alone is enough for classification.", ["Text only", "Keep image"])
-    r.branch(keep, "Text only")
-    r.add("nothing")
-    r.branch(keep, "Keep image")
-    converted = r.add("image.convert", WFInput=token(variable("Receipt Photo")), WFImageFormat="JPEG", WFImageCompressionQuality=0.85, WFImagePreserveMetadata=False)
-    r.setvar("Receipt JPEG", converted)
-    digest = r.add("hash", WFInput=token(converted), WFHashType="SHA256")
-    name = {"Value": {"string": "\ufffc.jpg", "attachmentsByRange": {"{0, 1}": digest}}, "WFSerializationType": "WFTextTokenString"}
-    image = r.add("setitemname", WFInput=token(variable("Receipt JPEG")), WFName=name)
-    r.add("documentpicker.save", WFInput=token(image), WFAskWhereToSave=True, WFSaveFileOverwrite=False)
-    path = {"Value": {"string": "assets/\ufffc.jpg", "attachmentsByRange": {"{7, 1}": digest}}, "WFSerializationType": "WFTextTokenString"}
-    image_metadata = r.dictionary({})
-    path_value = r.add("gettext", WFTextActionText=path)
-    image_metadata = r.put(image_metadata, "path", path_value)
-    # Mac hashes the actual file bytes; Shortcuts' Hash output is used only as an opaque filename.
-    payload = r.put(variable("Receipt Payload"), "image", image_metadata)
-    r.setvar("Receipt Payload", payload)
-    r.endmenu(keep)
-    event = r.dictionary({"source": "receipt_attachment", "app": "Shortcuts"})
-    event = r.put(event, "target", variable("Receipt Target"))
-    event = r.put(event, "receipt", variable("Receipt Payload"))
-    result = r.run("GroundKeeper Capture Transaction", event)
+    serialized = r.add("detect.text", WFInput=token(variable("Saved Event")))
+    bounded(r, serialized, 15000, "The receipt is too large.")
+    save_image(r)
+    result = r.run("GroundKeeper Capture Transaction", variable("Saved Event"))
     r.add("output", WFOutput=text(result))
     r.save()
 
     later = Workflow("GroundKeeper Attach Receipt Later", writer)
     selected = later.add("documentpicker.open", WFSelectMultiple=False)
+    require(later, selected, "No payment file was selected.")
     payment = later.add("detect.dictionary", WFInput=token(selected))
     later.run("GroundKeeper Add Receipt", payment)
     later.save()

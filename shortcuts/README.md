@@ -11,7 +11,7 @@ Mac. Local Qwen and Laya classification do not require Shortcuts.
 | [GroundKeeper Capture Transaction.shortcut](GroundKeeper%20Capture%20Transaction.shortcut) | Shared iPhone capture writer |
 | [GroundKeeper Wallet Automation.shortcut](GroundKeeper%20Wallet%20Automation.shortcut) | Wallet transaction adapter; pass automation input |
 | [GK Receipt OCR.shortcut](GK%20Receipt%20OCR.shortcut) | Local Apple Extract Text from Image action |
-| [GroundKeeper Add Receipt.shortcut](GroundKeeper%20Add%20Receipt.shortcut) | Optional photo/image prompt after a payment is saved |
+| [GroundKeeper Add Receipt.shortcut](GroundKeeper%20Add%20Receipt.shortcut) | Attach a receipt to an existing payment |
 | [GroundKeeper Attach Receipt Later.shortcut](GroundKeeper%20Attach%20Receipt%20Later.shortcut) | Select the original saved payment JSON, then add a receipt |
 | [GroundKeeper CIBC Automation.shortcut](GroundKeeper%20CIBC%20Automation.shortcut) | Optional experimental notification adapter |
 | [GK Categorize Cloud.shortcut](GK%20Categorize%20Cloud.shortcut) | Apple Intelligence Cloud classification |
@@ -54,17 +54,18 @@ or device-specific automation references. Adapters read **Shortcut Input**;
 create the personal automation on your phone and pass its transaction or
 notification input to the adapter. If the shared writer is not resolved by name,
 reselect it in the adapter’s **Run Shortcut** action.
-Check every Run Shortcut target after importing: Wallet → Capture Transaction
-and Add Receipt; Add Receipt → GK Receipt OCR and Capture Transaction; Attach
-Receipt Later → Add Receipt. Select the installed helper explicitly if necessary.
+Check every Run Shortcut target after importing: Wallet/CIBC → Capture Transaction;
+Capture Transaction → GK Receipt OCR; Add Receipt → GK Receipt OCR and Capture
+Transaction; Attach Receipt Later → Add Receipt. Select the installed helper explicitly if necessary.
 
 1. Enable iCloud Drive and Shortcuts sync on both devices. Reuse
    `iCloud Drive/Shortcuts/Groundkeeper/inbox` as the capture destination.
 2. Open **GroundKeeper Capture Transaction** on the iPhone. Check its Save File
-   destination and grant access to that folder. The installer initially asks where
-   to save; choose the inbox and turn off **Ask Where to Save** for automation. This shared writer adds the
-   schema version, event ID, and capture time to the input dictionary, saves it,
-   then returns that saved envelope for the optional receipt step.
+   destination and grant access to that folder. The final Save File action writes
+   JSON to the inbox; the earlier image Save File action belongs in `inbox/assets`.
+   The installer initially asks where to save; configure both destinations and
+   turn off **Ask Where to Save**. The writer adds the schema version, event ID
+   and capture time, collects optional details, then saves the completed envelope.
 3. Open **GroundKeeper Wallet Automation**. Check that its **Run Shortcut**
    action targets the shared capture writer. Its dictionary uses
    `source: wallet_transaction`, `app: Wallet`, and the trigger's card/pass,
@@ -79,41 +80,52 @@ Receipt Later → Add Receipt. Select the installed helper explicitly if necessa
    labels against your accounts. The importer preserves source files and
    detects repeated deliveries.
 
-## Optional receipts
+## Optional receipts and notes
 
-Install the shared writer and all receipt helpers before the Wallet adapter.
-Its first Run Shortcut saves the payment; its second calls **GroundKeeper Add
-Receipt**. That helper offers **Skip**, **Take photo**, or **Choose image**. A
-cancelled prompt cannot undo the already saved payment. Interactive actions and
-locked-phone behavior still need an iPhone check.
+The shared writer first offers **Add receipt**, **Add note**, or **Skip adding
+receipt**. After adding a receipt, choose **Add note** or **Save transaction**.
+After adding a note, choose **Add receipt** or **Skip adding receipt**. Both are
+optional; there is no combined receipt-and-note button. Cancelling a menu, note,
+camera or photo picker aborts the capture. Choosing Skip deliberately saves the
+transaction with whatever details were already completed.
 
-The helper calls **GK Receipt OCR**, which uses Apple's native **Extract Text from
-Image** action and explicitly returns its text. No Apple Intelligence call is
-needed for OCR. Choose **Text only** to keep just recognized text. Choose **Keep
-image** to retain a JPEG as well. Create `assets` inside the inbox and configure
-Add Receipt's image Save File action to that directory; turn off Ask Where to
-Save once configured. Keep overwrite off. The capture writer's Save File action
-must still point to the inbox itself. These are two distinct destinations.
+No capture JSON is written until all chosen steps and validation finish. The
+result is one schema 4 payment with optional `note` and `receipt` fields. An
+empty selected image, blank requested note, empty text-only OCR, or an action
+error stops the run. Notes are limited to 2,000 characters and receipt OCR to
+8,000; a conservative serialized-size check protects the Mac's 64 KiB bound.
 
-The helper constructs nested dictionaries rather than interpolating OCR into a
-handwritten JSON string. A schema 3 receipt event references the original payment
-by source, app and event ID. It gets its own event ID; it does not overwrite the
-payment file. The Mac keeps source JSON, associates receipts with the reconciled
-purchase, imports optional images into the vault, and snapshots receipt context
-for classification. JSON may arrive before its image. Receipt text is still
-usable while the image downloads. Oversized/invalid receipt evidence is retained
-in the source folder for review rather than silently modifying the purchase.
+Filenames use `<transaction description>_<app>_CAPTURE_<timestamp>.json`, e.g.
+`Fictional_Coffee_Shop_Wallet_CAPTURE_2026-10-20_14-30-45-123.json`. The description
+is the Wallet merchant or bank subtitle, not the optional note. Spaces and other
+characters outside ASCII letters, digits, `_` and `-` become underscores. Each
+descriptive component is capped at 60 characters. The timestamp includes
+milliseconds; overwrite stays off. Event IDs inside JSON still provide replay
+identity, independently of names or renaming.
+
+Receipts offer **Take photo** or **Choose image**, then **Text only** or **Keep
+image**. **GK Receipt OCR** uses Apple's native Extract Text from Image action.
+For retained images, create `assets` inside the inbox. Configure Capture
+Transaction's image Save File action and Add Receipt's image Save File action to
+that folder, with overwrite off. Configure Capture Transaction's final JSON Save
+File action to the inbox itself. Images are saved only after all menus finish,
+immediately before JSON. Shortcuts cannot atomically save two files: a final
+JSON save failure can leave an unreferenced image, but creates no payment JSON.
 
 To attach a receipt later, run **GroundKeeper Attach Receipt Later** and select
-the intended payment JSON from the inbox. Do not select a receipt JSON or rely
-on a global "last purchase". Qwen and Laya consume bounded text locally. User
-categories are preserved. In Transactions, select a purchase and click
-**Receipts…** to see its evidence or read a retained image again on the Mac.
+the original payment JSON. This still creates an independent schema 3 receipt
+with an explicit parent identity. Do not select a receipt event or use a global
+last-payment variable. Install all updated helpers together when upgrading.
 
-Receipt input bounds and storage details are in the
-[capture contract](../contracts/capture/README.md). Native OCR was exercised on
-100 public images; source checks and signing do not establish real iPhone camera,
-folder permission, Wallet-trigger, or locked-phone behavior.
+On the Mac, **Notes & receipts…** displays the phone note alongside receipt
+evidence. Captured notes are preserved separately from editable transaction
+notes and are not sent to classifiers. Receipt text/image processing and
+classification consent remain unchanged. The importer accepts both old and new
+captures and does not rely on the filename. Source JSON stays in the inbox;
+optional images can arrive later and are imported into the local vault.
+
+Receiving-phone camera behavior, permissions, automation input and locked-phone
+menus still require a device check. See the [capture contract](../contracts/capture/README.md).
 
 The CIBC adapter is experimental and remains off in the development setup. It
 passes notification fields to the same writer with `notification_fields` as
@@ -139,12 +151,20 @@ The script converts each source to a binary `.shortcut` and uses Apple’s
 metadata. The signed files in this folder use Apple’s shareable signing chain.
 
 The app build bundles the catalog and every `.shortcut` from this folder. Source
-checks verify variable references, native text-token serialization, unique-file
-generation, and the absence of personal folder permissions and trigger selections.
-Signing and import were checked on Mac. Isolated native writer and receipt action
-checks produced schema 2 payments and schema 3 nested receipt JSON accepted by
-the importer. The receipt check inlined helper actions and omitted Save File;
-nested Run Shortcut execution stalled on this Mac even after selecting helpers.
-Real Wallet input, helper chaining on iPhone, folder permissions, cancellation,
-and locked-phone delivery still need device verification before unattended use.
-See the [receipt pilot](../experiments/receipts/README.md) for measured results.
+checks verify variable references, native text-token serialization, filename construction and final-write ordering, and the absence of personal folder permissions and trigger selections.
+Signing and native action checks are distinct from a real Wallet trigger.
+See the [receipt pilot](../experiments/receipts/README.md) for earlier measured OCR
+results. Physical iPhone triggers, cancellation, folder permissions and image
+saving still need verification on the receiving device.
+
+### Capture-details verification (2026-10-20)
+
+Native Mac Shortcuts checks produced the descriptive filename, a note-only
+capture, a capture with both receipt text and a quoted Unicode note, and no
+output after cancelling the first menu. The receipt-menu check substituted
+fictional photo/OCR outputs; it did not exercise a camera or photo permission.
+The final Save File action was replaced by CLI output into an isolated local
+directory. Those three native JSON outputs were imported into an isolated
+SQLCipher vault: three transactions, two captured notes, one receipt, no
+quarantined files and a passing integrity check. The app built successfully;
+29 Swift core tests and 39 Python capture/schema checks passed.

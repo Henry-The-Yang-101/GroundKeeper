@@ -39,7 +39,7 @@ import GroundKeeperCore
             let model = String(repeating: "a", count: 64)
             try await store.registerModel(id: model, name: "input-contract-only", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
             try await store.enqueueClassifications(modelID: model)
-            var contexts = 0, receiptCount = 0, imageCount = 0
+            var contexts = 0, receiptCount = 0, imageCount = 0, noteCount = 0
             while let task = try await store.claimClassification(modelID: model) {
                 if task.receiptContext != nil { contexts += 1 }
                 try await store.completeClassification(task, decision: .init(type: "unknown", category: "uncategorized", review: true))
@@ -47,10 +47,11 @@ import GroundKeeperCore
             let final = try await store.snapshot(limit: 5000)
             for transaction in final.transactions {
                 let receipts = try await store.receipts(transactionID: transaction.id)
+                noteCount += try await store.captureNotes(transactionID: transaction.id).count
                 receiptCount += receipts.count; imageCount += receipts.filter { $0.imageState == "stored" }.count
             }
             let report: [String: Any] = ["input_files": urls.count, "transactions": final.totalTransactions, "receipts": receiptCount,
-                "jobs_with_receipt_context": contexts, "stored_images": imageCount, "integrity_check": try await store.integrityCheck(),
+                "captured_notes": noteCount, "jobs_with_receipt_context": contexts, "stored_images": imageCount, "integrity_check": try await store.integrityCheck(),
                 "quarantined_files": final.queue.filter { $0.state == "quarantined" }.count,
                 "classification": "contract-only fixture; no model inference", "vault": "isolated encrypted temporary vault"]
             try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]).write(to: output)

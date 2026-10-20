@@ -127,8 +127,8 @@ struct PhoneSetupView: View {
                 } else { Label("\(name): export not available in this build", systemImage: "exclamationmark.circle").foregroundStyle(AppStyle.muted) }
             }
             Text("2. Set the destination").font(VaultTypography.section)
-            Text("On iPhone, edit GroundKeeper Capture Transaction. Set its Save File action to the same iCloud inbox selected here, turn off Ask Where to Save, and grant folder access. For a custom folder, update the Shortcut’s destination too.").foregroundStyle(AppStyle.muted)
-            Text("Receipt photos are optional. For image retention, create an assets folder inside that inbox and set Add Receipt’s image Save File action to it. Leave overwrite off. The default receipt choice keeps text only; retained images are copied into your local vault with its existing encryption mode.").foregroundStyle(AppStyle.muted)
+            Text("On iPhone, edit GroundKeeper Capture Transaction. Set its final JSON Save File action to the same iCloud inbox selected here, turn off Ask Where to Save, and grant folder access. For a custom folder, update the Shortcut’s destination too.").foregroundStyle(AppStyle.muted)
+            Text("Receipts and notes are optional. All chosen steps finish before the transaction is saved; cancelling stops the capture. For image retention, create an assets folder inside that inbox and set the image Save File actions in Capture Transaction and Add Receipt to it. Leave overwrite off. The default receipt choice keeps text only; retained images are copied into your local vault with its existing encryption mode.").foregroundStyle(AppStyle.muted)
             Text("3. Create a Wallet automation").font(VaultTypography.section)
             Text("Open Shortcuts → Automation → + → Transaction. Choose your cards and Run Immediately. Add Run Shortcut → GroundKeeper Wallet Automation and pass the transaction input. Check the merchant, amount, and card variables on your phone; available fields vary by iOS and card.").foregroundStyle(AppStyle.muted)
             Text("4. Add Apple Intelligence, if selected").font(VaultTypography.section)

@@ -8,22 +8,23 @@ separates measured results from phone behavior that still needs testing.
 
 ## Capture and processing
 
-1. The Wallet adapter saves the payment first. The writer returns the actual saved
-   envelope, including its event ID. A receipt prompt cannot undo that payment.
-2. Add Receipt offers Skip, Take photo, or Choose image. GK Receipt OCR uses the
-   native Extract Text from Image action, without invoking a language model.
-3. Text only saves a separate schema 3 receipt event. Keep image additionally
-   converts to JPEG without metadata and saves it beneath `inbox/assets`.
-4. The receipt event targets the payment's source, app, and event ID. It has its
-   own ID and file. Updating the original JSON would create sync/replay ambiguity
-   and discard the record of what arrived when, so this implementation preserves
-   separate immutable events instead.
-5. The Mac links the evidence even when files arrive out of order. An optional
-   image is imported into the local vault. Empty phone OCR can be recovered from
-   a retained image using native Vision; users can also request a new reading.
-6. The classifier job snapshots the receipt revision and a bounded context. A new
-   OCR revision invalidates stale jobs and may refresh an unconfirmed model
-   suggestion. Confirmed user categories and monetary fields remain authoritative.
+1. Wallet and bank adapters call the shared writer. It offers Add receipt, Add
+   note, or Skip adding receipt, followed by a choice to add the other detail.
+2. A receipt uses Take photo or Choose image, then native GK Receipt OCR. Text
+   only keeps recognized text; Keep image retains a JPEG without metadata.
+3. The writer waits until all selected steps finish before writing schema 4
+   payment JSON, with optional nested receipt and note. Cancellation/errors abort
+   the capture. An optional image is saved immediately before JSON; a failed
+   JSON save may leave an unreferenced image.
+4. Attach Receipt Later selects an existing payment and writes a separate schema
+   3 attachment referencing its source, app and event ID. Original captures are
+   never overwritten.
+5. The Mac imports payment and details atomically, links later attachments even
+   when files arrive out of order, and retries optional image delivery. Notes
+   appear in Notes & receipts and stay separate from editable ledger notes.
+6. Receipt classification snapshots, cloud consent, category protection and
+   monetary fields follow the existing rules. Captured notes remain local
+   evidence and are not included in classifier input.
 
 Apple documents a Wallet transaction trigger for a selected tapped card in its
 [Shortcuts guide](https://support.apple.com/en-euro/guide/shortcuts/apd65c67538a/ios).

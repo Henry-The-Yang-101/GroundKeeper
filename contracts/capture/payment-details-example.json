@@ -1,0 +1,19 @@
+{
+  "schema_version": 4,
+  "event_id": "fictional-payment-details",
+  "source": "wallet_transaction",
+  "app": "Wallet",
+  "captured_at": "2026-10-20T14:30:45-04:00",
+  "input_shape": "wallet_transaction_fields",
+  "merchant": "Fictional Coffee Shop",
+  "amount": "CAD 12.50",
+  "card_or_pass": "Example card",
+  "is_test": true,
+  "note": "Coffee beans for the office",
+  "receipt": {
+    "ocr": {
+      "producer": "apple_shortcuts",
+      "text": "COFFEE BEANS 12.50"
+    }
+  }
+}

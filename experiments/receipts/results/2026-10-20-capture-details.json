@@ -1,0 +1,22 @@
+{
+  "captured_notes": 2,
+  "classification": "contract-only fixture; no model inference",
+  "input_files": 3,
+  "integrity_check": true,
+  "jobs_with_receipt_context": 1,
+  "quarantined_files": 0,
+  "receipts": 1,
+  "stored_images": 0,
+  "transactions": 3,
+  "vault": "isolated encrypted temporary vault",
+  "native_checks": [
+    "skip with descriptive filename",
+    "note then skip receipt",
+    "receipt text then note",
+    "cancel produces no output"
+  ],
+  "fixture_inputs": "fictional; photo and OCR outputs substituted for receipt-menu check",
+  "save_surface": "CLI output into isolated local directory; final Save File omitted",
+  "iphone_verified": false,
+  "native_filename": "Fictional_Coffee_Shop_Wallet_CAPTURE_2026-10-20_16-46-40-962.json"
+}
