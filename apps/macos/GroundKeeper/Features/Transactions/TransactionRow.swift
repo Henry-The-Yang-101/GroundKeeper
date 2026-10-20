@@ -14,7 +14,7 @@ struct TransactionRow: View {
         HStack(spacing: 12) {
             CategoryIcon(category: transaction.category)
             VStack(alignment: .leading, spacing: 4) {
-                Text(transaction.merchant).fontWeight(.medium)
+                Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
                 Text(detail)
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -26,7 +26,7 @@ struct TransactionRow: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 15)
         .accessibilityElement(children: .combine)
     }
 }

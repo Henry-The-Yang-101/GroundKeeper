@@ -1,5 +1,22 @@
 import SwiftUI
 
+struct VaultFormSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    init(_ title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        Section { content } header: {
+            Text(title).font(VaultTypography.section).foregroundStyle(AppStyle.text)
+                .accessibilityAddTraits(.isHeader)
+        }
+    }
+}
+
 struct PageHeading: View {
     let title: String
     let subtitle: String
@@ -102,12 +119,15 @@ struct UnavailableFeature: View {
 }
 
 struct Metric: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let label: String
     let value: String
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(label).font(.caption).foregroundStyle(.secondary)
             Text(value).font(.title3.weight(.medium)).monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(reduceMotion ? nil : VaultMotion.feedback, value: value)
         }
         .accessibilityElement(children: .combine)
     }

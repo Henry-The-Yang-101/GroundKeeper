@@ -40,6 +40,7 @@ import GroundKeeperCore
     var editor: Transaction?
     var showingImportPreview = false
     var errorMessage: String?
+    var feedback: WorkspaceFeedback?
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
@@ -170,13 +171,18 @@ import GroundKeeperCore
             try await store.save(transaction.edit)
             self.editor = nil
             try await self.refresh()
+            self.feedback = WorkspaceFeedback(message: "Transaction saved")
         }
     }
     func delete(_ transaction: Transaction) {
         perform { try await self.store?.delete(id: transaction.id.uuidString, revision: transaction.revision); try await self.refresh() }
     }
     func addAccount(name: String, currency: String, kind: String) {
-        perform { try await self.store?.addAccount(name: name, currency: currency, kind: kind); try await self.refresh() }
+        perform {
+            try await self.store?.addAccount(name: name, currency: currency, kind: kind)
+            try await self.refresh()
+            self.feedback = WorkspaceFeedback(message: "Account added")
+        }
     }
     func map(_ review: ReviewRecord, accountID: String) {
         perform {

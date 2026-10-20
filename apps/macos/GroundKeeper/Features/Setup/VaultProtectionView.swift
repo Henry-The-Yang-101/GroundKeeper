@@ -2,6 +2,7 @@ import SwiftUI
 
 struct VaultProtectionView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onboarding = false
     var onApplied: () -> Void = {}
     @State private var encrypt = true
@@ -43,10 +44,14 @@ struct VaultProtectionView: View {
                             onApplied()
                         } catch { self.error = error.localizedDescription }
                     }
-                }.buttonStyle(.borderedProminent)
+                }.buttonStyle(.brass)
                     .disabled(!workspace.ready || workspace.saving || workspace.processing || (workspace.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
-                if applied { Label("Saved", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
+                if applied {
+                    Label("Saved", systemImage: "checkmark.circle.fill").foregroundStyle(AppStyle.accent)
+                        .transition(.opacity)
+                }
             }
+            .animation(reduceMotion ? nil : VaultMotion.feedback, value: applied)
         }
         .textFieldStyle(.roundedBorder)
         .onAppear { encrypt = onboarding ? true : workspace.encrypted; remember = VaultKeychain.isEnabled }
@@ -60,12 +65,12 @@ struct VaultUnlockView: View {
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "lock.shield.fill").font(.system(size: 72)).foregroundStyle(.tint)
-            Text("Your vault is locked.").font(.system(size: 36, weight: .bold))
+            Text("Your vault is locked.").font(VaultTypography.welcome)
             Text("Unlock to see your transactions and resume processing.").foregroundStyle(.secondary)
             SecureField("Vault passphrase", text: $passphrase).textFieldStyle(.roundedBorder).frame(width: 340)
                 .onSubmit { unlock() }
             HStack {
-                Button(workspace.unlocking ? "Unlocking…" : "Unlock", action: unlock).buttonStyle(.borderedProminent)
+                Button(workspace.unlocking ? "Unlocking…" : "Unlock", action: unlock).buttonStyle(.brass)
                     .disabled(passphrase.isEmpty || workspace.unlocking)
                 if VaultKeychain.isEnabled {
                     Button("Touch ID or Mac password") { Task { await workspace.unlock(usingKeychain: true) } }
@@ -76,6 +81,7 @@ struct VaultUnlockView: View {
             Text("Your vault stays on this Mac. Use the passphrase you chose during setup.")
                 .font(.callout).foregroundStyle(.secondary)
         }.padding(50).frame(maxWidth: .infinity, maxHeight: .infinity).frame(minWidth: 760, minHeight: 600)
+            .background(AppStyle.pageBackground)
             .onDisappear { passphrase = "" }
     }
     private func unlock() { let key = passphrase; passphrase = ""; Task { await workspace.unlock(passphrase: key) } }

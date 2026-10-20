@@ -28,6 +28,7 @@ struct TransactionsView: View {
         @Bindable var workspace = workspace
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
+                PageHeading(title: "Transactions", subtitle: "Every entry, kept in order.")
                 HStack(spacing: 12) {
                     TextField("Search transactions", text: $search)
                         .textFieldStyle(.roundedBorder)
@@ -65,7 +66,7 @@ struct TransactionsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(transaction.merchant).fontWeight(.medium)
                         Text(transaction.account).font(.caption).foregroundStyle(.secondary)
-                    }.padding(.vertical, 6)
+                    }.padding(.vertical, 15)
                 }.width(min: 140, ideal: 190)
                 TableColumn("Category / type") { transaction in
                     VStack(alignment: .leading, spacing: 4) {
@@ -86,6 +87,8 @@ struct TransactionsView: View {
                     }.frame(maxWidth: .infinity, alignment: .trailing)
                 }.width(min: 100, ideal: 110, max: 150)
             }
+            .scrollContentBackground(.hidden)
+            .background(AppStyle.surface)
             .contextMenu(forSelectionType: Transaction.ID.self) { ids in
                 if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
                     Button("Edit transaction…") { workspace.editor = transaction }
@@ -98,7 +101,11 @@ struct TransactionsView: View {
             .overlay {
                 if filteredTransactions.isEmpty {
                     ContentUnavailableView {
-                        Label(hasFilters ? "No matching transactions" : "No transactions yet", systemImage: hasFilters ? "magnifyingglass" : "tray")
+                        Label {
+                            Text(hasFilters ? "No matching transactions" : "No transactions yet").font(VaultTypography.section)
+                        } icon: {
+                            Image(systemName: hasFilters ? "magnifyingglass" : "tray").foregroundStyle(AppStyle.accent)
+                        }
                     } description: {
                         Text(hasFilters ? "Try a different search or clear your filters." : "Import or add a transaction.")
                     } actions: {
@@ -111,20 +118,15 @@ struct TransactionsView: View {
                 }
             }
             Divider()
-            HStack {
-                Text("\(filteredTransactions.count) \(filteredTransactions.count == 1 ? "transaction" : "transactions")").foregroundStyle(.secondary)
-                Spacer()
-                Button("Previous") { workspace.changePage(workspace.page - 1) }.disabled(workspace.page == 0)
-                Text("Page \(workspace.page + 1)").font(.caption)
-                Button("Next") { workspace.changePage(workspace.page + 1) }.disabled((workspace.page + 1) * 500 >= workspace.totalTransactions)
-                Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
-                    .disabled(selectedTransaction == nil)
-                Button("Edit…") { workspace.editor = selectedTransaction }
-                    .disabled(selectedTransaction == nil)
-                    .keyboardShortcut("e", modifiers: .command)
-                Button("Receipts…") { receiptTransaction = selectedTransaction }.disabled(selectedTransaction == nil)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) { pagination; Spacer(minLength: 0); selectionActions }
+                VStack(alignment: .leading, spacing: 12) {
+                    pagination
+                    HStack { Spacer(); selectionActions }
+                }
             }.padding(.horizontal, 20).padding(.vertical, 12)
         }
+        .background(AppStyle.pageBackground)
         .task(id: workspace.focusTransactionSearch) {
             guard workspace.focusTransactionSearch else { return }
             // Let the split-view navigation install its focus scope first.
@@ -147,12 +149,34 @@ struct TransactionsView: View {
         }
         .sheet(item: $receiptTransaction) { transaction in
             VStack(alignment: .leading, spacing: 16) {
-                Text(transaction.merchant).font(.title2.weight(.semibold))
+                Text(transaction.merchant).font(VaultTypography.sheet)
                 Text("Receipt evidence stays with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(.secondary)
                 ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack { Spacer(); Button("Done") { receiptTransaction = nil } }
-            }.padding(24).frame(width: 650, height: 650)
+            }.padding(24).frame(width: 650, height: 650).vaultSheet()
         }
+    }
+
+    private var pagination: some View {
+        HStack(spacing: 10) {
+            Text("\(filteredTransactions.count) \(filteredTransactions.count == 1 ? "transaction" : "transactions")")
+                .font(.caption).foregroundStyle(AppStyle.muted)
+            Button { workspace.changePage(workspace.page - 1) } label: {
+                Image(systemName: "chevron.left")
+            }.disabled(workspace.page == 0).accessibilityLabel("Previous page")
+            Text("Page \(workspace.page + 1)").font(.caption).monospacedDigit()
+            Button { workspace.changePage(workspace.page + 1) } label: {
+                Image(systemName: "chevron.right")
+            }.disabled((workspace.page + 1) * 500 >= workspace.totalTransactions).accessibilityLabel("Next page")
+        }.fixedSize()
+    }
+
+    private var selectionActions: some View {
+        HStack(spacing: 10) {
+            Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
+            Button("Receipts…") { receiptTransaction = selectedTransaction }
+            Button("Edit…") { workspace.editor = selectedTransaction }.keyboardShortcut("e", modifiers: .command)
+        }.disabled(selectedTransaction == nil).fixedSize()
     }
 
     private func focusSearchIfRequested() {

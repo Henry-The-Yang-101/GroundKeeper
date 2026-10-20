@@ -80,7 +80,7 @@ private struct CaptureReviewRow: View {
             }
             Button("Dismiss review") { workspace.dismiss(review) }.font(.caption)
         }.disabled(workspace.saving)
-        .sheet(isPresented: $correcting) { CaptureCorrection(review: review) }
+        .sheet(isPresented: $correcting) { CaptureCorrection(review: review).vaultSheet() }
     }
 }
 
@@ -96,7 +96,7 @@ private struct CaptureCorrection: View {
     @State private var saving = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Correct capture details").font(.title2)
+            Text("Correct capture details").font(VaultTypography.sheet)
             Text("Original source evidence is preserved. Enter a negative amount for money out, positive for money in.").foregroundStyle(.secondary)
             Form {
                 TextField("Description", text: $description)
@@ -118,7 +118,7 @@ private struct CaptureCorrection: View {
                         do { try await workspace.correct(review, description: description, amount: amount, accountID: accountID, day: day); dismiss() }
                         catch { self.error = error.localizedDescription }
                     }
-                }.disabled(saving || accountID.isEmpty).buttonStyle(.borderedProminent)
+                }.disabled(saving || accountID.isEmpty).buttonStyle(.brass)
             }
         }.padding(24).frame(width: 520).onAppear { description = review.description }
     }

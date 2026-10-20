@@ -3,6 +3,7 @@ import SwiftUI
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppWorkspace.self) private var workspace
+    // A sheet owns an edit session. Parent refreshes must not overwrite unsaved input.
     @State private var draft: Transaction
     @State private var amountText: String
     @State private var showingDiscardConfirmation = false
@@ -48,7 +49,7 @@ struct TransactionEditor: View {
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(original.merchant.isEmpty ? "Add transaction" : "Edit transaction")
-                        .font(.title2.weight(.semibold))
+                        .font(VaultTypography.sheet)
                     Text("Saved to your local database")
                         .font(.callout).foregroundStyle(.secondary)
                 }
@@ -56,7 +57,7 @@ struct TransactionEditor: View {
             }.padding(24)
             Divider()
             Form {
-                Section("Transaction") {
+                VaultFormSection("Transaction") {
                     TextField("Merchant or description", text: $draft.merchant)
                         .focused($merchantFocused)
                     HStack {
@@ -91,20 +92,20 @@ struct TransactionEditor: View {
                     TextField("Notes", text: $draft.notes, axis: .vertical)
                         .lineLimit(3...5)
                 } header: {
-                    Text("Details")
+                    Text("Details").font(VaultTypography.section)
                 } footer: {
                     Text(draft.kind.usesCategory && draft.category == .other
                          ? "Add a note describing this expense."
                          : "Changes apply to this transaction only. Uncategorized purchases stay in review.")
                 }
             }
-            .formStyle(.grouped)
+            .formStyle(.grouped).scrollContentBackground(.hidden)
             Divider()
             HStack {
                 Button("Cancel", action: cancel).keyboardShortcut(.cancelAction)
                 Spacer()
                 Button("Save transaction") { save() }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.brass)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!valid || workspace.saving)
             }.padding(20)

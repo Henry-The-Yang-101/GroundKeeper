@@ -11,7 +11,7 @@ struct ModelSetupView: View {
                 ForEach(models) { model in
                     VStack(alignment: .leading, spacing: 12) {
                         Image(systemName: model.id == "laya" ? "leaf" : "cpu").font(.title).foregroundStyle(.tint)
-                        Text(model.title).font(.title2.bold())
+                        Text(model.title).font(VaultTypography.section)
                         Text(model.id == "laya" ? "A focused local classifier, running on your Mac." : "Local language-model suggestions, running on your Mac.")
                             .foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
                         Text(ByteCountFormatter.string(fromByteCount: model.downloadBytes, countStyle: .file) + " download").font(.caption)
@@ -21,7 +21,8 @@ struct ModelSetupView: View {
                             Button("Install \(model.title)") { installer.install([model]) }.disabled(installer.busy)
                         }
                     }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 16))
+                        .background(AppStyle.surface, in: RoundedRectangle(cornerRadius: 10))
+                        .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(AppStyle.separator) }
                 }
             }
             HStack {
@@ -36,7 +37,7 @@ struct ModelSetupView: View {
             else { Text(installer.status).font(.callout).foregroundStyle(.secondary) }
             if let error = installer.error { Text(error).foregroundStyle(.red) }
             Divider()
-            Label("Apple Intelligence Cloud", systemImage: "apple.intelligence").font(.title3.bold())
+            Label("Apple Intelligence Cloud", systemImage: "apple.intelligence").font(VaultTypography.section)
             Text("No local model download needed. The included Shortcut uses Cloud with Broad World Knowledge. Description, direction, and currency go to the Shortcut and may be processed by Apple’s cloud service. Internet access, a compatible Mac, and Apple Intelligence are required; usage limits can apply.")
                 .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {

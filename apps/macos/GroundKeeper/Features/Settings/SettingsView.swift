@@ -14,12 +14,13 @@ struct SettingsView: View {
     @State private var kind = "credit_card"
     var body: some View {
         Form {
-            Section("Appearance") {
+            VaultFormSection("Appearance") {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented)
+                Text("Brass vault · Fraunces headings").font(.caption).foregroundStyle(AppStyle.muted)
             }
-            Section("Queue processing") {
+            VaultFormSection("Queue processing") {
                 Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
                     ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !workspace.encrypted) }) { Text($0.title).tag($0) }
                 }.disabled(workspace.changingProcessingMode || workspace.saving)
@@ -48,7 +49,7 @@ struct SettingsView: View {
                 }
                 if workspace.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(.secondary) }
                 if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
-            } header: { Text("Local vault") }
+            } header: { Text("Local vault").font(VaultTypography.section) }
             Section {
                 LabeledContent("Model", value: workspace.classifierStatus)
                 Button("Install models or choose a provider…") { showingModels = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
@@ -66,7 +67,7 @@ struct SettingsView: View {
                 LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
                 Text("Choose a Qwen or Laya package for local inference, or explicitly enable the Shortcut above. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
                     .font(.caption).foregroundStyle(.secondary)
-            } header: { Text("Categorization") }
+            } header: { Text("Categorization").font(VaultTypography.section) }
             Section {
                 ForEach(workspace.accounts) { account in LabeledContent(account.name, value: account.currency) }
                 TextField("New account name", text: $accountName)
@@ -78,8 +79,8 @@ struct SettingsView: View {
                 Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
                     .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespaces).isEmpty)
                 Text("Confirm Wallet and bank card labels in Sync. Names and last-four digits alone do not establish account identity.").font(.caption).foregroundStyle(.secondary)
-            } header: { Text("Accounts") }
-            Section("Setup and iPhone") {
+            } header: { Text("Accounts").font(VaultTypography.section) }
+            VaultFormSection("Setup and iPhone") {
                 Button("Review setup assistant…") { AppPreferences.defaults.set(0, forKey: "setupStep"); workspace.showingSetup = true }
                     .disabled(workspace.processing || workspace.saving)
                 Button("iPhone Shortcuts and automation guide…") { showingPhoneGuide = true }
@@ -87,26 +88,39 @@ struct SettingsView: View {
                 Button("Choose capture folder…", action: workspace.selectFolder)
                 Text(workspace.captureFolderPath).font(.caption).textSelection(.enabled)
             }
-            Section("GroundKeeper") {
+            VaultFormSection("GroundKeeper") {
                 Text("Local capture, import, reconciliation and classification")
                 Text("Analytics and planning will be added later.").foregroundStyle(.secondary)
             }
-        }.formStyle(.grouped).frame(maxWidth: 850).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
+        }.formStyle(.grouped).scrollContentBackground(.hidden)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                PageHeading(title: "Settings", subtitle: "Make this space your own.")
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(28)
+                    .background(AppStyle.pageBackground)
+            }
+            .frame(maxWidth: 850).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
             .sheet(isPresented: $showingProtection) {
                 VStack(alignment: .leading, spacing: 24) {
-                    Text("Vault protection").font(.largeTitle.bold())
+                    Text("Vault protection").font(VaultTypography.sheet)
                     VaultProtectionView()
                     HStack { Spacer(); Button("Done") { showingProtection = false }.disabled(workspace.saving) }
-                }.padding(32).frame(width: 580).interactiveDismissDisabled(workspace.saving)
+                }.padding(32).frame(width: 580).vaultSheet().interactiveDismissDisabled(workspace.saving)
             }
             .sheet(isPresented: $showingModels) {
                 VStack {
+                    Text("Categorization").font(VaultTypography.sheet)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 30).padding(.top, 24)
                     ScrollView { ModelSetupView(installer: installer).padding(30) }
                     HStack { Spacer(); Button("Done") { showingModels = false }.disabled(installer.busy || workspace.saving) }.padding()
-                }.frame(width: 720, height: 730).interactiveDismissDisabled(installer.busy || workspace.saving)
+                }.frame(width: 720, height: 730).vaultSheet().interactiveDismissDisabled(installer.busy || workspace.saving)
             }
             .sheet(isPresented: $showingPhoneGuide) {
-                VStack { ScrollView { PhoneSetupView().padding(30) }; Button("Done") { showingPhoneGuide = false }.padding() }.frame(width: 700, height: 700)
+                VStack {
+                    Text("iPhone capture").font(VaultTypography.sheet)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 30).padding(.top, 24)
+                    ScrollView { PhoneSetupView().padding(30) }
+                    Button("Done") { showingPhoneGuide = false }.keyboardShortcut(.cancelAction).padding()
+                }.frame(width: 700, height: 700).vaultSheet()
             }
     }
 }

@@ -3,7 +3,7 @@ import SwiftUI
 struct GroundKeeperApp: App {
     @NSApplicationDelegateAdaptor(GroundKeeperLifecycle.self) private var lifecycle
     @State private var workspace = AppWorkspace()
-    @AppStorage("appearance") private var appearance = AppAppearance.system
+    @AppStorage("appearance", store: AppPreferences.defaults) private var appearance = AppAppearance.system
 
     init() {
         VaultTypography.register()

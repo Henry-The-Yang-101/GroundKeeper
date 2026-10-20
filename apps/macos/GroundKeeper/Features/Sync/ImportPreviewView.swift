@@ -18,7 +18,7 @@ struct ImportPreviewView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Import bank CSV").font(.title2.weight(.semibold))
+            Text("Import bank CSV").font(VaultTypography.sheet)
             if let result {
                 Label(result, systemImage: "checkmark.circle")
                 Text("Possible matches are in Sync → Review captures. Categories remain suggestions until you confirm them.").foregroundStyle(.secondary)
@@ -42,7 +42,7 @@ struct ImportPreviewView: View {
                         Toggle("Positive amounts mean spending", isOn: $mapping.positiveMeansDebit).disabled(mapping.creditColumn != nil)
                         Toggle("Comma decimal separator (1.234,56)", isOn: $mapping.decimalComma)
                         Text("Signed amounts: negative is money out, positive is money in. A debit/credit pair must contain exactly one positive value. Select a bank ID only if it uniquely identifies a posted record.").font(.caption)
-                    }.formStyle(.grouped)
+                    }.formStyle(.grouped).scrollContentBackground(.hidden)
                 } else {
                     Text("\(rows.count - skipped.count) rows selected · \(rows.filter { $0.error != nil }.count) invalid")
                     Button("Skip all invalid rows") { skipped.formUnion(rows.filter { $0.error != nil }.map(\.id)) }
@@ -91,7 +91,7 @@ struct ImportPreviewView: View {
                                 } catch { self.error = error.localizedDescription }
                             }
                         }
-                    }.buttonStyle(.borderedProminent)
+                    }.buttonStyle(.brass)
                     .disabled(busy || mapping.accountID.isEmpty || (reviewing && (rows.allSatisfy { skipped.contains($0.id) } || rows.contains { $0.error != nil && !skipped.contains($0.id) })))
                 }
             }

@@ -7,14 +7,14 @@ struct RootView: View {
         @Bindable var workspace = workspace
         NavigationSplitView {
             SidebarView(selection: $workspace.selectedTab, reviewCount: workspace.reviewCount)
-                .navigationSplitViewColumnWidth(min: 190, ideal: 215, max: 260)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 230, max: 280)
         } detail: {
             selectedPage
                 .navigationTitle(workspace.selectedTab?.title ?? "Home")
                 .toolbar {
                     ToolbarItem(placement: .automatic) {
-                        Text(workspace.ready ? "Local vault" : "Opening vault")
-                            .font(.caption).foregroundStyle(.secondary)
+                        Label(workspace.ready ? "Local vault" : "Opening vault", systemImage: "internaldrive")
+                            .font(.caption).foregroundStyle(AppStyle.muted)
                             .padding(.horizontal, 10)
                             .help(workspace.status)
                     }
@@ -30,12 +30,14 @@ struct RootView: View {
                 }
         }
         .navigationSplitViewStyle(.balanced)
+        .background(AppStyle.pageBackground)
         .frame(minWidth: 760, minHeight: 560)
+        .overlay(alignment: .bottom) { WorkspaceFeedbackView() }
         .sheet(item: $workspace.editor) { transaction in
-            TransactionEditor(transaction: transaction, onSave: workspace.save)
+            TransactionEditor(transaction: transaction, onSave: workspace.save).vaultSheet()
         }
         .sheet(isPresented: $workspace.showingImportPreview) {
-            ImportPreviewView()
+            ImportPreviewView().vaultSheet()
         }
         .alert("GroundKeeper needs attention", isPresented: Binding(get: { workspace.errorMessage != nil }, set: { if !$0 { workspace.errorMessage = nil } })) {
             Button("OK") { workspace.errorMessage = nil }
