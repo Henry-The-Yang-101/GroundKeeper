@@ -18,7 +18,11 @@ struct GroundKeeperApp: App {
             }
                 .environment(workspace)
                 .defaultAppStorage(AppPreferences.defaults)
-                .preferredColorScheme(appearance.colorScheme)
+                .onChange(of: appearance, initial: true) {
+                    // Removing a SwiftUI preferredColorScheme can leave the hosting
+                    // view in its last override. AppKit nil restores system inheritance.
+                    NSApp.appearance = appearance.appKitAppearance
+                }
                 .tint(AppStyle.accent)
                 .foregroundStyle(AppStyle.text)
                 .task {

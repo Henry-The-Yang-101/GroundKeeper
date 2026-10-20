@@ -1,4 +1,4 @@
-import SwiftUI
+import AppKit
 
 enum InsightsSection: String, CaseIterable, Identifiable {
     case spending = "Spending"
@@ -12,11 +12,11 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     case light = "Light"
     case dark = "Dark"
     var id: Self { self }
-    var colorScheme: ColorScheme? {
+    var appKitAppearance: NSAppearance? {
         switch self {
         case .system: nil
-        case .light: .light
-        case .dark: .dark
+        case .light: NSAppearance(named: .aqua)
+        case .dark: NSAppearance(named: .darkAqua)
         }
     }
 }

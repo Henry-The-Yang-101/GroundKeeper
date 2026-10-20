@@ -35,6 +35,11 @@ continue to use the real vault. To inspect an empty onboarding step instead, use
 Visual verification should cover both appearances, minimum-width windows,
 sidebar visibility, long merchant names, review filtering, empty search results,
 editing and save feedback, imports, receipts, and Settings sheets.
+For appearance regression checks, select Dark → System while macOS is light,
+then Light → System while macOS is dark. Content, native controls, and newly
+opened sheets should all return to the current system appearance without a
+relaunch. System mode uses AppKit appearance inheritance so later macOS
+appearance changes also propagate.
 
 ## Build and launch
 
