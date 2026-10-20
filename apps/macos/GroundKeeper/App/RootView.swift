@@ -9,7 +9,7 @@ struct RootView: View {
         // beyond the host window. Read the proposal here instead of screen bounds.
         GeometryReader { geometry in
             NavigationSplitView {
-                SidebarView(selection: $workspace.selectedTab, reviewCount: workspace.reviewCount)
+                SidebarView(selection: $workspace.selectedTab, reviewCount: workspace.reviewCount, queueCount: workspace.queueCount)
                     .navigationSplitViewColumnWidth(min: 220, ideal: 230, max: 280)
             } detail: {
                 selectedPage

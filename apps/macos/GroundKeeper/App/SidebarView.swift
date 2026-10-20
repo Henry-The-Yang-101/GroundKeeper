@@ -3,6 +3,7 @@ import SwiftUI
 struct SidebarView: View {
     @Binding var selection: AppTab?
     let reviewCount: Int
+    let queueCount: Int
 
     var body: some View {
         List(selection: $selection) {
@@ -14,7 +15,7 @@ struct SidebarView: View {
                         Image(systemName: tab.symbol(isSelected: selection == tab))
                             .foregroundStyle(selection == tab ? AppStyle.accent : AppStyle.muted)
                     }
-                        .badge(tab == .home ? reviewCount : 0)
+                        .badge(badgeCount(for: tab))
                         .tag(tab)
                         .help("\(tab.title) (⌘\(String(tab.shortcut)))")
                 }
@@ -56,6 +57,14 @@ struct SidebarView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(18)
             .background(AppStyle.sidebar)
+        }
+    }
+
+    private func badgeCount(for tab: AppTab) -> Int {
+        switch tab {
+        case .home: reviewCount
+        case .sync: queueCount
+        default: 0
         }
     }
 }

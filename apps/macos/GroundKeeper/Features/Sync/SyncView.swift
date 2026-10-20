@@ -7,7 +7,9 @@ struct SyncView: View {
         PageContent {
             PageHeading(title: "Sync", subtitle: "Capture on your iPhone. Review on your Mac.")
             Surface {
-                SectionHeading(title: "iCloud capture folder", detail: workspace.folderName)
+                SectionHeading(title: "iCloud capture folder", detail: workspace.captureFolderPath)
+                    .textSelection(.enabled)
+                    .help(workspace.captureFolderPath)
                 Text(workspace.status).foregroundStyle(AppStyle.muted)
                 if let last = workspace.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
                 HStack {
