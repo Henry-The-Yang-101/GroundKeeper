@@ -38,9 +38,11 @@ inferring purchase contents or motivation.
 
 ## Optional receipt OCR
 
-- Planned, opt-in feature; ordinary capture, CSV import, and spending analysis
-  remain usable without receipts. Prefer Apple's Vision framework for on-device
-  text recognition; this is a proposed implementation, not an existing capability.
+- Receipt capture and bounded classification context now have an implementation;
+  see the [capture contract](../contracts/capture/README.md) and
+  [receipt pilot](../experiments/receipts/README.md). Phone automation/camera
+  behavior needs device validation. Receipt-based analytics below remain planned;
+  ordinary capture and CSV import remain usable without receipts.
 - Extract available merchant, date, currency, subtotal, tax, total, and line items.
   Preserve the original image, recognized text, extraction version, and available
   confidence information as source evidence. Missing or uncertain fields require

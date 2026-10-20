@@ -145,6 +145,10 @@ extension LedgerStore {
     public func receiptImage(id: String) throws -> Data? {
         try db.query("SELECT image FROM receipt_images WHERE receipt_id=?", [.text(id)]).first?["image"]?.data
     }
+    public func receiptNeedsOCR(id: String) throws -> Bool {
+        let row = try db.query("SELECT text FROM receipt_ocr_runs WHERE receipt_id=? ORDER BY created_at_ms DESC,rowid DESC LIMIT 1", [.text(id)]).first
+        return row?.text("text").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+    }
     public func addReceiptOCR(id: String, text: String, producer: String = "apple_vision_documents") throws {
         guard ["apple_vision", "apple_vision_documents", "user_text"].contains(producer), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let row = try db.query("SELECT transaction_id FROM receipt_captures WHERE id=?", [.text(id)]).first else { throw LedgerError.invalid("invalid_receipt") }
@@ -175,11 +179,18 @@ extension LedgerStore {
         // Stable, traceable lines; original text remains in the vault. Strip common payment/loyalty identifiers.
         let lines = full.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }.filter {
             !$0.isEmpty && $0.range(of: "(?i)(visa|mastercard|amex|card\\s*(no|number)|a[ui]th\\s*code|loyalty|member\\s*(id|no)|\\*{4,}|https?://|www\\.)", options: .regularExpression) == nil
-        }
+        }.map { $0.replacingOccurrences(of: "\\b[0-9]{8,}\\b", with: "[identifier]", options: .regularExpression) }.filter { $0 != "[identifier]" }
         var selected = "", truncated = false
         for line in lines {
             let candidate = selected.isEmpty ? line : selected + "\n" + line
-            if candidate.utf8.count > 1600 { truncated = true; break }
+            if candidate.utf8.count > 1600 {
+                truncated = true
+                if selected.isEmpty {
+                    selected = String(line.prefix(1600))
+                    while selected.utf8.count > 1600 { selected.removeLast() }
+                }
+                break
+            }
             selected = candidate
         }
         guard !selected.isEmpty else { return nil }

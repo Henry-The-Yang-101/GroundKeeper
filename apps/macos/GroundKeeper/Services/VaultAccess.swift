@@ -91,4 +91,42 @@ actor CaptureFolder {
         guard let result else { throw LedgerError.unavailable("Capture file could not be read.") }
         return try result.get()
     }
+    /// Read only explicitly referenced assets inside the same user-granted inbox.
+    func importReceiptImages(bookmark: Data, store: LedgerStore, exactFolder: Bool) async throws {
+        var stale = false
+        let root = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
+        guard !stale, root.startAccessingSecurityScopedResource() else { throw LedgerError.unavailable("Reconnect the capture folder.") }
+        defer { root.stopAccessingSecurityScopedResource() }
+        let inbox = (exactFolder || root.lastPathComponent == "inbox" ? root : root.appendingPathComponent("inbox")).resolvingSymlinksInPath()
+        for image in try await store.receiptImageRequests() {
+            try Task.checkCancellation()
+            let url = inbox.appendingPathComponent(image.path)
+            guard url.resolvingSymlinksInPath().path.hasPrefix(inbox.path + "/"),
+                  (try? url.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) != true else {
+                try await store.markReceiptImageInvalid(id: image.id); continue
+            }
+            guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .ubiquitousItemDownloadingStatusKey]) else { continue }
+            if let status = values.ubiquitousItemDownloadingStatus, status != .current {
+                try? FileManager.default.startDownloadingUbiquitousItem(at: url); continue
+            }
+            guard values.isRegularFile == true, (values.fileSize ?? Int.max) <= 8_388_608 else {
+                try await store.markReceiptImageInvalid(id: image.id); continue
+            }
+            var error: NSError?, data: Data?
+            NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: &error) { coordinated in
+                if let handle = try? FileHandle(forReadingFrom: coordinated) {
+                    defer { try? handle.close() }
+                    data = try? handle.read(upToCount: 8_388_609)
+                }
+            }
+            guard error == nil, let data else { continue }
+            do {
+                try await store.storeReceiptImage(id: image.id, data: data)
+                if try await store.receiptNeedsOCR(id: image.id), let result = try? await ReceiptOCR.recognize(data) {
+                    try await store.addReceiptOCR(id: image.id, text: result.text, producer: result.producer)
+                }
+            }
+            catch LedgerError.invalid { try await store.markReceiptImageInvalid(id: image.id) }
+        }
+    }
 }

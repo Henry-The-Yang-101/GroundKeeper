@@ -33,6 +33,7 @@ import GroundKeeperCore
     }
     var pendingJobs = 0
     var failedJobs = 0
+    var shareReceiptContextWithApple = false
     var page = 0
     var reviewOnly = false
     var focusTransactionSearch = false
@@ -91,6 +92,7 @@ import GroundKeeperCore
             }
             guard let opened else { return }
             store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
+            shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? false
             folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
             if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
@@ -269,6 +271,7 @@ import GroundKeeperCore
                     lastSync = Date(); status = scan.waiting == 0 ? "Capture folder checked" : "Waiting for \(scan.waiting) iCloud files"
                     if scan.files.count < 200 { break }
                 } while remaining > 0
+                try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
             }
             try Task.checkCancellation()
             try await refresh()
@@ -279,6 +282,21 @@ import GroundKeeperCore
             }
             await updateQueueCount()
         } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
+    }
+    func setReceiptSharing(_ enabled: Bool) {
+        perform {
+            try await self.store?.setReceiptCloudConsent(enabled)
+            self.shareReceiptContextWithApple = enabled
+            try await self.refresh()
+        }
+    }
+    func receiptRecords(transactionID: String) async throws -> [ReceiptRecord] { try await store?.receipts(transactionID: transactionID) ?? [] }
+    func receiptImage(id: String) async throws -> Data? { try await store?.receiptImage(id: id) }
+    func reprocessReceipt(id: String) async throws {
+        guard let store, let image = try await store.receiptImage(id: id) else { throw LedgerError.invalid("The receipt image is not available yet.") }
+        let result = try await ReceiptOCR.recognize(image)
+        try await store.addReceiptOCR(id: id, text: result.text, producer: result.producer)
+        try await refresh()
     }
     private func restoreModel() async throws {
         if classifierProvider == "manual" { return }
@@ -400,7 +418,7 @@ import GroundKeeperCore
                 try Task.checkCancellation()
                 guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
                 do {
-                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency),
+                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency, receiptContext: job.receiptContext),
                         model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
                     guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
                     try await store.completeClassification(job, decision: ClassificationDecision(type: decision.type, category: decision.category, review: decision.review))

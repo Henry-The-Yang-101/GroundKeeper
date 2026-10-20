@@ -29,7 +29,8 @@ import GroundKeeperCore
             let urls = try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" }.sorted { $0.path > $1.path }
             for url in urls { try await store.ingestCapture(data: Data(contentsOf: url), deliveryPath: url.lastPathComponent) }
             let snapshot = try await store.snapshot()
-            for review in snapshot.reviews where review.reason == "account_mapping_required" {
+            var mapped = Set<String>()
+            for review in snapshot.reviews where review.reason == "account_mapping_required" && mapped.insert(review.sourceID + "|" + review.label).inserted {
                 try await store.confirmMapping(sourceID: review.sourceID, label: review.label, accountID: snapshot.accounts[0].id)
             }
             for request in try await store.receiptImageRequests() {
@@ -38,15 +39,18 @@ import GroundKeeperCore
             let model = String(repeating: "a", count: 64)
             try await store.registerModel(id: model, name: "input-contract-only", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
             try await store.enqueueClassifications(modelID: model)
-            var contexts = 0, receiptCount = 0
+            var contexts = 0, receiptCount = 0, imageCount = 0
             while let task = try await store.claimClassification(modelID: model) {
                 if task.receiptContext != nil { contexts += 1 }
                 try await store.completeClassification(task, decision: .init(type: "unknown", category: "uncategorized", review: true))
             }
             let final = try await store.snapshot(limit: 5000)
-            for transaction in final.transactions { receiptCount += try await store.receipts(transactionID: transaction.id).count }
+            for transaction in final.transactions {
+                let receipts = try await store.receipts(transactionID: transaction.id)
+                receiptCount += receipts.count; imageCount += receipts.filter { $0.imageState == "stored" }.count
+            }
             let report: [String: Any] = ["input_files": urls.count, "transactions": final.totalTransactions, "receipts": receiptCount,
-                "jobs_with_receipt_context": contexts, "integrity_check": try await store.integrityCheck(),
+                "jobs_with_receipt_context": contexts, "stored_images": imageCount, "integrity_check": try await store.integrityCheck(),
                 "quarantined_files": final.queue.filter { $0.state == "quarantined" }.count,
                 "classification": "contract-only fixture; no model inference", "vault": "isolated encrypted temporary vault"]
             try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]).write(to: output)

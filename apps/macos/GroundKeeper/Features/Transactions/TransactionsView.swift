@@ -9,6 +9,7 @@ struct TransactionsView: View {
     @State private var selectedID: Transaction.ID?
     @State private var sortOrder = [KeyPathComparator(\Transaction.date, order: .reverse)]
     @State private var deletionCandidate: Transaction?
+    @State private var receiptTransaction: Transaction?
 
     private var filteredTransactions: [Transaction] {
         workspace.transactions.filter { transaction in
@@ -88,6 +89,7 @@ struct TransactionsView: View {
             .contextMenu(forSelectionType: Transaction.ID.self) { ids in
                 if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
                     Button("Edit transaction…") { workspace.editor = transaction }
+                    Button("Receipts…") { receiptTransaction = transaction }
                     Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
                 }
             } primaryAction: { ids in
@@ -120,6 +122,7 @@ struct TransactionsView: View {
                 Button("Edit…") { workspace.editor = selectedTransaction }
                     .disabled(selectedTransaction == nil)
                     .keyboardShortcut("e", modifiers: .command)
+                Button("Receipts…") { receiptTransaction = selectedTransaction }.disabled(selectedTransaction == nil)
             }.padding(.horizontal, 20).padding(.vertical, 12)
         }
         .task(id: workspace.focusTransactionSearch) {
@@ -141,6 +144,14 @@ struct TransactionsView: View {
             Button("Cancel", role: .cancel) { deletionCandidate = nil }
         } message: {
             Text("This hides the transaction while retaining its source evidence and history. Re-importing the same capture will not recreate it.")
+        }
+        .sheet(item: $receiptTransaction) { transaction in
+            VStack(alignment: .leading, spacing: 16) {
+                Text(transaction.merchant).font(.title2.weight(.semibold))
+                Text("Receipt evidence stays with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(.secondary)
+                ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString).frame(maxWidth: .infinity, alignment: .leading) }
+                HStack { Spacer(); Button("Done") { receiptTransaction = nil } }
+            }.padding(24).frame(width: 650, height: 650)
         }
     }
 

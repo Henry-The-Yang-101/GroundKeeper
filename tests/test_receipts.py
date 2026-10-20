@@ -29,6 +29,8 @@ def test_receipt_projection_is_bounded_and_records_truncation():
     context = context_from_text(text)
     assert "VISA" not in context["text"] and "example" not in context["text"]
     assert context["truncated"] and len(context["text"].encode()) <= 1600
+    assert context_from_text("界" * 1000)["truncated"]
+    assert "6018840059147765" not in context_from_text("MILK\nLOYALTY CARD\n6018840059147765")["text"]
 
 
 @pytest.mark.parametrize("field,value", [("version", "future"), ("text", "x" * 1601), ("text", "\0"), ("evidence_sha256", "not-a-hash"), ("truncated", "false")])

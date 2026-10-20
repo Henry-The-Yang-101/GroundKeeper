@@ -526,21 +526,189 @@
 		</dict>
 		<dict>
 			<key>WFWorkflowActionIdentifier</key>
-			<string>is.workflow.actions.detect.text</string>
+			<string>is.workflow.actions.setvariable</string>
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>7BE660B0-93A3-401A-B391-D29A9BEDE30F</string>
+				<string>3754173B-A23A-59C6-A56E-158FDD80262E</string>
+				<key>WFVariableName</key>
+				<string>Saved Event</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>OutputName</key>
-						<string>Dictionary</string>
-						<key>OutputUUID</key>
-						<string>DC65B069-3CF9-46E4-BA58-EEC4A0C6A3FC</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
+						<key>OutputUUID</key>
+						<string>DC65B069-3CF9-46E4-BA58-EEC4A0C6A3FC</string>
+						<key>OutputName</key>
+						<string>Dictionary</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvalueforkey</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>7081DDAA-ADAC-50F3-85D8-83378E62B84F</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>Type</key>
+						<string>Variable</string>
+						<key>VariableName</key>
+						<string>Saved Event</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFDictionaryKey</key>
+				<string>source</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>BC414395-06A2-54B3-8D09-FEF75F647487</string>
+				<key>GroupingIdentifier</key>
+				<string>F07F0B56-D621-582F-92AA-A92D8C0A41A3</string>
+				<key>WFControlFlowMode</key>
+				<integer>0</integer>
+				<key>WFCondition</key>
+				<integer>4</integer>
+				<key>WFConditionalActionString</key>
+				<string>receipt_attachment</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Type</key>
+					<string>Variable</string>
+					<key>Variable</key>
+					<dict>
+						<key>Value</key>
+						<dict>
+							<key>Type</key>
+							<string>ActionOutput</string>
+							<key>OutputUUID</key>
+							<string>7081DDAA-ADAC-50F3-85D8-83378E62B84F</string>
+							<key>OutputName</key>
+							<string>Result</string>
+						</dict>
+						<key>WFSerializationType</key>
+						<string>WFTextTokenAttachment</string>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.number</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>AF47038C-0E83-563F-9633-6DE60A266F70</string>
+				<key>WFNumberActionNumber</key>
+				<integer>3</integer>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvalueforkey</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>24CC900C-97DF-5079-94AB-C7D2998AFDDB</string>
+				<key>WFDictionary</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>Type</key>
+						<string>Variable</string>
+						<key>VariableName</key>
+						<string>Saved Event</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFDictionaryKey</key>
+				<string>schema_version</string>
+				<key>WFDictionaryValue</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>Type</key>
+						<string>ActionOutput</string>
+						<key>OutputUUID</key>
+						<string>AF47038C-0E83-563F-9633-6DE60A266F70</string>
+						<key>OutputName</key>
+						<string>Result</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>E19C2C2D-EF72-5662-B29E-5CB71803AF37</string>
+				<key>WFVariableName</key>
+				<string>Saved Event</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>Type</key>
+						<string>ActionOutput</string>
+						<key>OutputUUID</key>
+						<string>24CC900C-97DF-5079-94AB-C7D2998AFDDB</string>
+						<key>OutputName</key>
+						<string>Result</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>9DDDCA45-C60C-5189-AE50-89F3DDFF09CB</string>
+				<key>GroupingIdentifier</key>
+				<string>F07F0B56-D621-582F-92AA-A92D8C0A41A3</string>
+				<key>WFControlFlowMode</key>
+				<integer>2</integer>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.detect.text</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>67F3D645-7946-59E4-8234-2DCC42B5698D</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>Type</key>
+						<string>Variable</string>
+						<key>VariableName</key>
+						<string>Saved Event</string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenAttachment</string>
@@ -553,17 +721,17 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>A19FF608-5669-490C-952B-6C97FCB2E60D</string>
+				<string>FB2A7A22-8716-51A0-A60A-30822FC8516E</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>OutputName</key>
-						<string>Text</string>
-						<key>OutputUUID</key>
-						<string>7BE660B0-93A3-401A-B391-D29A9BEDE30F</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
+						<key>OutputUUID</key>
+						<string>67F3D645-7946-59E4-8234-2DCC42B5698D</string>
+						<key>OutputName</key>
+						<string>Result</string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenAttachment</string>
@@ -572,6 +740,8 @@
 				<dict>
 					<key>Value</key>
 					<dict>
+						<key>string</key>
+						<string>￼.json</string>
 						<key>attachmentsByRange</key>
 						<dict>
 							<key>{0, 1}</key>
@@ -582,8 +752,6 @@
 								<string>Event ID</string>
 							</dict>
 						</dict>
-						<key>string</key>
-						<string>￼.json</string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenString</string>
@@ -596,19 +764,42 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>56BF14BA-A362-42E0-A1A2-A0CC8D573D43</string>
+				<string>210806B5-C4CF-5FC2-A066-272285E23470</string>
 				<key>WFAskWhereToSave</key>
 				<true/>
+				<key>WFSaveFileOverwrite</key>
+				<false/>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>OutputName</key>
-						<string>Renamed Item</string>
-						<key>OutputUUID</key>
-						<string>A19FF608-5669-490C-952B-6C97FCB2E60D</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
+						<key>OutputUUID</key>
+						<string>FB2A7A22-8716-51A0-A60A-30822FC8516E</string>
+						<key>OutputName</key>
+						<string>Result</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.output</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>DABFE2FC-26D1-50AD-A4BD-DF1B3E5DAEB6</string>
+				<key>WFOutput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>Type</key>
+						<string>Variable</string>
+						<key>VariableName</key>
+						<string>Saved Event</string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenAttachment</string>
@@ -656,7 +847,9 @@
 	<key>WFWorkflowMinimumClientVersionString</key>
 	<string>1106</string>
 	<key>WFWorkflowOutputContentItemClasses</key>
-	<array/>
+	<array>
+		<string>WFDictionaryContentItem</string>
+	</array>
 	<key>WFWorkflowTypes</key>
 	<array/>
 </dict>

@@ -2,6 +2,25 @@ import Foundation
 import Testing
 @testable import GroundKeeperCore
 
+extension LedgerStore {
+    func simulatePreReceiptVault() throws {
+        try db.executeScript("DROP TABLE receipt_images; DROP TABLE receipt_ocr_runs; DROP TABLE receipt_captures; ALTER TABLE classification_jobs DROP COLUMN receipt_context_sha256; ALTER TABLE classification_runs DROP COLUMN context_version; DELETE FROM schema_migrations WHERE version=3;")
+    }
+}
+@Test func existingVersionTwoVaultUpgradesWithoutChangingPurchases() async throws {
+    let (store, url) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    try await ingestMapped(store, id: "existing")
+    let before = try await store.snapshot().transactions[0]
+    try await store.simulatePreReceiptVault()
+    await store.close()
+    let upgraded = try LedgerStore(url: url)
+    let after = try await upgraded.snapshot().transactions[0]
+    #expect(after.id == before.id && after.revision == before.revision && after.amountMinor == before.amountMinor)
+    #expect(try await upgraded.testRows("SELECT * FROM schema_migrations").count == 3)
+    #expect(try await upgraded.integrityCheck())
+}
+
 func receiptCapture(_ id: String, parent: String = "payment", text: String = "MILK 4.99\nBREAD 3.49", image: String? = nil, test: Bool = false) throws -> Data {
     var receipt: [String: Any] = ["ocr": ["producer": "apple_shortcuts", "text": text]]
     if let image { receipt["image"] = ["path": image] }
@@ -82,6 +101,11 @@ func receiptModel(_ store: LedgerStore, backend: String = "qwen_mlx") async thro
     #expect(!runs[0].text("input_json").contains("MILK"))
     #expect(runs[1].text("input_json").contains("MILK"))
     #expect(runs[1].text("context_version") == "receipt-context-v1")
+    try await store.setReceiptCloudConsent(false)
+    try await store.completeClassification(shared, decision: .init(type: "expense", category: "groceries", review: true))
+    #expect(try await store.snapshot().transactions[0].category == "shopping")
+    try await store.enqueueClassifications(modelID: model)
+    #expect(try await store.claimClassification(modelID: model)?.receiptContext == nil)
 }
 @Test func receiptBoundsTestIsolationAndPathTraversal() async throws {
     let (store, _) = try vault()

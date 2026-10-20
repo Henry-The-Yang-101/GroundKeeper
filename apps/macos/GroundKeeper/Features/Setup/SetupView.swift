@@ -113,7 +113,7 @@ struct SetupView: View {
 }
 
 struct PhoneSetupView: View {
-    private let captureNames = ["GroundKeeper Capture Transaction", "GroundKeeper Wallet Automation"]
+    private let captureNames = ["GroundKeeper Capture Transaction", "GK Receipt OCR", "GroundKeeper Add Receipt", "GroundKeeper Attach Receipt Later", "GroundKeeper Wallet Automation"]
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("1. Install the capture Shortcuts").font(.headline)
@@ -125,13 +125,14 @@ struct PhoneSetupView: View {
             }
             Text("2. Set the destination").font(.headline)
             Text("On iPhone, edit GroundKeeper Capture Transaction. Set its Save File action to the same iCloud inbox selected here, turn off Ask Where to Save, and grant folder access. For a custom folder, update the Shortcut’s destination too.").foregroundStyle(.secondary)
+            Text("Receipt photos are optional. For image retention, create an assets folder inside that inbox and set Add Receipt’s image Save File action to it. Leave overwrite off. The default receipt choice keeps text only; retained images are copied into your local vault with its existing encryption mode.").foregroundStyle(.secondary)
             Text("3. Create a Wallet automation").font(.headline)
             Text("Open Shortcuts → Automation → + → Transaction. Choose your cards and Run Immediately. Add Run Shortcut → GroundKeeper Wallet Automation and pass the transaction input. Check the merchant, amount, and card variables on your phone; available fields vary by iOS and card.").foregroundStyle(.secondary)
             Text("4. Add Apple Intelligence, if selected").font(.headline)
             if let url = SetupResources.shortcut("GK Categorize Cloud") {
                 HStack { Button("Install Apple Intelligence Shortcut") { NSWorkspace.shared.open(url) }; ShareLink(item: url) { Text("Send to iPhone") } }
             }
-            Text("The classifier runs on your Mac when GroundKeeper processes the queue. Shortcuts sync can also make it available on your phone. Inspect Use Model: Cloud, Broad World Knowledge on, Text output, Follow Up off. Enable it explicitly under Intelligence or Settings.").foregroundStyle(.secondary)
+            Text("The classifier runs on your Mac when GroundKeeper processes the queue. Inspect Use Model: Cloud, web search off, Text output, Follow Up off. Enable it explicitly under Intelligence or Settings. Receipt text sharing with this provider is a separate setting and is off by default.").foregroundStyle(.secondary)
             if let url = SetupResources.shortcut("GroundKeeper CIBC Automation") {
                 DisclosureGroup("Optional: CIBC notification adapter (experimental)") {
                     VStack(alignment: .leading, spacing: 10) {

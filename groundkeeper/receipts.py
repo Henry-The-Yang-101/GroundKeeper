@@ -26,9 +26,14 @@ def context_from_text(text):
         r"visa|mastercard|amex|card\s*(no|number)|a[ui]th\s*code|loyalty|member\s*(id|no)|\*{4,}|https?://|www\.", line, re.I)]
     selected, truncated = "", False
     for line in lines:
+        line = re.sub(r"\b[0-9]{8,}\b", "[identifier]", line)
+        if line == "[identifier]":
+            continue
         candidate = selected + ("\n" if selected else "") + line
         if len(candidate.encode()) > MAX_CONTEXT_BYTES:
             truncated = True
+            if not selected:
+                selected = line.encode()[:MAX_CONTEXT_BYTES].decode(errors="ignore")
             break
         selected = candidate
     if not selected:

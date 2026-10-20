@@ -174,6 +174,7 @@ extension LedgerStore {
     }
     public func retryQueue() throws {
         try db.query("UPDATE queue_items SET state='waiting',attempt_count=0,next_attempt_at_ms=0 WHERE state IN ('waiting','quarantined') AND error_code IS NOT 'event_identity_collision'")
+        try db.query("UPDATE receipt_captures SET image_state='pending',image_error=NULL WHERE image_state='invalid'")
     }
     @discardableResult public func importCSV(_ document: CSVDocument, mapping: CSVMapping, skipped: Set<Int> = []) throws -> Int {
         guard let selected = try account(mapping.accountID), selected.currency == mapping.currency else { throw LedgerError.invalid("Select an account with the import currency.") }

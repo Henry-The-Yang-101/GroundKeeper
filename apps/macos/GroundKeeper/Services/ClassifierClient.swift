@@ -1,4 +1,5 @@
 @preconcurrency import Foundation
+import GroundKeeperCore
 
 @objc(GKClassifierService) protocol ClassifierXPCService {
     func authorizeHost(_ bookmark: Data, withReply reply: @escaping (String?) -> Void)
@@ -13,13 +14,15 @@ struct ClassifierInput: Codable, Sendable {
     let description: String
     let direction: String
     let currency: String?
-    enum CodingKeys: String, CodingKey { case description, direction, currency }
+    var receiptContext: ReceiptContext? = nil
+    enum CodingKeys: String, CodingKey { case description, direction, currency; case receiptContext = "receipt_context" }
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(description, forKey: .description)
         try container.encode(direction, forKey: .direction)
         if let currency { try container.encode(currency, forKey: .currency) }
         else { try container.encodeNil(forKey: .currency) }
+        try container.encodeIfPresent(receiptContext, forKey: .receiptContext)
     }
 }
 

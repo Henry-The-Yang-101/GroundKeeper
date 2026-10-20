@@ -10,6 +10,9 @@ Mac. Local Qwen and Laya classification do not require Shortcuts.
 | --- | --- |
 | [GroundKeeper Capture Transaction.shortcut](GroundKeeper%20Capture%20Transaction.shortcut) | Shared iPhone capture writer |
 | [GroundKeeper Wallet Automation.shortcut](GroundKeeper%20Wallet%20Automation.shortcut) | Wallet transaction adapter; pass automation input |
+| [GK Receipt OCR.shortcut](GK%20Receipt%20OCR.shortcut) | Local Apple Extract Text from Image action |
+| [GroundKeeper Add Receipt.shortcut](GroundKeeper%20Add%20Receipt.shortcut) | Optional photo/image prompt after a payment is saved |
+| [GroundKeeper Attach Receipt Later.shortcut](GroundKeeper%20Attach%20Receipt%20Later.shortcut) | Select the original saved payment JSON, then add a receipt |
 | [GroundKeeper CIBC Automation.shortcut](GroundKeeper%20CIBC%20Automation.shortcut) | Optional experimental notification adapter |
 | [GK Categorize Cloud.shortcut](GK%20Categorize%20Cloud.shortcut) | Apple Intelligence Cloud classification |
 | [GK Categorize On-Device.shortcut](GK%20Categorize%20On-Device.shortcut) | Experimental on-device configuration |
@@ -20,13 +23,15 @@ Shortcut name. If both imports have the same internal name, rename one before
 configuring the app. Your Mac must support and enable the selected Apple
 Intelligence action.
 
-For the Cloud configuration, use Text output, enable Broad World Knowledge,
+For the Cloud configuration, use Text output, keep web search off,
 and disable Follow Up. In GroundKeeper's **Settings > Categorization**, enter
 the installed Shortcut's exact name, click **Use Apple Intelligence Shortcut**,
 and process a fictional transaction.
 
-GroundKeeper sends only description, direction, and currency. Cloud inference
-can send that text to Apple's service. The app validates the returned
+GroundKeeper sends description, direction, and currency. In Settings, the separate
+**Include receipt text with Apple Intelligence** option is off by default. Turning
+it on also sends a bounded receipt excerpt to the chosen Shortcut. Cloud inference
+can send that text to Apple's service. Images never enter classifier requests. The app validates the returned
 `type`, `category`, and `review` fields and requires review of every suggestion.
 It never switches from a local model to this provider automatically.
 
@@ -39,7 +44,7 @@ See the [benchmark report](https://github.com/Henry-The-Yang-101/GroundKeeper/bl
 ## iPhone capture setup
 
 The app’s first-launch assistant and Settings include install/share buttons for
-the signed capture writer, Wallet adapter, and Cloud classifier. Use Shortcuts
+the signed capture writer, receipt helpers, Wallet adapter, and Cloud classifier. Use Shortcuts
 iCloud sync or AirDrop to get them onto your iPhone. Install the shared writer
 before the adapters. The CIBC adapter is available separately as an experiment.
 
@@ -54,7 +59,8 @@ reselect it in the adapter’s **Run Shortcut** action.
 2. Open **GroundKeeper Capture Transaction** on the iPhone. Check its Save File
    destination and grant access to that folder. The installer initially asks where
    to save; choose the inbox and turn off **Ask Where to Save** for automation. This shared writer adds the
-   schema version, event ID, and capture time to the input dictionary.
+   schema version, event ID, and capture time to the input dictionary, saves it,
+   then returns that saved envelope for the optional receipt step.
 3. Open **GroundKeeper Wallet Automation**. Check that its **Run Shortcut**
    action targets the shared capture writer. Its dictionary uses
    `source: wallet_transaction`, `app: Wallet`, and the trigger's card/pass,
@@ -68,6 +74,42 @@ reselect it in the adapter’s **Run Shortcut** action.
    Existing saved parent-folder connections remain supported. Process a fictional event first, then confirm captured card
    labels against your accounts. The importer preserves source files and
    detects repeated deliveries.
+
+## Optional receipts
+
+Install the shared writer and all receipt helpers before the Wallet adapter.
+Its first Run Shortcut saves the payment; its second calls **GroundKeeper Add
+Receipt**. That helper offers **Skip**, **Take photo**, or **Choose image**. A
+cancelled prompt cannot undo the already saved payment. Interactive actions and
+locked-phone behavior still need an iPhone check.
+
+The helper calls **GK Receipt OCR**, which uses Apple's native **Extract Text from
+Image** action and explicitly returns its text. No Apple Intelligence call is
+needed for OCR. Choose **Text only** to keep just recognized text. Choose **Keep
+image** to retain a JPEG as well. Create `assets` inside the inbox and configure
+Add Receipt's image Save File action to that directory; turn off Ask Where to
+Save once configured. Keep overwrite off. The capture writer's Save File action
+must still point to the inbox itself. These are two distinct destinations.
+
+The helper constructs nested dictionaries rather than interpolating OCR into a
+handwritten JSON string. A schema 3 receipt event references the original payment
+by source, app and event ID. It gets its own event ID; it does not overwrite the
+payment file. The Mac keeps source JSON, associates receipts with the reconciled
+purchase, imports optional images into the vault, and snapshots receipt context
+for classification. JSON may arrive before its image. Receipt text is still
+usable while the image downloads. Oversized/invalid receipt evidence is retained
+in the source folder for review rather than silently modifying the purchase.
+
+To attach a receipt later, run **GroundKeeper Attach Receipt Later** and select
+the intended payment JSON from the inbox. Do not select a receipt JSON or rely
+on a global "last purchase". Qwen and Laya consume bounded text locally. User
+categories are preserved. In Transactions, select a purchase and click
+**Receipts…** to see its evidence or read a retained image again on the Mac.
+
+Receipt input bounds and storage details are in the
+[capture contract](../contracts/capture/README.md). Native OCR was exercised on
+100 public images; source checks and signing do not establish real iPhone camera,
+folder permission, Wallet-trigger, or locked-phone behavior.
 
 The CIBC adapter is experimental and remains off in the development setup. It
 passes notification fields to the same writer with `notification_fields` as

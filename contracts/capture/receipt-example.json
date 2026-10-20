@@ -1,0 +1,20 @@
+{
+  "schema_version": 3,
+  "event_id": "fictional-receipt-event",
+  "source": "receipt_attachment",
+  "captured_at": "2026-10-20T10:01:00-04:00",
+  "target": {
+    "source": "wallet_transaction",
+    "app": "Wallet",
+    "event_id": "fictional-payment-event"
+  },
+  "receipt": {
+    "ocr": {
+      "producer": "apple_shortcuts",
+      "text": "FICTIONAL GROCERY\nMILK 4.99\nBREAD 3.49\nEGGS 4.02\nTOTAL 12.50"
+    },
+    "image": {
+      "path": "assets/fictional-receipt.jpg"
+    }
+  }
+}
