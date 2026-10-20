@@ -1,0 +1,19 @@
+{
+  "surface": "Native UI result from a signed sandboxed copy of the app, original bundle identifier and development signing identity, isolated preview preferences and encrypted temporary vault",
+  "receipt_xpc_smoke": "passed",
+  "backend": "qwen_mlx",
+  "decision": {
+    "category": "shopping",
+    "review": true
+  },
+  "assertions": [
+    "receipt context present in queued job",
+    "production ClassifierClient and XPC worker return a valid decision",
+    "result committed to fixture vault",
+    "one purchase remains",
+    "database integrity check passes"
+  ],
+  "scope": "Contract and integration check on fictional milk/bread/eggs text; category correctness is not asserted",
+  "live_ledger_opened": false,
+  "signature": "codesign --verify --deep --strict passed after incremental build repair"
+}

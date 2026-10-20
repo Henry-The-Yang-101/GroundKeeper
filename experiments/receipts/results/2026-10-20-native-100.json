@@ -1,0 +1,8 @@
+{
+  "count": 100,
+  "succeeded": 100,
+  "median_ms": 203.71464600000002,
+  "producer": "apple_vision_documents",
+  "environment": "Apple M4 Pro; macOS 27.0.1 (26A434)",
+  "timing": "in-process native OCR only; excludes capture and sync"
+}

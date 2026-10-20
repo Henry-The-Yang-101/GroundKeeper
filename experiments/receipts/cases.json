@@ -1,0 +1,27 @@
+{
+  "version": "receipt-pilot-20-v1",
+  "label_status": "Agent-reviewed policy expectations from published transcripts; not independent human category gold",
+  "selection": "Deliberate semantic contrasts and controls, fixed before model runs; not a random accuracy benchmark",
+  "cases": [
+    {"id":"001","category":"shopping","focus":"Gift-shop name must not establish gift intent; lamp plus membership card","evidence":"TABLE LAMP; PRIVILEGE CARD"},
+    {"id":"010","category":"shopping","focus":"Anonymous trading company resolved to mixed ordinary goods","evidence":"SUPER GLUE; A4 COLOR PAPER"},
+    {"id":"023","category":"shopping","focus":"Stationery/book merchant does not imply education","evidence":"LAMINATING FILM"},
+    {"id":"027","category":"shopping","focus":"Mixed hardware basket; return/refund footer is not a refund transaction","evidence":"SCOURING PAD; SCISSOR; TRAILING SOCKET"},
+    {"id":"051","category":"dining","focus":"Corporate legal name resolved by prepared meal lines","evidence":"1 MEAT + 3 VEGE; ADD VEGETABLE"},
+    {"id":"060","category":"groceries","focus":"Clear grocery control with multipack quantities","evidence":"PINEAPPLE; MINERAL WATER"},
+    {"id":"064","category":"vehicle","focus":"Anonymous station operator resolved by fuel and litres; VISA is payment rail","evidence":"FUEL SAVE 95; LITRE"},
+    {"id":"075","category":"shopping","focus":"Office badges do not prove tuition or school spending","evidence":"NAME BADGE; METAL NAME BADGE CLIP"},
+    {"id":"077","category":"dining","focus":"Clear restaurant control with service charge and rounding","evidence":"PORK RIBS; TAU FU; ICED TEA"},
+    {"id":"090","category":"shopping","focus":"General mart purchase is batteries, not food","evidence":"EVEREADY BAT H/D AA"},
+    {"id":"095","category":"shopping","focus":"Bookstore purchase is copier paper; online-book promotional footer is irrelevant","evidence":"70G P.COPY 450'S"},
+    {"id":"101","category":"shopping","focus":"Unfamiliar company resolved by cutting disc; no home-renovation intent inferred","evidence":"105MM CUTTING DISC"},
+    {"id":"104","category":"dining","focus":"Legal company name resolved to restaurant; survey prize is not income","evidence":"CHILI'S; EAT IN; JUICE; TOSTADA CHIPS"},
+    {"id":"112","category":"local_transport","focus":"Anonymous property operator resolved to parking fee and duration","evidence":"PARKING TIME; PARKING FEE"},
+    {"id":"155","category":"dining","focus":"Restaurant legal entity and brand alias agree; takeout is dining","evidence":"MCDONALD'S; MCCHICKEN; FRIES"},
+    {"id":"156","category":"dining","focus":"Corporate legal name resolved by prepared Japanese dishes","evidence":"CHICKEN KATSU BENTO; CURRY FRIED RICE SET"},
+    {"id":"157","category":"dining","focus":"Corporate legal name resolved by ice-cream shop identity and cup","evidence":"BASKIN ROBBINS; DOUBLE RG. CUP"},
+    {"id":"414","category":"medical","focus":"Unknown merchant resolved by explicit medicine purchase","evidence":"LIQUID MEDICINE"},
+    {"id":"421","category":"groceries","focus":"Pharmacy/beauty retailer sold packaged crisps; medicines return-policy footer is irrelevant","evidence":"PRINGLES SUUR/CR"},
+    {"id":"563","category":"vehicle","focus":"Clear fuel-station control; pre-authorization code is not a second purchase","evidence":"FUELSAVE 95; 22.73 LITRE"}
+  ]
+}

@@ -1,0 +1,2315 @@
+{
+  "dataset": "ICDAR 2019 SROIE",
+  "mirror": "https://github.com/zzzDavid/ICDAR-2019-SROIE",
+  "revision": "27be4271b251c256f695acbade9a801bffe85994",
+  "license": "CC-BY-4.0 (dataset; mirror code license is separate)",
+  "dataset_license_source": "https://rrc.cvc.uab.es/?ch=13&com=downloads",
+  "license_documentation": "https://github.com/jsdnrs/ICDAR2019-SROIE/blob/77c4c11490e3c4179ee22f86611569c71c04b5f9/DATASET.md",
+  "attribution": "Huang et al., ICDAR2019 Competition on Scanned Receipt OCR and Information Extraction, 2019, doi:10.1109/ICDAR.2019.00244",
+  "selection": "First N image paths sorted by SHA256('groundkeeper-receipts-v1|' + path)",
+  "use": "OCR and integration evaluation only; no GroundKeeper category ground truth; no training",
+  "domain": "English-language Malaysian receipts; not a Canadian accuracy benchmark",
+  "count": 100,
+  "samples": [
+    {
+      "id": "233",
+      "files": [
+        {
+          "path": "img/233.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/233.jpg",
+          "bytes": 409408,
+          "sha256": "584a39304a80bb07563a3430078367b24a872a0ece95eed48015b38080e7d904"
+        },
+        {
+          "path": "box/233.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/233.csv",
+          "bytes": 2869,
+          "sha256": "6a1b6611fd44e93837376a96123aaf7583d14374626c3f1ec23be204112f8cea"
+        },
+        {
+          "path": "key/233.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/233.json",
+          "bytes": 172,
+          "sha256": "80ea6cfe614a42fab2df826287fa632ddf04452608b106394fdf12f1a2f51172"
+        }
+      ]
+    },
+    {
+      "id": "142",
+      "files": [
+        {
+          "path": "img/142.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/142.jpg",
+          "bytes": 228914,
+          "sha256": "87bdc533cca5c9932198d70130f9a2f30a013cb198b23966c72aa39fc6fc1a93"
+        },
+        {
+          "path": "box/142.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/142.csv",
+          "bytes": 1976,
+          "sha256": "d45e363d9f176ce90714e296b62acead16d9e7dd3afb53bf91c3c1cfdda6cfdb"
+        },
+        {
+          "path": "key/142.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/142.json",
+          "bytes": 190,
+          "sha256": "fb681fa37f941404fb8250574fc82ae18ccdcb79192ba39e00786ef3a46bf8d8"
+        }
+      ]
+    },
+    {
+      "id": "097",
+      "files": [
+        {
+          "path": "img/097.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/097.jpg",
+          "bytes": 569962,
+          "sha256": "8fb2435c87558cd032de090a812b375d1413ae1cd9b6e67239e5f1e08882cf0f"
+        },
+        {
+          "path": "box/097.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/097.csv",
+          "bytes": 2161,
+          "sha256": "d94be511363bbb04722dab5b811c5c3c592839185012a8c5dfe68c22fc792feb"
+        },
+        {
+          "path": "key/097.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/097.json",
+          "bytes": 177,
+          "sha256": "3d4f230d0589bf1ec3c4d9026cff0552e6391146781fcd9ddf44993ef6d6ca35"
+        }
+      ]
+    },
+    {
+      "id": "156",
+      "files": [
+        {
+          "path": "img/156.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/156.jpg",
+          "bytes": 288401,
+          "sha256": "7affb10d55d68769749411eceff84adf9b25d91569e4946baf3f82d75dbf4dda"
+        },
+        {
+          "path": "box/156.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/156.csv",
+          "bytes": 2321,
+          "sha256": "a1ed93d7a6df045d36590d27af396d417ef76a94ce80d88028d1af7004c10682"
+        },
+        {
+          "path": "key/156.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/156.json",
+          "bytes": 186,
+          "sha256": "b0469a15c02da3ee037ae1664354e0c55a9c363b18a1e735a6f65abe60af3408"
+        }
+      ]
+    },
+    {
+      "id": "423",
+      "files": [
+        {
+          "path": "img/423.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/423.jpg",
+          "bytes": 1429011,
+          "sha256": "067fd8cebf3bb9df281eeede96015717385434221e207a4d9acf818bb4d02907"
+        },
+        {
+          "path": "box/423.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/423.csv",
+          "bytes": 1884,
+          "sha256": "4e669aa2cddc6cf5f55583c274f2ef2e450e810b65b25d9bab46d90343eb12f7"
+        },
+        {
+          "path": "key/423.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/423.json",
+          "bytes": 224,
+          "sha256": "d96911fb69020666ce96858b51deada842495f7b24bfbe56ce480f64d6d95006"
+        }
+      ]
+    },
+    {
+      "id": "470",
+      "files": [
+        {
+          "path": "img/470.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/470.jpg",
+          "bytes": 602430,
+          "sha256": "1618ce18cbb3e408edf9f79230ca22947a39a8dfef5939a96b277057b848bfe2"
+        },
+        {
+          "path": "box/470.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/470.csv",
+          "bytes": 2445,
+          "sha256": "35ed395bec4d76466d2d2e580019f4f0acca0edc2b2b4fd6c30d7d322d7446c6"
+        },
+        {
+          "path": "key/470.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/470.json",
+          "bytes": 165,
+          "sha256": "0a04b7ab9547dd3e40eb4fc0122856139c0bb01f18e9bd7d8d2783eb9235a5d6"
+        }
+      ]
+    },
+    {
+      "id": "298",
+      "files": [
+        {
+          "path": "img/298.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/298.jpg",
+          "bytes": 2368993,
+          "sha256": "bd1357717be3fea33689f876574dfaa421b1d0205554afda61e70847c0e17b16"
+        },
+        {
+          "path": "box/298.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/298.csv",
+          "bytes": 2512,
+          "sha256": "ebc0ad284c7411dde911515b1b42f8030001e3c341832500f714bb47c7f903d5"
+        },
+        {
+          "path": "key/298.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/298.json",
+          "bytes": 235,
+          "sha256": "f660c37b28ed733bb83ec226fca5686ed98f30743ef31324a7843065f0629882"
+        }
+      ]
+    },
+    {
+      "id": "060",
+      "files": [
+        {
+          "path": "img/060.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/060.jpg",
+          "bytes": 312597,
+          "sha256": "c0e961e8a14c71f602b6dce79a287250f5ccc896eccd403eadb7bd6214f6578a"
+        },
+        {
+          "path": "box/060.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/060.csv",
+          "bytes": 2477,
+          "sha256": "0cfe983588727a0579fd3838700b815c86d986c5aab070c0b0b9b0db8313a623"
+        },
+        {
+          "path": "key/060.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/060.json",
+          "bytes": 188,
+          "sha256": "65bd327d58b8f41e8cd6bd9df8a7ddbc8b5d8cac9fbc11b9b0eecbb03559a3d4"
+        }
+      ]
+    },
+    {
+      "id": "272",
+      "files": [
+        {
+          "path": "img/272.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/272.jpg",
+          "bytes": 293714,
+          "sha256": "4189ad51a2a31a2aede058769c3722599d0e886d23048d393f9ed52e8b35529d"
+        },
+        {
+          "path": "box/272.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/272.csv",
+          "bytes": 2062,
+          "sha256": "62c4eb8d8cf4a0ecfcc83a9f65454e1cc533da235030f11115a311fcda1e17d5"
+        },
+        {
+          "path": "key/272.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/272.json",
+          "bytes": 202,
+          "sha256": "05f5735bb8317723763847957549cf319036d7ac61696b15b6aef71cdafbc1e0"
+        }
+      ]
+    },
+    {
+      "id": "230",
+      "files": [
+        {
+          "path": "img/230.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/230.jpg",
+          "bytes": 336821,
+          "sha256": "9bc92dc8289bcdd868dbe6dee1358bdf68218ee4292da1e81dec555373d34b8a"
+        },
+        {
+          "path": "box/230.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/230.csv",
+          "bytes": 2513,
+          "sha256": "e42ed1bbe18f6c287943c74684c7c142571b71b533616bd17b3e2f0d71fdb776"
+        },
+        {
+          "path": "key/230.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/230.json",
+          "bytes": 204,
+          "sha256": "878226220d59187498445d82b8c4db1e71d64ec6a825ec0fe68e9ca2fd034ba2"
+        }
+      ]
+    },
+    {
+      "id": "324",
+      "files": [
+        {
+          "path": "img/324.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/324.jpg",
+          "bytes": 236894,
+          "sha256": "495915416d52629ea463d7b2b890c15106faccf5e8f5a480427b2cb740e566ff"
+        },
+        {
+          "path": "box/324.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/324.csv",
+          "bytes": 2602,
+          "sha256": "42beca15acd062c9ae69de050274ad691ef05049f24a7fc5407ee0e033cfccbe"
+        },
+        {
+          "path": "key/324.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/324.json",
+          "bytes": 160,
+          "sha256": "588b0d10fde8de9b8ecc38786234a65c0d1d81f14812b6a9706a856b76bc827d"
+        }
+      ]
+    },
+    {
+      "id": "104",
+      "files": [
+        {
+          "path": "img/104.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/104.jpg",
+          "bytes": 794058,
+          "sha256": "9475fe70bb99b37a02e59b45ce16c0daf3db0b6c6b71de1d576e1594592c4d22"
+        },
+        {
+          "path": "box/104.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/104.csv",
+          "bytes": 2786,
+          "sha256": "e4a26a22ea8e3519f079c756734e6d7cdc8cef664617b89fe85a5c51587ea1f5"
+        },
+        {
+          "path": "key/104.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/104.json",
+          "bytes": 90,
+          "sha256": "760a286c39cc498f04bc656e56aad8e5b976cda48a8f43193a74be5bebb6e9e5"
+        }
+      ]
+    },
+    {
+      "id": "622",
+      "files": [
+        {
+          "path": "img/622.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/622.jpg",
+          "bytes": 163543,
+          "sha256": "0be8ae768b92529773e05ea6f9e8591d919f58b6e052d94f5437e6dd470f6e37"
+        },
+        {
+          "path": "box/622.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/622.csv",
+          "bytes": 2248,
+          "sha256": "1b94e2b45a45125f34f902968ee5162f0b943f74c9efab52c4070f4139f13ac0"
+        },
+        {
+          "path": "key/622.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/622.json",
+          "bytes": 194,
+          "sha256": "9c6de60658e600e3454e36b3da61480ee6898a6aa30731505013c8f5c96546c3"
+        }
+      ]
+    },
+    {
+      "id": "234",
+      "files": [
+        {
+          "path": "img/234.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/234.jpg",
+          "bytes": 317323,
+          "sha256": "8b31ff5f14fdb9973fdb509ad997439be2811a342327f0417b21a8754704c504"
+        },
+        {
+          "path": "box/234.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/234.csv",
+          "bytes": 1862,
+          "sha256": "af3cf925a861d65f7ccba257248df0c47311ba7b4dedb28e2185420cc1ec3fba"
+        },
+        {
+          "path": "key/234.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/234.json",
+          "bytes": 181,
+          "sha256": "840689ad5f30451b84c977790c767a34e9c85477a7e0b8f9f179f9aa9e412c4d"
+        }
+      ]
+    },
+    {
+      "id": "624",
+      "files": [
+        {
+          "path": "img/624.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/624.jpg",
+          "bytes": 142389,
+          "sha256": "1613ee46467b109043805e79d821d9a7ecdbc6a3d53ffa954d308018ed43faec"
+        },
+        {
+          "path": "box/624.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/624.csv",
+          "bytes": 1947,
+          "sha256": "9c0c6736568cebe5c80d4ffa8ca80ec739ad69b77d087422253ace38d9a83d2a"
+        },
+        {
+          "path": "key/624.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/624.json",
+          "bytes": 176,
+          "sha256": "64efa67d7aa6f95117ff796efcc5d01a257a1e63e552c8baf3f5c98c37782a7d"
+        }
+      ]
+    },
+    {
+      "id": "354",
+      "files": [
+        {
+          "path": "img/354.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/354.jpg",
+          "bytes": 317407,
+          "sha256": "f0aba54033b2038be52580f5b9cd495d9186d92171581de1887a7a97866c1c01"
+        },
+        {
+          "path": "box/354.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/354.csv",
+          "bytes": 3259,
+          "sha256": "b167e053c036b5c65549633f23ff1174903f4f32b3cfc26ac1cecccc42d52ca9"
+        },
+        {
+          "path": "key/354.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/354.json",
+          "bytes": 171,
+          "sha256": "70b9932ec2c50219b723a1845d9d39bd0309ebaa6e54a68f7e5cb19bd013a46f"
+        }
+      ]
+    },
+    {
+      "id": "602",
+      "files": [
+        {
+          "path": "img/602.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/602.jpg",
+          "bytes": 199203,
+          "sha256": "3c6976dc371677c9c6bbc1cc0c544a1a2e6fb88234f48b2696f3e41049c049e1"
+        },
+        {
+          "path": "box/602.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/602.csv",
+          "bytes": 3363,
+          "sha256": "361656ce87b2a9fa31ed1d5a0ad6d9b86c9ab3e33bdba29151041638f1519945"
+        },
+        {
+          "path": "key/602.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/602.json",
+          "bytes": 154,
+          "sha256": "dace9c23f0d9fadd8edc51815cc595ff33cb5872abfe75afabe8f7a143a6ab09"
+        }
+      ]
+    },
+    {
+      "id": "197",
+      "files": [
+        {
+          "path": "img/197.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/197.jpg",
+          "bytes": 552089,
+          "sha256": "d6580b05d1f58e2b595ed9c93ed177032a5e8ebd7add8f7f4d56467ed575406e"
+        },
+        {
+          "path": "box/197.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/197.csv",
+          "bytes": 2501,
+          "sha256": "14a55a9626f80cc2d6dc9220ee6b98afb47aacf6d2450cbe12bd1d3f79bd39bd"
+        },
+        {
+          "path": "key/197.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/197.json",
+          "bytes": 185,
+          "sha256": "5b079dd2bb823777de8d8810e2356c25e3a9762cd4043fc7f49dbd7ff13f4e21"
+        }
+      ]
+    },
+    {
+      "id": "027",
+      "files": [
+        {
+          "path": "img/027.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/027.jpg",
+          "bytes": 1926766,
+          "sha256": "c5d7271ea478624ed5b63b45b620799532637934dc72590d29b79ca78845f625"
+        },
+        {
+          "path": "box/027.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/027.csv",
+          "bytes": 2389,
+          "sha256": "f858ca5539956149c8795537a776217364ebe2465d19e71f03bf7a2189bccfe0"
+        },
+        {
+          "path": "key/027.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/027.json",
+          "bytes": 204,
+          "sha256": "af15c05dca7eca85355785f70fea733bb73918d92cf7908e591f2bd34279bf97"
+        }
+      ]
+    },
+    {
+      "id": "595",
+      "files": [
+        {
+          "path": "img/595.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/595.jpg",
+          "bytes": 193411,
+          "sha256": "ee33f6b6b8f5c35ec2ce6788a0487804a4115c6ad5a2b99265328395a81028d4"
+        },
+        {
+          "path": "box/595.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/595.csv",
+          "bytes": 2600,
+          "sha256": "e6628b7e785092eb4dfbfaa114a20cfbb393e4e03e4af0346fa533644d7a2651"
+        },
+        {
+          "path": "key/595.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/595.json",
+          "bytes": 193,
+          "sha256": "a18e8614b9945c61481b69cb87732c59abee2e79b4abe70537157b4f0f75c869"
+        }
+      ]
+    },
+    {
+      "id": "408",
+      "files": [
+        {
+          "path": "img/408.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/408.jpg",
+          "bytes": 346821,
+          "sha256": "01b36f55e33e37d07a8d049f82d753d70930bd850ec3fb395573d64bfcb8211b"
+        },
+        {
+          "path": "box/408.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/408.csv",
+          "bytes": 2921,
+          "sha256": "abcab19e6f7ea9d7c0904b76f507b72ef1e6ca1d17e58fd1be08447c52a96854"
+        },
+        {
+          "path": "key/408.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/408.json",
+          "bytes": 190,
+          "sha256": "950a8c2c8ed0fd981c7cf188963f1b2eb78f729bed8fcbb8368938fba29cb42b"
+        }
+      ]
+    },
+    {
+      "id": "235",
+      "files": [
+        {
+          "path": "img/235.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/235.jpg",
+          "bytes": 177739,
+          "sha256": "31f17bb53f9fb627b15f28d0b9ae206e43827c61fdfb4ffdcd60f92c2ab97f85"
+        },
+        {
+          "path": "box/235.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/235.csv",
+          "bytes": 1472,
+          "sha256": "0f198d460266c3d61fda1b7b67c29bca2f82d9ccc721bdff9e455e7a111d3f57"
+        },
+        {
+          "path": "key/235.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/235.json",
+          "bytes": 160,
+          "sha256": "7e685b4d6ff0ada74edeb437a07b4c7c739f8f9efa56062075acfe85b34bbcb9"
+        }
+      ]
+    },
+    {
+      "id": "390",
+      "files": [
+        {
+          "path": "img/390.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/390.jpg",
+          "bytes": 404103,
+          "sha256": "959da40a47e857a859d641882197ce200d2cb191b4b0d9bfdad735066a2f918e"
+        },
+        {
+          "path": "box/390.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/390.csv",
+          "bytes": 3603,
+          "sha256": "e08b5193eab73c490871797b597a431953c9153b4bfcd29444f23064fc9fd91b"
+        },
+        {
+          "path": "key/390.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/390.json",
+          "bytes": 212,
+          "sha256": "22130028b23a90c55360bed76c3c2e9c927d86b680ecd6114470139eaa68cacb"
+        }
+      ]
+    },
+    {
+      "id": "309",
+      "files": [
+        {
+          "path": "img/309.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/309.jpg",
+          "bytes": 1761828,
+          "sha256": "0033c3c4048ab91638d9a6a609f7008c601090931698e7195a0c9ebd2da55904"
+        },
+        {
+          "path": "box/309.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/309.csv",
+          "bytes": 2409,
+          "sha256": "cea42079674f4c5e7335a86468cdda480553595d09aec3ba1ec75c460a50dd8d"
+        },
+        {
+          "path": "key/309.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/309.json",
+          "bytes": 157,
+          "sha256": "ca1fc00f8ad7e508e681e90e7d61293a69d0fe25a89df0525c5412a14eae425d"
+        }
+      ]
+    },
+    {
+      "id": "318",
+      "files": [
+        {
+          "path": "img/318.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/318.jpg",
+          "bytes": 195383,
+          "sha256": "1cc15c54ef1edca697faa5bd786b4c58d89d1a81b2edd0d59cd19df45c99a877"
+        },
+        {
+          "path": "box/318.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/318.csv",
+          "bytes": 1910,
+          "sha256": "8ab62013fa752e1ad66e60ad3025d9c379aa213bd8df5e75a7f6aeab56ed353e"
+        },
+        {
+          "path": "key/318.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/318.json",
+          "bytes": 176,
+          "sha256": "7166649e8df15bcc4bdeaad0bd7a5b62547fb72eae42e7274c5ff994e6f1e022"
+        }
+      ]
+    },
+    {
+      "id": "122",
+      "files": [
+        {
+          "path": "img/122.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/122.jpg",
+          "bytes": 373178,
+          "sha256": "69f0ac05640746713f1c346a4a6cdd2d01927ae328bcf34819a67833f99a71ad"
+        },
+        {
+          "path": "box/122.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/122.csv",
+          "bytes": 2622,
+          "sha256": "550ea52ec9ed6a51aae21841c10f2d65ee7b96cd3406e5fb7e27245837f0c554"
+        },
+        {
+          "path": "key/122.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/122.json",
+          "bytes": 169,
+          "sha256": "07381fe4fb508d614481e92455c38894a769cbf8c53262f4120d51f39f53792d"
+        }
+      ]
+    },
+    {
+      "id": "077",
+      "files": [
+        {
+          "path": "img/077.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/077.jpg",
+          "bytes": 391621,
+          "sha256": "bc0f5b49ae3fbfbbd2c5530d66eb5ee55ee0c16814271633e409a48d1d5e9c40"
+        },
+        {
+          "path": "box/077.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/077.csv",
+          "bytes": 2535,
+          "sha256": "1138145a8b96f9d1cf3556bdf24a37c925f468fa58acce50ff90afdaf910d03d"
+        },
+        {
+          "path": "key/077.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/077.json",
+          "bytes": 178,
+          "sha256": "5dd58da6d6b7cfcdbfe79dba28dc2268262053d701081fbb4cb5d6b7a79d3646"
+        }
+      ]
+    },
+    {
+      "id": "257",
+      "files": [
+        {
+          "path": "img/257.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/257.jpg",
+          "bytes": 268188,
+          "sha256": "9377d4f186178e06c85037bfd34da2ce2a209a847e32e178a437a4bc64cf8fc5"
+        },
+        {
+          "path": "box/257.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/257.csv",
+          "bytes": 1479,
+          "sha256": "09665c9e80dba3359b5a5e32a543d96d49d55eff51f53a14b1476c3a4b1c0f7b"
+        },
+        {
+          "path": "key/257.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/257.json",
+          "bytes": 184,
+          "sha256": "c70cb340755441246a8f6a15ccd2523ed68a489c7dbb9a212f254178f97d9d5b"
+        }
+      ]
+    },
+    {
+      "id": "496",
+      "files": [
+        {
+          "path": "img/496.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/496.jpg",
+          "bytes": 574770,
+          "sha256": "25d742f3a7bb0531137a5684c90810ce2d9b3087d341fe3cf246abf1cd21b473"
+        },
+        {
+          "path": "box/496.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/496.csv",
+          "bytes": 2229,
+          "sha256": "178c6b3385956f30dfb6afb0f12fb025a773a162d0ad75e40875249c70c2b30d"
+        },
+        {
+          "path": "key/496.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/496.json",
+          "bytes": 164,
+          "sha256": "c88ecc369a0bfd848011167c57b6d14f2d5bc35c539f194fd3a67f7e778d7268"
+        }
+      ]
+    },
+    {
+      "id": "207",
+      "files": [
+        {
+          "path": "img/207.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/207.jpg",
+          "bytes": 410623,
+          "sha256": "7a490e372eee0ce67d9c66543b75e4a40e99d39d5741992c6542e5bf67ed1027"
+        },
+        {
+          "path": "box/207.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/207.csv",
+          "bytes": 1703,
+          "sha256": "1c266e8e73ae156cefd37044c4d699aeb6c0bf5221db8a9e9fe1ea23ab4f64c4"
+        },
+        {
+          "path": "key/207.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/207.json",
+          "bytes": 204,
+          "sha256": "cbc4cf0dca65ed94df44371f92b69d92e153203ea4069411866b76873cb5cd18"
+        }
+      ]
+    },
+    {
+      "id": "070",
+      "files": [
+        {
+          "path": "img/070.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/070.jpg",
+          "bytes": 278036,
+          "sha256": "0c9d2cdf3e7f500e418d84b4bbeaa04069d76766faa1e60c236a5aaa2410f237"
+        },
+        {
+          "path": "box/070.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/070.csv",
+          "bytes": 1495,
+          "sha256": "51bb0adef9fd116fbb38537f96dc9896f036532f5d3359c2774e57abd56e7bd8"
+        },
+        {
+          "path": "key/070.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/070.json",
+          "bytes": 190,
+          "sha256": "3fdfc3393c9546acda18c8861bf2623e17bc9582108a6b5d3707e814b34d1144"
+        }
+      ]
+    },
+    {
+      "id": "421",
+      "files": [
+        {
+          "path": "img/421.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/421.jpg",
+          "bytes": 401129,
+          "sha256": "b43fa6e1efb3635ca8ebf7a5de0bde5bab75ee24009ecffa3f4169b9e4e29387"
+        },
+        {
+          "path": "box/421.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/421.csv",
+          "bytes": 2264,
+          "sha256": "56ea6484d1a7a381eb22e081f28d998c4726d99a15a2cf7d62a4e766f1af3c86"
+        },
+        {
+          "path": "key/421.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/421.json",
+          "bytes": 171,
+          "sha256": "3b44e0529729b8adb030c8b575185cae61b6993cb9885cf682eda9bdbd10828a"
+        }
+      ]
+    },
+    {
+      "id": "118",
+      "files": [
+        {
+          "path": "img/118.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/118.jpg",
+          "bytes": 396085,
+          "sha256": "4b3b37487160133d34172ae28e77c7967d9fc9bdf001c9b3565c66438c4d317b"
+        },
+        {
+          "path": "box/118.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/118.csv",
+          "bytes": 2830,
+          "sha256": "408b8fe82c50acc1f8d563d7aaf219058a5aa7068a3b8844e3253eb773360f54"
+        },
+        {
+          "path": "key/118.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/118.json",
+          "bytes": 169,
+          "sha256": "667806e5df0623afab6a437b2f2512fbb5cde7917b477716f301760861806063"
+        }
+      ]
+    },
+    {
+      "id": "492",
+      "files": [
+        {
+          "path": "img/492.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/492.jpg",
+          "bytes": 526618,
+          "sha256": "4a6b5c43f4aecc0d2f32eccd5e598ef442829d8d91b6b7736e48a422ce87ccc6"
+        },
+        {
+          "path": "box/492.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/492.csv",
+          "bytes": 2178,
+          "sha256": "98fce162dab833372d1dd38aff36d35bd7727826932954d5e5b09fdeb10f4cd1"
+        },
+        {
+          "path": "key/492.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/492.json",
+          "bytes": 165,
+          "sha256": "cc0002239470e65a51eb93e0d4337d188a6b5d30cadfdd747b5ed93785aa978b"
+        }
+      ]
+    },
+    {
+      "id": "472",
+      "files": [
+        {
+          "path": "img/472.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/472.jpg",
+          "bytes": 554437,
+          "sha256": "5cddcfb8ff67dd18ecdda13b12f0bf988a37e7c62ff818faf69007ce21460b1a"
+        },
+        {
+          "path": "box/472.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/472.csv",
+          "bytes": 2221,
+          "sha256": "054ab32acad9d5ed0abe1714283aecdddf8346fa68ffaa532352e78973e204ad"
+        },
+        {
+          "path": "key/472.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/472.json",
+          "bytes": 164,
+          "sha256": "e6f6f452c206d2c41575c4f53610512164091a8f410750bee29e9bb33e5e6f66"
+        }
+      ]
+    },
+    {
+      "id": "311",
+      "files": [
+        {
+          "path": "img/311.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/311.jpg",
+          "bytes": 3113953,
+          "sha256": "110bf9b2b37418a2d79e8cd7447bf81ee55a307062c32c6c8d5e04433ff9b833"
+        },
+        {
+          "path": "box/311.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/311.csv",
+          "bytes": 4905,
+          "sha256": "d439327b5b1fcc13aa5d729f7c5f38f35c4e5c8dec1153825a2350281d78b0c6"
+        },
+        {
+          "path": "key/311.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/311.json",
+          "bytes": 186,
+          "sha256": "6da916e837704e29c654a543f5ea3d477f5344818ea4c79cfd2e182ec23d6294"
+        }
+      ]
+    },
+    {
+      "id": "610",
+      "files": [
+        {
+          "path": "img/610.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/610.jpg",
+          "bytes": 279566,
+          "sha256": "1f65581ac31cce5e59a8d32ffb3dd8bd26cf62461eaabbb3091a528d859e6169"
+        },
+        {
+          "path": "box/610.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/610.csv",
+          "bytes": 2384,
+          "sha256": "5e549a78ebe1b9eba5f25db3ae5c67600f5eb580f4edf1c29bf9853f6d498566"
+        },
+        {
+          "path": "key/610.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/610.json",
+          "bytes": 171,
+          "sha256": "46cc92286f159fd449eb089c5ca7a5172acb3d35fd09bc964a1dc83b9688ac82"
+        }
+      ]
+    },
+    {
+      "id": "619",
+      "files": [
+        {
+          "path": "img/619.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/619.jpg",
+          "bytes": 246870,
+          "sha256": "6f0fac37fa1c0481f88d84f466f01c206684ed5f6529deec28704b53d96721dd"
+        },
+        {
+          "path": "box/619.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/619.csv",
+          "bytes": 2671,
+          "sha256": "d698a5fcf3b4a1388deba2e29f8f39e81c3377b87be0e663e09d73496d90b217"
+        },
+        {
+          "path": "key/619.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/619.json",
+          "bytes": 193,
+          "sha256": "ad56882c0c8271898c8f2d340422d31b4e4e9153c84c800c37c4d5d677322b4b"
+        }
+      ]
+    },
+    {
+      "id": "024",
+      "files": [
+        {
+          "path": "img/024.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/024.jpg",
+          "bytes": 615358,
+          "sha256": "69cc44f0278b6917ffe1c3ca23e3595e74d33d179e8ec3485d91eb4c52077790"
+        },
+        {
+          "path": "box/024.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/024.csv",
+          "bytes": 3010,
+          "sha256": "ac214c22fed11dd213db74e619aff8ff276c35bbfb0a943ee2055300c0d54fbf"
+        },
+        {
+          "path": "key/024.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/024.json",
+          "bytes": 177,
+          "sha256": "ba396e59e0b526234a9a294745872439f91936bb16e27bea44babbeb1e2115cd"
+        }
+      ]
+    },
+    {
+      "id": "055",
+      "files": [
+        {
+          "path": "img/055.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/055.jpg",
+          "bytes": 134073,
+          "sha256": "57c8515cf773f0816ae34cccd3a83ab8f7bc78183c1baccf91b521444013a7f1"
+        },
+        {
+          "path": "box/055.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/055.csv",
+          "bytes": 1819,
+          "sha256": "e8f923495b948bcc9f0bf35934fcc3502cbddb379733099f2dacfb8c3387dfac"
+        },
+        {
+          "path": "key/055.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/055.json",
+          "bytes": 192,
+          "sha256": "ecbb09eff69bfc526a7840b60d61b001e8dbffb0dcf0ba1af671af1e9fcb4d26"
+        }
+      ]
+    },
+    {
+      "id": "262",
+      "files": [
+        {
+          "path": "img/262.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/262.jpg",
+          "bytes": 301001,
+          "sha256": "7379405ceaf949151d6c4d0602e0bcd32e3dd5f5b9f64d3490511ab849809029"
+        },
+        {
+          "path": "box/262.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/262.csv",
+          "bytes": 1273,
+          "sha256": "4e93f906cfdd09fcbf5090ed734132875e12768c3cf90261f15a0e8c508ff979"
+        },
+        {
+          "path": "key/262.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/262.json",
+          "bytes": 187,
+          "sha256": "92ae3e587be45a59e5751832c4671d5b7a77fae7fcd67aa057fc677a3bea53d2"
+        }
+      ]
+    },
+    {
+      "id": "266",
+      "files": [
+        {
+          "path": "img/266.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/266.jpg",
+          "bytes": 309814,
+          "sha256": "5b32087ca9f3b71160e320cf05b25e1b4c41de7f07ed826806ea30a8c0a3b5f1"
+        },
+        {
+          "path": "box/266.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/266.csv",
+          "bytes": 2086,
+          "sha256": "da9bd11324aeb64c567f1e6acb8b50e52a78fd6e9b650e1cab4ec04cce502378"
+        },
+        {
+          "path": "key/266.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/266.json",
+          "bytes": 192,
+          "sha256": "cf2c1525764bfa49d85ebfe35030c269cbed3561523fee46e8c4249f465b6de2"
+        }
+      ]
+    },
+    {
+      "id": "361",
+      "files": [
+        {
+          "path": "img/361.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/361.jpg",
+          "bytes": 365116,
+          "sha256": "4bbfdfca210a311a12981f0c06d9ff31e9b5958fe5766d62cc2463606f66112b"
+        },
+        {
+          "path": "box/361.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/361.csv",
+          "bytes": 3463,
+          "sha256": "5df7a326a9d32660b9e8b313fc8b9423cc6711e7e4a2d597e1bdce2acb2513ff"
+        },
+        {
+          "path": "key/361.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/361.json",
+          "bytes": 171,
+          "sha256": "f76c9739dd4da665f6c5dcbceeba02671ac27b49a35cb6a8d1f76c833c096ce3"
+        }
+      ]
+    },
+    {
+      "id": "001",
+      "files": [
+        {
+          "path": "img/001.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/001.jpg",
+          "bytes": 85804,
+          "sha256": "4e7bb7f427732e769eafc6f6eed5a92eedccf96bc0c711f46466462b98916c73"
+        },
+        {
+          "path": "box/001.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/001.csv",
+          "bytes": 2171,
+          "sha256": "280229706c7b18f056d4e277f820b0b6d52cac5e53a540b54f85b0645cc6fb47"
+        },
+        {
+          "path": "key/001.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/001.json",
+          "bytes": 166,
+          "sha256": "b12132202b9eb52fe786da52e9eb54ccbbcc2b4fdd5a1e7f4d4256a3718683e3"
+        }
+      ]
+    },
+    {
+      "id": "023",
+      "files": [
+        {
+          "path": "img/023.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/023.jpg",
+          "bytes": 568761,
+          "sha256": "54c35f4e3b3fe7ef579d1bbc7854351106980986e5537ea267ff4cf640d044e3"
+        },
+        {
+          "path": "box/023.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/023.csv",
+          "bytes": 2834,
+          "sha256": "41e0567ce33b64fa964864083d2c78a7ce36cc4b7e4e9ef543c3b2499c708f86"
+        },
+        {
+          "path": "key/023.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/023.json",
+          "bytes": 178,
+          "sha256": "e295f54a874af5c042a79940f1b9f647c700e392d52f28904972195aaed58515"
+        }
+      ]
+    },
+    {
+      "id": "384",
+      "files": [
+        {
+          "path": "img/384.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/384.jpg",
+          "bytes": 255024,
+          "sha256": "9d6b7e3a3c53a557eb46139f89c54638d17c74578cfe3fbc862501f16325787b"
+        },
+        {
+          "path": "box/384.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/384.csv",
+          "bytes": 1339,
+          "sha256": "9c75c42a49338778b67b2485c6e20bf23d0595bceca4c3b77bdb091b9a4c9b94"
+        },
+        {
+          "path": "key/384.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/384.json",
+          "bytes": 189,
+          "sha256": "e8ffc052847ad14338cb8240d85bf4de20cf7f807a519f98e6329ab7e4acb430"
+        }
+      ]
+    },
+    {
+      "id": "051",
+      "files": [
+        {
+          "path": "img/051.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/051.jpg",
+          "bytes": 137085,
+          "sha256": "258ba886bf99cf3ec871f94cec05c64c8c831b9de4ad9531d48fa5f87663fc1c"
+        },
+        {
+          "path": "box/051.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/051.csv",
+          "bytes": 1832,
+          "sha256": "10fb12a5a59291ceb2165d9bedda66e36c6dd1e63c2b4eead5ed2c1f22b7e619"
+        },
+        {
+          "path": "key/051.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/051.json",
+          "bytes": 192,
+          "sha256": "21039d5ecfcdde3b3c146ad97027b9ca7135700469a32d2d58ab618491c1d0be"
+        }
+      ]
+    },
+    {
+      "id": "042",
+      "files": [
+        {
+          "path": "img/042.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/042.jpg",
+          "bytes": 227326,
+          "sha256": "39edcda02069bde170f8b72072a91accc41749e5793b10ef422ffa64d49981f4"
+        },
+        {
+          "path": "box/042.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/042.csv",
+          "bytes": 2343,
+          "sha256": "16de4acffb5ae7d80c609f98b8f3ca1a96d2a771b52c463ca999568129bebe7c"
+        },
+        {
+          "path": "key/042.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/042.json",
+          "bytes": 198,
+          "sha256": "806a24b155717067896b1c5799bb18cc93b0389169697d8d10dc56b4ef8fe828"
+        }
+      ]
+    },
+    {
+      "id": "339",
+      "files": [
+        {
+          "path": "img/339.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/339.jpg",
+          "bytes": 343510,
+          "sha256": "42a7e219dd1ad5bfa1060054d4b0afcba0235be1c0ee01120be0016ac9176489"
+        },
+        {
+          "path": "box/339.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/339.csv",
+          "bytes": 3719,
+          "sha256": "5539ffc3276d9fb3d978272c434b1e0037bd0cb115597ed5181b01f22398b37b"
+        },
+        {
+          "path": "key/339.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/339.json",
+          "bytes": 170,
+          "sha256": "fb78db453b8bf24e25a1ba17996e277f4f11de78c029facd21e210ed8b5f9593"
+        }
+      ]
+    },
+    {
+      "id": "579",
+      "files": [
+        {
+          "path": "img/579.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/579.jpg",
+          "bytes": 282867,
+          "sha256": "5d1ae64a6efbba3763d7c115bd30aefc9f0612f0843a5f854e1d478798cd9610"
+        },
+        {
+          "path": "box/579.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/579.csv",
+          "bytes": 1866,
+          "sha256": "7979546f71d439cb813eb1200d804868b8ccaa4ba87093a562cee3e264a97d80"
+        },
+        {
+          "path": "key/579.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/579.json",
+          "bytes": 209,
+          "sha256": "3c6bddb32479ad86dff9f99c14726b65c87bbc75304f52f96cb1be614c6f91ed"
+        }
+      ]
+    },
+    {
+      "id": "548",
+      "files": [
+        {
+          "path": "img/548.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/548.jpg",
+          "bytes": 187644,
+          "sha256": "9ad7272ec9003396979a6c94136f896685cc7f859f2f6081a0829047952aabcd"
+        },
+        {
+          "path": "box/548.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/548.csv",
+          "bytes": 2114,
+          "sha256": "65df4c068a1d93f0d172ae8e92bba44ae78b0a29ba44cf42bf01f18bc729bfa2"
+        },
+        {
+          "path": "key/548.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/548.json",
+          "bytes": 191,
+          "sha256": "be77a3859742b926f681a8fe1dcd0b0f1b1901745a5f1fd41e26419b31a67be7"
+        }
+      ]
+    },
+    {
+      "id": "481",
+      "files": [
+        {
+          "path": "img/481.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/481.jpg",
+          "bytes": 599418,
+          "sha256": "59f99f129a7e115fbfbade14f0e50f7e615d6e595c85b9ef4727ab55879b077f"
+        },
+        {
+          "path": "box/481.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/481.csv",
+          "bytes": 2236,
+          "sha256": "c1eab5be5dbb0ffe356eab8db532b71e70f71612d334c654418b9cdfe5170f0e"
+        },
+        {
+          "path": "key/481.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/481.json",
+          "bytes": 164,
+          "sha256": "6db8ef5c8e71edccb574f9da413c4922400f357e08601b0b430a946ff31d1a3a"
+        }
+      ]
+    },
+    {
+      "id": "254",
+      "files": [
+        {
+          "path": "img/254.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/254.jpg",
+          "bytes": 421225,
+          "sha256": "f1aa10deb8cf1ce5d851c35aa3194291c03fdf4238ac04c580ae11dd94d988d7"
+        },
+        {
+          "path": "box/254.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/254.csv",
+          "bytes": 2529,
+          "sha256": "14efcbe61646f13c30a2a7a4a3bd141f003510b323dc93a7aaf07210918b0669"
+        },
+        {
+          "path": "key/254.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/254.json",
+          "bytes": 183,
+          "sha256": "a731c463380c396e69dfc236eddc81041fdca7e044846f789d9652ebca637c92"
+        }
+      ]
+    },
+    {
+      "id": "112",
+      "files": [
+        {
+          "path": "img/112.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/112.jpg",
+          "bytes": 424558,
+          "sha256": "f271fbc83fa759648ca3e8d481aa2133dce5627b58269c2b651a7510518e54fd"
+        },
+        {
+          "path": "box/112.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/112.csv",
+          "bytes": 1749,
+          "sha256": "7aa5f165a29a5da67346a0fda09e537e6f0ddb4b619cb1343e1915b2e41be9a5"
+        },
+        {
+          "path": "key/112.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/112.json",
+          "bytes": 186,
+          "sha256": "f0190bc2cb92603b8ae73eddd21ad1b98c7fa193698bc098a9ac1872a0cae3a5"
+        }
+      ]
+    },
+    {
+      "id": "446",
+      "files": [
+        {
+          "path": "img/446.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/446.jpg",
+          "bytes": 359585,
+          "sha256": "b07d390927d2518f8d02e62e6545c4ebc402095e14847ffc5db9b86483a17104"
+        },
+        {
+          "path": "box/446.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/446.csv",
+          "bytes": 2241,
+          "sha256": "09d8aecaea1e89cdc31a982716c9ac18b2ff1ff70e17fc2d6fa9997b97f4b096"
+        },
+        {
+          "path": "key/446.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/446.json",
+          "bytes": 204,
+          "sha256": "7840bf973beade2e59f5306f8e3910f6ce972cb5b6b297f0c6ccb022b35aa7be"
+        }
+      ]
+    },
+    {
+      "id": "141",
+      "files": [
+        {
+          "path": "img/141.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/141.jpg",
+          "bytes": 236639,
+          "sha256": "7f5daf76cec8960ce4bc41723c9310bb6d8473b971762fb599e227fdd6ebc22e"
+        },
+        {
+          "path": "box/141.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/141.csv",
+          "bytes": 2186,
+          "sha256": "20d67b2777e5ad9da8d3c14a20fe9afdbf8469e7f0bb17739afe0560866024db"
+        },
+        {
+          "path": "key/141.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/141.json",
+          "bytes": 190,
+          "sha256": "506d92902a7969f5c3962f97fc5b4a9aefb51c2b023e00ae08497606dbf972f9"
+        }
+      ]
+    },
+    {
+      "id": "536",
+      "files": [
+        {
+          "path": "img/536.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/536.jpg",
+          "bytes": 1519214,
+          "sha256": "91136fb9ac5da7cee8652e3a84d8eaa6d320d1eb398feb9b33314bfd6170aea2"
+        },
+        {
+          "path": "box/536.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/536.csv",
+          "bytes": 2151,
+          "sha256": "71b20055df2a95b7b792abf29a0e64352b0f476c6214ab56bce37b2bc24a1eae"
+        },
+        {
+          "path": "key/536.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/536.json",
+          "bytes": 194,
+          "sha256": "c1e98bc715bf44e205f299cdd91446d3d18246d6b8e6d21690791c1a7c559b46"
+        }
+      ]
+    },
+    {
+      "id": "116",
+      "files": [
+        {
+          "path": "img/116.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/116.jpg",
+          "bytes": 403762,
+          "sha256": "568b81cc6d83b0e462ffbe3bb63635fffbb3d9b1d3de512e6cda6e2f80fcc7b7"
+        },
+        {
+          "path": "box/116.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/116.csv",
+          "bytes": 3073,
+          "sha256": "d60f214cd66a3929fed53afeeb1bc475d61fabb458708290851bcfd4e1d55dbd"
+        },
+        {
+          "path": "key/116.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/116.json",
+          "bytes": 170,
+          "sha256": "8b40e63b9c62f9e03ea660fc9fb44ca3ab6da89e7c6f66d99462e9236f2d3d3f"
+        }
+      ]
+    },
+    {
+      "id": "155",
+      "files": [
+        {
+          "path": "img/155.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/155.jpg",
+          "bytes": 324742,
+          "sha256": "0b17d8f8ac411e1ad55d6442e7f139110d648e4e6061ede9c6f1dd1ac58d777b"
+        },
+        {
+          "path": "box/155.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/155.csv",
+          "bytes": 1842,
+          "sha256": "e46d40fc77f34230ac370844a58fd7458737a3ff1043fce7c35c712a110ddb8c"
+        },
+        {
+          "path": "key/155.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/155.json",
+          "bytes": 214,
+          "sha256": "8032a3434fdb3e48e355d6abbbcc2335af5d907eaa939e8b134b6df972cb9a38"
+        }
+      ]
+    },
+    {
+      "id": "010",
+      "files": [
+        {
+          "path": "img/010.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/010.jpg",
+          "bytes": 683767,
+          "sha256": "ae9ee3b5dc0860c10753b9fa37adc88f424e72cc546cf68ad3bc0e7d4287af7d"
+        },
+        {
+          "path": "box/010.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/010.csv",
+          "bytes": 2238,
+          "sha256": "aa39a7b33b0791bf69fc3743f932fcdd77d5127f969d7648d43fc21754efee94"
+        },
+        {
+          "path": "key/010.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/010.json",
+          "bytes": 155,
+          "sha256": "6006c5c1ba3e2944f12213b4e6be2d4aa1a57fa8a51132ac9ae9997e6785fc4a"
+        }
+      ]
+    },
+    {
+      "id": "201",
+      "files": [
+        {
+          "path": "img/201.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/201.jpg",
+          "bytes": 382353,
+          "sha256": "7e0b3be4e305e8fa9675b7baf24fa47cd1f5541e204abe3f27d1ecb7cbc7341d"
+        },
+        {
+          "path": "box/201.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/201.csv",
+          "bytes": 1485,
+          "sha256": "f92d8b1f87ef2b7df7964e6761d89831e20ebf52126150e4c233d46ad0f7891c"
+        },
+        {
+          "path": "key/201.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/201.json",
+          "bytes": 204,
+          "sha256": "f6308d10c3b8c1dd7a62a1424ff9f97eee884e8d178ba545ede8c0ed5ae0c3ea"
+        }
+      ]
+    },
+    {
+      "id": "417",
+      "files": [
+        {
+          "path": "img/417.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/417.jpg",
+          "bytes": 223457,
+          "sha256": "84bd60da3911f4867af01b5b09166f1d34eb5409ec54fc659a717296986bb43a"
+        },
+        {
+          "path": "box/417.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/417.csv",
+          "bytes": 1960,
+          "sha256": "ebf6b465ea594920122c0dd359cc7cb291ab7b9330a18951e5bc903abb01df5e"
+        },
+        {
+          "path": "key/417.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/417.json",
+          "bytes": 179,
+          "sha256": "ca1898f6d6975b31e1f7afcb6c6af9a864093105a09368e8416c8870b760d4db"
+        }
+      ]
+    },
+    {
+      "id": "379",
+      "files": [
+        {
+          "path": "img/379.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/379.jpg",
+          "bytes": 316607,
+          "sha256": "a1e07c4587b6557b264edd68487a0e376140cf69dd3d0176b06d380822d8cec3"
+        },
+        {
+          "path": "box/379.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/379.csv",
+          "bytes": 2322,
+          "sha256": "6f18efe6fa63048b204d989e00701583fbf47a9a24c813c86be39bcfed9f6eab"
+        },
+        {
+          "path": "key/379.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/379.json",
+          "bytes": 212,
+          "sha256": "e5c66374ef52ffd5080ef202fcb81b921044f10a87ae1395a147b7b5d36edcd1"
+        }
+      ]
+    },
+    {
+      "id": "031",
+      "files": [
+        {
+          "path": "img/031.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/031.jpg",
+          "bytes": 194710,
+          "sha256": "e921f4bca358d8085f5177b5e32ea3bd12b01b1f38a2cbd640f7850ed2abb879"
+        },
+        {
+          "path": "box/031.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/031.csv",
+          "bytes": 1846,
+          "sha256": "c45e4b992ba2981bafdba1508419114a53ea1842ff7bfe8aebdd51acf0aa3eee"
+        },
+        {
+          "path": "key/031.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/031.json",
+          "bytes": 185,
+          "sha256": "a747171461399bc2717264052c05a6ef6a511b7018d3fa7879788b8f1964446a"
+        }
+      ]
+    },
+    {
+      "id": "623",
+      "files": [
+        {
+          "path": "img/623.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/623.jpg",
+          "bytes": 198384,
+          "sha256": "809ee8e3b507541fa288712daf2b0a3703af7e25ef6a0f4bfe8fcddc3df39435"
+        },
+        {
+          "path": "box/623.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/623.csv",
+          "bytes": 2925,
+          "sha256": "29fa246ed5732623b58e04d85f4c6eb5db3581b8f31d7fc82af842ebb2bfb50f"
+        },
+        {
+          "path": "key/623.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/623.json",
+          "bytes": 194,
+          "sha256": "cedc84abe53cf0377d4e64d0116efb44c608e07155212e3031805d7495bac41f"
+        }
+      ]
+    },
+    {
+      "id": "101",
+      "files": [
+        {
+          "path": "img/101.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/101.jpg",
+          "bytes": 548791,
+          "sha256": "e34db27fda7f8b993f90016beb0936b2c476dba0ceca8b58b27ee1f816ea2e0b"
+        },
+        {
+          "path": "box/101.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/101.csv",
+          "bytes": 2460,
+          "sha256": "1d44e3a49f6e3299fc6aedd4759adf350c703f7510ca0c627c7e28ad2c30deb0"
+        },
+        {
+          "path": "key/101.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/101.json",
+          "bytes": 169,
+          "sha256": "d17cb754b5c2c88636fde50c01c9ee47a6bae8729bce186f602353b6afeb52c3"
+        }
+      ]
+    },
+    {
+      "id": "577",
+      "files": [
+        {
+          "path": "img/577.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/577.jpg",
+          "bytes": 267709,
+          "sha256": "dec727ba9b05c2bf41ad086eb0ff62d0bd34299ac811fe1532f1ff35309911a5"
+        },
+        {
+          "path": "box/577.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/577.csv",
+          "bytes": 1423,
+          "sha256": "8104d7c0d88dec92f94f933501ad251627964efbaf40c769c28be3a653c44fd0"
+        },
+        {
+          "path": "key/577.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/577.json",
+          "bytes": 190,
+          "sha256": "a0a669caa137bd5a8b9d05fe7345c58d466114465768a3e7abf185b40f8b9b91"
+        }
+      ]
+    },
+    {
+      "id": "453",
+      "files": [
+        {
+          "path": "img/453.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/453.jpg",
+          "bytes": 349415,
+          "sha256": "58e3d0ab5333a2f8c05a3d60d1c66fe05f7f433d6ca676b7402c4723da5f3f30"
+        },
+        {
+          "path": "box/453.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/453.csv",
+          "bytes": 1543,
+          "sha256": "29c3a699bc294cb3da5d212958ba963127b37774a418f639dbefd2f6eb9fd9d5"
+        },
+        {
+          "path": "key/453.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/453.json",
+          "bytes": 167,
+          "sha256": "d918c7cda0694f2391d75eaf1d95d2ae1800a3414a43f07e946846f3e4212123"
+        }
+      ]
+    },
+    {
+      "id": "228",
+      "files": [
+        {
+          "path": "img/228.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/228.jpg",
+          "bytes": 625673,
+          "sha256": "d26bf911e15ffd5660f071d001cd7f9fecdc0d86205257f24c9176e28e88f9b0"
+        },
+        {
+          "path": "box/228.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/228.csv",
+          "bytes": 2843,
+          "sha256": "68270f177492b221d324099de8d73af353a3032c0c57961173b2323a0d80ad44"
+        },
+        {
+          "path": "key/228.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/228.json",
+          "bytes": 178,
+          "sha256": "da6228fcb4e5ebdce3b723701621cd32b69a8ecd4dbe56e4f8b671c6504e4b19"
+        }
+      ]
+    },
+    {
+      "id": "597",
+      "files": [
+        {
+          "path": "img/597.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/597.jpg",
+          "bytes": 196078,
+          "sha256": "feabf37deec2861d665b1b207b1bba095a1307faa390405ae2580ce98979067a"
+        },
+        {
+          "path": "box/597.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/597.csv",
+          "bytes": 2846,
+          "sha256": "5bf064485eb61d52c6cb53ecbb0f2303c274cd728d2a56793c64be11261472b3"
+        },
+        {
+          "path": "key/597.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/597.json",
+          "bytes": 194,
+          "sha256": "9a1734f5cab00680de1eefdd2244007b5c94675456079ea2b440f8a57036153b"
+        }
+      ]
+    },
+    {
+      "id": "264",
+      "files": [
+        {
+          "path": "img/264.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/264.jpg",
+          "bytes": 473412,
+          "sha256": "f20cd4e3f29fce218701bd12d85809c374cd19464413f2b23f6f9ceb7e57aff7"
+        },
+        {
+          "path": "box/264.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/264.csv",
+          "bytes": 2720,
+          "sha256": "a4a1e6a5974a5752980b3f8eeb4d2558ae12b431b7721d25d83d8b896dd4ed61"
+        },
+        {
+          "path": "key/264.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/264.json",
+          "bytes": 142,
+          "sha256": "7ce8acf74f951c1edb8c05545004111b35eb9fabddf78518a036f9e5603cb9c0"
+        }
+      ]
+    },
+    {
+      "id": "095",
+      "files": [
+        {
+          "path": "img/095.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/095.jpg",
+          "bytes": 665446,
+          "sha256": "a8ab9e0b080df5cb4b6c29b5ad61e22ace8f7b2da13ce2aefb7e2265f939d3c2"
+        },
+        {
+          "path": "box/095.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/095.csv",
+          "bytes": 2144,
+          "sha256": "685a9725b8e0b0bae9de1d9ca0da42152b6eede1357ac47a14eb63e6f70ff4fa"
+        },
+        {
+          "path": "key/095.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/095.json",
+          "bytes": 199,
+          "sha256": "d681fb62bc59fe50eff32c843f940f0e4ce12c4a5bf11dcc65b33ff2108b7f67"
+        }
+      ]
+    },
+    {
+      "id": "508",
+      "files": [
+        {
+          "path": "img/508.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/508.jpg",
+          "bytes": 762380,
+          "sha256": "65cc9ae0277665ab9eac8959393a28cffec224821d8d7a9ba673142072389a51"
+        },
+        {
+          "path": "box/508.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/508.csv",
+          "bytes": 2666,
+          "sha256": "2da209d2ddde677c78d79af6f00d69a70f194d0d52f131c30a1c20f0fe2931b9"
+        },
+        {
+          "path": "key/508.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/508.json",
+          "bytes": 217,
+          "sha256": "833129644072797e842d38a1025f74e213327e17879d6246c5a73852d6da22d2"
+        }
+      ]
+    },
+    {
+      "id": "563",
+      "files": [
+        {
+          "path": "img/563.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/563.jpg",
+          "bytes": 233126,
+          "sha256": "dfd45d5933cbcbcec8ee24ecc1e304b737d5b58b5c22653e2f81f07e70b00f52"
+        },
+        {
+          "path": "box/563.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/563.csv",
+          "bytes": 1961,
+          "sha256": "60c57f29a22bf2e436ffc09ca706a0bab8da604e1c925e798d369591961b7970"
+        },
+        {
+          "path": "key/563.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/563.json",
+          "bytes": 187,
+          "sha256": "5b247a793123a0e82c58bd70a73532d2fd96ea6d52cc79de1895d3ceec90d5e3"
+        }
+      ]
+    },
+    {
+      "id": "614",
+      "files": [
+        {
+          "path": "img/614.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/614.jpg",
+          "bytes": 152489,
+          "sha256": "eb589fa2dbcf983456a1ea079c50d47d9d43a376a3e7bfc9745ffb2ca5926587"
+        },
+        {
+          "path": "box/614.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/614.csv",
+          "bytes": 1014,
+          "sha256": "ecec7c60814c9b3d6cd563cbeec2067050e788f6f0de48b76a78c9ba7e37ee97"
+        },
+        {
+          "path": "key/614.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/614.json",
+          "bytes": 182,
+          "sha256": "311aed9876088f814aff10c9ef3545c7060caf05f8b81a22013aefd2896f7bb0"
+        }
+      ]
+    },
+    {
+      "id": "090",
+      "files": [
+        {
+          "path": "img/090.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/090.jpg",
+          "bytes": 974828,
+          "sha256": "9c1ec2a22a99cacf60a2a997f8b11fd2a118a8749fb2d447de59a9074d3441bd"
+        },
+        {
+          "path": "box/090.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/090.csv",
+          "bytes": 2708,
+          "sha256": "15a1a773be29ed6cc0f4ff8b6e5ad8304c0ac8a9198df57299d7245dfdba6b47"
+        },
+        {
+          "path": "key/090.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/090.json",
+          "bytes": 177,
+          "sha256": "5209415bce4d7e25752dcf8c93eb2265daf35e41b56cff1182a96cfb61909c6b"
+        }
+      ]
+    },
+    {
+      "id": "184",
+      "files": [
+        {
+          "path": "img/184.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/184.jpg",
+          "bytes": 403256,
+          "sha256": "65a15167af37c00348e59dc5364912b91fd6a26846369fd90c7faffb9748f467"
+        },
+        {
+          "path": "box/184.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/184.csv",
+          "bytes": 2147,
+          "sha256": "9e10b6f71f287ff10f35b78a287652336546526399908f39909c26676715298f"
+        },
+        {
+          "path": "key/184.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/184.json",
+          "bytes": 179,
+          "sha256": "36ad0f0877156be0225ddc0bf99566a3f7a4dbc47ecd55eb7adedfcb80f35d17"
+        }
+      ]
+    },
+    {
+      "id": "115",
+      "files": [
+        {
+          "path": "img/115.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/115.jpg",
+          "bytes": 353850,
+          "sha256": "098c52e6376624bb40762e10b6da643cac97849c27ded974a33eaf8a88ba90b8"
+        },
+        {
+          "path": "box/115.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/115.csv",
+          "bytes": 2551,
+          "sha256": "6b7cb7c47affb1bc3853d0051f7a2fd300edc140e6986341a5672b6605ad237e"
+        },
+        {
+          "path": "key/115.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/115.json",
+          "bytes": 169,
+          "sha256": "ad584ce305b9f87399fa84840c7f8e81dff6157a621e7813c11b830bd50d3e41"
+        }
+      ]
+    },
+    {
+      "id": "358",
+      "files": [
+        {
+          "path": "img/358.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/358.jpg",
+          "bytes": 324760,
+          "sha256": "75756759e3e8aa4d48873a0529e17c0630e173bad33eea0bbd9103cd10513bad"
+        },
+        {
+          "path": "box/358.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/358.csv",
+          "bytes": 3756,
+          "sha256": "9074c53f6eb83bec25e01f3538521dc023ab6f425fd0c5269ab9fe9e81b85922"
+        },
+        {
+          "path": "key/358.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/358.json",
+          "bytes": 171,
+          "sha256": "b19b25bf25f051d1cf709f2b0c337ef24813355e0d10b056d202456d501bce09"
+        }
+      ]
+    },
+    {
+      "id": "217",
+      "files": [
+        {
+          "path": "img/217.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/217.jpg",
+          "bytes": 101209,
+          "sha256": "ea5fc6f2b15c599e02732e7e26b8dbf991e5de93aba3e925e0e9389570aee9ec"
+        },
+        {
+          "path": "box/217.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/217.csv",
+          "bytes": 1786,
+          "sha256": "40726e54be0ec9ae643beb49ba2bf40d3e57f9f101761d8b1c6231f6029e9776"
+        },
+        {
+          "path": "key/217.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/217.json",
+          "bytes": 158,
+          "sha256": "edba704961b3469d1f8477b6ef6a6bc948e894ff31418b1f695bb3051877bbfa"
+        }
+      ]
+    },
+    {
+      "id": "313",
+      "files": [
+        {
+          "path": "img/313.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/313.jpg",
+          "bytes": 243040,
+          "sha256": "7c8e3bd007bebbf37ac99191a997fb49d5da55161f4902b9f2df0856b9d7d877"
+        },
+        {
+          "path": "box/313.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/313.csv",
+          "bytes": 2482,
+          "sha256": "1a3abbbd115fc5147f3a7a326d338d10045da1c9a189a060be31ffec5aa2cda9"
+        },
+        {
+          "path": "key/313.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/313.json",
+          "bytes": 159,
+          "sha256": "6e77392e00616980d5564de6ca08a9aa6b7e6ef1bb58791e6a34347d458cb471"
+        }
+      ]
+    },
+    {
+      "id": "079",
+      "files": [
+        {
+          "path": "img/079.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/079.jpg",
+          "bytes": 353768,
+          "sha256": "08f9358fd75ead9877c4f704024ed1eb162e6ece578803b784074eca8c03dbfb"
+        },
+        {
+          "path": "box/079.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/079.csv",
+          "bytes": 3066,
+          "sha256": "0a1cf77e2c59193b387dcdd8cde11766e9a0b6aa7160fdf26ebdea96ee183062"
+        },
+        {
+          "path": "key/079.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/079.json",
+          "bytes": 200,
+          "sha256": "2f604e957feb28271057cf9215e89110eb89c537406027007e4f47596b1ee3e8"
+        }
+      ]
+    },
+    {
+      "id": "329",
+      "files": [
+        {
+          "path": "img/329.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/329.jpg",
+          "bytes": 356785,
+          "sha256": "230b359446e12fc1fe307b90f1fe27590d0fa8ab8ea28c212a3a5f1c46a423be"
+        },
+        {
+          "path": "box/329.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/329.csv",
+          "bytes": 3212,
+          "sha256": "54584eee7194f387f4e63a64d7ea183469c7db6b0c394de3a862030df9d95c0c"
+        },
+        {
+          "path": "key/329.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/329.json",
+          "bytes": 171,
+          "sha256": "566d1f3ec572dc9bce7fa6a71246f2be8ba82d1a3004f6a8f2b7870d9d8dbb46"
+        }
+      ]
+    },
+    {
+      "id": "397",
+      "files": [
+        {
+          "path": "img/397.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/397.jpg",
+          "bytes": 495823,
+          "sha256": "bde3eadbe00e70bc118b7984a4180b7a064701b5ccb4e8ca9d3d57ff953765d4"
+        },
+        {
+          "path": "box/397.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/397.csv",
+          "bytes": 4009,
+          "sha256": "82c694e6354bb39b6addb02f18e40dd52147f94a1367d4f8cbb62fa0a7b0a825"
+        },
+        {
+          "path": "key/397.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/397.json",
+          "bytes": 182,
+          "sha256": "3b4028dbf3cc7b866f281c2287e2bc3a7a67a203c2e9a25ae960c541217114c0"
+        }
+      ]
+    },
+    {
+      "id": "499",
+      "files": [
+        {
+          "path": "img/499.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/499.jpg",
+          "bytes": 579080,
+          "sha256": "0cf3dd37919b9868605e5dff2ceb90a14f4f0125666d70e5f692eea0b4067192"
+        },
+        {
+          "path": "box/499.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/499.csv",
+          "bytes": 2220,
+          "sha256": "4d58356385eb2042fae6a140f558c36b785e0cb77374125a14f6d4ccb2d6d3d1"
+        },
+        {
+          "path": "key/499.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/499.json",
+          "bytes": 164,
+          "sha256": "7460c6fe1e11cca3b8279d41218af9b2f7f2a2afc6e3224f7e0d59f6a8d99cec"
+        }
+      ]
+    },
+    {
+      "id": "109",
+      "files": [
+        {
+          "path": "img/109.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/109.jpg",
+          "bytes": 255316,
+          "sha256": "60ec7b2610fd3b66ee2f148b510d07a96f3cd18e63d14c76c7dfe79463d39485"
+        },
+        {
+          "path": "box/109.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/109.csv",
+          "bytes": 1960,
+          "sha256": "d18c72e85b474c5c0816e24c06e173757361404aca6c2605fd3e54fc5afcc7f1"
+        },
+        {
+          "path": "key/109.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/109.json",
+          "bytes": 194,
+          "sha256": "dfade4135b062782bc74b53f7a710c26e745ee4bb71518456549c019aa0f1dc2"
+        }
+      ]
+    },
+    {
+      "id": "347",
+      "files": [
+        {
+          "path": "img/347.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/347.jpg",
+          "bytes": 410573,
+          "sha256": "e0dee2557ea9ebb23b7f9892c68ee9c1efd9b492cd9e442a7c2155336dba88db"
+        },
+        {
+          "path": "box/347.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/347.csv",
+          "bytes": 3988,
+          "sha256": "04f8ae0e74adb042edd5d822f0d90465a189df03e78e7062886a0ab1b16cbfe8"
+        },
+        {
+          "path": "key/347.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/347.json",
+          "bytes": 171,
+          "sha256": "f6a35841eca9955d7bb65d2606fb1161b941d040fc23760a2a54d629163c88bd"
+        }
+      ]
+    },
+    {
+      "id": "353",
+      "files": [
+        {
+          "path": "img/353.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/353.jpg",
+          "bytes": 353609,
+          "sha256": "1df0dc7384924e1b51a2673a673cad13bf61c0e2b3c7311334f564efc6e53613"
+        },
+        {
+          "path": "box/353.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/353.csv",
+          "bytes": 3437,
+          "sha256": "fbef237b8543ca517501bc4cf986baf1151366f66e58491e55fa49fcb8c352a5"
+        },
+        {
+          "path": "key/353.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/353.json",
+          "bytes": 170,
+          "sha256": "2b11d9b5867eab35a087078c2f93ff60df323b82680920650d0a4fcc10f009d6"
+        }
+      ]
+    },
+    {
+      "id": "157",
+      "files": [
+        {
+          "path": "img/157.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/157.jpg",
+          "bytes": 321573,
+          "sha256": "61f16c80f93a2777c8b3e519fc23b2a6813ec606541bbdc52aa2162e8afdcd7b"
+        },
+        {
+          "path": "box/157.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/157.csv",
+          "bytes": 2344,
+          "sha256": "c6adfc45a27c7b1ab06beb3869a0f3594f42510b548e291cc80de6572e9c56b3"
+        },
+        {
+          "path": "key/157.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/157.json",
+          "bytes": 210,
+          "sha256": "2dd4352493c70dcf9c11a21109a172c32894d0e067c10a2c5e4d39ddf70e4646"
+        }
+      ]
+    },
+    {
+      "id": "075",
+      "files": [
+        {
+          "path": "img/075.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/075.jpg",
+          "bytes": 173326,
+          "sha256": "25da7080734abf41cb17d4cf97ac3966b9f7c5591e54e9e344726547a7545f54"
+        },
+        {
+          "path": "box/075.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/075.csv",
+          "bytes": 2123,
+          "sha256": "9af13b53737b91db02c83dc4152e85634dcb361061f7052f4189fcdeeb5ab665"
+        },
+        {
+          "path": "key/075.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/075.json",
+          "bytes": 216,
+          "sha256": "a1d4b1fe7e93bcc1b8988c499be0e5cbcef6ec588d6ef5714754b565fada0db6"
+        }
+      ]
+    },
+    {
+      "id": "284",
+      "files": [
+        {
+          "path": "img/284.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/284.jpg",
+          "bytes": 1413381,
+          "sha256": "22b473914f8739accf0a89f5a42321012f92a86755fd64efe62f0d310d1204b1"
+        },
+        {
+          "path": "box/284.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/284.csv",
+          "bytes": 1939,
+          "sha256": "1a720341ea3069faa693f05afdfcbcd988879cadb407c92c6cee18e29dd8b12e"
+        },
+        {
+          "path": "key/284.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/284.json",
+          "bytes": 192,
+          "sha256": "b1abfe31663bf76937e2d37a33ab3d84fb42cdfa6fad3aee444d961bed6d088a"
+        }
+      ]
+    },
+    {
+      "id": "246",
+      "files": [
+        {
+          "path": "img/246.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/246.jpg",
+          "bytes": 334330,
+          "sha256": "a6178f6e0774e8ca29ffb29745d49be551055768884095873c3ef6c261fa354a"
+        },
+        {
+          "path": "box/246.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/246.csv",
+          "bytes": 1804,
+          "sha256": "1e35ecdb9b3487563b617a65bfe6ae2b46a3b02dffbceb52b3ea04463e8f2132"
+        },
+        {
+          "path": "key/246.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/246.json",
+          "bytes": 207,
+          "sha256": "2400f1d9e93b20d8f9fdc85124d3d6acc502831cffad2723b5edc1670479b5eb"
+        }
+      ]
+    },
+    {
+      "id": "578",
+      "files": [
+        {
+          "path": "img/578.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/578.jpg",
+          "bytes": 270289,
+          "sha256": "736fe4da7a5bab34a44c19d0f140aad3c2eb4bab33eb34d9aff2434146f9f3f4"
+        },
+        {
+          "path": "box/578.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/578.csv",
+          "bytes": 1432,
+          "sha256": "aa4ba61c827993c7a3c5b550cae9ee0f2e443fd3f87d04c07280c8e382f4f63b"
+        },
+        {
+          "path": "key/578.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/578.json",
+          "bytes": 190,
+          "sha256": "34af77121fb99755dcc9b5ec1e418f062a1d4d0fedd3e21d8e3ed554e27dfde2"
+        }
+      ]
+    },
+    {
+      "id": "522",
+      "files": [
+        {
+          "path": "img/522.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/522.jpg",
+          "bytes": 1817090,
+          "sha256": "f1d71ebbca75163e88486812641e37f5100faa321940f4f5398e6900f1534b43"
+        },
+        {
+          "path": "box/522.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/522.csv",
+          "bytes": 2404,
+          "sha256": "53f1e09bbb9f1a566dd5e9ee7dabcc7e4437df8edf87e0af1675ce167d75c1ce"
+        },
+        {
+          "path": "key/522.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/522.json",
+          "bytes": 193,
+          "sha256": "2f58a93fe76279122d2b32092b886927a5d4dc80f3526edb17ad017e410629cc"
+        }
+      ]
+    },
+    {
+      "id": "131",
+      "files": [
+        {
+          "path": "img/131.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/131.jpg",
+          "bytes": 260672,
+          "sha256": "8eb12e0b6fdae8d3e0af9f72d9af59edbfcbee4a2ebfe8844b354501a618a8f3"
+        },
+        {
+          "path": "box/131.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/131.csv",
+          "bytes": 2577,
+          "sha256": "49fccb5cbe830022ba80cfa33213028517a78ab58fc5d6a4ce8922fac70ff91d"
+        },
+        {
+          "path": "key/131.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/131.json",
+          "bytes": 196,
+          "sha256": "4ad2586f0d816812e5191632544ce464e41c7933611ade0cd3894dfae8a73d7f"
+        }
+      ]
+    },
+    {
+      "id": "086",
+      "files": [
+        {
+          "path": "img/086.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/086.jpg",
+          "bytes": 312797,
+          "sha256": "0c95f3d463eceb7e1711cc0a845b22c0270b6f884088ea945e79b362ed616d91"
+        },
+        {
+          "path": "box/086.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/086.csv",
+          "bytes": 2738,
+          "sha256": "491925d7499ecd2f0c1676b819825dca94d84c207ca9374bb33a3ffd530b3280"
+        },
+        {
+          "path": "key/086.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/086.json",
+          "bytes": 209,
+          "sha256": "a7ae151b70cf0b4c946ab52fe95a5c8cd77eb3195c72a2afb7a9d0642ba865c6"
+        }
+      ]
+    },
+    {
+      "id": "414",
+      "files": [
+        {
+          "path": "img/414.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/414.jpg",
+          "bytes": 176098,
+          "sha256": "b92a788eda623f4fa02e7cf8afc1fb9437204ffca454312c3b32fa62600df504"
+        },
+        {
+          "path": "box/414.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/414.csv",
+          "bytes": 2040,
+          "sha256": "dde84476b6fc65291d2e0b11d3b412c2d27c09d66d3ead3ea0fa5b41685f9795"
+        },
+        {
+          "path": "key/414.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/414.json",
+          "bytes": 180,
+          "sha256": "e403bbfd55558e96d90daac23cc86dca228109d4f1f4249b0795886b0bf333ea"
+        }
+      ]
+    },
+    {
+      "id": "064",
+      "files": [
+        {
+          "path": "img/064.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/064.jpg",
+          "bytes": 182686,
+          "sha256": "793bc894772b85f77ba8c00a6a4612e90070361227cc122794c6b63008a09740"
+        },
+        {
+          "path": "box/064.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/064.csv",
+          "bytes": 1983,
+          "sha256": "d1f920cb87e4ef74d7f4491e21b6382d6bd73420f55a1dcffc399df05b68260f"
+        },
+        {
+          "path": "key/064.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/064.json",
+          "bytes": 145,
+          "sha256": "9f3bc770d61d927a0f81ae61c262ce19cd37b7134ab552b45e19d91dfa867c31"
+        }
+      ]
+    },
+    {
+      "id": "330",
+      "files": [
+        {
+          "path": "img/330.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/330.jpg",
+          "bytes": 334435,
+          "sha256": "67da6a81bd6d88914dd2fd2861d4257fa4c59ec902da46f51cfabcb001e98f57"
+        },
+        {
+          "path": "box/330.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/330.csv",
+          "bytes": 3535,
+          "sha256": "1c0766f45e4fa59c48f5d7af883fe7f0439650e6f6cfbd741ce3cf76c6b76e3c"
+        },
+        {
+          "path": "key/330.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/330.json",
+          "bytes": 171,
+          "sha256": "8d2b8644de074352f29310cf2535af22a6ed4d4ff55c9a3389ed848684d934dc"
+        }
+      ]
+    },
+    {
+      "id": "215",
+      "files": [
+        {
+          "path": "img/215.jpg",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/img/215.jpg",
+          "bytes": 742502,
+          "sha256": "9f950c1548502215a7c7107513befb880e0c96ed5a4b638f15ef5f250b2d3205"
+        },
+        {
+          "path": "box/215.csv",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/box/215.csv",
+          "bytes": 2985,
+          "sha256": "b33da44950fc7d6120a03d279823563e4bad032414ee030974f224b71b4d4d8d"
+        },
+        {
+          "path": "key/215.json",
+          "source_url": "https://raw.githubusercontent.com/zzzDavid/ICDAR-2019-SROIE/27be4271b251c256f695acbade9a801bffe85994/data/key/215.json",
+          "bytes": 192,
+          "sha256": "058e6d1dbc6e0c02884a5f876a389d3f8ef19fde27cc4db33e60a7fd8df9dd81"
+        }
+      ]
+    }
+  ]
+}

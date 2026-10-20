@@ -1,0 +1,1614 @@
+{
+  "summary": {
+    "label_status": "Agent-reviewed policy expectations from published transcripts; not independent human category gold",
+    "selection": "Deliberate semantic contrasts and controls, fixed before model runs; not a random accuracy benchmark",
+    "case_count": 20,
+    "ocr_source": "native",
+    "ocr": {
+      "completed": 20,
+      "median_ms": 198.505521,
+      "mean_normalized_character_error_rate": 0.27608140972824974,
+      "mean_order_independent_token_f1": 0.8984790009809037,
+      "metric_note": "CER is sensitive to reading order, reference annotation errors and whitespace normalization; latency includes CLI launch for Shortcuts."
+    },
+    "qwen": {
+      "description_only": {
+        "attempted": 20,
+        "succeeded": 20,
+        "category_matches": 10,
+        "joint_matches": 10
+      },
+      "ocr_context": {
+        "attempted": 20,
+        "succeeded": 20,
+        "category_matches": 19,
+        "joint_matches": 19
+      },
+      "reference_context": {
+        "attempted": 20,
+        "succeeded": 20,
+        "category_matches": 19,
+        "joint_matches": 19
+      }
+    },
+    "laya": {
+      "description_only": {
+        "attempted": 20,
+        "succeeded": 20,
+        "category_matches": 4,
+        "joint_matches": 4
+      },
+      "ocr_context": {
+        "attempted": 20,
+        "succeeded": 20,
+        "category_matches": 5,
+        "joint_matches": 5
+      },
+      "reference_context": {
+        "attempted": 20,
+        "succeeded": 20,
+        "category_matches": 6,
+        "joint_matches": 6
+      }
+    }
+  },
+  "cases_sha256": "5a88e6e2d286ff64d43be8b89ae776f8964685a20b825fd18f8821042e688083",
+  "models": {
+    "qwen": {
+      "model_id": "qwen-delaware-v1-step5872",
+      "backend": "qwen_mlx",
+      "manifest_sha256": "e9141393b4a6c12ff063b3049c2e50e65a8642b754ac8f3f8bb3942c028da4d0",
+      "policy_version": "groundkeeper-18-v1",
+      "device": "mlx_gpu"
+    },
+    "laya": {
+      "model_id": "laya-epoch3",
+      "backend": "laya_mps",
+      "manifest_sha256": "50da08d6d738f32a75e2e2fd3d21a2d70cdf8ae0bdd66b44f55954bbe0d9539f",
+      "policy_version": "groundkeeper-18-v1",
+      "device": "mps"
+    }
+  },
+  "cases": [
+    {
+      "id": "001",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "73efe615711fb8e1dee83e8a7c89f8cd94242c5e7588159979b42fc616d1b219",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "f628697867b3fb72af4f1499212dfa7edc9ca59a84a9dc24494310e22504ae1c",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "83c68bc4e4a17be3f24de185b7b550739cc5f20ec6dd23dc085d2a766912a97b",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "73efe615711fb8e1dee83e8a7c89f8cd94242c5e7588159979b42fc616d1b219",
+            "decision": {
+              "type": "expense",
+              "category": "gifts",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "f628697867b3fb72af4f1499212dfa7edc9ca59a84a9dc24494310e22504ae1c",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "83c68bc4e4a17be3f24de185b7b550739cc5f20ec6dd23dc085d2a766912a97b",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 61484.798333,
+        "image_sha256": "4e7bb7f427732e769eafc6f6eed5a92eedccf96bc0c711f46466462b98916c73",
+        "normalized_character_error_rate": 0.19736842105263158,
+        "order_independent_token_f1": 0.869198312236287
+      }
+    },
+    {
+      "id": "010",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "27685c77e389d0a3e45699a1fc17188e31b75138bbb44b9df673e1fff7ce2bdb",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "ccf8f89999976d78f0e83e98cace4bb68b9a61a37e3c9edcb33059435ce48cbb",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "a2ff0cceb0f2dd3ad4c7611ec6461906fff9355b6e24d50f582e17107318285a",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "27685c77e389d0a3e45699a1fc17188e31b75138bbb44b9df673e1fff7ce2bdb",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "ccf8f89999976d78f0e83e98cace4bb68b9a61a37e3c9edcb33059435ce48cbb",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "a2ff0cceb0f2dd3ad4c7611ec6461906fff9355b6e24d50f582e17107318285a",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 133.994791,
+        "image_sha256": "ae9ee3b5dc0860c10753b9fa37adc88f424e72cc546cf68ad3bc0e7d4287af7d",
+        "normalized_character_error_rate": 0.29462738301559793,
+        "order_independent_token_f1": 0.9399293286219081
+      }
+    },
+    {
+      "id": "023",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "d7b446014224e2f9807acf9785fa61de2f29537d4d92ec06e73bea94d3097bba",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "2889d639c83a340196c5ad333ee1622b39424cfc42c2d0329dd37824c3f58bd5",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "124e339ea719b81f262fb4800ca7cbffdba4d92cd1bf9aeec0d5be314c9ee7e4",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "d7b446014224e2f9807acf9785fa61de2f29537d4d92ec06e73bea94d3097bba",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "2889d639c83a340196c5ad333ee1622b39424cfc42c2d0329dd37824c3f58bd5",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "124e339ea719b81f262fb4800ca7cbffdba4d92cd1bf9aeec0d5be314c9ee7e4",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 213.41425,
+        "image_sha256": "54c35f4e3b3fe7ef579d1bbc7854351106980986e5537ea267ff4cf640d044e3",
+        "normalized_character_error_rate": 0.3218045112781955,
+        "order_independent_token_f1": 0.8326530612244898
+      }
+    },
+    {
+      "id": "027",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "68006e7dbffc9acb18ba4356524ca2a147e08a61de7cfd06a59d66443424a858",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "474043506423e47b0637e84111fbf0ee211b50fbbb298bbf890a72c034a22a4a",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "d7cb8189a5723f4df99de38a9026c48ec377143be6d5f0e2154aae8d6300990f",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "68006e7dbffc9acb18ba4356524ca2a147e08a61de7cfd06a59d66443424a858",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "474043506423e47b0637e84111fbf0ee211b50fbbb298bbf890a72c034a22a4a",
+            "decision": {
+              "type": "balance_adjustment",
+              "category": null,
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "d7cb8189a5723f4df99de38a9026c48ec377143be6d5f0e2154aae8d6300990f",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 235.522583,
+        "image_sha256": "c5d7271ea478624ed5b63b45b620799532637934dc72590d29b79ca78845f625",
+        "normalized_character_error_rate": 0.49264705882352944,
+        "order_independent_token_f1": 0.8029197080291971
+      }
+    },
+    {
+      "id": "051",
+      "expected_category": "dining",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "9006f5b1e40c45327cfc173417116c79943f3e0e6cf26652f7de8b69f9d3116a",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "23470605c279ead93edb59032b86647e86360098738f5910e0a4f53fe94b7251",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "8057be915a8dbdc86c941dd37554dd1472906749403d5591b7536cbd923aae43",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "9006f5b1e40c45327cfc173417116c79943f3e0e6cf26652f7de8b69f9d3116a",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "23470605c279ead93edb59032b86647e86360098738f5910e0a4f53fe94b7251",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "8057be915a8dbdc86c941dd37554dd1472906749403d5591b7536cbd923aae43",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 228.7595,
+        "image_sha256": "258ba886bf99cf3ec871f94cec05c64c8c831b9de4ad9531d48fa5f87663fc1c",
+        "normalized_character_error_rate": 0.2641509433962264,
+        "order_independent_token_f1": 0.6568627450980392
+      }
+    },
+    {
+      "id": "060",
+      "expected_category": "groceries",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "cbca554e4e05475d7ba270d368f53b6584151901904c4d912653effbf190e3fc",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "b323ef1e37660e3b443138afa056b04d1c85f2ba9f7fc9af825298fad82ed2de",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "089d16a9048ba7f2ce2660b0ff64bed7399f03cf0202b789b7a9bea8c1c88d99",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "cbca554e4e05475d7ba270d368f53b6584151901904c4d912653effbf190e3fc",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "b323ef1e37660e3b443138afa056b04d1c85f2ba9f7fc9af825298fad82ed2de",
+            "decision": {
+              "type": "refund",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "089d16a9048ba7f2ce2660b0ff64bed7399f03cf0202b789b7a9bea8c1c88d99",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 228.613084,
+        "image_sha256": "c0e961e8a14c71f602b6dce79a287250f5ccc896eccd403eadb7bd6214f6578a",
+        "normalized_character_error_rate": 0.22701949860724233,
+        "order_independent_token_f1": 0.9710144927536232
+      }
+    },
+    {
+      "id": "064",
+      "expected_category": "vehicle",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "f09a73347e1b368742e9406e9e907f98838b9c98b9ac161faf4f65757d1ac2ea",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "57e6f757c602390d42f43dd34a0484080d6f43f19a45e75188fc6aed0cbd05a0",
+            "decision": {
+              "type": "expense",
+              "category": "vehicle",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "e20a27554375515c60131cd614b53052f9f9fbe4cc916f3d88da130051cc39be",
+            "decision": {
+              "type": "expense",
+              "category": "vehicle",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "f09a73347e1b368742e9406e9e907f98838b9c98b9ac161faf4f65757d1ac2ea",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "57e6f757c602390d42f43dd34a0484080d6f43f19a45e75188fc6aed0cbd05a0",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "e20a27554375515c60131cd614b53052f9f9fbe4cc916f3d88da130051cc39be",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 183.228417,
+        "image_sha256": "793bc894772b85f77ba8c00a6a4612e90070361227cc122794c6b63008a09740",
+        "normalized_character_error_rate": 0.06573705179282868,
+        "order_independent_token_f1": 0.9045226130653267
+      }
+    },
+    {
+      "id": "075",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "73a29149b80226d30424e3bcd407fda78c14d02c76c70b8110426345d15c2e7f",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "a47353157fc982cd9c8662a07c3ade380bd41eab2daba4734d939fc8d613a2d2",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "cd601c7b15f2dd567b8193f54a7d6bba1bd2f7256bafc1f6389be363ea609fc1",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "73a29149b80226d30424e3bcd407fda78c14d02c76c70b8110426345d15c2e7f",
+            "decision": {
+              "type": "expense",
+              "category": "local_transport",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "a47353157fc982cd9c8662a07c3ade380bd41eab2daba4734d939fc8d613a2d2",
+            "decision": {
+              "type": "expense",
+              "category": "taxes",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "cd601c7b15f2dd567b8193f54a7d6bba1bd2f7256bafc1f6389be363ea609fc1",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 207.596458,
+        "image_sha256": "25da7080734abf41cb17d4cf97ac3966b9f7c5591e54e9e344726547a7545f54",
+        "normalized_character_error_rate": 0.3468013468013468,
+        "order_independent_token_f1": 0.9531914893617022
+      }
+    },
+    {
+      "id": "077",
+      "expected_category": "dining",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "27b10103ed8cdefab9fb99cb62734bd8b124dfdd70ccd868b3063630908c94a8",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "dc6c88ce6af3daad480164014e7a53c580dd9e2fd9a361a86bbdada829568f28",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "5792384966cbcbf03177a6096d5d4851084f95342c8dd29fdbdc7b45f3c007e4",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "27b10103ed8cdefab9fb99cb62734bd8b124dfdd70ccd868b3063630908c94a8",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "dc6c88ce6af3daad480164014e7a53c580dd9e2fd9a361a86bbdada829568f28",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "5792384966cbcbf03177a6096d5d4851084f95342c8dd29fdbdc7b45f3c007e4",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 165.346917,
+        "image_sha256": "bc0f5b49ae3fbfbbd2c5530d66eb5ee55ee0c16814271633e409a48d1d5e9c40",
+        "normalized_character_error_rate": 0.23822714681440443,
+        "order_independent_token_f1": 0.9823321554770318
+      }
+    },
+    {
+      "id": "090",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "299ce33b0b6ce83aed99bb84ac32112bfcb253322bf726e3e6c46cdf81a6469d",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "3a89469163bbe8cee49a31d4bca877361b6ea309323aefde528536baaef99530",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "b1755b1ef47c1460553a2db818c6ceca1e7a9048f360804af6d637cfdd55c25b",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "299ce33b0b6ce83aed99bb84ac32112bfcb253322bf726e3e6c46cdf81a6469d",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "3a89469163bbe8cee49a31d4bca877361b6ea309323aefde528536baaef99530",
+            "decision": {
+              "type": "expense",
+              "category": "taxes",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "b1755b1ef47c1460553a2db818c6ceca1e7a9048f360804af6d637cfdd55c25b",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 187.2525,
+        "image_sha256": "9c1ec2a22a99cacf60a2a997f8b11fd2a118a8749fb2d447de59a9074d3441bd",
+        "normalized_character_error_rate": 0.12040133779264214,
+        "order_independent_token_f1": 0.967930029154519
+      }
+    },
+    {
+      "id": "095",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "c8d9ed1ddae193121191d33b9f7b82cba3fd831df18c47f408df431006f3035a",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "ca7fb8424c85b0f188d305bf51cdb693cb9cfeb2f8b2d6fcb00f7630d40ba29b",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "b4d86dfe3646be8cda05d378c12235f52f062f1113d31161d9cc58e97e2ddc4f",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "c8d9ed1ddae193121191d33b9f7b82cba3fd831df18c47f408df431006f3035a",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "ca7fb8424c85b0f188d305bf51cdb693cb9cfeb2f8b2d6fcb00f7630d40ba29b",
+            "decision": {
+              "type": "expense",
+              "category": "education",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "b4d86dfe3646be8cda05d378c12235f52f062f1113d31161d9cc58e97e2ddc4f",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 205.870833,
+        "image_sha256": "a8ab9e0b080df5cb4b6c29b5ad61e22ace8f7b2da13ce2aefb7e2265f939d3c2",
+        "normalized_character_error_rate": 0.15193798449612403,
+        "order_independent_token_f1": 0.9182879377431906
+      }
+    },
+    {
+      "id": "101",
+      "expected_category": "shopping",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "d5fc4fa022b96468b2743251928f97ed108d3815eb60de96db7b64fba3b5053e",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "85932e4c9f07c6d4129f0de080bee8c0bbf4a70f2b40bb9fc79646059470f223",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "c09d11ba6a1bb7c74886f339e54e154c763128237c42ab9dfb9803799f8bc45d",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "d5fc4fa022b96468b2743251928f97ed108d3815eb60de96db7b64fba3b5053e",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "85932e4c9f07c6d4129f0de080bee8c0bbf4a70f2b40bb9fc79646059470f223",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "c09d11ba6a1bb7c74886f339e54e154c763128237c42ab9dfb9803799f8bc45d",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 155.2675,
+        "image_sha256": "e34db27fda7f8b993f90016beb0936b2c476dba0ceca8b58b27ee1f816ea2e0b",
+        "normalized_character_error_rate": 0.4300884955752212,
+        "order_independent_token_f1": 0.9775784753363229
+      }
+    },
+    {
+      "id": "104",
+      "expected_category": "dining",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "bad31742be0f12cfb336eb947bc4c1490033668bd6f0631ec228fa366f8849d8",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "295be78ddccc98e1d75b4097eaee949d08586c7903e82bdc259a0d4f46a3008d",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "dd39fdcd3f68a29cc835587d18a64229f7f50c9933edb31fed9c4034256018e5",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "bad31742be0f12cfb336eb947bc4c1490033668bd6f0631ec228fa366f8849d8",
+            "decision": {
+              "type": "expense",
+              "category": "education",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "295be78ddccc98e1d75b4097eaee949d08586c7903e82bdc259a0d4f46a3008d",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "dd39fdcd3f68a29cc835587d18a64229f7f50c9933edb31fed9c4034256018e5",
+            "decision": {
+              "type": "expense",
+              "category": "education",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 154.784167,
+        "image_sha256": "9475fe70bb99b37a02e59b45ce16c0daf3db0b6c6b71de1d576e1594592c4d22",
+        "normalized_character_error_rate": 0.12646675358539766,
+        "order_independent_token_f1": 0.943952802359882
+      }
+    },
+    {
+      "id": "112",
+      "expected_category": "local_transport",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "394b941b9c71f1a3fec72b29dcbded188cdf0687f6045d8c0f6f05013f4765c9",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "ebd6dfb9326ae8567d0f1ecb5576008d874a2efe85c39e85d222702d4b9ae409",
+            "decision": {
+              "type": "expense",
+              "category": "local_transport",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "b2eb4359470f716e41b32fc474922e5a3193b31095723c5da9c3cf8ab4329cf2",
+            "decision": {
+              "type": "expense",
+              "category": "local_transport",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "394b941b9c71f1a3fec72b29dcbded188cdf0687f6045d8c0f6f05013f4765c9",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "ebd6dfb9326ae8567d0f1ecb5576008d874a2efe85c39e85d222702d4b9ae409",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "b2eb4359470f716e41b32fc474922e5a3193b31095723c5da9c3cf8ab4329cf2",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 203.113709,
+        "image_sha256": "f271fbc83fa759648ca3e8d481aa2133dce5627b58269c2b651a7510518e54fd",
+        "normalized_character_error_rate": 0.8486842105263158,
+        "order_independent_token_f1": 0.8542713567839196
+      }
+    },
+    {
+      "id": "155",
+      "expected_category": "dining",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "645450a53b5a7ca0de132eaaf8c902c466961078b554c85a8d8357c0960b3edd",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "352d6bed3d727ae4e34658d2fd1a8347e0acd4f7c6c459ed3cff010e19f6fe87",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "6b4c72a043151495ee2c1367d41085bd60b15ab7e6c3003889b495c319afa39a",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "645450a53b5a7ca0de132eaaf8c902c466961078b554c85a8d8357c0960b3edd",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "352d6bed3d727ae4e34658d2fd1a8347e0acd4f7c6c459ed3cff010e19f6fe87",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "6b4c72a043151495ee2c1367d41085bd60b15ab7e6c3003889b495c319afa39a",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 193.897333,
+        "image_sha256": "0b17d8f8ac411e1ad55d6442e7f139110d648e4e6061ede9c6f1dd1ac58d777b",
+        "normalized_character_error_rate": 0.08766233766233766,
+        "order_independent_token_f1": 0.9416666666666667
+      }
+    },
+    {
+      "id": "156",
+      "expected_category": "dining",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "781705c3890d5eb4dc75b5bcac7097fdb46171ac5948ed577de109c26bd67da6",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "66a783788c4c38c32dde22a04420c9cb061a0c676c7224c0a8f1c70cc6c58ef5",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "bea6cfbf9f21c1503b94157b095e0b6fba2987d2620e60acfceba3f3557c0aa4",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "781705c3890d5eb4dc75b5bcac7097fdb46171ac5948ed577de109c26bd67da6",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "66a783788c4c38c32dde22a04420c9cb061a0c676c7224c0a8f1c70cc6c58ef5",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "bea6cfbf9f21c1503b94157b095e0b6fba2987d2620e60acfceba3f3557c0aa4",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 155.5965,
+        "image_sha256": "7affb10d55d68769749411eceff84adf9b25d91569e4946baf3f82d75dbf4dda",
+        "normalized_character_error_rate": 0.36589698046181174,
+        "order_independent_token_f1": 0.9435483870967742
+      }
+    },
+    {
+      "id": "157",
+      "expected_category": "dining",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "ac9a7db69c7963f338556e142c1593a8912ea87b4cddd6d11e3a59e6c3afc8e0",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "7f1841bc8670121d3d6e5e4756c62820f67f6c7316b59ef3612252d5d2fed168",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "032d4da6256742097417bc1ae09826851bbb9b78dbf127ef949ace41c4f3e1c5",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "ac9a7db69c7963f338556e142c1593a8912ea87b4cddd6d11e3a59e6c3afc8e0",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "7f1841bc8670121d3d6e5e4756c62820f67f6c7316b59ef3612252d5d2fed168",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "032d4da6256742097417bc1ae09826851bbb9b78dbf127ef949ace41c4f3e1c5",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 233.660291,
+        "image_sha256": "61f16c80f93a2777c8b3e519fc23b2a6813ec606541bbdc52aa2162e8afdcd7b",
+        "normalized_character_error_rate": 0.151033386327504,
+        "order_independent_token_f1": 0.9800796812749004
+      }
+    },
+    {
+      "id": "414",
+      "expected_category": "medical",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "044abdfcb46b285e0db0d25fdb5d68f074153c987c1ca7cc7dfaad0bccb8e3b2",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "73d136f7e1d51b46c7a0da05f2ec04c93154637e372b4cf9de1ce7640c857b4f",
+            "decision": {
+              "type": "expense",
+              "category": "medical",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "779d652e2b7a07f74722718d6622ade5028a0576e11014af09cf672086ddcc22",
+            "decision": {
+              "type": "expense",
+              "category": "medical",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "044abdfcb46b285e0db0d25fdb5d68f074153c987c1ca7cc7dfaad0bccb8e3b2",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "73d136f7e1d51b46c7a0da05f2ec04c93154637e372b4cf9de1ce7640c857b4f",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "779d652e2b7a07f74722718d6622ade5028a0576e11014af09cf672086ddcc22",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 203.438333,
+        "image_sha256": "b92a788eda623f4fa02e7cf8afc1fb9437204ffca454312c3b32fa62600df504",
+        "normalized_character_error_rate": 0.4637964774951076,
+        "order_independent_token_f1": 0.8669950738916257
+      }
+    },
+    {
+      "id": "421",
+      "expected_category": "groceries",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "96f55c4c785f208d476d560a9ea7c48b67e7d4af8db869c70aacd65bd2cb6bbf",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "a40cc355f13c61db58af8f315c4a25e366d984b83ee30efc1315a73875f98857",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "e1ec06253b24e684e7b10f2176be6bf08febd61875420156cdce6e46473fa239",
+            "decision": {
+              "type": "expense",
+              "category": "shopping",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "96f55c4c785f208d476d560a9ea7c48b67e7d4af8db869c70aacd65bd2cb6bbf",
+            "decision": {
+              "type": "expense",
+              "category": "personal_care",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "a40cc355f13c61db58af8f315c4a25e366d984b83ee30efc1315a73875f98857",
+            "decision": {
+              "type": "expense",
+              "category": "personal_care",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "e1ec06253b24e684e7b10f2176be6bf08febd61875420156cdce6e46473fa239",
+            "decision": {
+              "type": "expense",
+              "category": "personal_care",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 185.679417,
+        "image_sha256": "b43fa6e1efb3635ca8ebf7a5de0bde5bab75ee24009ecffa3f4169b9e4e29387",
+        "normalized_character_error_rate": 0.21536351165980797,
+        "order_independent_token_f1": 0.6764705882352942
+      }
+    },
+    {
+      "id": "563",
+      "expected_category": "vehicle",
+      "predictions": {
+        "qwen": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "d421477639fc2f492ed1da8a999deee7db7f6a798c9bf285b3a8e0bac6d97c32",
+            "decision": {
+              "type": "expense",
+              "category": "dining",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "4e4e3ff27692a61b8f5ef838480a6b6cd894436cf954e89a57724ae9585035db",
+            "decision": {
+              "type": "expense",
+              "category": "vehicle",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "d1be0ebaad635b2ca60138d9d4617bfb47cd8f0cc5a4683bf56017faf098809a",
+            "decision": {
+              "type": "expense",
+              "category": "vehicle",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "laya": {
+          "description_only": {
+            "status": "succeeded",
+            "input_sha256": "d421477639fc2f492ed1da8a999deee7db7f6a798c9bf285b3a8e0bac6d97c32",
+            "decision": {
+              "type": "expense",
+              "category": "local_transport",
+              "review": true
+            },
+            "error": null
+          },
+          "ocr_context": {
+            "status": "succeeded",
+            "input_sha256": "4e4e3ff27692a61b8f5ef838480a6b6cd894436cf954e89a57724ae9585035db",
+            "decision": {
+              "type": "expense",
+              "category": "uncategorized",
+              "review": true
+            },
+            "error": null
+          },
+          "reference_context": {
+            "status": "succeeded",
+            "input_sha256": "d1be0ebaad635b2ca60138d9d4617bfb47cd8f0cc5a4683bf56017faf098809a",
+            "decision": {
+              "type": "expense",
+              "category": "groceries",
+              "review": true
+            },
+            "error": null
+          }
+        },
+        "apple": {}
+      },
+      "ocr": {
+        "elapsed_ms": 127.171125,
+        "image_sha256": "dfd45d5933cbcbcec8ee24ecc1e304b737d5b58b5c22653e2f81f07e70b00f52",
+        "normalized_character_error_rate": 0.11191335740072202,
+        "order_independent_token_f1": 0.9861751152073732
+      }
+    }
+  ]
+}

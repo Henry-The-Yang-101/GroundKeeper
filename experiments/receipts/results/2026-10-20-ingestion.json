@@ -1,0 +1,11 @@
+{
+  "classification" : "contract-only fixture; no model inference",
+  "input_files" : 40,
+  "integrity_check" : true,
+  "jobs_with_receipt_context" : 20,
+  "quarantined_files" : 0,
+  "receipts" : 20,
+  "stored_images" : 20,
+  "transactions" : 20,
+  "vault" : "isolated encrypted temporary vault"
+}

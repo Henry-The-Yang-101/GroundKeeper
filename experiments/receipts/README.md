@@ -42,3 +42,46 @@ command uses an isolated encrypted temporary vault, reads payment and receipt
 events in reverse filename order, imports images and checks classifier inputs.
 Its decisions are explicit fixtures, not model predictions. It never opens the
 user's live vault. Actual Shortcuts OCR and model comparisons are separate runs.
+
+## Reproduce the comparison
+
+Read the [recorded results](RESULTS.md) and [design assessment](../../docs/receipt-ocr.md)
+before interpreting the scores. Install GK Receipt OCR on a Mac and inspect the
+native Extract Text from Image action. The classifier Shortcut must use the
+selected intended model, Text output, Follow Up off and web knowledge off.
+Run from the repository root with the project environment:
+
+```sh
+.venv/bin/python -m scripts.download_receipt_pilot
+.venv/bin/python -m scripts.receipt_pilot shortcuts-ocr
+.venv/bin/python -m scripts.receipt_pilot prepare --ocr shortcuts
+.venv/bin/python -m scripts.receipt_pilot classify --ocr shortcuts --provider qwen --package .local/macos/models/qwen-delaware
+.venv/bin/python -m scripts.receipt_pilot classify --ocr shortcuts --provider laya --package .local/macos/models/laya
+.venv/bin/python -m scripts.receipt_pilot classify --ocr shortcuts --provider apple --skip-reference
+.venv/bin/python -m scripts.receipt_pilot report --ocr shortcuts
+```
+
+Adjust package directories to the actual installed packages. The classifier
+command uses the production worker without the app's XPC transport; the signed
+app smoke test verifies that transport separately. Apple calls send the public
+sample's description and bounded OCR to the selected Shortcut/model. No personal
+ledger is read. The app's separate receipt-sharing setting governs normal app
+jobs; this explicitly invoked pilot sends its public fixtures directly.
+
+The runner records successes and safe errors, stops on a quota error, resumes
+only matching input hashes, and refuses to mix case/model identities. Keep new
+experiments in a new `--work` directory. Do not retry errors merely to raise a
+score. `report --publish` exports decisions and aggregate metrics without raw
+receipt text or images into this experiment's dated results files; reserve that
+option for intentionally updating the recorded pilot.
+
+For native OCR, build ReceiptPilot with the Swift package and run its `ocr`
+command above, then repeat prepare/classify/report using `--ocr native`. Use a
+separate ignored scratch build directory as in the macOS development guide.
+Native OCR covers all 100 images; the paired classification still uses only the
+fixed 20 cases. The [case file](cases.json) defines their policy expectations and
+selection rationale independently from inference inputs.
+
+The full prompt/response and OCR logs remain in `.local/receipts`, while committed
+results contain model identities, image and input hashes, decisions and metrics.
+The files are evaluation artifacts, not training data or a production ledger.
