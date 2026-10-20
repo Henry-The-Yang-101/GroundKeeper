@@ -5,6 +5,10 @@ struct GroundKeeperApp: App {
     @State private var workspace = AppWorkspace()
     @AppStorage("appearance") private var appearance = AppAppearance.system
 
+    init() {
+        VaultTypography.register()
+    }
+
     var body: some Scene {
         Window("GroundKeeper", id: "main") {
             Group {
@@ -15,6 +19,8 @@ struct GroundKeeperApp: App {
                 .environment(workspace)
                 .defaultAppStorage(AppPreferences.defaults)
                 .preferredColorScheme(appearance.colorScheme)
+                .tint(AppStyle.accent)
+                .foregroundStyle(AppStyle.text)
                 .task {
                     lifecycle.workspace = workspace
                     if AppPreferences.isReceiptSmoke { await ReceiptSmoke.run() }
