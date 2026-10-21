@@ -1,10 +1,8 @@
 # GroundKeeper
 
-The "GROUND" in GroundKeeper means your finances stay grounded on your own
-devices: no hosted backend and no cloud AI required. Your personal iCloud Drive
-simply delivers capture files from iPhone to Mac.
 
-GroundKeeper is a local-first system designed to automatically help you keep track of personal spending. The end-to-end system lies strictly within your own personal environment, with no external cloud server ever getting hands on your private transaction data. YOU are fully in control of your own private data.
+
+GroundKeeper is a local-first system designed to automatically help you keep track of personal spending. The GROUND in GroundKeeper means your finances stay grounded on your own devices: no hosted backend and no cloud AI required. Your personal iCloud Drive simply delivers capture files from iPhone to Mac. The end-to-end system lies strictly within your own personal environment, with no external cloud server ever getting hands on your private transaction data. YOU are fully in control of your own private data.
 
 iPhone Shortcuts capture transactions and pass them to your Mac through files in
 your personal iCloud Drive, the only bridge between the two devices. Your Mac
