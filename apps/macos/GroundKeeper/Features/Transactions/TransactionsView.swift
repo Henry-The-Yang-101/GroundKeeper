@@ -51,7 +51,10 @@ struct TransactionsView: View {
                         Button("Clear filters", action: clearFilters).buttonStyle(.borderless)
                     }
                 }.labelsHidden()
-            }.padding(20).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: PageLayout.contentWidth, alignment: .leading)
+            .padding(PageLayout.inset).frame(maxWidth: .infinity)
+            .fixedSize(horizontal: false, vertical: true)
             Divider()
             // Bound the native table to the space left by the header and footer.
             // Its intrinsic height must not expand the split view beyond the window.
@@ -88,7 +91,7 @@ struct TransactionsView: View {
                             Text(transaction.formattedAmount).monospacedDigit()
                             Text(transaction.currency).font(.caption2).foregroundStyle(AppStyle.muted)
                         }.frame(maxWidth: .infinity, alignment: .trailing)
-                    }.width(min: 100, ideal: 110, max: 150)
+                    }.width(min: 100, ideal: 110, max: 150).alignment(.trailing)
                 }
                 .scrollContentBackground(.hidden)
                 .alternatingRowBackgrounds(.disabled)
@@ -156,12 +159,14 @@ struct TransactionsView: View {
             Text("This hides the transaction while retaining its source evidence and history. Re-importing the same capture will not recreate it.")
         }
         .sheet(item: $receiptTransaction) { transaction in
-            VStack(alignment: .leading, spacing: 16) {
-                Text(transaction.merchant).font(VaultTypography.sheet)
-                Text("Transaction notes and captured receipts stay with this purchase.").font(.callout).foregroundStyle(AppStyle.muted)
-                ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString, transactionNote: transaction.notes).frame(maxWidth: .infinity, alignment: .leading) }
-                HStack { Spacer(); Button("Done") { receiptTransaction = nil } }
-            }.padding(24).frame(width: 650, height: 650).vaultSheet()
+            VStack(spacing: 0) {
+                SheetHeading(title: transaction.merchant, subtitle: "Transaction notes and captured receipts stay with this purchase.")
+                ContentSizedScrollView {
+                    ReceiptEvidenceView(transactionID: transaction.id.uuidString, transactionNote: transaction.notes)
+                        .padding(.horizontal, 24).padding(.bottom, 24)
+                }
+                SheetFooter { Spacer(); SheetDoneButton() }
+            }.frame(width: 650).vaultSheet()
         }
     }
 

@@ -33,38 +33,38 @@ struct ReportTransactionsSheet: View {
         return result
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text(drilldown.title).font(VaultTypography.sheet)
-                Spacer()
-                Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
-            }
-            Text(ReportFormat.range(filter.range, timezone: filter.timezone)).foregroundStyle(AppStyle.muted)
-            if drilldown.filter.baseline != nil {
-                Picker("Period", selection: $previous) { Text("Selected").tag(false); Text("Previous").tag(true) }
-                    .pickerStyle(.segmented).tint(AppStyle.controlAccent).onChange(of: previous) { page = 0 }
-            }
-            Text("\(filter.currency) · \(filter.includePending ? "Includes pending" : "Posted only") · \(filter.purchasesOnly ? "Purchase amounts before refunds." : "Refunds reduce spending.") Category and tag filters show only the matching portions of split purchases.")
-                .font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
-            Divider()
-            if loading { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
-            else if let error { Text(error).frame(maxWidth: .infinity, maxHeight: .infinity) }
-            else if rows.isEmpty { UnavailableFeature(title: "No matching entries", symbol: "tray", description: "There are no recorded purchases or refunds in this view.").frame(maxHeight: .infinity) }
-            else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 6) {
-                        ForEach(rows) { entry in ReportEntryRow(entry: entry, currency: filter.currency); Divider() }
+        VStack(spacing: 0) {
+            SheetHeading(title: drilldown.title)
+            VStack(alignment: .leading, spacing: 16) {
+                Text(ReportFormat.range(filter.range, timezone: filter.timezone)).foregroundStyle(AppStyle.muted)
+                if drilldown.filter.baseline != nil {
+                    Picker("Period", selection: $previous) { Text("Selected").tag(false); Text("Previous").tag(true) }
+                        .pickerStyle(.segmented).tint(AppStyle.controlAccent).onChange(of: previous) { page = 0 }
+                }
+                Text("\(filter.currency) · \(filter.includePending ? "Includes pending" : "Posted only") · \(filter.purchasesOnly ? "Purchase amounts before refunds." : "Refunds reduce spending.") Category and tag filters show only the matching portions of split purchases.")
+                    .font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
+                Divider()
+                if loading { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
+                else if let error { Text(error).frame(maxWidth: .infinity, maxHeight: .infinity) }
+                else if rows.isEmpty { UnavailableFeature(title: "No matching entries", symbol: "tray", description: "There are no recorded purchases or refunds in this view.").frame(maxHeight: .infinity) }
+                else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 6) {
+                            ForEach(rows) { entry in ReportEntryRow(entry: entry, currency: filter.currency); Divider() }
+                        }
                     }
                 }
-            }
-            HStack {
+            }.frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24).padding(.bottom, 24)
+            SheetFooter {
                 Text("Page \(page + 1)").font(.caption).foregroundStyle(AppStyle.muted)
                 Spacer()
                 Button("Previous") { page -= 1 }.disabled(page == 0 || loading)
                 Button("Next") { page += 1 }.disabled(!hasMore || loading)
+                SheetDoneButton()
             }
         }
-        .padding(24).frame(minWidth: 540, idealWidth: 680, minHeight: 450, idealHeight: 620)
+        .frame(minWidth: 540, idealWidth: 680, minHeight: 450, idealHeight: 620)
         .task(id: "\(page)|\(previous)|\(workspace.reportingRevision)|\(workspace.ready)") {
             rows = []; error = nil; loading = true
             do {

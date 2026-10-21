@@ -1,6 +1,28 @@
 import Foundation
 import GroundKeeperCore
 
+enum TransactionInput {
+    static func positiveAmount(_ text: String) -> Decimal? {
+        let input = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = input.components(separatedBy: Locale.current.decimalSeparator ?? ".")
+        // Reject numeric prefixes, grouping, signs, and fractions beyond cents.
+        guard (1...2).contains(parts.count), !parts[0].isEmpty,
+              parts.allSatisfy({ $0.unicodeScalars.allSatisfy(CharacterSet.decimalDigits.contains) }),
+              parts.count == 1 || parts[1].count <= 2,
+              let amount = try? Decimal(input, format: .number.locale(.current), lenient: false),
+              amount > 0, amount.exponent >= -2 else { return nil }
+        return amount
+    }
+
+    static func day(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
 /// Editable presentation of a persisted account-side transaction.
 struct Transaction: Identifiable, Equatable {
     var id = UUID()

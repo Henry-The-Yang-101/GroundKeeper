@@ -1,5 +1,97 @@
 import SwiftUI
 
+enum PageLayout {
+    static let inset: CGFloat = 28
+    static let contentWidth: CGFloat = 1080
+}
+
+struct AlignedFormField<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(title).frame(width: 96, alignment: .leading)
+            content.labelsHidden().frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+struct SheetHeading: View {
+    let title: String
+    var subtitle: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(VaultTypography.sheet).accessibilityAddTraits(.isHeader)
+            if let subtitle { Text(subtitle).font(.callout).foregroundStyle(AppStyle.muted) }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading).padding(24)
+    }
+}
+
+struct SheetFooter<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack(spacing: 12) { content }
+                .padding(.horizontal, 24).padding(.vertical, 16)
+        }.fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+struct SheetDoneButton: View {
+    @Environment(\.dismiss) private var dismiss
+    var disabled = false
+
+    var body: some View {
+        Button("Done") { dismiss() }.keyboardShortcut(.cancelAction).disabled(disabled)
+    }
+}
+
+/// Sparse evidence stays compact; expanded receipts scroll within the sheet.
+struct ContentSizedScrollView<Content: View>: View {
+    var maximumHeight: CGFloat = 420
+    @ViewBuilder var content: Content
+    @State private var contentHeight: CGFloat = 48
+
+    var body: some View {
+        ScrollView {
+            content.frame(maxWidth: .infinity, alignment: .leading)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+        }.frame(height: min(max(contentHeight, 48), maximumHeight))
+    }
+}
+
+struct TransactionAmountField: View {
+    @Binding var text: String
+
+    var body: some View {
+        TextField("Amount", text: $text)
+            .accessibilityHint("Enter a positive amount without thousands separators. Choose Money out or Money in for its direction.")
+    }
+}
+
+struct TransactionDirectionPicker: View {
+    @Binding var isDebit: Bool
+
+    var body: some View {
+        Picker("Direction", selection: $isDebit) { Text("Money out").tag(true); Text("Money in").tag(false) }
+    }
+}
+
+struct TransactionDatePicker: View {
+    @Binding var date: Date
+
+    var body: some View {
+        DatePicker("Date", selection: $date, displayedComponents: .date)
+            .environment(\.calendar, Calendar(identifier: .gregorian))
+    }
+}
+
 struct VaultFormSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
@@ -34,8 +126,8 @@ struct PageContent<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) { content }
-                .frame(maxWidth: 1080, alignment: .leading)
-                .padding(28)
+                .frame(maxWidth: PageLayout.contentWidth, alignment: .leading)
+                .padding(PageLayout.inset)
                 .frame(maxWidth: .infinity)
         }
         .background(AppStyle.pageBackground)

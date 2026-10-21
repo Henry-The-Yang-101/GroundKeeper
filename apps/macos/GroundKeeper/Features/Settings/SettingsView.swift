@@ -94,33 +94,35 @@ struct SettingsView: View {
                 Text("Spending reports and calculated insights run locally. Budgeting and planning are coming later.").foregroundStyle(AppStyle.muted)
             }
         }.formStyle(.grouped).scrollContentBackground(.hidden)
+            // The grouped form supplies 20 points; match the page's 28-point edge.
+            .padding(.horizontal, PageLayout.inset - 20)
             .safeAreaInset(edge: .top, spacing: 0) {
                 PageHeading(title: "Settings", subtitle: "Make this space your own.")
-                    .frame(maxWidth: .infinity, alignment: .leading).padding(28)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(PageLayout.inset)
                     .background(AppStyle.pageBackground)
             }
-            .frame(maxWidth: 850).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
+            .frame(maxWidth: PageLayout.contentWidth + 2 * PageLayout.inset).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
             .sheet(isPresented: $showingProtection) {
-                VStack(alignment: .leading, spacing: 24) {
-                    Text("Vault protection").font(VaultTypography.sheet)
-                    VaultProtectionView()
-                    HStack { Spacer(); Button("Done") { showingProtection = false }.disabled(workspace.saving) }
-                }.padding(32).frame(width: 580).vaultSheet().interactiveDismissDisabled(workspace.saving)
+                VStack(spacing: 0) {
+                    SheetHeading(title: "Vault protection")
+                    ContentSizedScrollView(maximumHeight: 520) {
+                        VaultProtectionView().padding(.horizontal, 24).padding(.bottom, 24)
+                    }
+                    SheetFooter { Spacer(); SheetDoneButton(disabled: workspace.saving) }
+                }.frame(width: 580).vaultSheet().interactiveDismissDisabled(workspace.saving)
             }
             .sheet(isPresented: $showingModels) {
-                VStack {
-                    Text("Categorization").font(VaultTypography.sheet)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 30).padding(.top, 24)
-                    ScrollView { ModelSetupView(installer: installer).padding(30) }
-                    HStack { Spacer(); Button("Done") { showingModels = false }.disabled(installer.busy || workspace.saving) }.padding()
+                VStack(spacing: 0) {
+                    SheetHeading(title: "Categorization")
+                    ScrollView { ModelSetupView(installer: installer).padding(.horizontal, 24).padding(.bottom, 24) }
+                    SheetFooter { Spacer(); SheetDoneButton(disabled: installer.busy || workspace.saving) }
                 }.frame(width: 720, height: 730).vaultSheet().interactiveDismissDisabled(installer.busy || workspace.saving)
             }
             .sheet(isPresented: $showingPhoneGuide) {
-                VStack {
-                    Text("iPhone capture").font(VaultTypography.sheet)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 30).padding(.top, 24)
-                    ScrollView { PhoneSetupView().padding(30) }
-                    Button("Done") { showingPhoneGuide = false }.keyboardShortcut(.cancelAction).padding()
+                VStack(spacing: 0) {
+                    SheetHeading(title: "iPhone capture")
+                    ScrollView { PhoneSetupView().padding(.horizontal, 24).padding(.bottom, 24) }
+                    SheetFooter { Spacer(); SheetDoneButton() }
                 }.frame(width: 700, height: 700).vaultSheet()
             }
     }

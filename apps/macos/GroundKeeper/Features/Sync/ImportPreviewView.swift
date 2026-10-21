@@ -17,58 +17,64 @@ struct ImportPreviewView: View {
     @State private var delimiter = ","
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Import bank CSV").font(VaultTypography.sheet)
-            if let result {
-                Label(result, systemImage: "checkmark.circle")
-                Text("Possible matches are in Sync → Review captures. Categories remain suggestions until you confirm them.").foregroundStyle(AppStyle.muted)
-                Spacer()
-            } else if let document {
-                Text("\(document.filename) · \(document.rows.count) rows").foregroundStyle(AppStyle.muted)
-                if !reviewing {
-                    Form {
-                        column("Date", selection: $mapping.dateColumn, document: document)
-                        column("Description", selection: $mapping.descriptionColumn, document: document)
-                        column("Amount / debit", selection: $mapping.amountColumn, document: document)
-                        optionalColumn("Credit (optional)", selection: $mapping.creditColumn, document: document)
-                        optionalColumn("Bank record ID (optional)", selection: $mapping.externalIDColumn, document: document)
-                        Picker("Account", selection: $mapping.accountID) {
-                            Text("Choose account").tag("")
-                            ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
-                        }
-                        Picker("Date format", selection: $mapping.dateFormat) {
-                            ForEach(["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"], id: \.self) { Text($0) }
-                        }
-                        Toggle("Positive amounts mean spending", isOn: $mapping.positiveMeansDebit).disabled(mapping.creditColumn != nil)
-                        Toggle("Comma decimal separator (1.234,56)", isOn: $mapping.decimalComma)
-                        Text("Signed amounts: negative is money out, positive is money in. A debit/credit pair must contain exactly one positive value. Select a bank ID only if it uniquely identifies a posted record.").font(.caption)
-                    }.formStyle(.grouped).scrollContentBackground(.hidden)
-                } else {
-                    Text("\(rows.count - skipped.count) rows selected · \(rows.filter { $0.error != nil }.count) invalid")
-                    Button("Skip all invalid rows") { skipped.formUnion(rows.filter { $0.error != nil }.map(\.id)) }
-                    List(rows.prefix(200)) { row in
-                        HStack {
-                            Toggle("Row \(row.id)", isOn: Binding(get: { !skipped.contains(row.id) }, set: { if $0 { skipped.remove(row.id) } else { skipped.insert(row.id) } })).frame(width: 85)
-                            VStack(alignment: .leading) {
-                                Text(row.description.isEmpty ? "Missing description" : row.description)
-                                Text(row.error ?? "\(row.day) · \(Decimal(row.amountMinor ?? 0) / 100) \(mapping.currency)")
-                                    .font(.caption).foregroundStyle(row.error == nil ? AppStyle.muted : Color.red)
+        VStack(spacing: 0) {
+            SheetHeading(title: "Import bank CSV")
+            VStack(alignment: .leading, spacing: 16) {
+                if let result {
+                    Label(result, systemImage: "checkmark.circle")
+                    Text("Possible matches are in Sync → Review captures. Categories remain suggestions until you confirm them.").foregroundStyle(AppStyle.muted)
+                } else if let document {
+                    Text("\(document.filename) · \(document.rows.count) rows").foregroundStyle(AppStyle.muted)
+                    if !reviewing {
+                        Form {
+                            column("Date", selection: $mapping.dateColumn, document: document)
+                            column("Description", selection: $mapping.descriptionColumn, document: document)
+                            column("Amount / debit", selection: $mapping.amountColumn, document: document)
+                            optionalColumn("Credit (optional)", selection: $mapping.creditColumn, document: document)
+                            optionalColumn("Bank record ID (optional)", selection: $mapping.externalIDColumn, document: document)
+                            Picker("Account", selection: $mapping.accountID) {
+                                Text("Choose account").tag("")
+                                ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
                             }
-                        }
+                            Picker("Date format", selection: $mapping.dateFormat) {
+                                ForEach(["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"], id: \.self) { Text($0) }
+                            }
+                            Toggle("Positive amounts mean spending", isOn: $mapping.positiveMeansDebit).disabled(mapping.creditColumn != nil)
+                            Toggle("Comma decimal separator (1.234,56)", isOn: $mapping.decimalComma)
+                            Text("Signed amounts: negative is money out, positive is money in. A debit/credit pair must contain exactly one positive value. Select a bank ID only if it uniquely identifies a posted record.").font(.caption)
+                        }.formStyle(.grouped).scrollContentBackground(.hidden)
+                    } else {
+                        Text("\(rows.count - skipped.count) rows selected · \(rows.filter { $0.error != nil }.count) invalid")
+                        Button("Skip all invalid rows") { skipped.formUnion(rows.filter { $0.error != nil }.map(\.id)) }
+                            .disabled(!rows.contains { $0.error != nil && !skipped.contains($0.id) })
+                        List(rows.prefix(200)) { row in
+                            HStack {
+                                Toggle("Row \(row.id)", isOn: Binding(get: { !skipped.contains(row.id) }, set: { if $0 { skipped.remove(row.id) } else { skipped.insert(row.id) } })).frame(width: 85)
+                                VStack(alignment: .leading) {
+                                    Text(row.description.isEmpty ? "Missing description" : row.description)
+                                    Text(row.error ?? "\(row.day) · \((Decimal(row.amountMinor ?? 0) / 100).formatted(.currency(code: mapping.currency))) \(mapping.currency)")
+                                        .font(.caption).foregroundStyle(row.error == nil ? AppStyle.muted : Color.red)
+                                }
+                            }.listRowBackground(AppStyle.surface)
+                        }.listStyle(.plain).scrollContentBackground(.hidden)
+                            .background(AppStyle.surface).clipShape(.rect(cornerRadius: 10))
+                        if rows.count > 200 { Text("Showing the first 200 rows. Validation covers the entire file.").font(.caption) }
                     }
-                    if rows.count > 200 { Text("Showing the first 200 rows. Validation covers the entire file.").font(.caption) }
+                } else {
+                    Text("Choose a UTF-8 CSV with a header row. Add your real accounts in Settings first.").foregroundStyle(AppStyle.muted)
+                    Picker("Delimiter", selection: $delimiter) { Text("Comma").tag(","); Text("Semicolon").tag(";"); Text("Tab").tag("\t") }
+                    Button("Choose CSV…", action: choose).disabled(busy)
+                    if busy { ProgressView("Reading CSV…").controlSize(.small) }
                 }
-            } else {
-                Text("Choose a UTF-8 CSV with a header row. Add your real accounts in Settings first.").foregroundStyle(AppStyle.muted)
-                Picker("Delimiter", selection: $delimiter) { Text("Comma").tag(","); Text("Semicolon").tag(";"); Text("Tab").tag("\t") }
-                Button("Choose CSV…", action: choose)
+                if let error { Text(error).foregroundStyle(.red).font(.callout) }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24).padding(.bottom, 24)
+            SheetFooter {
+                if result == nil {
+                    Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction).disabled(busy)
+                }
                 Spacer()
-            }
-            if let error { Text(error).foregroundStyle(.red).font(.callout) }
-            Divider()
-            HStack {
-                Button(result == nil ? "Cancel" : "Done") { dismiss() }.keyboardShortcut(.cancelAction).disabled(busy)
-                Spacer()
+                if result != nil { SheetDoneButton(disabled: busy) }
                 if document != nil && result == nil {
                     if reviewing { Button("Back") { reviewing = false }.disabled(busy) }
                     Button(reviewing ? "Import selected rows" : "Validate rows") {
@@ -95,7 +101,7 @@ struct ImportPreviewView: View {
                     .disabled(busy || mapping.accountID.isEmpty || (reviewing && (rows.allSatisfy { skipped.contains($0.id) } || rows.contains { $0.error != nil && !skipped.contains($0.id) })))
                 }
             }
-        }.padding(24).frame(width: 690, height: 650).interactiveDismissDisabled(busy)
+        }.frame(width: 690, height: document != nil && result == nil ? 650 : nil).interactiveDismissDisabled(busy)
     }
     private func column(_ title: String, selection: Binding<Int>, document: CSVDocument) -> some View {
         Picker(title, selection: selection) { ForEach(document.headers.indices, id: \.self) { Text("\($0 + 1): \(document.headers[$0])").tag($0) } }

@@ -100,26 +100,40 @@ struct SpendingReportsView: View {
             }
             DisclosureGroup("Filters & reporting preferences") {
                 VStack(alignment: .leading, spacing: 12) {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), alignment: .leading)], alignment: .leading, spacing: 12) {
-                        Picker("Account", selection: $accountID) {
-                            Text("All accounts").tag("")
-                            ForEach(workspace.accounts.filter { $0.currency == currency }) { Text($0.name).tag($0.id) }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), alignment: .leading)], alignment: .leading, spacing: 12) {
+                        AlignedFormField(title: "Account") {
+                            Picker("Account", selection: $accountID) {
+                                Text("All accounts").tag("")
+                                ForEach(workspace.accounts.filter { $0.currency == currency }) { Text($0.name).tag($0.id) }
+                            }
                         }
-                        Picker("Category", selection: $category) {
-                            Text("All categories").tag("")
-                            ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag($0.code) }
+                        AlignedFormField(title: "Category") {
+                            Picker("Category", selection: $category) {
+                                Text("All categories").tag("")
+                                ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag($0.code) }
+                            }
                         }
                         if !tags.isEmpty {
-                            Picker("Tag", selection: $tagID) { Text("All tags").tag(""); ForEach(tags) { Text($0.name).tag($0.id) } }
+                            AlignedFormField(title: "Tag") {
+                                Picker("Tag", selection: $tagID) { Text("All tags").tag(""); ForEach(tags) { Text($0.name).tag($0.id) } }
+                            }
                         }
-                        Picker("Week starts", selection: $weekStart) { Text("Monday").tag(2); Text("Sunday").tag(1) }
-                        Picker("Compare with", selection: $comparison) {
-                            Text("Previous period").tag("Previous period"); Text("Year earlier").tag("Year earlier"); Text("No comparison").tag("None")
+                        AlignedFormField(title: "Week starts") {
+                            Picker("Week starts", selection: $weekStart) { Text("Monday").tag(2); Text("Sunday").tag(1) }
                         }
-                        Picker("Time zone", selection: $timezone) {
-                            ForEach(Array(Set([TimeZone.current.identifier, timezone, "America/Toronto", "America/Vancouver", "America/Edmonton", "America/Winnipeg", "America/Halifax", "America/St_Johns", "UTC"])).sorted(), id: \.self) { Text($0).tag($0) }
+                        AlignedFormField(title: "Compare with") {
+                            Picker("Compare with", selection: $comparison) {
+                                Text("Previous period").tag("Previous period"); Text("Year earlier").tag("Year earlier"); Text("No comparison").tag("None")
+                            }
                         }
-                        Picker("Findings", selection: $sensitivity) { ForEach(InsightSensitivity.allCases) { Text($0.rawValue).tag($0) } }
+                        AlignedFormField(title: "Time zone") {
+                            Picker("Time zone", selection: $timezone) {
+                                ForEach(Array(Set([TimeZone.current.identifier, timezone, "America/Toronto", "America/Vancouver", "America/Edmonton", "America/Winnipeg", "America/Halifax", "America/St_Johns", "UTC"])).sorted(), id: \.self) { Text($0).tag($0) }
+                            }
+                        }
+                        AlignedFormField(title: "Findings") {
+                            Picker("Findings", selection: $sensitivity) { ForEach(InsightSensitivity.allCases) { Text($0.rawValue).tag($0) } }
+                        }
                     }
                     Toggle("Include pending purchases", isOn: $includePending)
                     HStack {

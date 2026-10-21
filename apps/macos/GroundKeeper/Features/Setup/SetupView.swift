@@ -84,9 +84,17 @@ struct SetupView: View {
                 ForEach(workspace.accounts) { account in Label("\(account.name) · \(account.currency)", systemImage: "checkmark.circle").foregroundStyle(AppStyle.muted) }
             }
             TextField("Account name, for example Everyday card", text: $accountName).textFieldStyle(.roundedBorder)
-            Picker("Currency", selection: $currency) { ForEach(["CAD", "USD", "EUR", "GBP"], id: \.self) { Text($0).tag($0) } }
-            Picker("Account type", selection: $accountKind) {
-                Text("Credit card").tag("credit_card"); Text("Chequing").tag("checking"); Text("Savings").tag("savings"); Text("Cash").tag("cash"); Text("Other").tag("other")
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
+                GridRow {
+                    Text("Currency")
+                    Picker("Currency", selection: $currency) { ForEach(["CAD", "USD", "EUR", "GBP"], id: \.self) { Text($0).tag($0) } }.labelsHidden()
+                }
+                GridRow {
+                    Text("Account type")
+                    Picker("Account type", selection: $accountKind) {
+                        Text("Credit card").tag("credit_card"); Text("Chequing").tag("checking"); Text("Savings").tag("savings"); Text("Cash").tag("cash"); Text("Other").tag("other")
+                    }.labelsHidden()
+                }
             }
             Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: accountKind); accountName = "" }
                 .disabled(workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -121,10 +129,19 @@ struct PhoneSetupView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("1. Install the capture Shortcuts").font(VaultTypography.section)
             Text("Enable Shortcuts iCloud sync on Mac and iPhone. Open these on your Mac to sync them, or share them to your phone with AirDrop.").foregroundStyle(AppStyle.muted)
-            ForEach(captureNames, id: \.self) { name in
-                if let url = SetupResources.shortcut(name) {
-                    HStack { Button(name) { NSWorkspace.shared.open(url) }; ShareLink(item: url) { Label("Send to iPhone", systemImage: "square.and.arrow.up") } }
-                } else { Label("\(name): export not available in this build", systemImage: "exclamationmark.circle").foregroundStyle(AppStyle.muted) }
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
+                ForEach(captureNames, id: \.self) { name in
+                    if let url = SetupResources.shortcut(name) {
+                        GridRow {
+                            Button(name) { NSWorkspace.shared.open(url) }.frame(maxWidth: .infinity, alignment: .leading)
+                            ShareLink(item: url) { Label("Send to iPhone", systemImage: "square.and.arrow.up") }
+                                .fixedSize().accessibilityLabel("Send \(name) to iPhone")
+                        }
+                    } else {
+                        Label("\(name): export not available in this build", systemImage: "exclamationmark.circle")
+                            .foregroundStyle(AppStyle.muted).gridCellColumns(2)
+                    }
+                }
             }
             Text("2. Set the destination").font(VaultTypography.section)
             Text("On iPhone, edit GroundKeeper Capture Transaction. Set its final JSON Save File action to the same iCloud inbox selected here, turn off Ask Where to Save, and grant folder access. For a custom folder, update the Shortcut’s destination too.").foregroundStyle(AppStyle.muted)

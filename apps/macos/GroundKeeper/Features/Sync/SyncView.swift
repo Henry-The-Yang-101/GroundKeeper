@@ -102,38 +102,48 @@ private struct CaptureCorrection: View {
     @State private var description = ""
     @State private var amount = ""
     @State private var accountID = ""
-    @State private var day = ""
+    @State private var date = Date()
+    @State private var isDebit = true
     @State private var error: String?
     @State private var saving = false
     @State private var rememberCard = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Correct capture details").font(VaultTypography.sheet)
-            Text("Original source evidence is preserved. Enter a negative amount for money out, positive for money in.").foregroundStyle(AppStyle.muted)
+        VStack(spacing: 0) {
+            SheetHeading(title: "Correct capture details", subtitle: "Check the amount, direction, and date against the original capture. Source evidence is preserved.")
             Form {
                 TextField("Description", text: $description)
-                TextField("Signed amount", text: $amount)
-                TextField("Date (YYYY-MM-DD)", text: $day)
+                TransactionAmountField(text: $amount)
+                if !amount.isEmpty && TransactionInput.positiveAmount(amount) == nil {
+                    Text("Use a positive amount, up to two decimal places, and no thousands separators.")
+                        .font(.caption).foregroundStyle(.red)
+                }
+                TransactionDirectionPicker(isDebit: $isDebit)
+                TransactionDatePicker(date: $date)
                 Picker("Account", selection: $accountID) {
                     Text("Choose account").tag("")
                     ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
                 }
                 if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
-            }
-            if let error { Text(error).foregroundStyle(.red) }
-            HStack {
-                Button("Cancel") { dismiss() }.disabled(saving)
+            }.formStyle(.grouped).scrollContentBackground(.hidden).frame(height: 360)
+            if let error { Text(error).foregroundStyle(.red).padding(.horizontal, 24).padding(.bottom, 16) }
+            SheetFooter {
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction).disabled(saving)
                 Spacer()
                 Button("Save correction") {
+                    guard let value = TransactionInput.positiveAmount(amount) else { return }
+                    let signedAmount = NSDecimalNumber(decimal: isDebit ? -value : value).stringValue
+                    let day = TransactionInput.day(date)
                     saving = true
                     Task {
                         defer { saving = false }
-                        do { try await workspace.correct(review, description: description, amount: amount, accountID: accountID, day: day, remember: rememberCard); dismiss() }
+                        do { try await workspace.correct(review, description: description, amount: signedAmount, accountID: accountID, day: day, remember: rememberCard); dismiss() }
                         catch { self.error = error.localizedDescription }
                     }
-                }.disabled(saving || workspace.saving || accountID.isEmpty).buttonStyle(.brass)
+                }.keyboardShortcut(.defaultAction)
+                    .disabled(saving || workspace.saving || accountID.isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || TransactionInput.positiveAmount(amount) == nil)
+                    .buttonStyle(.brass)
             }
-        }.padding(24).frame(width: 520).onAppear { description = review.description }
+        }.frame(width: 530).interactiveDismissDisabled(saving).onAppear { description = review.description }
     }
 }
