@@ -24,6 +24,9 @@ duplicates, correct details, and confirm category suggestions.
 - Run Qwen through MLX or Laya through PyTorch MPS on your Mac. Every category
   suggestion requires review, and later model replies cannot replace a
   confirmed correction.
+- Optionally enrich classification with OCR text from a receipt photo, giving
+  the selected model purchased-item context beyond the merchant name. Keeping
+  the image is optional. See [receipt capture setup](shortcuts/README.md#optional-receipts).
 - Choose automatic processing while the app is open or run it manually with
   **Process queue**. Failed work has bounded retries and a visible review path.
   Closed-app background processing is available in source builds but disabled
@@ -34,6 +37,8 @@ Enabling it sends the description, direction, and currency to the selected
 Shortcut. Its **Use Model** action controls whether inference runs on device
 or in the cloud. Apple usage limits apply, and the app never switches providers
 automatically. See [provider setup and verification](docs/setup.md#choose-a-classifier).
+Receipt text is shared with this provider only when **Include receipt text with
+Apple Intelligence** is enabled; that separate setting is off by default.
 
 ## How it works
 
@@ -60,8 +65,9 @@ the same record again; possible purchase duplicates still require reconciliation
 
 A bundled Objective-C XPC host runs CPython and the inference libraries outside
 the UI process. Local model packages have file hashes and a versioned manifest
-that the worker checks before loading. The classifier receives only the
-transaction description, direction, and currency. It has no database connection.
+that the worker checks before loading. The classifier receives the transaction
+description, direction, currency, and optional bounded receipt OCR context.
+Receipt images are not sent to the classifier. It has no database connection.
 
 iCloud transfers capture files. The live database stays in the Mac's sandbox
 container, outside iCloud Drive, and currently uses ordinary, unencrypted SQLite.
