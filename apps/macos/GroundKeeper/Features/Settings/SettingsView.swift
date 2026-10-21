@@ -91,7 +91,7 @@ struct SettingsView: View {
             }
             VaultFormSection("GroundKeeper") {
                 Text("Local capture, import, reconciliation and classification")
-                Text("Analytics and planning will be added later.").foregroundStyle(AppStyle.muted)
+                Text("Spending reports and calculated insights run locally. Budgeting and planning are coming later.").foregroundStyle(AppStyle.muted)
             }
         }.formStyle(.grouped).scrollContentBackground(.hidden)
             .safeAreaInset(edge: .top, spacing: 0) {

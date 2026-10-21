@@ -1,6 +1,7 @@
 enum AppTab: String, CaseIterable, Identifiable {
     case home
     case fullInsights
+    case spending
     case sync
     case settings
 
@@ -10,6 +11,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: "Home"
         case .fullInsights: "Transactions"
+        case .spending: "Spending"
         case .sync: "Sync"
         case .settings: "Settings"
         }
@@ -19,6 +21,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: isSelected ? "house.fill" : "house"
         case .fullInsights: "list.bullet.rectangle"
+        case .spending: "chart.bar.xaxis"
         case .sync: "arrow.triangle.2.circlepath"
         case .settings: "gearshape"
         }
@@ -28,6 +31,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: "1"
         case .fullInsights: "2"
+        case .spending: "5"
         case .sync: "3"
         case .settings: "4"
         }

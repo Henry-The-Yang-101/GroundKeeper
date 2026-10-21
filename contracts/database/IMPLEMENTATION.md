@@ -10,7 +10,8 @@ convenience unlock. See [setup and protection](../../docs/onboarding.md).
 The existing relational design is suitable for this scope. Keep raw events,
 observations and canonical transactions separate; preserve signed integer minor
 units, append-only assignments, test-event guards and source provenance. No
-replacement schema is needed. Planning and analytics tables remain unused.
+replacement schema is needed. Planning tables remain unused. Spending reports now query the ledger and use
+the insight tables; see the spending report section below.
 
 Only these additions were necessary, in migration 002:
 
@@ -206,3 +207,39 @@ retry, revision and explicit cloud-consent rules as schema 3 attachments.
 
 Earlier migrations and capture formats remain supported. Filename text has no
 role in identity, parsing or matching; the importer accepts any JSON basename.
+
+## Spending reports and calculated findings
+
+Migration 005 adds a persisted analytics revision and triggers on transactions,
+parts, assignments, review items, capture links and tags. Relevant changes bump
+that revision and mark current insights stale, including assignments that do not
+increment a transaction revision. Existing migrations remain unchanged.
+
+`LedgerStore.spendingReport` queries the complete ledger, independently of the
+paged transaction list. Currency, account, category, tag, reporting date and
+pending-state predicates are shared with paginated report evidence. Amounts stay
+integer minor units in SQL; averages use Decimal. SQLite integer overflow fails
+the report rather than wrapping. Splits contribute their own amounts and distinct
+canonical purchases determine counts. `EXISTS` tag filters avoid join multiplication.
+
+Known instants use the selected reporting timezone via a local SQLite scalar
+function. Civil and unknown-time dates stay on their recorded date. Refunds use
+their recorded date/category; unclassified transaction types are excluded and
+counted separately. Posted and optionally pending expenses/refunds are included;
+transfers, card payments, voided/deleted/merged records are excluded. Unreviewed
+included assignments are disclosed. Queries do not establish account completeness.
+
+Findings store rule version, metrics, scope, baseline, data revision, and supporting
+transaction IDs/revisions. Current rules compare overall/category net spending
+and purchase count/average size. They require at least three reviewed purchases
+per equal-length period, observed history reaching the baseline, no known pending
+or unclassified entries in scope, and configured absolute/relative thresholds.
+Reports regenerate findings when viewed/refreshed after a ledger change. Dismissal
+and seven-day snooze preferences survive recomputation and reopening. Restoring
+hidden findings clears those preferences. No merchant identity inference, external
+AI request, or notification delivery is part of this implementation.
+
+The app clears report views on vault lock and rejects replies from a replaced
+store. Home and Spending observe the ledger revision; evidence sheets query all
+matching records in pages of 100. Report results are not built from the 500-row
+transaction UI snapshot.

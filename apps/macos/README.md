@@ -3,7 +3,9 @@
 The SwiftUI app offers ordinary SQLite or SQLCipher encryption in local Application Support.
 Capture ingestion, CSV import, reconciliation, transaction editing, and the
 classifier queue are connected. First launch walks through protection, optional models,
-iCloud capture and phone setup. Analytics is deferred. See [setup and protection](../../docs/onboarding.md).
+iCloud capture and phone setup. Home and Spending now show local spending reports,
+category breakdowns, period comparisons, and calculated findings. See
+[spending reports](../../docs/spending-reports.md) and [setup and protection](../../docs/onboarding.md).
 
 ## Brass vault interface
 

@@ -27,10 +27,27 @@ enum InterfacePreview {
                 description: example.0, amountMinor: example.1, currency: "CAD",
                 occurredOn: "2026-10-\(20 - index)", accountID: account.id,
                 type: example.1 > 0 ? "refund" : "expense", category: example.2,
-                needsReview: example.3, notes: "Fictional UI preview record."
+                needsReview: CommandLine.arguments.contains("--spending-preview") ? false : example.3, notes: "Fictional UI preview record."
             ))
         }
         try await store.addAccount(name: "Travel card · Demo", currency: "CAD")
+        if CommandLine.arguments.contains("--spending-preview") {
+            let calendar = try ReportCalendar()
+            let month = calendar.calendar.dateInterval(of: .month, for: Date())!.start
+            for offset in -2...0 {
+                let start = calendar.calendar.date(byAdding: .month, value: offset, to: month)!
+                let numberOfDays = offset == 0 ? calendar.calendar.component(.day, from: Date()) : 28
+                for day in 0..<numberOfDays {
+                    let date = calendar.calendar.date(byAdding: .day, value: day, to: start)!
+                    for category in ["groceries", "dining", "local_transport"] {
+                        let amount: Int64 = category == "groceries" ? 1800 : category == "dining" ? (offset == 0 ? 1600 : 800) : 350
+                        try await store.save(TransactionEdit(description: category == "groceries" ? "Fictional Market" : category == "dining" ? "Neighbourhood Café" : "City Transit",
+                                                              amountMinor: -amount, currency: "CAD", occurredOn: calendar.day(date), accountID: account.id,
+                                                              type: "expense", category: category, needsReview: false, notes: "Fictional spending preview."))
+                    }
+                }
+            }
+        }
         // Real capture-review controls, backed by the disposable preview vault.
         for (id, wallet, card) in [("preview-wallet", true, "Everyday card · 1234"),
                                    ("preview-bank", false, "CIBC Dividend Visa Card, 5678")] {

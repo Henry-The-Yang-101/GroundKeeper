@@ -1,8 +1,10 @@
 # GroundKeeper analysis features
 
-Scope proposal, updated 2026-10-19. Graphs are part of the product; the roadmap below
-separates spending analysis supported by captures from planning features that
-need additional data. Nothing in this document is implemented yet.
+Roadmap, updated 2026-10-21. Spending-over-time reports, category breakdowns,
+period comparisons, and local category/overall findings now have an implementation;
+see [implemented spending reports](spending-reports.md) for behavior and limits.
+Merchant/habit analysis, budgets, recurring costs, goals, balances, forecasts,
+and receipt analytics below remain planned. Optional AI explanations remain planned.
 
 ## Roadmap and graphs
 

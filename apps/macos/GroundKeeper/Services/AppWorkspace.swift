@@ -15,6 +15,7 @@ import GroundKeeperCore
     var reviews: [ReviewRecord] = []
     var queue: [QueueRecord] = []
     var totalTransactions = 0
+    var reportingRevision: Int64 = 0
     var processingMode = QueuePreferences.mode
     var backgroundStatus = QueueBackgroundService.status
     var changingProcessingMode = false
@@ -98,6 +99,9 @@ import GroundKeeperCore
                 try await InterfacePreview.seed(opened.0)
                 status = "Preview vault · fictional transactions"
                 processingMode = .manual
+                if CommandLine.arguments.contains("--spending-preview") {
+                    showingSetup = false; selectedTab = .spending
+                }
             }
             shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? false
             folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
@@ -168,7 +172,32 @@ import GroundKeeperCore
         cardMappings = snapshot.cardMappings
         unqueuedJobs = try await store.unqueuedClassificationCount()
         totalTransactions = snapshot.totalTransactions; pendingJobs = snapshot.pendingJobs; failedJobs = snapshot.failedJobs
+        reportingRevision = try await store.spendingRevision()
     }
+
+    func spendingContext(timezone: String) async throws -> SpendingContext {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to view spending.") }
+        let result = try await store.spendingContext(timezone: timezone)
+        guard self.store === store else { throw CancellationError() }
+        return result
+    }
+    func spendingReport(_ filter: SpendingFilter) async throws -> SpendingReport {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to view spending.") }
+        let result = try await store.spendingReport(filter)
+        guard self.store === store else { throw CancellationError() }
+        return result
+    }
+    func spendingEntries(_ filter: SpendingFilter, offset: Int) async throws -> [SpendingEntry] {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to view spending.") }
+        let result = try await store.spendingEntries(filter, offset: offset, limit: 101)
+        guard self.store === store else { throw CancellationError() }
+        return result
+    }
+    func hideFinding(_ id: String, snooze: Bool) async throws {
+        guard let store else { return }
+        try await store.setFindingPreference(id: id, dismissed: !snooze, snoozedUntil: snooze ? Date().addingTimeInterval(7 * 86400) : nil)
+    }
+    func restoreFindings() async throws { try await store?.restoreSpendingFindings() }
     func showTransactions(needingReview: Bool = false) {
         reviewOnly = needingReview; insightsSection = .transactions; selectedTab = .fullInsights
     }

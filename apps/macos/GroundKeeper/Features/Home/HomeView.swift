@@ -18,6 +18,7 @@ struct HomeView: View {
                     Text("Start by adding an account in Settings, then connect your capture folder in Sync.").foregroundStyle(AppStyle.muted)
                 }
             }
+            if !workspace.accounts.isEmpty { HomeSpendingOverview() }
             Surface {
                 SectionHeading(title: "Recent transactions")
                 if workspace.transactions.isEmpty {

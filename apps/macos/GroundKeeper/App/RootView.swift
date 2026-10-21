@@ -54,6 +54,7 @@ struct RootView: View {
         switch workspace.selectedTab ?? .home {
         case .home: HomeView()
         case .fullInsights: FullInsightsView()
+        case .spending: SpendingReportsView()
         case .sync: SyncView()
         case .settings: SettingsView()
         }

@@ -33,7 +33,7 @@ extension LedgerStore {
                 (needs_review=1 OR has_open_review=1 OR confirmed_at_ms IS NULL) AS unreviewed
               FROM current_transaction_parts
             ), scoped AS (SELECT * FROM dated WHERE \(predicates.joined(separator: " AND "))),
-            included AS (SELECT * FROM scoped WHERE type_code IN ('expense','refund') AND \(lifecycle))
+            included AS (SELECT * FROM scoped WHERE \(filter.purchasesOnly ? "type_code='expense'" : "type_code IN ('expense','refund')") AND \(lifecycle))
             """, bindings)
     }
 
@@ -44,9 +44,9 @@ extension LedgerStore {
               coalesce(sum(CASE WHEN type_code='refund' THEN abs(amount_minor) ELSE 0 END),0) AS refunds,
               coalesce(sum(net),0) AS net, count(DISTINCT CASE WHEN type_code='expense' THEN transaction_id END) AS purchases,
               count(DISTINCT CASE WHEN unreviewed THEN transaction_id END) AS review_count,
-              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE lifecycle='pending' AND type_code IN ('expense','refund','unknown')) AS pending_count,
+              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE lifecycle='pending' AND type_code IN ('expense','refund')) AS pending_count,
               (SELECT coalesce(sum(net),0) FROM scoped WHERE lifecycle='pending') AS pending_net,
-              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE type_code='unknown' AND lifecycle IN ('pending','posted','unknown')) AS unknown_count
+              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE (type_code='unknown' AND lifecycle IN ('pending','posted','unknown')) OR (lifecycle='unknown' AND type_code IN ('expense','refund'))) AS unknown_count
             FROM included
             """, bindings).first!
         return SpendingTotals(gross: r.number("gross"), refunds: r.number("refunds"), net: r.number("net"), purchases: Int(r.number("purchases")),
@@ -111,20 +111,43 @@ extension LedgerStore {
     public func spendingReport(_ filter: SpendingFilter, now: Date = Date()) throws -> SpendingReport {
         let calendar = try ReportCalendar(timezone: filter.timezone, weekStart: filter.weekStart)
         let context = try spendingContext(timezone: filter.timezone)
+        let history = try db.query("SELECT min(CASE WHEN time_precision='instant' THEN gk_report_day(occurred_at_ms,?) ELSE occurred_on END) AS day FROM transactions WHERE state='active' AND currency=?" + (filter.accountID == nil ? "" : " AND account_id=?"),
+                                   [.text(filter.timezone), .text(filter.currency)] + (filter.accountID.map { [.text($0)] } ?? [])).first?["day"]?.string
         let totals = try reportTotals(filter, range: filter.range)
         let previous = try filter.baseline.map { try reportTotals(filter, range: $0) }
         let categories = try reportCategories(filter, range: filter.range)
         let previousCategories = try filter.baseline.map { try reportCategories(filter, range: $0) } ?? []
         let days = calendar.count(filter.range)
         let unit = days > 180 ? "Monthly" : days > 45 ? "Weekly" : "Daily"
+        let buckets = try reportBuckets(filter, range: filter.range, unit: unit)
         let findings = try refreshSpendingFindings(filter, totals: totals, previous: previous, categories: categories,
-                                                  previousCategories: previousCategories, firstDay: context.firstDay, revision: context.revision, now: now)
+                                                  previousCategories: previousCategories, firstDay: history, revision: context.revision, now: now)
         return SpendingReport(filter: filter, totals: totals, previous: previous,
-                              buckets: try reportBuckets(filter, range: filter.range, unit: unit),
+                              buckets: buckets,
                               previousBuckets: try filter.baseline.map { try reportBuckets(filter, range: $0, unit: unit) } ?? [],
                               categories: categories, previousCategories: previousCategories,
+                              categoryBuckets: try reportCategoryBuckets(filter, buckets: buckets),
                               largest: try spendingEntries(filter, limit: 5, largest: true), findings: findings,
-                              firstDay: context.firstDay, revision: context.revision, generatedAt: now, bucketUnit: unit)
+                              firstDay: history, revision: context.revision, generatedAt: now, bucketUnit: unit)
+    }
+
+    private func reportCategoryBuckets(_ filter: SpendingFilter, buckets: [SpendingBucket]) throws -> [SpendingCategoryBucket] {
+        let (source, bindings) = try reportSource(filter, range: filter.range)
+        let rows = try db.query(source + "SELECT day,coalesce(category_id,'uncategorized') AS category,sum(net) AS net FROM included GROUP BY day,coalesce(category_id,'uncategorized') ORDER BY day", bindings)
+        var totals: [String: Int64] = [:], metadata: [String: (SpendingBucket, String)] = [:]
+        var index = 0
+        for row in rows {
+            while index < buckets.count && row.text("day") >= buckets[index].end { index += 1 }
+            guard index < buckets.count else { break }
+            let bucket = buckets[index], category = row.text("category"), key = bucket.start + ":" + category
+            let (sum, overflow) = (totals[key] ?? 0).addingReportingOverflow(row.number("net"))
+            guard !overflow else { throw LedgerError.invalid("Spending total is too large.") }
+            totals[key] = sum; metadata[key] = (bucket, category)
+        }
+        return totals.keys.sorted().map { key in
+            let (bucket, category) = metadata[key]!
+            return SpendingCategoryBucket(start: bucket.start, end: bucket.end, category: category, net: totals[key]!)
+        }
     }
 
     func reportEvidence(_ filter: SpendingFilter) throws -> [Row] {

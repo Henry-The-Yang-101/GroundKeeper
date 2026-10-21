@@ -28,6 +28,7 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     #expect(report.categories.reduce(0) { $0 + $1.net } == report.totals.net)
     #expect(report.buckets.reduce(0) { $0 + $1.net } == report.totals.net)
     #expect(report.buckets.last?.cumulative == report.totals.net)
+    #expect(report.categoryBuckets.reduce(0) { $0 + $1.net } == report.totals.net)
     var evidence: [SpendingEntry] = []
     for offset in stride(from: 0, to: 600, by: 100) { evidence += try await store.spendingEntries(filter, offset: offset) }
     #expect(evidence.count == 511)
@@ -46,6 +47,7 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     #expect(week.start == "2026-10-19" && week.end == "2026-10-22")
     let (year, _) = try calendar.ranges(.lastYear, now: calendar.date("2025-02-01"))
     #expect(calendar.count(year) == 366)
+    #expect(try calendar.yearEarlier(ReportRange(start: "2024-02-29", end: "2024-03-01")) == ReportRange(start: "2023-02-28", end: "2023-03-01"))
 }
 
 @Test func pendingUncertaintyAndKnownInstantsStayVisible() async throws {
@@ -65,6 +67,24 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     _ = try await store.testRows("UPDATE transactions SET lifecycle='posted',time_precision='instant',occurred_at_ms=\(ms),utc_offset_minutes=0 WHERE id='\(id)'")
     #expect(try await store.spendingReport(reportFilter()).totals.net == 0)
     #expect(try await store.spendingReport(reportFilter("2026-09-01", "2026-10-01")).totals.net == 1000)
+    try await purchase(store, account: account, day: "2026-10-02", amount: -5000, category: "uncategorized", type: "unknown", review: true)
+    let unresolved = try await store.spendingReport(reportFilter())
+    #expect(unresolved.totals.net == 0 && unresolved.totals.unknownCount == 1)
+    #expect(unresolved.findings.isEmpty)
+}
+
+@Test func reportMoneyOverflowFailsAndNegativeRefundDaysRemainExact() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Reports", currency: "CAD")
+    let account = try await store.snapshot().accounts[0].id
+    try await purchase(store, account: account, day: "2026-10-01", amount: 1200, type: "refund")
+    let refund = try await store.spendingReport(reportFilter())
+    #expect(refund.totals.net == -1200 && refund.buckets[0].net == -1200)
+    var purchasesOnly = try reportFilter(); purchasesOnly.purchasesOnly = true
+    #expect(try await store.spendingEntries(purchasesOnly).isEmpty)
+    try await purchase(store, account: account, day: "2026-10-02", amount: -(Int64.max - 1))
+    try await purchase(store, account: account, day: "2026-10-03", amount: -2)
+    await #expect(throws: (any Error).self) { try await store.spendingReport(reportFilter()) }
 }
 
 @Test func findingsPersistEvidenceAndDismissalsAcrossCorrectionsAndReopen() async throws {
@@ -80,6 +100,10 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     let finding = try #require(report.findings.first)
     try await store.setFindingPreference(id: finding.id, dismissed: true)
     #expect(try await store.spendingReport(filter).findings.count == 2)
+    var growing = filter
+    growing.range = try ReportRange(start: "2026-10-01", end: "2026-10-06")
+    growing.baseline = try ReportRange(start: "2026-09-01", end: "2026-09-06")
+    #expect(try await store.spendingReport(growing).findings.allSatisfy { $0.id != finding.id })
     try await purchase(store, account: account, day: "2026-10-04", amount: -5000)
     #expect(try await store.testRows("SELECT * FROM insights WHERE state='current'").isEmpty)
     #expect(try await store.spendingReport(filter).findings.allSatisfy { $0.id != finding.id })
@@ -91,6 +115,10 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     let now = Date()
     try await reopened.setFindingPreference(id: finding.id, snoozedUntil: now.addingTimeInterval(60))
     #expect(try await reopened.spendingReport(filter, now: now).findings.count == 2)
+    var moving = filter
+    moving.range = try ReportRange(start: "2026-10-02", end: "2026-10-06")
+    moving.baseline = try ReportRange(start: "2026-09-01", end: "2026-09-05")
+    #expect(try await reopened.spendingReport(moving, now: now).findings.allSatisfy { $0.preferenceKey != finding.preferenceKey })
     #expect(try await reopened.spendingReport(filter, now: now.addingTimeInterval(61)).findings.count == 3)
     // Review flags suppress confident findings, even when amounts have not changed.
     let transaction = try await reopened.snapshot().transactions[0]

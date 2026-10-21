@@ -40,6 +40,10 @@ public struct ReportCalendar: Sendable {
     }
     public func adding(_ days: Int, to day: String) -> String { self.day(calendar.date(byAdding: .day, value: days, to: date(day))!) }
     public func count(_ range: ReportRange) -> Int { calendar.dateComponents([.day], from: date(range.start), to: date(range.end)).day! }
+    public func yearEarlier(_ range: ReportRange) throws -> ReportRange {
+        try ReportRange(start: day(calendar.date(byAdding: .year, value: -1, to: date(range.start))!),
+                        end: day(calendar.date(byAdding: .year, value: -1, to: date(range.end))!))
+    }
     public func ranges(_ period: ReportPeriod, now: Date = Date(), firstDay: String? = nil, custom: ReportRange? = nil) throws -> (ReportRange, ReportRange?) {
         let today = calendar.startOfDay(for: now), tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
         var start = today, end = tomorrow
@@ -91,6 +95,7 @@ public struct SpendingFilter: Codable, Equatable, Sendable {
     public var timezone: String
     public var weekStart: Int
     public var sensitivity: InsightSensitivity = .balanced
+    public var purchasesOnly = false
     public init(range: ReportRange, baseline: ReportRange? = nil, currency: String = "CAD", accountID: String? = nil,
                 category: String? = nil, tagID: String? = nil, includePending: Bool = true,
                 timezone: String = TimeZone.current.identifier, weekStart: Int = 2) {
@@ -138,6 +143,14 @@ public struct SpendingCategoryTotal: Identifiable, Codable, Equatable, Sendable 
     public let reviewCount: Int
 }
 
+public struct SpendingCategoryBucket: Identifiable, Equatable, Sendable {
+    public var id: String { start + ":" + category }
+    public let start: String
+    public let end: String
+    public let category: String
+    public let net: Int64
+}
+
 public struct SpendingEntry: Identifiable, Equatable, Sendable {
     public let id: String
     public let day: String
@@ -149,6 +162,7 @@ public struct SpendingEntry: Identifiable, Equatable, Sendable {
 
 public struct SpendingFinding: Identifiable, Codable, Equatable, Sendable {
     public let id: String
+    public let preferenceKey: String
     public let kind: String
     public let category: String?
     public let current: Int64
@@ -166,8 +180,9 @@ public struct SpendingReport: Sendable {
     public let previousBuckets: [SpendingBucket]
     public let categories: [SpendingCategoryTotal]
     public let previousCategories: [SpendingCategoryTotal]
+    public let categoryBuckets: [SpendingCategoryBucket]
     public let largest: [SpendingEntry]
-    public let findings: [SpendingFinding]
+    public var findings: [SpendingFinding]
     public let firstDay: String?
     public let revision: Int64
     public let generatedAt: Date
