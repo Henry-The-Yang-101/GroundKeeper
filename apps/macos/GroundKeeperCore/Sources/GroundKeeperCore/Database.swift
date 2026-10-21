@@ -65,6 +65,7 @@ final class Database {
             try executeScript("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA temp_store=MEMORY;")
             guard try query("PRAGMA foreign_keys").first?.number("foreign_keys") == 1 else { throw LedgerError.unavailable("Foreign keys could not be enabled.") }
             try migrate()
+            try registerReportingFunctions()
         } catch { if let handle { sqlite3_close(handle); self.handle = nil }; throw error }
     }
     deinit { close() }
@@ -159,15 +160,27 @@ final class Database {
         do { let result = try body(); try executeScript("COMMIT"); return result }
         catch { try? executeScript("ROLLBACK"); throw error }
     }
+    private func registerReportingFunctions() throws {
+        let result = sqlite3_create_function_v2(handle, "gk_report_day", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nil, { context, count, values in
+            guard count == 2, let values, let timestamp = values[0], let zone = values[1],
+                  let text = sqlite3_value_text(zone),
+                  let calendar = try? ReportCalendar(timezone: String(cString: text)) else {
+                sqlite3_result_error(context, "Invalid reporting timezone", -1); return
+            }
+            let value = calendar.day(Date(timeIntervalSince1970: Double(sqlite3_value_int64(timestamp)) / 1000))
+            value.withCString { sqlite3_result_text(context, $0, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
+        }, nil, nil, nil)
+        guard result == SQLITE_OK else { throw LedgerError.storage(result) }
+    }
     private func migrate() throws {
         let exists = try query("SELECT name FROM sqlite_master WHERE name='schema_migrations'").count == 1
         if !exists, !(try query("SELECT name FROM sqlite_master WHERE type='table'")).isEmpty {
             throw LedgerError.unavailable("This is not a GroundKeeper vault. It was not changed.")
         }
-        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 4 {
+        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 5 {
             throw LedgerError.unavailable("This vault requires a newer GroundKeeper version.")
         }
-        for (version, name) in [(1, "001-schema"), (2, "002-processing"), (3, "003-receipts"), (4, "004-capture-details")] {
+        for (version, name) in [(1, "001-schema"), (2, "002-processing"), (3, "003-receipts"), (4, "004-capture-details"), (5, "005-spending-reports")] {
             guard let url = Bundle.module.url(forResource: name, withExtension: "sql") else { throw LedgerError.unavailable("Missing bundled migration.") }
             let data = try Data(contentsOf: url), checksum = contentHash(data)
             if exists, let applied = try query("SELECT checksum FROM schema_migrations WHERE version=?", [.integer(Int64(version))]).first {
