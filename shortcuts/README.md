@@ -125,6 +125,16 @@ inbox/assets destinations and each adapter's Run Shortcut target again.
 
 ## Optional receipts and notes
 
+The capture menus and note prompt show the transaction context above the choices.
+Wallet shows the merchant, supplied amount, source app and card/pass label. CIBC
+shows the description, original notification body, app and notification title;
+the body preserves the bank's amount and currency wording. Missing optional
+fields stay blank. This context is display-only and does not change saved data.
+Native Mac previews with fictional CIBC and Wallet inputs verified the initial
+menu; CIBC also retained its context in note entry and the follow-up receipt
+menu. The preview removed Save File actions. The iPhone layout and sync still
+need a receiving-device check.
+
 The shared writer first offers **Add receipt**, **Add note**, or **Skip adding
 receipt**. After adding a receipt, choose **Add note** or **Save transaction**.
 After adding a note, choose **Add receipt** or **Skip adding receipt**. Both are

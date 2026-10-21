@@ -191,6 +191,47 @@ def optional_details(w):
     w.endmenu(menu)
 
 
+def transaction_context(workflow):
+    """Add display-only context without changing existing actions or saved data.
+
+    The separate workflow namespace preserves existing action UUIDs, including
+    those in installed writers with personal Save File destinations.
+    """
+    context = Workflow("GroundKeeper Transaction Context", workflow)
+    saved = variable("Saved Event")
+    source = context.get(saved, "source")
+    wallet = condition(context, source, 4, "wallet_transaction")
+    amount = context.get(saved, "amount")
+    card = context.get(saved, "card_or_pass")
+    summary = context.add("gettext", WFTextActionText=formatted(
+        variable("Capture Description"), "\nAmount: ", amount,
+        "\n", variable("Capture App"), "\n", card))
+    context.setvar("Transaction Context", summary)
+    context.add("conditional", GroupingIdentifier=wallet, WFControlFlowMode=1)
+    title = context.get(saved, "title")
+    body = context.get(saved, "body")
+    # Keep the bank's original amount/currency wording instead of guessing at
+    # notification formats or accidentally picking a card suffix as the amount.
+    summary = context.add("gettext", WFTextActionText=formatted(
+        variable("Capture Description"), "\n", body,
+        "\n", variable("Capture App"), "\n", title))
+    context.setvar("Transaction Context", summary)
+    endif(context, wallet)
+
+    actions = workflow["WFWorkflowActions"]
+    first_menu = next(i for i, action in enumerate(actions)
+                      if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    actions[first_menu:first_menu] = context.actions
+    for action in actions[first_menu + len(context.actions):]:
+        params = action["WFWorkflowActionParameters"]
+        for key in ("WFMenuPrompt", "WFAskActionPrompt"):
+            if key in params:
+                prompt = params[key]
+                if isinstance(prompt, dict):
+                    prompt = prompt["Value"]["string"]
+                params[key] = formatted(variable("Transaction Context"), "\n\n", prompt)
+
+
 def save_image(w):
     group = condition(w, variable("Receipt JPEG"))
     image = w.add("setitemname", WFInput=token(variable("Receipt JPEG")), WFName=text(variable("Receipt Filename")))
@@ -266,6 +307,7 @@ def main():
     w.add("exit")
     endif(w, missing_file)
     w.add("output", WFOutput=text(saved))
+    transaction_context(w.data)
     w.save()
 
     # Both adapters use the same writer, which now owns all optional menus.
