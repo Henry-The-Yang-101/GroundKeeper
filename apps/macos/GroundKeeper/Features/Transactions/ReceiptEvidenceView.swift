@@ -4,20 +4,33 @@ import GroundKeeperCore
 struct ReceiptEvidenceView: View {
     @Environment(AppWorkspace.self) private var workspace
     let transactionID: String
+    var transactionNote = ""
     @State private var notes: [CaptureNote] = []
     @State private var records: [ReceiptRecord] = []
     @State private var images: [String: NSImage] = [:]
     @State private var error: String?
     @State private var busy = false
+    @State private var loading = true
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if !transactionNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Transaction note").font(.headline)
+                    Text(transactionNote).textSelection(.enabled)
+                }
+            }
+            if loading { ProgressView("Loading captured notes and receipts…").controlSize(.small) }
             ForEach(notes) { note in
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Captured note · \(note.app)").font(.headline)
                     Text(note.text).textSelection(.enabled)
                 }
             }
-            if records.isEmpty { Text("No receipt is attached to this purchase.").foregroundStyle(AppStyle.muted) }
+            if !loading && error == nil && records.isEmpty {
+                Text(transactionNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && notes.isEmpty
+                     ? "No notes or receipts are attached to this transaction."
+                     : "No receipt is attached to this transaction.").foregroundStyle(AppStyle.muted)
+            }
             ForEach(records) { receipt in
                 DisclosureGroup("Receipt · \(receipt.imageState == "stored" ? "image saved" : receipt.imageState == "pending" ? "waiting for image" : "text")") {
                     VStack(alignment: .leading, spacing: 10) {
@@ -42,6 +55,8 @@ struct ReceiptEvidenceView: View {
         }.task(id: transactionID) { await load() }
     }
     private func load() async {
+        loading = true
+        defer { loading = false }
         do {
             notes = try await workspace.captureNotes(transactionID: transactionID)
             records = try await workspace.receiptRecords(transactionID: transactionID)

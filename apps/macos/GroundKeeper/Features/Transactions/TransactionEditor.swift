@@ -50,7 +50,7 @@ struct TransactionEditor: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(original.merchant.isEmpty ? "Add transaction" : "Edit transaction")
                         .font(VaultTypography.sheet)
-                    Text("Saved to your local database")
+                    Text("Save this entry to your local database.")
                         .font(.callout).foregroundStyle(AppStyle.muted)
                 }
                 Spacer()

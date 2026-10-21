@@ -68,7 +68,8 @@ import GroundKeeperCore
     }
     @ObservationIgnored private var classifying = false
     @ObservationIgnored private var started = false
-    var reviewCount: Int { transactions.filter(\.needsReview).count + reviews.count }
+    var transactionReviewCount: Int { transactions.filter(\.needsReview).count }
+    var reviewCount: Int { transactionReviewCount + reviews.count }
     var ready: Bool { store != nil }
 
     func configureQueueSmoke(store: LedgerStore, bookmark: Data, mode: QueueProcessingMode) {

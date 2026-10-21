@@ -158,8 +158,8 @@ struct TransactionsView: View {
         .sheet(item: $receiptTransaction) { transaction in
             VStack(alignment: .leading, spacing: 16) {
                 Text(transaction.merchant).font(VaultTypography.sheet)
-                Text("Captured notes and receipts stay with this purchase. Reading an image again preserves earlier OCR and confirmed categories.").font(.callout).foregroundStyle(AppStyle.muted)
-                ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString).frame(maxWidth: .infinity, alignment: .leading) }
+                Text("Transaction notes and captured receipts stay with this purchase.").font(.callout).foregroundStyle(AppStyle.muted)
+                ScrollView { ReceiptEvidenceView(transactionID: transaction.id.uuidString, transactionNote: transaction.notes).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack { Spacer(); Button("Done") { receiptTransaction = nil } }
             }.padding(24).frame(width: 650, height: 650).vaultSheet()
         }

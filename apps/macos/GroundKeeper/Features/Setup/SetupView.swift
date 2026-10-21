@@ -54,7 +54,7 @@ struct SetupView: View {
             feature("iphone.and.arrow.forward", "Capture as you pay", "iPhone Shortcuts save transaction events to your personal iCloud Drive.")
             feature("sparkles", "Get a useful first pass", "Qwen, Laya, or Apple Intelligence suggest categories. You review the result.")
             feature("externaldrive", "Keep the full record", "Import CSVs, reconcile repeated captures, and edit transactions in a local vault.")
-            Text("Setup takes a few minutes. Model downloads and iPhone setup can be completed later. Analytics and planning are still in development.").font(.callout).foregroundStyle(AppStyle.muted)
+            Text("Setup takes a few minutes. Model downloads and iPhone setup can be completed later. Spending reports run locally; budgeting and planning are coming later.").font(.callout).foregroundStyle(AppStyle.muted)
             if !workspace.ready { Text(workspace.status).foregroundStyle(AppStyle.muted); Button("Retry opening vault") { Task { await workspace.start() } } }
         case 1:
             header("lock.shield.fill", "Your records.\nYour choice of protection.", "Choose how GroundKeeper stores the transaction database on this Mac. Your existing records are preserved when you change protection.")

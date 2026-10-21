@@ -141,14 +141,15 @@ struct ReportCategoryChart: View {
                         VStack(alignment: .trailing, spacing: 4) {
                             Text(ReportFormat.money(category.net, report.filter.currency)).monospacedDigit()
                             if report.totals.gross > 0 {
-                                Text("\((Decimal(category.gross) / Decimal(report.totals.gross)).formatted(.percent.precision(.fractionLength(0)))) of purchases")
+                                Text("\((Decimal(category.gross) / Decimal(report.totals.gross)).formatted(.percent.precision(.fractionLength(0)))) of purchase spending")
                                     .font(.caption).foregroundStyle(AppStyle.muted)
+                                    .multilineTextAlignment(.trailing).fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }.padding(.vertical, 8).contentShape(Rectangle())
                 }.buttonStyle(VaultRowButtonStyle())
             }
-            Text("Category amounts include linked assignments and refunds. Purchases split across categories appear in each relevant row; the overall purchase count counts each once.")
+            Text("Category amounts include refunds. Percentages show each category’s share of purchase spending before refunds. Purchases split across categories appear in each relevant row; the overall purchase count counts each once.")
                 .font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
         }
     }

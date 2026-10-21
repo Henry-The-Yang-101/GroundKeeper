@@ -6,9 +6,10 @@ struct HomeView: View {
         PageContent {
             PageHeading(title: "Your vault", subtitle: workspace.status)
             VStack(alignment: .leading, spacing: 18) {
-                HStack(spacing: 32) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 18) {
                     Metric(label: "Saved transactions", value: "\(workspace.totalTransactions)")
-                    Metric(label: "To review", value: "\(workspace.reviewCount)")
+                    Metric(label: "Transactions to review", value: "\(workspace.transactionReviewCount)")
+                    Metric(label: "Captures to review", value: "\(workspace.reviews.count)")
                 }
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) { actions }
@@ -41,10 +42,10 @@ struct HomeView: View {
 
     @ViewBuilder private var actions: some View {
         Button("View transactions") { workspace.showTransactions() }.buttonStyle(.brass)
-        Button("Review transactions") { workspace.showTransactions(needingReview: true) }
-        if !workspace.reviews.isEmpty {
-            Button("Review captures (\(workspace.reviews.count))") { workspace.selectedTab = .sync }
-        }
+        Button("Review transactions (\(workspace.transactionReviewCount))") { workspace.showTransactions(needingReview: true) }
+            .disabled(workspace.transactionReviewCount == 0)
+        Button("Review captures (\(workspace.reviews.count))") { workspace.selectedTab = .sync }
+            .disabled(workspace.reviews.isEmpty)
         Button("Import CSV…") { workspace.showingImportPreview = true }.disabled(workspace.accounts.isEmpty)
     }
 }
