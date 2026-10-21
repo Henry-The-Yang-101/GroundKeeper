@@ -50,14 +50,44 @@ extension LedgerStore {
                 """, [.text(modelID), .integer(nowMS())]).first else { return nil }
             let mayUseReceipt = try row.text("provider") != "apple_shortcut" || receiptCloudConsent()
             let context = mayUseReceipt ? try receiptContext(transactionID: row.text("transaction_id")) : nil
+            let walletHint = try walletCategoryHint(transactionID: row.text("transaction_id"))
             let runID = identifier()
-            struct Input: Encodable { let description: String, direction: String, currency: String; let receipt_context: ReceiptContext? }
-            let input = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receipt_context: context))
+            struct Input: Encodable {
+                let description: String, direction: String, currency: String
+                let receipt_context: ReceiptContext?
+                let wallet_category_raw: String?
+                let wallet_category_source_event_id: String?
+            }
+            let input = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receipt_context: context, wallet_category_raw: walletHint?.value, wallet_category_source_event_id: nil))
+            // The category value lives only in its immutable source payload.
+            // Audit the source reference and hash the actual inference input.
+            let audit = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receipt_context: context, wallet_category_raw: nil, wallet_category_source_event_id: walletHint?.eventID))
             try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,model_version_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version) VALUES (?,?,?,'model',?,'groundkeeper-18-v1',?,?,?,'running',?)",
-                [.text(runID), .text(row.text("part_id")), .integer(row.number("input_revision")), .text(modelID), .text(input), .text(contentHash(Data(input.utf8))), .integer(nowMS()), .optional(context?.version)])
+                [.text(runID), .text(row.text("part_id")), .integer(row.number("input_revision")), .text(modelID), .text(audit), .text(contentHash(Data(input.utf8))), .integer(nowMS()), .optional(context?.version)])
             try db.query("UPDATE classification_jobs SET status='running',attempts=attempts+1,run_id=?,updated_at_ms=?,receipt_context_sha256=? WHERE id=?", [.text(runID), .integer(nowMS()), .optional(context?.evidenceSHA256), .text(row.text("id"))])
-            return ClassificationTask(id: row.text("id"), runID: runID, partID: row.text("part_id"), revision: Int(row.number("input_revision")), description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receiptContext: context)
+            return ClassificationTask(id: row.text("id"), runID: runID, partID: row.text("part_id"), revision: Int(row.number("input_revision")), description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receiptContext: context, walletCategoryRaw: walletHint?.value)
         }
+    }
+    /// Missing, malformed or conflicting hints must not prevent classification.
+    func walletCategoryHint(transactionID: String) throws -> (eventID: String, value: String)? {
+        let events = try db.query("""
+            SELECT e.id,p.payload_json FROM transaction_event_links l
+            JOIN raw_events e ON e.id=l.event_id JOIN sources s ON s.id=e.source_id
+            JOIN raw_event_payloads p ON p.event_id=e.id
+            WHERE l.transaction_id=? AND l.unlinked_at_ms IS NULL AND e.is_test=0 AND s.kind='apple_wallet'
+            ORDER BY e.captured_at_ms,e.id
+            """, [.text(transactionID)])
+        var selected: (eventID: String, value: String)?
+        for event in events {
+            guard let payload = try? JSONSerialization.jsonObject(with: Data(event.text("payload_json").utf8)) as? [String: Any],
+                  let hint = payload["wallet_category_raw"] as? String,
+                  !hint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  hint.utf8.count <= 128,
+                  !hint.unicodeScalars.contains(where: { $0.value < 32 || $0.value == 127 }) else { continue }
+            if let selected, selected.value != hint { return nil }
+            if selected == nil { selected = (event.text("id"), hint) }
+        }
+        return selected
     }
     public func completeClassification(_ task: ClassificationTask, decision: ClassificationDecision) throws {
         try db.transaction {

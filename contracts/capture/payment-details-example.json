@@ -6,6 +6,7 @@
   "captured_at": "2026-10-20T14:30:45-04:00",
   "input_shape": "wallet_transaction_fields",
   "merchant": "Fictional Coffee Shop",
+  "wallet_category_raw": "Food & Drink",
   "amount": "CAD 12.50",
   "card_or_pass": "Example card",
   "is_test": true,

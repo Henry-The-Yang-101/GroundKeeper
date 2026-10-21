@@ -450,7 +450,7 @@ import GroundKeeperCore
                 try Task.checkCancellation()
                 guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
                 do {
-                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency, receiptContext: job.receiptContext),
+                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency, receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw),
                         model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
                     guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
                     try await store.completeClassification(job, decision: ClassificationDecision(type: decision.type, category: decision.category, review: decision.review))

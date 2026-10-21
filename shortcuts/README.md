@@ -80,6 +80,34 @@ Transaction; Attach Receipt Later → Add Receipt. Select the installed helper e
    labels against your accounts. The importer preserves source files and
    detects repeated deliveries.
 
+### Optional Wallet category hint
+
+The Wallet adapter dictionary has an optional `wallet_category_raw` text entry,
+blank by default. The transaction property picker inspected in macOS Shortcuts
+offers Transaction, Card or Pass, Merchant, Amount and Name; it does **not** offer
+Category. Do not bind this entry to an invented Category property or use Name as
+a category substitute.
+
+For **Any Category**, leave the entry blank. To capture the category via the
+trigger, create an iPhone automation restricted to one Wallet category. Copy the
+adapter's Dictionary and Run Shortcut actions into that automation, reselect its
+trigger variables, and put the exact filter label in `wallet_category_raw`
+before calling **GroundKeeper Capture Transaction**. A single shared adapter
+with one fixed label cannot represent several different category filters.
+Each category needs its own filtered automation; avoid
+overlapping an enabled Any Category automation, which would capture twice.
+This setup still requires an iPhone check; no category-filtered automations are
+installed by these exports. The shared writer preserves the entry in the JSON.
+
+At classification time the Mac reads the hint from the original linked Wallet
+payload. Missing, empty, malformed and conflicting hints are ignored. The value
+is stored only in that original payload; no category column or merchant record
+is added. Classifier audit records retain a source-event reference and a hash of
+the actual input. Models use the label as uncertain supporting evidence, with
+explicit purchase/receipt evidence taking priority. It never directly assigns
+a GroundKeeper category or bypasses review. Update the selected GK Categorize
+Shortcut too when using the Apple Shortcut provider so it includes these rules.
+
 ## Success notifications
 
 Wallet and CIBC adapters show a custom notification only after the shared writer

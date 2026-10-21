@@ -1,4 +1,4 @@
-"""Apple Shortcuts adapter for the existing three-field categorizer contract."""
+"""Apple Shortcuts adapter with optional receipt and Wallet category evidence."""
 import json
 import subprocess
 import tempfile

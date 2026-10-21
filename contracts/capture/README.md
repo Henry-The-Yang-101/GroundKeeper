@@ -41,12 +41,36 @@ account identifier, receipt total, or financial history goes to the classifier.
 Receipt evidence increments the transaction revision and invalidates stale
 jobs. Unconfirmed model suggestions can be revisited; user-origin assignments
 and confirmed categories are preserved. Monetary fields never change because
-of a receipt. Jobs snapshot the exact input and context version/hash.
+of a receipt. Jobs snapshot receipt input and context version/hash.
 
 The Apple Shortcut provider receives receipt text only after the separate
 `receipt_cloud_consent` setting is enabled. This setting is checked when the job
 is claimed, including by the background agent. The selected Shortcut may use
 cloud inference; local providers do not fall back to it.
+
+## Optional Wallet category evidence
+
+Wallet payment payloads may include `wallet_category_raw`. This optional text
+is accepted without a schema migration or new observation/transaction column;
+the value is retained solely in the original `raw_event_payloads.payload_json`.
+Classification reads active links to non-test `apple_wallet` events. A usable
+hint must be a nonblank string of at most 128 UTF-8 bytes with no ASCII control
+characters. Missing, null, empty, non-string, oversized or conflicting hints
+are ignored without rejecting the payment. Bank payloads cannot supply a Wallet
+hint. Multiple valid linked Wallet hints must agree exactly.
+
+The inference request includes `wallet_category_raw` only when usable.
+`classification_runs.input_json` instead records
+`wallet_category_source_event_id`; `input_sha256` hashes the actual request,
+including the hint. To reconstruct that request, replace the source reference
+with the original payload's `wallet_category_raw`. The audit does not duplicate
+the category value. Existing captures without hints keep the existing flow.
+This supplies evidence for future jobs; it does not reclassify completed jobs.
+
+Shortcuts does not expose Category in the inspected transaction property picker.
+The adapter leaves its optional entry blank; a category-filtered iPhone
+automation can explicitly supply its filter label. See the
+[setup guide](../../shortcuts/README.md#optional-wallet-category-hint).
 
 ## Schema 4 payments
 

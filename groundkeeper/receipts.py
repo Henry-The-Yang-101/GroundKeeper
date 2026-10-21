@@ -54,6 +54,8 @@ def laya_receipt_state(inputs):
         return inputs
     # Laya's small state window is separate from Qwen's generative prompt window.
     state = {key: inputs[key] for key in ("description", "direction", "currency")}
+    if "wallet_category_raw" in inputs:
+        state["wallet_category_raw"] = inputs["wallet_category_raw"]
     context = inputs["receipt_context"]
     state["receipt_items_ocr"] = context["text"]
     return state

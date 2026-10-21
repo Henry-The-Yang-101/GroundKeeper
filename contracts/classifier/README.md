@@ -97,10 +97,11 @@ model manifest identity and model package format are separate versions.
 | `classify` | `job_id`, `part_id`, `transaction_revision`, `policy_version`, `model_manifest_sha256`, `input` | Decision, actual model identity and echoed job/part/revision. |
 | `release_model` | None | Releases model references and backend allocator caches. |
 
-Classifier input is `{description,direction,currency}` with an optional
-`receipt_context`, including explicit
+Classifier input is `{description,direction,currency}` with optional
+`receipt_context` and `wallet_category_raw` fields, including explicit
 JSON null for unknown currency. Description is bounded to 2048 characters; Qwen
-also rejects prompts over 512 tokens without receipts, or 2048 tokens with them.
+also rejects prompts over 512 tokens without additional evidence, 768 with only
+a Wallet hint, or 2048 tokens with receipts.
 Receipt context uses `receipt-context-v1` with `text` (at most 1600 UTF-8 bytes),
 `truncated` (boolean), and `evidence_sha256` (full original OCR hash). Qwen adds
 receipt instructions to its package's v1/v2 prompt. Laya receives a separately
@@ -108,7 +109,17 @@ identified OCR state field and receipt-aware questions, with 1024/768 sequence/h
 budgets; its existing weights are unchanged and receipt performance must be
 evaluated independently. Apple Shortcut exports include receipt instructions;
 the queue omits receipt evidence unless its separate consent setting is enabled.
-Without receipt context, existing prompts/state and limits are preserved.
+`wallet_category_raw` is a nonblank string of at most 128 UTF-8 bytes without
+ASCII controls. It is an untrusted broad merchant-category hint, never an
+instruction or direct category assignment. Explicit purchase/receipt evidence
+takes priority; it does not establish purchased items, payment type, gift intent
+or refund purpose. Conflicts and ambiguity require review. Qwen v1/v2 append
+hint instructions only when present. Laya preserves the hint alongside any OCR
+state and uses evidence-aware questions and 1024/768 budgets. The Apple Shortcut
+adapter forwards it as JSON; the exported categorizer prompts include the same
+rules. Existing weights are unchanged; improved accuracy is not established.
+Without either evidence field, Python-built Qwen prompts and Laya state,
+questions and limits are preserved.
 No account identifier, amount, geotag or
 financial history is required. Category/type vocabulary is currently the pinned
 18-category experimental policy, not the dynamically expandable database table.

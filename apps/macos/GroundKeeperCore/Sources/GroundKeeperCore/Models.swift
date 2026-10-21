@@ -122,6 +122,7 @@ public struct CSVDocument: Sendable {
 public struct ClassificationTask: Sendable {
     public let id: String, runID: String, partID: String, revision: Int, description: String, direction: String, currency: String
     public let receiptContext: ReceiptContext?
+    public let walletCategoryRaw: String?
 }
 public struct ClassificationDecision: Codable, Sendable {
     public let type: String, category: String?, review: Bool

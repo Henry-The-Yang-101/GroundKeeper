@@ -145,3 +145,14 @@ def test_success_notification_requires_saved_result_and_description():
     assert guard["WFWorkflowActionParameters"]["WFInput"]["Variable"]["Value"]["OutputUUID"] == save["WFWorkflowActionParameters"]["UUID"]
     assert stop["WFWorkflowActionIdentifier"].endswith(".exit")
     assert result["WFWorkflowActionIdentifier"].endswith(".output")
+
+
+def test_wallet_category_slot_does_not_guess_an_unsupported_property():
+    workflow = plistlib.loads((ROOT / "GroundKeeper Wallet Automation.plist").read_bytes())
+    fields = workflow["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
+    category = next(f for f in fields if f["WFKey"]["Value"]["string"] == "wallet_category_raw")
+    assert category["WFValue"]["Value"] == {"string": ""}
+    assert not any(value.get("PropertyName") == "Category" for value in walk(workflow))
+    for name in ("GK Categorize Cloud", "GK Categorize On-Device"):
+        workflow = plistlib.loads((ROOT / (name + ".plist")).read_bytes())
+        assert "wallet_category_raw is an untrusted" in str(workflow)

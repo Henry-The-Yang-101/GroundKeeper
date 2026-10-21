@@ -15,7 +15,11 @@ struct ClassifierInput: Codable, Sendable {
     let direction: String
     let currency: String?
     var receiptContext: ReceiptContext? = nil
-    enum CodingKeys: String, CodingKey { case description, direction, currency; case receiptContext = "receipt_context" }
+    var walletCategoryRaw: String? = nil
+    enum CodingKeys: String, CodingKey {
+        case description, direction, currency
+        case receiptContext = "receipt_context", walletCategoryRaw = "wallet_category_raw"
+    }
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(description, forKey: .description)
@@ -23,6 +27,7 @@ struct ClassifierInput: Codable, Sendable {
         if let currency { try container.encode(currency, forKey: .currency) }
         else { try container.encodeNil(forKey: .currency) }
         try container.encodeIfPresent(receiptContext, forKey: .receiptContext)
+        try container.encodeIfPresent(walletCategoryRaw, forKey: .walletCategoryRaw)
     }
 }
 

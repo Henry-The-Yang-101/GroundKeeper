@@ -273,6 +273,13 @@ def main():
         path = ROOT / (name + ".plist")
         adapter = plistlib.loads(path.read_bytes())
         adapter["WFWorkflowActions"] = adapter["WFWorkflowActions"][:2]
+        if name == "GroundKeeper Wallet Automation":
+            fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
+            if not any(field["WFKey"]["Value"]["string"] == "wallet_category_raw" for field in fields):
+                # No Category property exists in the inspected transaction picker.
+                # Leave blank for Any Category; a category-filtered iPhone
+                # automation can supply its exact filter label as literal text.
+                fields.append({"WFItemType": 0, "WFKey": text("wallet_category_raw"), "WFValue": text("")})
         a = Workflow(name, adapter)
         a.actions.extend(adapter["WFWorkflowActions"])
         result = output(a.actions[1]["WFWorkflowActionParameters"]["UUID"], "Shortcut Result")

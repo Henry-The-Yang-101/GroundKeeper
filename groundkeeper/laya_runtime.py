@@ -7,7 +7,7 @@ import itertools
 import math
 from pathlib import Path
 
-from .policy import CATEGORIES, TYPES, validate_answer, validate_input
+from .policy import CATEGORIES, TYPES, WALLET_CATEGORY_INSTRUCTIONS, validate_answer, validate_input
 
 MAX_LEN = 512
 HEAD_MAX_LEN = 384
@@ -164,9 +164,14 @@ class LocalLayaCategorizer:
         validate_input(inputs)
         from .receipts import laya_receipt_state, RECEIPT_INSTRUCTIONS
         questions = QUESTIONS
+        instructions = []
         if "receipt_context" in inputs:
-            questions = {key: {**value, "instructions": value["instructions"] + " " + RECEIPT_INSTRUCTIONS} for key, value in QUESTIONS.items()}
-        result = self.agent.predict(laya_receipt_state(inputs), questions, max_len=1024 if "receipt_context" in inputs else MAX_LEN, head_max_len=768 if "receipt_context" in inputs else HEAD_MAX_LEN)
+            instructions.append(RECEIPT_INSTRUCTIONS)
+        if "wallet_category_raw" in inputs:
+            instructions.append(WALLET_CATEGORY_INSTRUCTIONS)
+        if instructions:
+            questions = {key: {**value, "instructions": value["instructions"] + " " + " ".join(instructions)} for key, value in QUESTIONS.items()}
+        result = self.agent.predict(laya_receipt_state(inputs), questions, max_len=1024 if instructions else MAX_LEN, head_max_len=768 if instructions else HEAD_MAX_LEN)
         return decode(result["answers"])
 
     def suggest(self, inputs):

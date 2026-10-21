@@ -39,10 +39,16 @@ app creates its database at:
 `~/Library/Containers/com.groundkeeper.macos/Data/Library/Application Support/GroundKeeper/vault.sqlite`
 
 The live database is never placed in iCloud. Python receives only the existing
-description/direction/currency contract and job/revision/model identity. It has
+description/direction/currency contract, optional receipt/Wallet category evidence,
+and job/revision/model identity. It has
 no database connection. Settings can explicitly select an Apple Intelligence
-Shortcut provider, which receives the same three input fields and is recorded
-as cloud-capable. Council orchestration remains planned.
+Shortcut provider, which receives the same input contract and is recorded
+as cloud-capable. Optional Wallet category values are read from active non-test
+Wallet capture payloads when claiming a classification job. They are not copied
+to observation/transaction columns or merchant tables. Run audit JSON records a
+source-event reference instead of the value; its input hash covers the actual
+request. See [capture evidence](../capture/README.md#optional-wallet-category-evidence).
+Council orchestration remains planned.
 
 The UI now loads persisted transactions, adds accounts, saves confirmed manual
 edits, soft-deletes transactions, and shows pending/failed work. Transaction
