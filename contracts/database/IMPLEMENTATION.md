@@ -105,7 +105,25 @@ invalid rows. An invalid unskipped row rolls back the entire import. File hash
 plus source/account prevents reimporting a committed batch. Different exports
 use reliable record IDs or review; a merchant/amount hash is never a purchase ID.
 
-Wallet and bank source labels must be explicitly mapped to real accounts.
+Wallet and bank captures require an explicitly chosen account, either for that
+capture alone or through a remembered card mapping. Sync's **Remember this card
+for future transactions** option is off by default, including when correcting
+capture details. Leaving it unchecked creates no mapping; dismissing a review
+also creates none. Wallet uses `card_or_pass`; the CIBC adapter's notification
+`title` holds the card description and `subtitle` holds the merchant. Exact
+descriptions are scoped to their source/app; matching last-four digits or similar
+names never joins identities across sources. Blank descriptions cannot be saved
+as rules.
+
+Mappings stay in the local vault's existing `source_account_mappings` table.
+Settings lists active mappings and lets users change their account or remove
+them. Only active mappings apply when importing a new capture, including delayed
+iCloud deliveries; retired rows remain as history. Mapping changes do not rewrite
+saved transactions or replay pending/dismissed reviews. Assigning a capture and
+optionally remembering its card commit atomically. The legacy `confirmMapping`
+bulk API additionally retries open account/currency reviews for that source and
+label, excluding linked captures, dismissed reviews, and identity conflicts.
+
 Automatic linking requires one unambiguous complementary capture with the same
 account, currency, amount and normalized merchant within five minutes, and no
 existing capture of the incoming source kind. Separate Wallet events remain

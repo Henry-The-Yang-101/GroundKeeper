@@ -54,7 +54,7 @@ public actor LedgerStore {
                     candidates: (try? JSONDecoder().decode([String].self, from: Data(row.text("details_json").utf8))) ?? [])
             }
         let queue = try db.query("SELECT * FROM queue_items ORDER BY first_seen_at_ms DESC LIMIT 100").map { QueueRecord(id: $0.text("id"), path: $0.text("relative_path"), state: $0.text("state"), error: $0.text("error_code"), attempts: Int($0.number("attempt_count"))) }
-        return LedgerSnapshot(transactions: transactions, accounts: accounts, reviews: reviews, queue: queue,
+        return LedgerSnapshot(transactions: transactions, accounts: accounts, reviews: reviews, queue: queue, cardMappings: try cardAccountMappings(),
             totalTransactions: Int(try db.query("SELECT count(*) AS n FROM transactions WHERE state='active'").first!.number("n")),
             pendingJobs: Int(try db.query("SELECT count(*) AS n FROM classification_jobs WHERE status IN ('pending','running')").first!.number("n")),
             failedJobs: Int(try db.query("SELECT count(*) AS n FROM classification_jobs WHERE status='failed'").first!.number("n")))

@@ -54,9 +54,9 @@ extension LedgerStore {
         try db.query("INSERT OR IGNORE INTO event_receipts(id,event_id,delivery_key,received_at_ms,payload_sha256) VALUES (?,?,?,?,?)", [.text(identifier()), .text(eventID), .text(delivery), .integer(nowMS()), .text(hash)])
     }
     func parseAndReconcile(_ envelope: CaptureEnvelope, eventID: String) throws {
-        let (captured, _) = try CaptureParser.timestamp(envelope.capturedAt)
-        let mapped = try db.query("SELECT account_id FROM source_account_mappings WHERE source_id=? AND external_account_key=? AND valid_from_ms<=? AND (valid_until_ms IS NULL OR valid_until_ms>?) ORDER BY valid_from_ms DESC LIMIT 1",
-            [.text(envelope.sourceID), .text("label:" + envelope.label), .integer(captured), .integer(captured)]).first?["account_id"]?.string
+        let mapped = envelope.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : try db.query(
+            "SELECT account_id FROM source_account_mappings WHERE source_id=? AND external_account_key=? AND valid_until_ms IS NULL",
+            [.text(envelope.sourceID), .text("label:" + envelope.label)]).first?["account_id"]?.string
         let selected = try mapped.flatMap { try account($0) }
         let observation = try CaptureParser.parse(envelope, account: selected)
         try process(observation, eventID: eventID, sourceID: envelope.sourceID, kind: envelope.sourceKind)
@@ -64,12 +64,14 @@ extension LedgerStore {
     public func confirmMapping(sourceID: String, label: String, accountID: String) throws {
         guard try account(accountID) != nil else { throw LedgerError.invalid("Choose an existing account.") }
         try db.transaction {
-            // Initial mapping explicitly covers existing captures. Replacements start now.
-            let prior = try db.query("SELECT id FROM source_account_mappings WHERE source_id=? AND external_account_key=? AND valid_until_ms IS NULL", [.text(sourceID), .text("label:" + label)])
-            let start: Int64 = prior.isEmpty ? 0 : nowMS()
-            try db.query("UPDATE source_account_mappings SET valid_until_ms=? WHERE source_id=? AND external_account_key=? AND valid_until_ms IS NULL", [.integer(start), .text(sourceID), .text("label:" + label)])
-            try db.query("INSERT INTO source_account_mappings(id,source_id,external_account_key,account_id,valid_from_ms,confirmed_at_ms) VALUES (?,?,?,?,?,?)", [.text(identifier()), .text(sourceID), .text("label:" + label), .text(accountID), .integer(start), .integer(nowMS())])
-            let events = try db.query("SELECT e.id,p.payload_json FROM raw_events e JOIN raw_event_payloads p ON p.event_id=e.id WHERE e.source_id=? AND e.external_account_key=? AND e.is_test=0 AND NOT EXISTS(SELECT 1 FROM transaction_event_links WHERE event_id=e.id AND unlinked_at_ms IS NULL)", [.text(sourceID), .text("label:" + label)])
+            try rememberCard(sourceID: sourceID, label: label, accountID: accountID)
+            let events = try db.query("""
+                SELECT e.id,p.payload_json FROM raw_events e JOIN raw_event_payloads p ON p.event_id=e.id
+                WHERE e.source_id=? AND e.external_account_key=? AND e.is_test=0
+                AND NOT EXISTS(SELECT 1 FROM transaction_event_links WHERE event_id=e.id AND unlinked_at_ms IS NULL)
+                AND EXISTS(SELECT 1 FROM review_items WHERE event_id=e.id AND status='open' AND reason_code IN ('account_mapping_required','currency_required'))
+                AND NOT EXISTS(SELECT 1 FROM review_items WHERE event_id=e.id AND reason_code='event_identity_collision')
+                """, [.text(sourceID), .text("label:" + label)])
             for event in events {
                 let envelope = try CaptureParser.decode(Data(event.text("payload_json").utf8))
                 try resolveReviews(event.text("id")); try parseAndReconcile(envelope, eventID: event.text("id"))
@@ -160,14 +162,16 @@ extension LedgerStore {
     public func dismissReview(_ id: String) throws {
         try db.query("UPDATE review_items SET status='dismissed',resolved_at_ms=?,resolution='user_dismissed' WHERE id=?", [.integer(nowMS()), .text(id)])
     }
-    public func correctCapture(eventID: String, description: String, amountMinor: Int64, accountID: String, day: String) throws {
+    public func correctCapture(eventID: String, description: String, amountMinor: Int64, accountID: String, day: String, remember: Bool = false) throws {
         guard !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, description.count <= 2048,
               amountMinor != 0, amountMinor != Int64.min, let account = try account(accountID) else { throw LedgerError.invalid("Enter a description, nonzero amount and account.") }
         _ = try CivilDate.parse(day)
         try db.transaction {
+            let envelope = try unmappedCapture(eventID: eventID)
             guard let event = try db.query("SELECT e.*,s.kind FROM raw_events e JOIN sources s ON s.id=e.source_id WHERE e.id=? AND e.is_test=0", [.text(eventID)]).first,
                   try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This capture already has a transaction or is test evidence.") }
-            let observation = Observation(description: description, amount: amountMinor, currency: account.currency, day: day, captured: event.number("captured_at_ms"), offset: Int(event.number("captured_offset_minutes")), accountID: accountID, label: event.text("external_account_key"), lifecycle: "pending", dateOnly: true)
+            if remember { try rememberCard(sourceID: envelope.sourceID, label: envelope.label, accountID: accountID) }
+            let observation = Observation(description: description, amount: amountMinor, currency: account.currency, day: day, captured: event.number("captured_at_ms"), offset: Int(event.number("captured_offset_minutes")), accountID: accountID, label: envelope.label, lifecycle: "pending", dateOnly: true)
             try resolveReviews(eventID)
             try process(observation, eventID: eventID, sourceID: event.text("source_id"), kind: event.text("kind"))
             try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms,after_json) VALUES (?,?,'raw_event',?,'user','correct_observation',?,?)", [.text(identifier()), .text(identifier()), .text(eventID), .integer(nowMS()), .text(try json(observation))])

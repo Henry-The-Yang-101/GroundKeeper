@@ -5,6 +5,9 @@ public struct Account: Identifiable, Sendable, Equatable {
     public let name: String
     public let currency: String
 }
+public struct CardAccountMapping: Identifiable, Sendable, Equatable {
+    public let id: String, sourceID: String, sourceName: String, label: String, accountID: String
+}
 public struct LedgerTransaction: Identifiable, Sendable {
     public let id: String
     public let partID: String
@@ -42,6 +45,7 @@ public struct QueueRecord: Identifiable, Sendable {
 }
 public struct LedgerSnapshot: Sendable {
     public let transactions: [LedgerTransaction], accounts: [Account], reviews: [ReviewRecord], queue: [QueueRecord]
+    public let cardMappings: [CardAccountMapping]
     public let totalTransactions: Int, pendingJobs: Int, failedJobs: Int
 }
 public struct CaptureEnvelope: Codable, Sendable {
@@ -63,6 +67,8 @@ public struct CaptureEnvelope: Codable, Sendable {
     }
     var sourceKind: String { source == "wallet_transaction" ? "apple_wallet" : "bank_notification" }
     var sourceID: String { "capture:" + contentHash(Data("\(sourceKind)|\(app ?? "")".utf8)) }
+    // CIBC's card line below the app heading is the notification Title;
+    // Subtitle carries the merchant. Do not use the merchant as a card key.
     var label: String { (source == "wallet_transaction" ? cardOrPass : title) ?? "" }
 }
 struct Observation: Codable, Sendable {
