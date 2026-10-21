@@ -259,7 +259,12 @@ def main():
     bounded(w, serialized, 16000, "The capture is too large. Use a shorter note or receipt.")
     save_image(w)
     named = w.add("setitemname", WFInput=token(variable("Capture JSON")), WFName=name)
-    w.add("documentpicker.save", WFAskWhereToSave=True, WFSaveFileOverwrite=False, WFInput=token(named))
+    saved_file = w.add("documentpicker.save", WFAskWhereToSave=True, WFSaveFileOverwrite=False, WFInput=token(named))
+    # A cancelled Save File may return no item instead of throwing. Never return
+    # a success envelope unless that final action produced a saved file.
+    missing_file = condition(w, saved_file, 101)
+    w.add("exit")
+    endif(w, missing_file)
     w.add("output", WFOutput=text(saved))
     w.save()
 
@@ -268,7 +273,21 @@ def main():
         path = ROOT / (name + ".plist")
         adapter = plistlib.loads(path.read_bytes())
         adapter["WFWorkflowActions"] = adapter["WFWorkflowActions"][:2]
-        path.write_bytes(plistlib.dumps(adapter, sort_keys=False))
+        a = Workflow(name, adapter)
+        a.actions.extend(adapter["WFWorkflowActions"])
+        result = output(a.actions[1]["WFWorkflowActionParameters"]["UUID"], "Shortcut Result")
+        returned = condition(a, result)
+        event_id = a.get(result, "event_id")
+        saved_capture = condition(a, event_id)
+        description = a.get(result, "merchant" if "Wallet" in name else "subtitle")
+        has_description = condition(a, description)
+        a.add("notification", WFNotificationActionTitle=text(name),
+              WFNotificationActionBody=formatted("Successfully captured and saved ", description, "!"),
+              WFNotificationActionSound=False)
+        endif(a, has_description)
+        endif(a, saved_capture)
+        endif(a, returned)
+        a.save()
 
     # Standalone later attachment still writes schema 3 and never another payment.
     r = Workflow("GroundKeeper Add Receipt", writer)

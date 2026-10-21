@@ -80,6 +80,21 @@ Transaction; Attach Receipt Later → Add Receipt. Select the installed helper e
    labels against your accounts. The importer preserves source files and
    detects repeated deliveries.
 
+## Success notifications
+
+Wallet and CIBC adapters show a custom notification only after the shared writer
+returns a successfully saved capture. The title is **GroundKeeper Wallet
+Automation** or **GroundKeeper CIBC Automation**. The body is
+`Successfully captured and saved <transaction description>!`, using the saved
+Wallet merchant or bank subtitle. Cancelled or failed captures do not show a
+success notification. This confirms the capture file was saved, not that the
+Mac has imported it or that iCloud has finished uploading it.
+
+You can leave the personal automation's **Notify When Run** disabled. The custom
+Show Notification action is separate. When upgrading, replace both adapter
+Shortcuts and **GroundKeeper Capture Transaction**, then check the writer's
+inbox/assets destinations and each adapter's Run Shortcut target again.
+
 ## Optional receipts and notes
 
 The shared writer first offers **Add receipt**, **Add note**, or **Skip adding

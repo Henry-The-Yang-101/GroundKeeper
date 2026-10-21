@@ -48,8 +48,8 @@ def test_writer_prompts_for_receiving_users_folder_and_preserves_unique_filename
 def test_adapters_use_one_writer_and_receipts_remain_optional():
     for name in ("Wallet", "CIBC"):
         workflow = plistlib.loads((ROOT / f"GroundKeeper {name} Automation.plist").read_bytes())
-        calls = [a["WFWorkflowActionParameters"].get("WFWorkflowName") for a in workflow["WFWorkflowActions"]]
-        assert calls == [None, "GroundKeeper Capture Transaction"]
+        calls = [a["WFWorkflowActionParameters"]["WFWorkflowName"] for a in workflow["WFWorkflowActions"] if a["WFWorkflowActionIdentifier"].endswith(".runworkflow")]
+        assert calls == ["GroundKeeper Capture Transaction"]
     ocr = plistlib.loads((ROOT / "GK Receipt OCR.plist").read_bytes())
     assert ocr["WFWorkflowActions"][0]["WFWorkflowActionIdentifier"] == "is.workflow.actions.extracttextfromimage"
     actions = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
@@ -64,7 +64,7 @@ def test_adapters_use_one_writer_and_receipts_remain_optional():
     saves = [i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".documentpicker.save")]
     assert len(saves) == 2  # Optional image, then one combined capture JSON.
     assert min(saves) > last_menu
-    assert saves[-1] == len(actions) - 2
+    assert saves[-1] == len(actions) - 5
     # Cancellation/no-output guards stop before the final JSON write.
     guards = [a["WFWorkflowActionParameters"] for a in actions[:saves[-1]] if a["WFWorkflowActionIdentifier"].endswith(".conditional")]
     assert sum(g.get("WFCondition") == 101 for g in guards) >= 10
@@ -73,7 +73,7 @@ def test_adapters_use_one_writer_and_receipts_remain_optional():
 def test_filename_structure_and_safe_components():
     import re
     actions = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
-    filename = actions[-3]["WFWorkflowActionParameters"]["WFName"]["Value"]
+    filename = next(a["WFWorkflowActionParameters"]["WFName"]["Value"] for a in reversed(actions) if a["WFWorkflowActionIdentifier"].endswith(".setitemname"))
     assert filename["string"] == "\ufffc_\ufffc_CAPTURE_\ufffc.json"
     assert [v.get("VariableName") for v in list(filename["attachmentsByRange"].values())[:2]] == ["Filename Description", "Filename App"]
     replacements = [a["WFWorkflowActionParameters"] for a in actions if a["WFWorkflowActionIdentifier"].endswith(".text.replace")]
@@ -119,3 +119,29 @@ def test_native_replace_and_match_use_text_token_fields():
                 assert params["WFInput"]["WFSerializationType"] == "WFTextTokenString"
             if action["WFWorkflowActionIdentifier"].endswith(".text.match"):
                 assert params["text"]["WFSerializationType"] == "WFTextTokenString"
+
+
+def test_success_notification_requires_saved_result_and_description():
+    for kind, key in (("Wallet", "merchant"), ("CIBC", "subtitle")):
+        name = f"GroundKeeper {kind} Automation"
+        actions = plistlib.loads((ROOT / (name + ".plist")).read_bytes())["WFWorkflowActions"]
+        notifications = [i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".notification")]
+        assert len(notifications) == 1
+        index = notifications[0]
+        params = actions[index]["WFWorkflowActionParameters"]
+        assert params["WFNotificationActionTitle"]["Value"]["string"] == name
+        assert params["WFNotificationActionBody"]["Value"]["string"] == "Successfully captured and saved \ufffc!"
+        assert actions[index-2]["WFWorkflowActionParameters"]["WFDictionaryKey"] == key
+        # All three success guards surround the notification; empty returns,
+        # missing IDs and missing descriptions cannot fall through to it.
+        guards = [a["WFWorkflowActionParameters"] for a in actions[2:index] if a["WFWorkflowActionIdentifier"].endswith(".conditional")]
+        assert len(guards) == 3
+        assert all(g["WFControlFlowMode"] == 0 and g["WFCondition"] == 100 for g in guards)
+        assert [a["WFWorkflowActionParameters"]["GroupingIdentifier"] for a in actions[index+1:]] == [g["GroupingIdentifier"] for g in reversed(guards)]
+    writer = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
+    save, guard, stop, end, result = writer[-5:]
+    assert save["WFWorkflowActionIdentifier"].endswith(".documentpicker.save")
+    assert guard["WFWorkflowActionParameters"]["WFCondition"] == 101
+    assert guard["WFWorkflowActionParameters"]["WFInput"]["Variable"]["Value"]["OutputUUID"] == save["WFWorkflowActionParameters"]["UUID"]
+    assert stop["WFWorkflowActionIdentifier"].endswith(".exit")
+    assert result["WFWorkflowActionIdentifier"].endswith(".output")
