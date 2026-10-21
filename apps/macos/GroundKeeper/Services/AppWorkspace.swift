@@ -11,6 +11,7 @@ import GroundKeeperCore
     var insightsSection: InsightsSection = .transactions
     var transactions: [Transaction] = []
     var accounts: [Account] = []
+    var cardMappings: [CardAccountMapping] = []
     var reviews: [ReviewRecord] = []
     var queue: [QueueRecord] = []
     var totalTransactions = 0
@@ -149,7 +150,7 @@ import GroundKeeperCore
     func lockVault() async {
         guard encrypted, !saving, !changingProcessingMode else { return }
         await stop()
-        transactions = []; accounts = []; reviews = []; queue = []; editor = nil; showingImportPreview = false
+        transactions = []; accounts = []; cardMappings = []; reviews = []; queue = []; editor = nil; showingImportPreview = false
         totalTransactions = 0; model = nil; status = "Unlock your local vault"
     }
     func finishSetup() {
@@ -164,6 +165,7 @@ import GroundKeeperCore
         let snapshot = try await store.snapshot(limit: 500, offset: page * 500)
         transactions = snapshot.transactions.map(Transaction.init)
         accounts = snapshot.accounts; reviews = snapshot.reviews; queue = snapshot.queue
+        cardMappings = snapshot.cardMappings
         unqueuedJobs = try await store.unqueuedClassificationCount()
         totalTransactions = snapshot.totalTransactions; pendingJobs = snapshot.pendingJobs; failedJobs = snapshot.failedJobs
     }
@@ -189,10 +191,25 @@ import GroundKeeperCore
             self.feedback = WorkspaceFeedback(message: "Account added")
         }
     }
-    func map(_ review: ReviewRecord, accountID: String) {
+    func assignAccount(_ review: ReviewRecord, accountID: String, remember: Bool) {
         perform {
-            try await self.store?.confirmMapping(sourceID: review.sourceID, label: review.label, accountID: accountID)
+            try await self.store?.assignCaptureAccount(eventID: review.eventID, accountID: accountID, remember: remember)
             try await self.refresh(); await self.processIfAutomatic()
+            self.feedback = WorkspaceFeedback(message: remember ? "Account chosen and card mapping remembered" : "Account chosen for this capture")
+        }
+    }
+    func updateCardMapping(_ mapping: CardAccountMapping, accountID: String) {
+        perform {
+            try await self.store?.updateCardMapping(id: mapping.id, accountID: accountID)
+            try await self.refresh()
+            self.feedback = WorkspaceFeedback(message: "Card mapping updated for future imports")
+        }
+    }
+    func removeCardMapping(_ mapping: CardAccountMapping) {
+        perform {
+            try await self.store?.removeCardMapping(id: mapping.id)
+            try await self.refresh()
+            self.feedback = WorkspaceFeedback(message: "Card mapping removed")
         }
     }
     func resolve(_ review: ReviewRecord, transactionID: String?) {
@@ -201,10 +218,13 @@ import GroundKeeperCore
     func dismiss(_ review: ReviewRecord) {
         perform { try await self.store?.dismissReview(review.id); try await self.refresh() }
     }
-    func correct(_ review: ReviewRecord, description: String, amount: String, accountID: String, day: String) async throws {
+    func correct(_ review: ReviewRecord, description: String, amount: String, accountID: String, day: String, remember: Bool) async throws {
+        guard !saving, let store else { throw LedgerError.unavailable("Wait for the current operation to finish.") }
         guard let account = accounts.first(where: { $0.id == accountID }) else { throw LedgerError.invalid("Choose an account.") }
         let minor = try ExactMoney.parse(amount, currency: account.currency)
-        try await store?.correctCapture(eventID: review.eventID, description: description, amountMinor: minor, accountID: accountID, day: day)
+        saving = true
+        defer { saving = false }
+        try await store.correctCapture(eventID: review.eventID, description: description, amountMinor: minor, accountID: accountID, day: day, remember: remember)
         try await refresh()
     }
     var hasCaptureFolder: Bool { AppPreferences.defaults.data(forKey: "captureFolderBookmark") != nil }

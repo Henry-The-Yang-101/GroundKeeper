@@ -78,8 +78,9 @@ struct SettingsView: View {
                 }
                 Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
                     .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespaces).isEmpty)
-                Text("Confirm Wallet and bank card labels in Sync. Names and last-four digits alone do not establish account identity.").font(.caption).foregroundStyle(AppStyle.muted)
+                Text("Choose an account for Wallet and bank captures in Sync, with the option to remember each card description.").font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Accounts").font(VaultTypography.section) }
+            CardMappingsSection()
             VaultFormSection("Setup and iPhone") {
                 Button("Review setup assistant…") { AppPreferences.defaults.set(0, forKey: "setupStep"); workspace.showingSetup = true }
                     .disabled(workspace.processing || workspace.saving)

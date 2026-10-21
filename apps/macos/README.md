@@ -162,6 +162,14 @@ Sync contains imports, capture review and queue activity. Settings contains
 accounts, queue processing preferences and local model selection. The earlier charts/planning prototypes
 remain source fixtures but are not exposed as live reports.
 
+In Sync → Review captures, choose an account and **Use for this transaction**.
+Optionally check **Remember this card for future transactions** to save the exact
+Wallet card or bank card description for that source. The option starts unchecked
+and is also available when correcting capture details. Dismissing the review
+leaves it unmapped. Settings → Card mappings lets you change the account or remove
+a saved mapping. These changes affect future imports, including delayed captures;
+saved transactions and other reviews retain their existing account choices.
+
 Keyboard shortcuts: ⌘N adds a transaction, ⌘F opens transaction search, ⌘,
 opens Settings, and ⌘1 through ⌘4 select a navigation tab.
 

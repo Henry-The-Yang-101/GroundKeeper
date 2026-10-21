@@ -30,5 +30,22 @@ enum InterfacePreview {
                 needsReview: example.3, notes: "Fictional UI preview record."
             ))
         }
+        try await store.addAccount(name: "Travel card · Demo", currency: "CAD")
+        // Real capture-review controls, backed by the disposable preview vault.
+        for (id, wallet, card) in [("preview-wallet", true, "Everyday card · 1234"),
+                                   ("preview-bank", false, "CIBC Dividend Visa Card, 5678")] {
+            var payload: [String: Any] = [
+                "schema_version": 2, "event_id": id, "captured_at": "2026-10-20T10:00:00-04:00",
+                "source": wallet ? "wallet_transaction" : "bank_notification",
+                "app": wallet ? "Wallet" : "CIBC Banking",
+                "input_shape": wallet ? "wallet_transaction_fields" : "notification_fields"
+            ]
+            if wallet {
+                payload.merge(["card_or_pass": card, "merchant": "Fictional Café", "amount": "$8.50"]) { _, new in new }
+            } else {
+                payload.merge(["title": card, "subtitle": "Fictional Bookshop", "body": "$24.00"]) { _, new in new }
+            }
+            try await store.ingestCapture(data: JSONSerialization.data(withJSONObject: payload), deliveryPath: id + ".json")
+        }
     }
 }

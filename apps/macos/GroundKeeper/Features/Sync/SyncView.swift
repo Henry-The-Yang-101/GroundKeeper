@@ -59,20 +59,25 @@ private struct CaptureReviewRow: View {
     @Environment(AppWorkspace.self) private var workspace
     let review: ReviewRecord
     @State private var accountID = ""
+    @State private var rememberCard = false
     @State private var correcting = false
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(review.description.isEmpty ? "Unparsed capture" : review.description).fontWeight(.medium)
             Text(review.reason.replacingOccurrences(of: "_", with: " ")).font(.callout).foregroundStyle(AppStyle.muted)
-            if !review.label.isEmpty { Text("Card label: \(review.label)").font(.caption) }
+            if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
             if ["account_mapping_required", "currency_required"].contains(review.reason) {
                 HStack {
-                    Picker("Confirmed account", selection: $accountID) {
+                    Picker("Account", selection: $accountID) {
                         Text("Choose account").tag("")
                         ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
                     }
-                    Button("Confirm mapping") { workspace.map(review, accountID: accountID) }.disabled(accountID.isEmpty)
                 }
+                RememberCardChoice(label: review.label, remember: $rememberCard)
+                Button(rememberCard ? "Use account and remember card" : "Use for this transaction") {
+                    workspace.assignAccount(review, accountID: accountID, remember: rememberCard)
+                }.disabled(accountID.isEmpty)
+                if workspace.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }
             }
             if review.reason == "possible_duplicate" {
                 ForEach(review.candidates, id: \.self) { id in
@@ -100,6 +105,7 @@ private struct CaptureCorrection: View {
     @State private var day = ""
     @State private var error: String?
     @State private var saving = false
+    @State private var rememberCard = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Correct capture details").font(VaultTypography.sheet)
@@ -112,6 +118,8 @@ private struct CaptureCorrection: View {
                     Text("Choose account").tag("")
                     ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
                 }
+                if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
+                RememberCardChoice(label: review.label, remember: $rememberCard)
             }
             if let error { Text(error).foregroundStyle(.red) }
             HStack {
@@ -121,10 +129,10 @@ private struct CaptureCorrection: View {
                     saving = true
                     Task {
                         defer { saving = false }
-                        do { try await workspace.correct(review, description: description, amount: amount, accountID: accountID, day: day); dismiss() }
+                        do { try await workspace.correct(review, description: description, amount: amount, accountID: accountID, day: day, remember: rememberCard); dismiss() }
                         catch { self.error = error.localizedDescription }
                     }
-                }.disabled(saving || accountID.isEmpty).buttonStyle(.brass)
+                }.disabled(saving || workspace.saving || accountID.isEmpty).buttonStyle(.brass)
             }
         }.padding(24).frame(width: 520).onAppear { description = review.description }
     }
