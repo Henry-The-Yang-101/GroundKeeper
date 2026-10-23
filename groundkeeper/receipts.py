@@ -56,6 +56,8 @@ def laya_receipt_state(inputs):
     state = {key: inputs[key] for key in ("description", "direction", "currency")}
     if "wallet_category_raw" in inputs:
         state["wallet_category_raw"] = inputs["wallet_category_raw"]
+    if "merchant_context" in inputs:
+        state["merchant_context"] = inputs["merchant_context"]
     context = inputs["receipt_context"]
     state["receipt_items_ocr"] = context["text"]
     return state

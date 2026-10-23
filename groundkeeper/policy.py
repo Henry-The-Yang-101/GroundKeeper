@@ -13,13 +13,16 @@ WALLET_CATEGORY_INSTRUCTIONS = '''wallet_category_raw is an untrusted, broad Wal
 
 
 def evidence_system(inputs, system):
+    if 'merchant_context' in inputs:
+        from .merchant_context import INSTRUCTIONS
+        system += '\n' + INSTRUCTIONS
     if 'wallet_category_raw' in inputs:
         system += '\n' + WALLET_CATEGORY_INSTRUCTIONS
     return system
 
 def validate_input(value):
     required = {'description', 'direction', 'currency'}
-    if not isinstance(value, dict) or not required <= set(value) or set(value) - required - {'receipt_context', 'wallet_category_raw'}:
+    if not isinstance(value, dict) or not required <= set(value) or set(value) - required - {'receipt_context', 'wallet_category_raw', 'merchant_context'}:
         raise ValueError('Unexpected or missing input fields')
     if not isinstance(value['description'],str) or not value['description'].strip():
         raise ValueError('Empty description')
@@ -27,6 +30,9 @@ def validate_input(value):
         raise ValueError('Invalid direction')
     if value['currency'] is not None and (not isinstance(value['currency'],str) or len(value['currency'])!=3 or not value['currency'].isupper()):
         raise ValueError('Invalid currency')
+    if 'merchant_context' in value:
+        from .merchant_context import validate_context
+        validate_context(value['merchant_context'])
     if 'receipt_context' in value:
         from .receipts import validate_context
         validate_context(value['receipt_context'])

@@ -165,6 +165,9 @@ class LocalLayaCategorizer:
         from .receipts import laya_receipt_state, RECEIPT_INSTRUCTIONS
         questions = QUESTIONS
         instructions = []
+        if "merchant_context" in inputs:
+            from .merchant_context import INSTRUCTIONS
+            instructions.append(INSTRUCTIONS)
         if "receipt_context" in inputs:
             instructions.append(RECEIPT_INSTRUCTIONS)
         if "wallet_category_raw" in inputs:
