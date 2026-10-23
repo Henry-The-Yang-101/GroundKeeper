@@ -1,0 +1,1363 @@
+{
+  "dataset": "https://data.delaware.gov/resource/nurt-5rqw.json",
+  "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+  "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+  "evidence_sha256": "092ef75a04307b99865768b4d84eaf5fdfbb0dedf1ad906286cbbc19abfed6e4",
+  "labels": "frozen_AI_review_not_human_gold",
+  "human_labels": 0,
+  "synthetic_rows": 0,
+  "sealed_test_access": false,
+  "n": 100,
+  "distinct_descriptions": 96,
+  "reference_certainty": {
+    "low": 5,
+    "high": 63,
+    "moderate": 32
+  },
+  "search": {
+    "record_type": "summary",
+    "attempted": 83,
+    "matched_rows": 67,
+    "stop_reason": null,
+    "wall_seconds": 908.8279420420295,
+    "outcomes": {
+      "matched": 67,
+      "no_match": 26,
+      "unsafe_query": 7
+    },
+    "cache_rows": 10,
+    "lookup_seconds_median_including_queue_wait": 11.064056999981403
+  },
+  "models": {
+    "base-baseline": {
+      "n": 100,
+      "category_agreement": 39,
+      "type_agreement": 44,
+      "type_and_category_agreement": 27,
+      "full_decision_agreement": 8,
+      "review_required": 100,
+      "context_rows": 0,
+      "model_seconds_median": 0.6945303335087374,
+      "model_seconds_p95": 0.7168516669771634,
+      "model_seconds_mean": 0.6959725120797521,
+      "predictions_sha256": "fb407e0d826574da8b78c7e81ac0d67c23c26fb03a1ad4ab989f0b4e63479772",
+      "identity": {
+        "record_type": "manifest",
+        "model": {
+          "model_id": "qwen3.5-4b-4bit-original-no-adapter",
+          "backend": "qwen_mlx",
+          "manifest_sha256": "4ae10631ffb62f084deb3d8f546212134b361ebae8ea4a60f8503d9b200d7176",
+          "policy_version": "groundkeeper-18-v1",
+          "device": "mlx_gpu"
+        },
+        "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+        "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+        "evidence_sha256": null,
+        "mode": "baseline",
+        "warmup": "first_real_row_excluded_from_timing",
+        "human_labels": 0,
+        "synthetic_rows": 0,
+        "prompt_version": "v1",
+        "adapter_directory": null,
+        "worker_sha256": "71bbb5e59252cccab96ffb718c4b0922b921a05b53515fcd29a94b1d18781efb"
+      },
+      "high_certainty": {
+        "n": 63,
+        "category_agreement": 27,
+        "type_agreement": 28,
+        "type_and_category_agreement": 22,
+        "full_decision_agreement": 4,
+        "review_required": 63,
+        "context_rows": 0,
+        "model_seconds_median": 0.6948686669929884,
+        "model_seconds_p95": 0.7171172079979442,
+        "model_seconds_mean": 0.6960331752373364
+      },
+      "unique_descriptions": {
+        "n": 96,
+        "category_agreement": 39,
+        "type_agreement": 42,
+        "type_and_category_agreement": 27,
+        "full_decision_agreement": 8,
+        "review_required": 96,
+        "context_rows": 0,
+        "model_seconds_median": 0.694474062504014,
+        "model_seconds_p95": 0.7171172079979442,
+        "model_seconds_mean": 0.6956497361043148
+      },
+      "matched_subset": {
+        "n": 67,
+        "category_agreement": 27,
+        "type_agreement": 31,
+        "type_and_category_agreement": 20,
+        "full_decision_agreement": 5,
+        "review_required": 67,
+        "context_rows": 0,
+        "model_seconds_median": 0.6943607499706559,
+        "model_seconds_p95": 0.7124278330011293,
+        "model_seconds_mean": 0.6947714608195655
+      }
+    },
+    "base-enriched": {
+      "n": 100,
+      "category_agreement": 44,
+      "type_agreement": 59,
+      "type_and_category_agreement": 39,
+      "full_decision_agreement": 11,
+      "review_required": 100,
+      "context_rows": 67,
+      "model_seconds_median": 1.0026832914736588,
+      "model_seconds_p95": 1.182473791996017,
+      "model_seconds_mean": 0.9378747874853434,
+      "predictions_sha256": "3887f9e4bcc2bd9b34821aca12d04ad087390c257ef6d98326202566c1c74706",
+      "identity": {
+        "record_type": "manifest",
+        "model": {
+          "model_id": "qwen3.5-4b-4bit-original-no-adapter",
+          "backend": "qwen_mlx",
+          "manifest_sha256": "4ae10631ffb62f084deb3d8f546212134b361ebae8ea4a60f8503d9b200d7176",
+          "policy_version": "groundkeeper-18-v1",
+          "device": "mlx_gpu"
+        },
+        "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+        "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+        "evidence_sha256": "092ef75a04307b99865768b4d84eaf5fdfbb0dedf1ad906286cbbc19abfed6e4",
+        "mode": "enriched",
+        "warmup": "first_real_row_excluded_from_timing",
+        "human_labels": 0,
+        "synthetic_rows": 0,
+        "prompt_version": "v1",
+        "adapter_directory": null,
+        "worker_sha256": "71bbb5e59252cccab96ffb718c4b0922b921a05b53515fcd29a94b1d18781efb"
+      },
+      "high_certainty": {
+        "n": 63,
+        "category_agreement": 29,
+        "type_agreement": 33,
+        "type_and_category_agreement": 27,
+        "full_decision_agreement": 6,
+        "review_required": 63,
+        "context_rows": 39,
+        "model_seconds_median": 0.9869514160091057,
+        "model_seconds_p95": 1.2045450829900801,
+        "model_seconds_mean": 0.9300868961884315
+      },
+      "unique_descriptions": {
+        "n": 96,
+        "category_agreement": 42,
+        "type_agreement": 57,
+        "type_and_category_agreement": 37,
+        "full_decision_agreement": 11,
+        "review_required": 96,
+        "context_rows": 64,
+        "model_seconds_median": 0.99934635401587,
+        "model_seconds_p95": 1.182473791996017,
+        "model_seconds_mean": 0.9342893072656201
+      },
+      "matched_subset": {
+        "n": 67,
+        "category_agreement": 32,
+        "type_agreement": 46,
+        "type_and_category_agreement": 32,
+        "full_decision_agreement": 8,
+        "review_required": 67,
+        "context_rows": 67,
+        "model_seconds_median": 1.0484953749692068,
+        "model_seconds_p95": 1.2045450829900801,
+        "model_seconds_mean": 1.0561233146642612
+      }
+    },
+    "finetuned-baseline": {
+      "n": 100,
+      "category_agreement": 54,
+      "type_agreement": 83,
+      "type_and_category_agreement": 50,
+      "full_decision_agreement": 29,
+      "review_required": 100,
+      "context_rows": 0,
+      "model_seconds_median": 0.7041985624819063,
+      "model_seconds_p95": 0.7183664579642937,
+      "model_seconds_mean": 0.7044896916806465,
+      "predictions_sha256": "da9feafd9b4383a2d00601572210af6985b31c6abfa757b94dd5463c020b2a63",
+      "identity": {
+        "record_type": "manifest",
+        "model": {
+          "model_id": "qwen-full-v1-step512",
+          "backend": "qwen_mlx",
+          "manifest_sha256": "1e5aa09c18c944ae54274144fa7131efe988c9719f1c1dff917261d2eb446a51",
+          "policy_version": "groundkeeper-18-v1",
+          "device": "mlx_gpu"
+        },
+        "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+        "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+        "evidence_sha256": null,
+        "mode": "baseline",
+        "warmup": "first_real_row_excluded_from_timing",
+        "human_labels": 0,
+        "synthetic_rows": 0,
+        "prompt_version": "v1",
+        "adapter_directory": "adapters",
+        "worker_sha256": "71bbb5e59252cccab96ffb718c4b0922b921a05b53515fcd29a94b1d18781efb"
+      },
+      "high_certainty": {
+        "n": 63,
+        "category_agreement": 41,
+        "type_agreement": 52,
+        "type_and_category_agreement": 40,
+        "full_decision_agreement": 20,
+        "review_required": 63,
+        "context_rows": 0,
+        "model_seconds_median": 0.7038186659920029,
+        "model_seconds_p95": 0.7185105830430984,
+        "model_seconds_mean": 0.7037843637785594
+      },
+      "unique_descriptions": {
+        "n": 96,
+        "category_agreement": 54,
+        "type_agreement": 80,
+        "type_and_category_agreement": 50,
+        "full_decision_agreement": 29,
+        "review_required": 96,
+        "context_rows": 0,
+        "model_seconds_median": 0.7041985624819063,
+        "model_seconds_p95": 0.7185105830430984,
+        "model_seconds_mean": 0.70451598265754
+      },
+      "matched_subset": {
+        "n": 67,
+        "category_agreement": 40,
+        "type_agreement": 61,
+        "type_and_category_agreement": 38,
+        "full_decision_agreement": 22,
+        "review_required": 67,
+        "context_rows": 0,
+        "model_seconds_median": 0.7039578330004588,
+        "model_seconds_p95": 0.7183664579642937,
+        "model_seconds_mean": 0.7043586629998884
+      }
+    },
+    "finetuned-enriched": {
+      "n": 100,
+      "category_agreement": 58,
+      "type_agreement": 86,
+      "type_and_category_agreement": 55,
+      "full_decision_agreement": 26,
+      "review_required": 100,
+      "context_rows": 67,
+      "model_seconds_median": 1.0229306460241787,
+      "model_seconds_p95": 1.191402750031557,
+      "model_seconds_mean": 0.9487902091356227,
+      "predictions_sha256": "eebe14d089bc7ee73748918d4322b5131cb3791aa9749ca782b0d943c57147e2",
+      "identity": {
+        "record_type": "manifest",
+        "model": {
+          "model_id": "qwen-full-v1-step512",
+          "backend": "qwen_mlx",
+          "manifest_sha256": "1e5aa09c18c944ae54274144fa7131efe988c9719f1c1dff917261d2eb446a51",
+          "policy_version": "groundkeeper-18-v1",
+          "device": "mlx_gpu"
+        },
+        "sample_sha256": "cba58b704ff848ac52bb8bd12071b141ecd1c3e0efa9521660b4e4ad91ebb4da",
+        "reference_sha256": "f69cd5e82277b2cab663216e9252779c5f2ae220ed9892bd8301c13477edffb8",
+        "evidence_sha256": "092ef75a04307b99865768b4d84eaf5fdfbb0dedf1ad906286cbbc19abfed6e4",
+        "mode": "enriched",
+        "warmup": "first_real_row_excluded_from_timing",
+        "human_labels": 0,
+        "synthetic_rows": 0,
+        "prompt_version": "v1",
+        "adapter_directory": "adapters",
+        "worker_sha256": "71bbb5e59252cccab96ffb718c4b0922b921a05b53515fcd29a94b1d18781efb"
+      },
+      "high_certainty": {
+        "n": 63,
+        "category_agreement": 42,
+        "type_agreement": 54,
+        "type_and_category_agreement": 41,
+        "full_decision_agreement": 20,
+        "review_required": 63,
+        "context_rows": 39,
+        "model_seconds_median": 1.0103189590154216,
+        "model_seconds_p95": 1.1946292500360869,
+        "model_seconds_mean": 0.9363371898532875
+      },
+      "unique_descriptions": {
+        "n": 96,
+        "category_agreement": 56,
+        "type_agreement": 82,
+        "type_and_category_agreement": 53,
+        "full_decision_agreement": 26,
+        "review_required": 96,
+        "context_rows": 64,
+        "model_seconds_median": 1.019977458519861,
+        "model_seconds_p95": 1.191402750031557,
+        "model_seconds_mean": 0.945275237381793
+      },
+      "matched_subset": {
+        "n": 67,
+        "category_agreement": 44,
+        "type_agreement": 64,
+        "type_and_category_agreement": 43,
+        "full_decision_agreement": 19,
+        "review_required": 67,
+        "context_rows": 67,
+        "model_seconds_median": 1.0630240829777904,
+        "model_seconds_p95": 1.1998704579891637,
+        "model_seconds_mean": 1.070807001188592
+      }
+    }
+  },
+  "paired": {
+    "base": {
+      "n": 100,
+      "both_agree": 33,
+      "baseline_only_agrees": 6,
+      "enriched_only_agrees": 11,
+      "neither_agrees": 50,
+      "category_changed": 24,
+      "uncovered_decision_changes": 0
+    },
+    "finetuned": {
+      "n": 100,
+      "both_agree": 49,
+      "baseline_only_agrees": 5,
+      "enriched_only_agrees": 9,
+      "neither_agrees": 37,
+      "category_changed": 15,
+      "uncovered_decision_changes": 0
+    }
+  },
+  "changed_rows": [
+    {
+      "id": "delaware-100-001",
+      "description": "HERTRICH CAPITOL",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "low",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-004",
+      "description": "BELAIR ROAD SUPPLY CO",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "other",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-008",
+      "description": "UPS*BILLING CENTER",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "other",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "financial",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-009",
+      "description": "GODADDY#4095988064",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "software",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-014",
+      "description": "MORTONS ARLINGTON",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-020",
+      "description": "NAME.COM INC",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "software",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-026",
+      "description": "VZWRLSS*IVR VB",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-028",
+      "description": "MICHAELS STORES 1274",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-043",
+      "description": "GRAINGER",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-045",
+      "description": "VZWRLSS*IVR VB",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-050",
+      "description": "ATLANTIC MACHINERY",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "other",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-051",
+      "description": "USPS 09099009335434117",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "other",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-053",
+      "description": "DIAMOND ELECTRIC",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-055",
+      "description": "FLEETPRIDE INC.",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-057",
+      "description": "KEEFE SUPPLY COMPANY",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-062",
+      "description": "OPTUS INC",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "utilities",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-063",
+      "description": "FULL SOURCE LLC",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "low",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-068",
+      "description": "EMEDCO",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-070",
+      "description": "DAVE And BUSTER'S INC.",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-072",
+      "description": "DELAWARE NOTARY",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "other",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-076",
+      "description": "JOR-LIN INC.",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "low",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "transfer",
+        "category": null,
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-078",
+      "description": "GRAINGER",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-080",
+      "description": "G AND E INC",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "transfer",
+        "category": null,
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-088",
+      "description": "GAN*NEWSPAPER SUB1052",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-093",
+      "description": "GRAINGER",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-094",
+      "description": "EMR COMMERCIAL",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-097",
+      "description": "USPS POSTAGE STAMPS.COM",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "other",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "other",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-098",
+      "description": "COMCAST OF SALISBURY",
+      "model": "base",
+      "reference": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "card_payment",
+        "category": null,
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-001",
+      "description": "HERTRICH CAPITOL",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "low",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-004",
+      "description": "BELAIR ROAD SUPPLY CO",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-008",
+      "description": "UPS*BILLING CENTER",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "other",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "financial",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-014",
+      "description": "MORTONS ARLINGTON",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "dining",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "dining",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-020",
+      "description": "NAME.COM INC",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "software",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "software",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-026",
+      "description": "VZWRLSS*IVR VB",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-043",
+      "description": "GRAINGER",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-045",
+      "description": "VZWRLSS*IVR VB",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "utilities",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-055",
+      "description": "FLEETPRIDE INC.",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "vehicle",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-062",
+      "description": "OPTUS INC",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "utilities",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-063",
+      "description": "FULL SOURCE LLC",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "low",
+      "baseline": {
+        "type": "unknown",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-070",
+      "description": "DAVE And BUSTER'S INC.",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-076",
+      "description": "JOR-LIN INC.",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "reference_certainty": "low",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "travel",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-078",
+      "description": "GRAINGER",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-079",
+      "description": "CATHERINES.COM",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-088",
+      "description": "GAN*NEWSPAPER SUB1052",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": false
+      },
+      "reference_certainty": "high",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "entertainment",
+        "review": true
+      },
+      "web_context_used": true
+    },
+    {
+      "id": "delaware-100-093",
+      "description": "GRAINGER",
+      "model": "finetuned",
+      "reference": {
+        "type": "expense",
+        "category": "shopping",
+        "review": false
+      },
+      "reference_certainty": "moderate",
+      "baseline": {
+        "type": "expense",
+        "category": "uncategorized",
+        "review": true
+      },
+      "enriched": {
+        "type": "expense",
+        "category": "shopping",
+        "review": true
+      },
+      "web_context_used": true
+    }
+  ],
+  "plan": {
+    "base_weight_sha256": "d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477",
+    "original_text_weight_path": ".local/finetune/models/qwen35-text/model.safetensors",
+    "no_adapter": true,
+    "prompt_version": "v1",
+    "input_source": ".local/real-eval/delaware-100-20261017-v1",
+    "reference_status": "preexisting_frozen_AI_reference_not_human_gold",
+    "sealed_test_access": false,
+    "models_compared": [
+      "original_base",
+      "qwen-full-v1-step512"
+    ],
+    "modes": [
+      "baseline",
+      "ddgs_enriched"
+    ],
+    "selection": "all_100_existing_rows_no_resampling_or_dropping",
+    "locality": "not_invented",
+    "synthetic_rows": 0
+  },
+  "environment": {
+    "python": "3.12.9",
+    "macOS": "27.0.1",
+    "architecture": "arm64",
+    "chip": "Apple M4 Pro",
+    "physical_memory_bytes": 25769803776,
+    "packages": {
+      "mlx": "0.32.3",
+      "mlx-lm": "0.32.0",
+      "transformers": "5.19.0",
+      "tokenizers": "0.23.2"
+    },
+    "source_revision": "32f3e8ecf65426fc3306969496342d504bfa13f3",
+    "search_packages": {
+      "ddgs": "9.16.0",
+      "primp": "2.0.1",
+      "lxml": "6.1.3",
+      "click": "8.5.0"
+    },
+    "search_implementation_commit": "30d655f",
+    "benchmark_harness_commit": "f660db5"
+  }
+}

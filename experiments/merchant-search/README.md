@@ -1,9 +1,11 @@
 # Merchant-context search diagnostics
 
-Research-only retrieval experiments requested on 2026-10-22. They test whether
-DDGS snippets contain enough evidence to describe a public business's type.
-It does not score Qwen, alter the classifier contract, or provide calibrated
-merchant matching or automatic category acceptance.
+The original retrieval experiments requested on 2026-10-22 tested whether DDGS
+snippets contain enough evidence to describe a public business's type. Those
+experiments did not score Qwen. The optional app integration is documented in
+[the classifier contract](../../contracts/classifier/README.md#merchant-search-evidence);
+subsequent model comparisons are recorded separately below. Search evidence
+does not provide calibrated merchant matching or automatic category acceptance.
 
 ## Original DuckDuckGo method
 
@@ -100,3 +102,30 @@ See [RESULTS.md](RESULTS.md) for the original DuckDuckGo trial and
 and Google observations. The DuckDuckGo-only
 [interval diagnostic](DDG_INTERVALS_2026-10-22.md) records the half-second-grid
 screens separately from complete fixture runs.
+
+## Real transaction descriptions and Qwen
+
+[The real-description Qwen benchmark](QWEN_REAL_BENCHMARK_2026-10-23.md) compares
+the original Qwen3.5-4B weights without a transaction adapter and the current
+`qwen-full-v1-step512` package, each with and without production DDGS evidence.
+It uses all 100 rows of the existing frozen public Delaware diagnostic, not
+the Waterloo fixtures or sealed test sets. The reference judgments are AI
+reviewed, with zero human confirmations; reported scores are label agreement.
+
+`scripts/benchmark_real_merchant_search.py` provides three operations:
+
+- `collect --source <frozen-directory> --queries <query-jsonl> --output <evidence-jsonl>`
+  serializes production searches and caches repeated queries. Generate the query
+  file with `MerchantQueryPilot` from the Swift core package so the actual app
+  sanitizer is used. Missing matches and backoff remain in the sample.
+- `predict --source <frozen-directory> --package <verified-package> --output <predictions-jsonl>`
+  calls the actual Python worker. Add `--evidence <evidence-jsonl>` for enrichment.
+  One real row warms up the model before the 100 timed predictions.
+- `score --source <frozen-directory> --run <run-directory> --output <summary-json>`
+  checks the frozen hashes, row alignment, original input hashes, prompt versions,
+  shared evidence, and absence of a base-model adapter before computing agreement.
+
+Each operation refuses to overwrite its output. Use
+`python -m scripts.benchmark_real_merchant_search` from the repository root: the separate
+DDGS environment for collection and the MLX environment for prediction/scoring.
+The report records model provenance, run layout, bounds and reproduction details.

@@ -190,6 +190,7 @@ def score(args):
     report["search"]["lookup_seconds_median_including_queue_wait"] = statistics.median(lookup_seconds) if lookup_seconds else None
     matched = [i for i, r in enumerate(searches) if r.get("context") is not None]
     high = [i for i, r in enumerate(reference) if r["reference_certainty"] == "high"]
+    unique = list({r["input"]["description"]: i for i, r in enumerate(sample)}.values())
     for model in ("base", "finetuned"):
         configurations = {}
         for mode in ("baseline", "enriched"):
@@ -215,6 +216,7 @@ def score(args):
             result = metrics(reference, predictions)
             result.update(predictions_sha256=digest(path), identity=identity,
                 high_certainty=metrics([reference[i] for i in high], [predictions[i] for i in high]) if high else None,
+                unique_descriptions=metrics([reference[i] for i in unique], [predictions[i] for i in unique]),
                 matched_subset=metrics([reference[i] for i in matched], [predictions[i] for i in matched]) if matched else None)
             report["models"][f"{model}-{mode}"] = result
             configurations[mode] = predictions
@@ -229,7 +231,7 @@ def score(args):
         json.dump(report, output, indent=2, ensure_ascii=False)
         output.write("\n")
     print(json.dumps({"search": report["search"], "paired": report["paired"], "models": {
-        name: {k: v for k, v in result.items() if k not in ("identity", "predictions_sha256", "high_certainty", "matched_subset")}
+        name: {k: v for k, v in result.items() if k not in ("identity", "predictions_sha256", "high_certainty", "unique_descriptions", "matched_subset")}
         for name, result in report["models"].items()}}, indent=2))
 
 
