@@ -65,6 +65,7 @@ struct SettingsView: View {
                 Button("Use Apple Intelligence Shortcut", action: workspace.useShortcut)
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
+                MerchantSearchSettingsView(workspace: workspace)
                 Text("Choose a Qwen or Laya package for local inference, or explicitly enable the Shortcut above. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Categorization").font(VaultTypography.section) }

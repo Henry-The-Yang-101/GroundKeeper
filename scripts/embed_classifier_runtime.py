@@ -1,11 +1,9 @@
-"""Xcode build phase: embed and sign staged runtime plus current worker sources."""
+"""Embed each service's worker code; the host app owns the shared runtime."""
 import os
-import hashlib
 from pathlib import Path
 import shutil
-import subprocess
 
-from scripts.prepare_classifier_runtime import DEST, ROOT, native
+from scripts.prepare_classifier_runtime import DEST, ROOT
 
 
 def main():
@@ -13,27 +11,22 @@ def main():
         raise SystemExit("Run .venv/bin/python -m scripts.prepare_classifier_runtime before building the app")
     bundle = Path(os.environ["TARGET_BUILD_DIR"]) / os.environ["CONTENTS_FOLDER_PATH"]
     bundle.mkdir(parents=True, exist_ok=True)
-    identity = os.environ.get("EXPANDED_CODE_SIGN_IDENTITY") or "-"
-    cache_key = hashlib.sha256((DEST / "runtime-lock.json").read_bytes() + identity.encode()).hexdigest()
+    # Runtime lives once in the enclosing app. Retire copies from older builds.
+    for folder in ("Frameworks", "Resources/Python"):
+        target = bundle / folder
+        if target.exists():
+            shutil.rmtree(target)
     marker = bundle / "Resources/runtime-embedding.txt"
-    embed = not marker.is_file() or marker.read_text() != cache_key
-    if embed:
-        for folder in ("Frameworks", "Resources/Python"):
-            target = bundle / folder
-            target.mkdir(parents=True, exist_ok=True)
-            subprocess.run(["/usr/bin/rsync", "-a", "--delete", str(DEST / folder) + "/", str(target) + "/"], check=True)
+    marker.unlink(missing_ok=True)
     worker = bundle / "Resources/Worker/groundkeeper"
     worker.mkdir(parents=True, exist_ok=True)
-    for name in ("__init__.py", "worker.py", "policy.py", "policy_v2.py", "receipts.py", "constraints.py", "laya_runtime.py", "apple_shortcuts.py"):
+    names = ("__init__.py", "merchant_search.py", "merchant_context.py") if os.environ.get("TARGET_NAME") == "GroundKeeperMerchantSearch" else ("__init__.py", "worker.py", "policy.py", "policy_v2.py", "receipts.py", "constraints.py", "laya_runtime.py", "apple_shortcuts.py", "merchant_context.py")
+    for existing in worker.glob("*.py"):
+        if existing.name not in names:
+            existing.unlink()
+    for name in names:
         shutil.copy2(ROOT / "groundkeeper" / name, worker / name)
     shutil.copy2(DEST / "runtime-lock.json", bundle / "Resources/runtime-lock.json")
-    if embed:
-        for directory in (bundle / "Frameworks", bundle / "Resources/Python"):
-            for path in directory.rglob("*"):
-                if native(path):
-                    subprocess.run(["/usr/bin/codesign", "--force", "--sign", identity, "--options", "runtime", str(path)],
-                                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-        marker.write_text(cache_key)
 
 
 if __name__ == "__main__":

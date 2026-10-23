@@ -36,6 +36,9 @@ import GroundKeeperCore
     var pendingJobs = 0
     var failedJobs = 0
     var shareReceiptContextWithApple = false
+    var merchantSearchEnabled = false
+    var merchantSearchLocality = ""
+    var merchantSearchStatus = ""
     var page = 0
     var reviewOnly = false
     var focusTransactionSearch = false
@@ -56,6 +59,7 @@ import GroundKeeperCore
     // Views observe readiness through this reference, including setup resumed on a later page.
     private var store: LedgerStore?
     @ObservationIgnored private let client = ClassifierClient()
+    @ObservationIgnored private let merchantSearch = MerchantSearchClient()
     @ObservationIgnored private let folder = CaptureFolder()
     @ObservationIgnored private var folderBookmark: Data?
     @ObservationIgnored private var modelURL: URL?
@@ -105,6 +109,14 @@ import GroundKeeperCore
                 }
             }
             shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? false
+            let searchSettings = try await store?.merchantSearchSettings() ?? .init()
+            merchantSearchEnabled = searchSettings.enabled; merchantSearchLocality = searchSettings.locality
+            if InterfacePreview.isEnabled && CommandLine.arguments.contains("--merchant-search-preview") {
+                showingSetup = false; selectedTab = .settings
+                try await store?.setMerchantSearchSettings(.init(enabled: true, locality: "Waterloo Ontario"))
+                merchantSearchEnabled = true; merchantSearchLocality = "Waterloo Ontario"
+                merchantSearchStatus = "Using cached DuckDuckGo context · fictional preview"
+            }
             folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
             if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
@@ -351,6 +363,58 @@ import GroundKeeperCore
             try await self.refresh()
         }
     }
+    func setMerchantSearch(_ enabled: Bool) {
+        perform {
+            try await self.store?.setMerchantSearchSettings(.init(enabled: enabled, locality: self.merchantSearchLocality))
+            self.merchantSearchEnabled = enabled
+            if !enabled { await self.merchantSearch.shutdown(); self.merchantSearchStatus = "Web context off" }
+            else { self.merchantSearchStatus = "Enabled for pending and future classifications" }
+        }
+    }
+    func saveMerchantSearchLocality() { setMerchantSearch(merchantSearchEnabled) }
+    func clearMerchantSearchCache() {
+        perform {
+            try await self.store?.clearMerchantSearchCache()
+            self.merchantSearchStatus = "Search cache cleared; classification audit evidence retained"
+        }
+    }
+    private func merchantContext(for job: ClassificationTask, store: LedgerStore) async throws -> MerchantContext? {
+        let settings = try await store.merchantSearchSettings()
+        guard settings.enabled else { return nil }
+        guard let query = try await store.merchantSearchQuery(for: job, locality: settings.locality) else {
+            merchantSearchStatus = "No safe merchant query; classifying without web context"
+            return try await store.bindMerchantSearch(.init(query: nil, outcome: "unsafe_query"), to: job)
+        }
+        if let cached = try await store.cachedMerchantSearch(query) {
+            merchantSearchStatus = cached.context == nil ? "Cached search had no reliable match" : "Using cached DuckDuckGo context"
+            return try await store.bindMerchantSearch(cached, to: job)
+        }
+        let notBefore = try await store.merchantSearchNotBeforeMS()
+        if notBefore - Int64(Date().timeIntervalSince1970 * 1000) > 30_000 {
+            merchantSearchStatus = "DuckDuckGo search paused; classifying without web context"
+            return try await store.bindMerchantSearch(.init(query: query, outcome: "backoff"), to: job)
+        }
+        while Int64(Date().timeIntervalSince1970 * 1000) < notBefore {
+            merchantSearchStatus = "Waiting for DuckDuckGo search spacing…"
+            try await Task.sleep(for: .milliseconds(200))
+            if try await !store.merchantSearchSettings().enabled { return nil }
+        }
+        try Task.checkCancellation()
+        guard try await store.merchantSearchSettings().enabled else { return nil }
+        // Persist a conservative reservation before dispatch, including across process handoffs.
+        try await store.setMerchantSearchNotBeforeMS(Int64(Date().timeIntervalSince1970 * 1000) + 45_000)
+        merchantSearchStatus = "Searching DuckDuckGo…"
+        let evidence: MerchantSearchEvidence
+        do { evidence = try await merchantSearch.search(query) }
+        catch is CancellationError { throw CancellationError() }
+        catch { evidence = .init(query: query, outcome: "unavailable") }
+        let delay: Int64 = evidence.outcome == "blocked" ? 900_000 : evidence.outcome == "unavailable" ? 60_000 : 10_500
+        try await store.setMerchantSearchNotBeforeMS(Int64(Date().timeIntervalSince1970 * 1000) + delay)
+        if evidence.outcome == "blocked" { await merchantSearch.shutdown() }
+        try await store.cacheMerchantSearch(evidence)
+        merchantSearchStatus = evidence.context != nil ? "DuckDuckGo context added" : evidence.outcome == "blocked" ? "DuckDuckGo blocked searches; paused for 15 minutes" : "No reliable web context; using transaction evidence"
+        return try await store.bindMerchantSearch(evidence, to: job)
+    }
     func captureNotes(transactionID: String) async throws -> [CaptureNote] { try await store?.captureNotes(transactionID: transactionID) ?? [] }
     func receiptRecords(transactionID: String) async throws -> [ReceiptRecord] { try await store?.receipts(transactionID: transactionID) ?? [] }
     func receiptImage(id: String) async throws -> Data? { try await store?.receiptImage(id: id) }
@@ -480,7 +544,8 @@ import GroundKeeperCore
                 try Task.checkCancellation()
                 guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
                 do {
-                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency, receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw),
+                    let context = try await merchantContext(for: job, store: store)
+                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency, receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw, merchantContext: context),
                         model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
                     guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
                     try await store.completeClassification(job, decision: ClassificationDecision(type: decision.type, category: decision.category, review: decision.review))

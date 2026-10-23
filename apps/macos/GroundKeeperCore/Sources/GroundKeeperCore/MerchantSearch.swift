@@ -19,7 +19,8 @@ public struct MerchantContext: Codable, Sendable, Equatable {
             guard let url = URLComponents(string: result.url), ["https", "http"].contains(url.scheme), url.host != nil,
                   url.user == nil, url.password == nil else { throw LedgerError.invalid("Invalid merchant source URL.") }
         }
-        guard try JSONEncoder().encode(self).count <= 1500 else { throw LedgerError.invalid("Merchant evidence is too large.") }
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.withoutEscapingSlashes]
+        guard try encoder.encode(self).count <= 1500 else { throw LedgerError.invalid("Merchant evidence is too large.") }
     }
 }
 
@@ -39,6 +40,10 @@ public struct MerchantSearchQuery: Codable, Sendable, Equatable {
         guard text.range(of: "(?i)@|https?://|\\b(e[ -]?transfer|payroll|salary|account|iban|routing|interac|transfer to|transfer from)\\b", options: .regularExpression) == nil else { return nil }
         text = text.replacingOccurrences(of: "(?i)^(?:pos |purchase |withdrawal from |debit purchase |visa debit |card purchase |sq ?\\*|tst ?\\*)+", with: "", options: .regularExpression)
         text = text.replacingOccurrences(of: "(?i)\\b(ref(?:erence)?|auth(?:orization)?|card|acct|terminal)\\b.*$", with: "", options: .regularExpression)
+        if raw?.isEmpty != false {
+            // Mixed letter/digit references in bank descriptors are not public names.
+            text = text.replacingOccurrences(of: "\\b(?=[A-Za-z0-9]{6,}\\b)(?=[A-Za-z0-9]*[0-9])(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]+\\b", with: " ", options: .regularExpression)
+        }
         text = text.replacingOccurrences(of: "[$€£]\\s*\\d+(?:[.,]\\d+)?|\\b\\d+(?:[.,]\\d+)?\\b|[*#]+", with: " ", options: .regularExpression)
         text = text.replacingOccurrences(of: "[^\\p{L}\\p{N}'’& .-]", with: " ", options: .regularExpression)
         text = text.split(whereSeparator: \.isWhitespace).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -55,8 +60,10 @@ public struct MerchantSearchEvidence: Codable, Sendable {
     public let context: MerchantContext?
     public let fetchedAtMS: Int64
     public let cached: Bool
-    public init(query: MerchantSearchQuery?, outcome: String, context: MerchantContext? = nil, fetchedAtMS: Int64 = Int64(Date().timeIntervalSince1970 * 1000), cached: Bool = false) {
+    public let diagnostic: String?
+    public init(query: MerchantSearchQuery?, outcome: String, context: MerchantContext? = nil, fetchedAtMS: Int64 = Int64(Date().timeIntervalSince1970 * 1000), cached: Bool = false, diagnostic: String? = nil) {
         self.query = query; self.outcome = outcome; self.context = context; self.fetchedAtMS = fetchedAtMS; self.cached = cached
+        self.diagnostic = diagnostic
     }
 }
 
@@ -93,6 +100,7 @@ extension LedgerStore {
     }
     public func cacheMerchantSearch(_ evidence: MerchantSearchEvidence) throws {
         guard let query = evidence.query, ["matched", "no_match"].contains(evidence.outcome), try merchantSearchSettings().enabled else { return }
+        guard (evidence.outcome == "matched") == (evidence.context != nil) else { throw LedgerError.invalid("Search outcome does not match its evidence.") }
         try evidence.context?.validate()
         let ttl: Int64 = evidence.context == nil ? 86_400_000 : 2_592_000_000
         try db.query("DELETE FROM merchant_search_cache WHERE expires_at_ms<=?", [.integer(nowMS())])
@@ -113,8 +121,15 @@ extension LedgerStore {
             let settings = try merchantSearchSettings()
             let context = settings.enabled ? evidence.context : nil
             try context?.validate()
+            guard try !db.query("""
+                SELECT 1 FROM classification_jobs j JOIN transaction_parts p ON p.id=j.part_id
+                JOIN transactions t ON t.id=p.transaction_id JOIN category_assignments a ON a.id=p.current_assignment_id
+                WHERE j.id=? AND j.run_id=? AND j.status='running' AND t.revision=?
+                AND t.state='active' AND a.confirmed_at_ms IS NULL
+                """, [.text(task.id), .text(task.runID), .integer(Int64(task.revision))]).isEmpty else { throw LedgerError.conflict }
             guard let row = try db.query("SELECT input_json FROM classification_runs WHERE id=? AND status='running'", [.text(task.runID)]).first else { throw LedgerError.invalid("Classification is no longer running.") }
             var audit = try JSONSerialization.jsonObject(with: Data(row.text("input_json").utf8)) as! [String: Any]
+            audit.removeValue(forKey: "merchant_context")
             if let context { audit["merchant_context"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(context)) }
             var wire = audit
             wire.removeValue(forKey: "wallet_category_source_event_id")

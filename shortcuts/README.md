@@ -28,6 +28,14 @@ and disable Follow Up. In GroundKeeper's **Settings > Categorization**, enter
 the installed Shortcut's exact name, click **Use Apple Intelligence Shortcut**,
 and process a fictional transaction.
 
+The app's optional **Use DuckDuckGo merchant search** setting performs a separate
+DDGS lookup on the Mac before calling any classifier, including these Shortcuts.
+Reimport the updated categorizer export to install its merchant-evidence prompt
+rules. Keep **Use Model** web search off: the prepared `merchant_context` already
+contains bounded, untrusted search snippets and source URLs. With a cloud model,
+that context may also be processed by Apple's service. The original transaction
+input and separate receipt-sharing consent remain intact.
+
 GroundKeeper sends description, direction, and currency. In Settings, the separate
 **Include receipt text with Apple Intelligence** option is off by default. Turning
 it on also sends a bounded receipt excerpt to the chosen Shortcut. Cloud inference

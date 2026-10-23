@@ -34,23 +34,26 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--python", type=Path, default=ROOT / ".venv/bin/python")
     parser.add_argument("--laya-python", type=Path, default=ROOT / ".local/laya/.venv/bin/python")
+    parser.add_argument("--search-python", type=Path, default=ROOT / ".local/merchant-search-ddgs/venv/bin/python")
     parser.add_argument("--rebuild", action="store_true")
     args = parser.parse_args()
     if sys.platform != "darwin":
         parser.error("The embedded classifier requires Apple silicon macOS")
-    mlx_env, laya_env = inventory(args.python), inventory(args.laya_python)
+    mlx_env, laya_env, search_env = inventory(args.python), inventory(args.laya_python), inventory(args.search_python)
     if mlx_env["version"] != laya_env["version"] or mlx_env["version"][:2] != [3, 12]:
         parser.error("Both source environments must use the same CPython 3.12 runtime")
+    if search_env["version"] != mlx_env["version"]:
+        parser.error("The search environment must use the same CPython runtime")
     # Resolve the actual installed dependency closure, not the entire research venv.
     from packaging.requirements import Requirement
     from packaging.utils import canonicalize_name
     selected = {}
-    queue = ["mlx", "mlx-metal", "mlx-lm", "torch", "laya"]
+    queue = ["mlx", "mlx-metal", "mlx-lm", "torch", "laya", "ddgs", "primp", "lxml"]
     while queue:
         name = canonicalize_name(queue.pop())
         if name in selected:
             continue
-        source = mlx_env if name in ("mlx", "mlx-metal", "mlx-lm", "sentencepiece", "protobuf") else laya_env
+        source = search_env if name in ("ddgs", "primp", "lxml") else mlx_env if name in ("mlx", "mlx-metal", "mlx-lm", "sentencepiece", "protobuf") else laya_env
         package = source["packages"].get(name) or mlx_env["packages"].get(name)
         if not package:
             parser.error(f"Missing installed dependency: {name}")
@@ -65,7 +68,7 @@ def main():
             if requirement.marker is None or requirement.marker.evaluate({"extra": ""}):
                 if selected[canonicalize_name(requirement.name)]["version"] not in requirement.specifier:
                     parser.error(f"Incompatible installed versions: {package['name']} requires {requirement}")
-    lock = {"format_version": 1, "python": mlx_env["version"], "packages": {name: p["version"] for name, p in sorted(selected.items())}}
+    lock = {"format_version": 2, "architecture": "arm64", "python": mlx_env["version"], "packages": {name: p["version"] for name, p in sorted(selected.items())}}
     expected = ROOT / "contracts/classifier/runtime-lock.json"
     if json.loads(expected.read_text()) != lock:
         parser.error("Installed runtime differs from contracts/classifier/runtime-lock.json; resolve and review pinned versions before bundling")
@@ -102,6 +105,13 @@ def main():
     subprocess.run(["install_name_tool", "-id", "@rpath/libpython3.12.dylib", str(library)], check=True)
     machos = [p for p in temporary.rglob("*") if native(p)]
     for path in machos:
+        architectures = subprocess.check_output(["lipo", "-archs", str(path)], text=True).split()
+        if "arm64" not in architectures:
+            raise RuntimeError(f"Missing Apple silicon slice: {path.name}")
+        if len(architectures) > 1:
+            thinned = path.with_name(path.name + ".arm64")
+            subprocess.run(["lipo", str(path), "-thin", "arm64", "-output", str(thinned)], check=True)
+            thinned.replace(path)
         dependencies = subprocess.check_output(["otool", "-L", str(path)], text=True)
         identities = {line.strip() for line in subprocess.check_output(["otool", "-D", str(path)], text=True).splitlines()
                       if line.strip() and not line.rstrip().endswith(":" )}

@@ -33,6 +33,8 @@ jobs:
           uv sync --locked --python 3.12.9
           uv venv --python .venv/bin/python .local/laya/.venv
           uv pip install --python .local/laya/.venv/bin/python -r experiments/laya/requirements.lock
+          uv venv --python .venv/bin/python .local/merchant-search-ddgs/venv
+          uv pip install --python .local/merchant-search-ddgs/venv/bin/python -r experiments/merchant-search/requirements.txt
       - name: Test Python and Swift core
         run: |
           # Hosted Macs do not provide the Metal GPU needed by this one MLX test.

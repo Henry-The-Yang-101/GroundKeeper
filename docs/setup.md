@@ -39,6 +39,8 @@ cd GroundKeeper
 uv sync --locked --python 3.12.9
 uv venv --python .venv/bin/python .local/laya/.venv
 uv pip install --python .local/laya/.venv/bin/python -r experiments/laya/requirements.lock
+uv venv --python .venv/bin/python .local/merchant-search-ddgs/venv
+uv pip install --python .local/merchant-search-ddgs/venv/bin/python -r experiments/merchant-search/requirements.txt
 
 ./apps/macos/run.sh
 ```
@@ -48,7 +50,8 @@ recreate an environment while a training or inference process is using it.
 
 `uv.lock` fixes the project dependencies. Laya and PyTorch use a separate
 environment pinned by `experiments/laya/requirements.lock`. The runtime preparer
-selects packages from both environments and checks their complete dependency
+selects packages from those environments and the separately pinned DDGS build
+environment (`experiments/merchant-search/requirements.txt`), checking the dependency
 closure against `contracts/classifier/runtime-lock.json`, including the exact
 Python patch version. A mismatch stops the build.
 
@@ -62,6 +65,39 @@ The launcher stages CPython and native libraries under
 The built app contains its Python runtime. It does not launch your development
 virtual environment. Weights are loaded from a separately selected model
 package; the build does not download or train a model.
+
+## Optional DuckDuckGo merchant context
+
+In **Settings > Categorization**, enable **Use DuckDuckGo merchant search**.
+It is off by default and applies to pending/future classifications for Qwen,
+Laya, and the selected Apple Intelligence Shortcut. Confirmed assignments are
+preserved. Optionally enter a city/region and click **Save search locality**.
+
+The Mac sends only a cleaned merchant name (or cleaned transaction description)
+and optional locality to DuckDuckGo's HTML search endpoint through DDGS 9.16.0.
+It sends no amount, account/card identifier, receipt, precise coordinate or full
+transaction object. Unsafe queries are skipped. Searches require internet
+access; "run from this Mac" does not mean offline search. There is no hosted
+GroundKeeper search backend, API key, or other-engine fallback.
+
+Uncached queries are serialized with a 10.5-second pause after the preceding
+search finishes, producing roughly 11-second search-start spacing in the
+experiment. Inference adds processing time. This is experimental pacing, not
+a guaranteed DuckDuckGo limit. CAPTCHA/403/429 pauses new searches for at least
+15 minutes; other failures back off for one minute. Classification continues
+without web evidence. Cancellations preserve a conservative reservation.
+
+Matched snippets cache for 30 days; no-match results cache for one day. The vault
+retains at most 1,000 entries. **Clear search cache** removes reusable entries;
+immutable run evidence remains for audit. Turning the toggle off prevents new
+searches and subsequent use of cached search evidence. Local models remain
+local; Apple Intelligence receives the context too and may process it in the
+cloud according to the Shortcut's Use Model action.
+
+Reimport the updated **GK Categorize Cloud** or **GK Categorize On-Device**
+installer when using that provider. Keep the action's built-in web search off.
+Every result still requires review; improved classification accuracy has not
+been established. See [architecture and evaluation](../contracts/classifier/README.md#merchant-search-evidence).
 
 ## First run
 

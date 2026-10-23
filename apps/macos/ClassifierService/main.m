@@ -57,6 +57,7 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
 @property(strong) NSMapTable<NSXPCConnection *,NSString *> *authorized;
 @property BOOL pythonReady;
 @property BOOL attemptedPython;
+@property(strong) NSURL *runtimeHostAccess;
 @end
 
 @implementation GKService
@@ -104,7 +105,6 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
     if (host && !stale && [host.URLByStandardizingPath.path isEqualToString:expected.URLByStandardizingPath.path]) {
         requirement=GKHostRequirement(NSBundle.mainBundle.bundleURL);
     }
-    [host stopAccessingSecurityScopedResource];
     unsigned char random[32];
     if (requirement && SecRandomCopyBytes(kSecRandomDefault,sizeof(random),random)==errSecSuccess) {
         // The requirement protects subsequent messages. A random nonce returned
@@ -115,6 +115,8 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
         [self.authorized setObject:nonce forKey:connection];
     }
     [self.condition unlock];
+    if (nonce && !self.runtimeHostAccess) self.runtimeHostAccess=host;
+    else [host stopAccessingSecurityScopedResource];
     reply(nonce);
     if (!nonce) [connection invalidate];
 }
@@ -156,8 +158,11 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
 }
 - (BOOL)initializePython {
     NSBundle *bundle=NSBundle.mainBundle;
-    NSString *home=[bundle.resourcePath stringByAppendingPathComponent:@"Python"];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[home stringByAppendingPathComponent:@"lib/python3.12/encodings/__init__.py"]]) return NO;
+    NSURL *app=bundle.bundleURL.URLByDeletingLastPathComponent.URLByDeletingLastPathComponent.URLByDeletingLastPathComponent;
+    NSString *home=[[app.path stringByAppendingPathComponent:@"Contents/Resources"] stringByAppendingPathComponent:@"Python"];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[home stringByAppendingPathComponent:@"lib/python3.12/encodings/__init__.py"]]) {
+        os_log_error(OS_LOG_DEFAULT,"Shared Python standard library is unavailable"); return NO;
+    }
     setenv("PYTHONDONTWRITEBYTECODE","1",1);
     setenv("HF_HUB_OFFLINE","1",1); setenv("TRANSFORMERS_OFFLINE","1",1);
     setenv("HF_HUB_DISABLE_TELEMETRY","1",1); setenv("TOKENIZERS_PARALLELISM","false",1);
@@ -179,6 +184,7 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
     }
     if (!PyStatus_Exception(status)) status=Py_InitializeFromConfig(&config);
     BOOL success=!PyStatus_Exception(status);
+    if (!success) os_log_error(OS_LOG_DEFAULT,"Python initialization failed: %{public}s",status.err_msg ?: "unknown");
     PyConfig_Clear(&config); return success;
 }
 - (void)inferenceLoop {
@@ -215,7 +221,11 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
                 self.attemptedPython=YES;
                 self.pythonReady=[self initializePython];
                 if (self.pythonReady) {
+#ifdef GK_SEARCH_SERVICE
+                    PyObject *module=PyImport_ImportModule("groundkeeper.merchant_search");
+#else
                     PyObject *module=PyImport_ImportModule("groundkeeper.worker");
+#endif
                     dispatch=module ? PyObject_GetAttrString(module,"dispatch") : NULL;
                     Py_XDECREF(module);
                     if (!dispatch) { PyErr_Clear(); self.pythonReady=NO; }
@@ -226,6 +236,9 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
             } else {
                 NSDictionary *request=[NSJSONSerialization JSONObjectWithData:job.encoded options:0 error:NULL];
                 BOOL prepare=[request[@"operation"] isEqual:@"prepare_model"];
+#ifdef GK_SEARCH_SERVICE
+                prepare=NO;
+#endif
                 NSURL *candidate=nil;
                 if (prepare) {
                     NSString *bookmark=request[@"package_bookmark"];

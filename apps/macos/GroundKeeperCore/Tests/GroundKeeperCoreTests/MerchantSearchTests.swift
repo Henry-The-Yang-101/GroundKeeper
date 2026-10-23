@@ -5,6 +5,7 @@ import Testing
 @Test func merchantQueryOmitsPaymentDetailsAndRejectsUnsafeFallbacks() throws {
     let query = MerchantSearchQuery.make(merchant: nil, description: "POS FICTIONAL CAFE 12345678 $12.34 REF 999999", locality: "Waterloo Ontario")
     #expect(query?.merchant == "FICTIONAL CAFE")
+    #expect(MerchantSearchQuery.make(merchant: nil, description: "POS FICTIONAL CAFE HQ58SX", locality: "")?.merchant == "FICTIONAL CAFE")
     #expect(MerchantSearchQuery.make(merchant: "Fictional Cafe", description: "private transfer", locality: "")?.merchant == "Fictional Cafe")
     for description in ["Interac e-transfer to Person", "email@example.com", "Account 12345678", "https://private.example", "12345678"] {
         #expect(MerchantSearchQuery.make(merchant: nil, description: description, locality: "") == nil)

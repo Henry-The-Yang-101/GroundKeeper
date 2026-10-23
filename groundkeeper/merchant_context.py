@@ -1,5 +1,6 @@
 """Bounded, untrusted search evidence shared by every classifier provider."""
 import json
+import copy
 from urllib.parse import urlsplit
 
 VERSION = "merchant-search-v1"
@@ -30,6 +31,17 @@ def validate_context(value):
     return value
 
 
-def laya_context(inputs):
-    """A compact projection, retaining original URLs in the audited wire input."""
-    return [{"title": r["title"], "snippet": r["body"]} for r in inputs["merchant_context"]["results"]]
+def shrink_web_evidence(inputs):
+    """Trim only optional web text; preserve the primary input and other evidence."""
+    result = copy.deepcopy(inputs)
+    context = result.get("merchant_context")
+    if not context:
+        return result
+    last = context["results"][-1]
+    if len(last["body"].encode()) > 80:
+        last["body"] = last["body"].encode()[:len(last["body"].encode()) // 2].decode("utf-8", "ignore")
+    else:
+        context["results"].pop()
+        if not context["results"]:
+            del result["merchant_context"]
+    return result

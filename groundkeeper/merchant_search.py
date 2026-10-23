@@ -57,6 +57,9 @@ class MerchantSearch:
         self.client = None
         self.next_search = 0.0
         self.blocked = False
+        self.blocked_until = 0.0
+        self.engine_class = None
+        self.diagnostic = None
 
     def search(self, merchant, locality, cancelled=lambda: False, event=lambda _: None):
         from importlib.metadata import version
@@ -67,21 +70,37 @@ class MerchantSearch:
         from ddgs.engines.duckduckgo import Duckduckgo
         from ddgs.http_client import HttpClient
 
-        if self.blocked:
+        if self.blocked and time.monotonic() < self.blocked_until:
             return {"outcome": "blocked", "context": None}
+        self.blocked = False
         if time.monotonic() < self.next_search:
             event({"stage": "search_cooldown"})
         while time.monotonic() < self.next_search:
             if cancelled():
                 raise InterruptedError()
-            time.sleep(min(0.1, self.next_search - time.monotonic()))
+            time.sleep(max(0, min(0.1, self.next_search - time.monotonic())))
         if cancelled():
             raise InterruptedError()
-        implementation.ENGINES = {"text": {"duckduckgo": Duckduckgo}}
+        class SystemDNSDuckduckgo(Duckduckgo):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                import primp
+                stock = self.http_client.client
+                # macOS sandboxed helpers cannot read the resolver configuration
+                # used by primp's default resolver. Use getaddrinfo through macOS,
+                # retaining the stock chosen browser/OS profile and TLS validation.
+                self.http_client.client = primp.Client(timeout=12, dns_resolver="system",
+                    impersonate=stock.impersonate, impersonate_os=stock.impersonate_os,
+                    verify=True, follow_redirects=False, https_only=True)
+
+        if self.engine_class is None:
+            self.engine_class = SystemDNSDuckduckgo
+        implementation.ENGINES = {"text": {"duckduckgo": self.engine_class}}
         DDGS.threads = 1
         if self.client is None:
             self.client = DDGS(timeout=12)
         original = HttpClient.request
+        self.diagnostic = None
 
         def guarded(client, method, url, *args, **kwargs):
             parsed = urlsplit(url)
@@ -91,15 +110,23 @@ class MerchantSearch:
                 raise InterruptedError()
             # A redirect is not needed for the verified endpoint. Never follow it.
             kwargs["follow_redirects"] = False
-            response = original(client, method, url, *args, **kwargs)
+            try:
+                response = original(client, method, url, *args, **kwargs)
+            except Exception as error:
+                # Only fixed diagnostic labels cross XPC, never dependency messages.
+                text = str(error).lower()
+                self.diagnostic = next((code for word, code in (("certificate", "tls_certificate"), ("cert", "tls_certificate"), ("dns", "dns"), ("resolve", "dns"), ("permission", "permission"), ("timed out", "timeout"), ("connect", "connection")) if word in text), "transport")
+                raise
             text = response.text.lower()
             if response.status_code in (403, 429) or any(marker in text for marker in (
                 "anomaly-modal", "challenge-form", "unfortunately, bots", "select all squares",
                 "verify you are human", "verify that you are human", "prove you are human", "schedule a captcha",
             )):
                 self.blocked = True
+                self.blocked_until = time.monotonic() + 900
                 raise RuntimeError("Search blocked")
             if response.status_code != 200 or len(response.content) > 2_000_000:
+                self.diagnostic = "http_status" if response.status_code != 200 else "response_too_large"
                 raise RuntimeError("Search unavailable")
             return response
 
@@ -116,7 +143,7 @@ class MerchantSearch:
         except Exception as error:
             # The pinned DDGS adapter reports a successful empty page this way.
             empty = type(error).__name__ == "DDGSException" and str(error) == "No results found."
-            return {"outcome": "blocked" if self.blocked else "no_match" if empty else "unavailable", "context": None}
+            return {"outcome": "blocked" if self.blocked else "no_match" if empty else "unavailable", "context": None, "diagnostic": self.diagnostic or "adapter"}
         finally:
             HttpClient.request = original
             self.next_search = time.monotonic() + GAP_SECONDS

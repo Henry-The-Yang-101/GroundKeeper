@@ -7,6 +7,13 @@ convenience unlock. See [setup and protection](../../docs/onboarding.md).
 
 ## Schema audit
 
+Migration 006 adds the optional DuckDuckGo merchant-evidence cache and per-run
+search audit metadata. Cache entries expire and are bounded; run input/evidence
+snapshots remain independent of cache cleanup. Search consent/locality and
+cross-process cooldown/backoff live in vault settings. The queue binds enriched
+input and its canonical hash before inference, with original transaction/capture
+data preserved. See the [search contract](../classifier/README.md#merchant-search-evidence).
+
 The existing relational design is suitable for this scope. Keep raw events,
 observations and canonical transactions separate; preserve signed integer minor
 units, append-only assignments, test-event guards and source provenance. No

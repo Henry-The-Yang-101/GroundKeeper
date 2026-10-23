@@ -2,7 +2,7 @@
 
 
 
-GroundKeeper is a local-first system designed to automatically help you keep track of personal spending. The GROUND in GroundKeeper means your finances stay grounded on your own devices: no hosted backend and no cloud AI required. Your personal iCloud Drive simply delivers capture files from iPhone to Mac. The end-to-end system lies strictly within your own personal environment, with no external cloud server ever getting hands on your private transaction data. YOU are fully in control of your own private data.
+GroundKeeper is a local-first system designed to help you keep track of personal spending. Your ledger stays on your Mac, with no hosted GroundKeeper backend or cloud AI required. Your personal iCloud Drive delivers capture files from iPhone to Mac. Optional DuckDuckGo merchant search and Apple Intelligence providers send only the data described in their explicit settings; both can remain off.
 
 iPhone Shortcuts capture transactions and pass them to your Mac through files in
 your personal iCloud Drive, the only bridge between the two devices. Your Mac
@@ -37,6 +37,14 @@ or in the cloud. Apple usage limits apply, and the app never switches providers
 automatically. See [provider setup and verification](docs/setup.md#choose-a-classifier).
 Receipt text is shared with this provider only when **Include receipt text with
 Apple Intelligence** is enabled; that separate setting is off by default.
+
+Optional **DuckDuckGo merchant search** adds bounded business titles/snippets and
+source URLs to Qwen, Laya, or Apple Intelligence inputs. It runs from the Mac,
+sending cleaned merchant terms and optional city/region to DuckDuckGo. It is off
+by default, caches evidence locally, and paces uncached searches roughly 11
+seconds apart before model processing time. It requires internet access, uses no
+API key or hosted GroundKeeper search backend, and never bypasses review.
+See [search setup](docs/setup.md#optional-duckduckgo-merchant-context).
 
 ## How it works
 

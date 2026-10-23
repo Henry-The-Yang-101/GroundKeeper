@@ -1,6 +1,7 @@
 import copy
 import json
 import subprocess
+import plistlib
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -56,7 +57,8 @@ def test_all_providers_receive_optional_context_without_changing_original(receip
         observed.update(state=state, questions=questions)
         return {"answers": {}}
     model = LocalLayaCategorizer.__new__(LocalLayaCategorizer)
-    model.agent = SimpleNamespace(predict=predict)
+    model.agent = SimpleNamespace(predict=predict, _to_internal=lambda q: q,
+        _encode_state=lambda *args, **kwargs: [{"state_stats": {"truncated": False}}])
     model.predict(inputs)
     assert observed["state"]["merchant_context"] == context
     assert all(INSTRUCTIONS in q["instructions"] for q in observed["questions"].values())
@@ -99,12 +101,14 @@ def test_reuses_client_and_stops_on_challenge_without_fallback(transport):
     search = MerchantSearch()
     assert search.search("Fictional Cafe", "Waterloo")["outcome"] == "matched"
     assert search.next_search > 0
+    engine = sys.modules["ddgs.ddgs"].ENGINES["text"]["duckduckgo"]
     assert transport.calls[0][1]["follow_redirects"] is False
     search.next_search = 0
     transport.status = 202; transport.html = "<div class='anomaly-modal'>challenge</div>"
     assert search.search("Fictional Cafe", "Waterloo")["outcome"] == "blocked"
     assert search.search("Fictional Cafe", "Waterloo")["outcome"] == "blocked"
     assert transport.clients == 1 and len(transport.calls) == 2
+    assert sys.modules["ddgs.ddgs"].ENGINES["text"]["duckduckgo"] is engine
     assert list(sys.modules["ddgs.ddgs"].ENGINES["text"]) == ["duckduckgo"]
 
 
@@ -122,3 +126,46 @@ def test_service_rejects_private_or_oversized_queries_before_network():
     for merchant in ("payer@example.com", "acct 12345678", "x" * 121, "Line\nBreak", "$50"):
         result = search.handle({"protocol_version": 1, "request_id": "test", "operation": "merchant_search", "merchant": merchant, "locality": "Waterloo"})
         assert result["status"] == "failed" and result["error"]["code"] == "invalid_request"
+
+
+def test_pacing_is_after_completion_and_cooperatively_cancellable(transport, monkeypatch):
+    from groundkeeper import merchant_search
+    now = [100.0]
+    monkeypatch.setattr(merchant_search.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(merchant_search.time, "sleep", lambda seconds: now.__setitem__(0, now[0] + seconds))
+    search = MerchantSearch()
+    search.search("Fictional Cafe", "Waterloo")
+    assert search.next_search == 110.5
+    search.search("Fictional Cafe", "Waterloo")
+    assert 110.5 <= now[0] < 110.6
+    assert len(transport.calls) == 2
+
+
+def test_laya_trims_web_evidence_before_primary_input():
+    inputs = {**BASE, "merchant_context": select_context(RAW, "Fictional Cafe", "Waterloo"), "receipt_context": context_from_text("MILK\nBREAD")}
+    original = copy.deepcopy(inputs)
+    seen = []
+    def encoded(state, *args, **kwargs):
+        assert state["description"] == BASE["description"]
+        assert state["receipt_items_ocr"] == "MILK\nBREAD"
+        seen.append(copy.deepcopy(state))
+        return [{"state_stats": {"truncated": "merchant_context" in state}}]
+    model = LocalLayaCategorizer.__new__(LocalLayaCategorizer)
+    model.agent = SimpleNamespace(_to_internal=lambda q: q, _encode_state=encoded,
+        predict=lambda state, *args, **kwargs: {"answers": {}})
+    model.predict(inputs)
+    assert "merchant_context" not in seen[-1]
+    assert inputs == original
+
+
+def test_shortcut_prompts_keep_search_off_and_bind_input_at_the_actual_token():
+    root = Path(__file__).resolve().parents[1]
+    for name in ("GK Categorize Cloud", "GK Categorize On-Device"):
+        source = plistlib.loads((root / "shortcuts/sources" / (name + ".plist")).read_bytes())
+        action = next(a for a in source["WFWorkflowActions"] if a["WFWorkflowActionIdentifier"] == "is.workflow.actions.askllm")
+        params = action["WFWorkflowActionParameters"]
+        value = params["WFLLMPrompt"]["Value"]
+        assert params["WFAllowWebSearch"] is False
+        assert INSTRUCTIONS in value["string"]
+        position = len(value["string"].split("\ufffc")[0].encode("utf-16-le")) // 2
+        assert list(value["attachmentsByRange"]) == [f"{{{position}, 1}}"]

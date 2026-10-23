@@ -98,7 +98,7 @@ model manifest identity and model package format are separate versions.
 | `release_model` | None | Releases model references and backend allocator caches. |
 
 Classifier input is `{description,direction,currency}` with optional
-`receipt_context` and `wallet_category_raw` fields, including explicit
+`receipt_context`, `wallet_category_raw`, and `merchant_context` fields, including explicit
 JSON null for unknown currency. Description is bounded to 2048 characters; Qwen
 also rejects prompts over 512 tokens without additional evidence, 768 with only
 a Wallet hint, or 2048 tokens with receipts.
@@ -201,9 +201,99 @@ bounded retries, and commits results idempotently only when the database revisio
 and current assignment still permit them. The bridge itself does not write to
 SQLite or promise exactly-once inference.
 
+## Merchant search evidence
+
+Search is an optional stage owned by the Swift queue before inference. Settings
+and cached evidence live in the vault, with migration 006 adding a bounded
+cache and immutable per-run `merchant_search_json` metadata. The original
+transaction/capture remains unchanged. The final canonical input hash includes
+the selected `merchant_context`; Wallet values are reconstructed from their
+existing source reference for hashing. Cache expiry/clearing does not remove
+the run's evidence snapshot. Enabling the setting does not recategorize already
+completed/confirmed transactions automatically.
+
+The dedicated `com.groundkeeper.macos.merchant-search` XPC service receives only
+`merchant` (at most 120 UTF-8 bytes) and `locality` (80), not the transaction.
+It exposes `search_handshake` and `merchant_search` over the same authenticated,
+64 KiB, cancellable native transport. Search stages happen outside inference's
+deadline. The search service has network-client access and no vault/key access;
+the inference service keeps its network-free sandbox. Each service bundles only
+its worker entry point. One physical CPython/dependency copy lives under the
+enclosing app's `Contents/Resources/Python`, with libpython in
+`Contents/Frameworks`. Authenticated services retain a read grant to that exact
+signed app for loading this shared code. They do not receive a ledger bookmark.
+Ad hoc distributions use the distinct `.merchant-search.adhoc` service identifier
+to avoid reusing a development-team-owned sandbox container. The client reads the
+embedded helper's identifier; both known variants keep the same host signature
+and nonce checks. No container access ACL is weakened during a signing transition.
+
+DDGS 9.16.0 uses only its DuckDuckGo HTML adapter with `ca-en`, five results,
+one thread, a reused client/adapter, and a 12-second HTTP timeout. An explicit
+host/path guard permits only HTTPS `html.duckduckgo.com/html/`; redirects and
+other engines are disabled, and result URLs are never visited. The adapter
+retains DDGS's randomly chosen browser/OS profile, while configuring primp's
+`dns_resolver="system"` because its default resolver cannot read DNS configuration
+in the macOS sandbox. TLS verification remains enabled. This is a transport
+configuration change from the original standalone experiment; the signed app
+is checked separately. No API/MCP server dependencies or browser automation are bundled.
+The pinned [primp resolver implementation](https://github.com/deedy5/primp/blob/v2.0.1/crates/primp-python/src/client_builder.rs)
+defines the system-resolver option.
+
+A native service thread serializes searches. The queue caches repeated queries,
+persists a conservative reservation before dispatch and the next eligible time
+after completion, and shares that pacing across provider switches and process
+handoffs. The helper independently enforces 10.5 seconds after each completed
+search using monotonic time. CAPTCHA/403/429 activates a 15-minute circuit breaker;
+other unavailable responses back off for one minute. No challenge solving,
+proxy rotation, immediate retry or engine fallback is attempted. Empty/ambiguous
+matches and failures continue classification without web evidence. Positive cache
+entries expire after 30 days; negatives after one day; the cache holds at most
+1,000 entries. Idle client connections close after 60 seconds.
+
+`merchant_context` has exactly `version="merchant-search-v1"`,
+`source="duckduckgo"`, and `results` (one or two objects with `title`, `body`,
+`url`). Titles/snippets/URLs are bounded to 120/360/320 UTF-8 bytes per result,
+and the entire canonical context is bounded to 1,500 UTF-8 bytes. Names and
+supplied locality must match the retrieved evidence conservatively; empty or
+ambiguous results are omitted. URLs exclude query strings/fragments.
+
+Qwen v1/v2, Laya questions/state, and both categorizer Shortcut prompts identify
+search results as untrusted business-type evidence. They cannot establish items,
+gift intent, transfers or refund purpose. Original purchase/receipt evidence
+takes priority. Qwen has a 3,072-token ceiling with web evidence and trims only
+optional web snippets if needed. Laya uses 2,048/1,024 sequence/head budgets only
+when web context is supplied, preflights the pinned tokenizer's actual state
+budget, and trims web evidence before allowing any original evidence to be
+truncated. If the primary evidence still does not fit, it abstains. Legacy
+prompt/state/budget behavior remains unchanged without web evidence. The
+audit retains the complete bounded input even when model-specific projections
+trim optional snippets.
+
+The exported Apple categorizer Shortcuts must be reimported after upgrading;
+their built-in web search stays off. The selected Use Model action still controls
+on-device versus cloud inference. Receipt sharing retains its separate consent;
+web-context consent also authorizes forwarding the retrieved context to that
+explicitly selected provider. All suggestions require review.
+
+For reproducible baseline/enriched comparisons, prepare a local JSON case list:
+
+```json
+[{"id":"case-1","input":{"description":"PUBLIC MERCHANT","direction":"debit","currency":"CAD"},
+  "merchant_context":{"version":"merchant-search-v1","source":"duckduckgo","results":[{"title":"Public merchant","body":"Previously captured business evidence.","url":"https://example.org/"}]},
+  "expected":{"type":"expense","category":"shopping","review":true}}]
+```
+
+Run `python -m scripts.benchmark_merchant_context --package <verified-package>
+--cases <cases.json> --output <new-results.jsonl>` with the appropriate pinned
+model environment, or use `--shortcut <exact-name>` for an explicitly selected
+Apple provider. This reuses production prompt/inference code and existing
+evidence without performing searches. It compares type/category correctness and
+latency per mode. Keep private cases/results under ignored `.private/`.
+Small smoke comparisons do not establish classification accuracy improvement.
+
 ## Signing and isolation
 
-Both app and XPC service are sandboxed. The service has no network, App Group
+Both app and XPC services are sandboxed. The inference service has no network, App Group
 vault, iCloud, or Keychain entitlement. Native libraries are signed with the
 service/app identity.
 

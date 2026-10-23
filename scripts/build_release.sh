@@ -18,6 +18,8 @@ xcodebuild -quiet -project apps/macos/GroundKeeper.xcodeproj -scheme GroundKeepe
   -derivedDataPath "$build_root/DerivedData" \
   GK_APP_ENTITLEMENTS=GroundKeeper.AdHoc.entitlements \
   GK_CLASSIFIER_RELEASE_ENTITLEMENTS=ClassifierService/ClassifierService.AdHoc.entitlements \
+  GK_SEARCH_RELEASE_ENTITLEMENTS=MerchantSearchService/MerchantSearch.AdHoc.entitlements \
+  GK_SEARCH_BUNDLE_IDENTIFIER=com.groundkeeper.macos.merchant-search.adhoc \
   GK_CODE_SIGN_IDENTITY=- GK_CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual \
   DEVELOPMENT_TEAM= "CURRENT_PROJECT_VERSION=$GK_BUILD_NUMBER" \
@@ -40,7 +42,8 @@ codesign -dv --verbose=4 "$app" 2> "$build_root/signature.txt"
 grep -Fx "Signature=adhoc" "$build_root/signature.txt" >/dev/null
 grep -Fx "TeamIdentifier=not set" "$build_root/signature.txt" >/dev/null
 test -f "$app/Contents/XPCServices/GroundKeeperClassifier.xpc/Contents/Resources/Worker/groundkeeper/worker.py"
-test -f "$app/Contents/XPCServices/GroundKeeperClassifier.xpc/Contents/Frameworks/libpython3.12.dylib"
+test -f "$app/Contents/Frameworks/libpython3.12.dylib"
+test -f "$app/Contents/XPCServices/GroundKeeperMerchantSearch.xpc/Contents/Resources/Worker/groundkeeper/merchant_search.py"
 
 # Smoke checks use fictional data and verify the bundled XPC/Python connection.
 .venv/bin/python - "$app/Contents/MacOS/GroundKeeper" <<'PY'

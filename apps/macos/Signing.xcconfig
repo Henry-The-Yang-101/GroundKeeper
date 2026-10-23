@@ -3,6 +3,8 @@ GK_CODE_SIGN_IDENTITY = -
 GK_CODE_SIGN_STYLE = Manual
 GK_APP_ENTITLEMENTS = GroundKeeper.entitlements
 GK_CLASSIFIER_RELEASE_ENTITLEMENTS = ClassifierService/ClassifierService.entitlements
+GK_SEARCH_RELEASE_ENTITLEMENTS = MerchantSearchService/MerchantSearch.entitlements
+GK_SEARCH_BUNDLE_IDENTIFIER = com.groundkeeper.macos.merchant-search
 
 // Machine-specific team/certificate settings are intentionally excluded from Git.
 #include? "../../.local/macos/Signing.xcconfig"

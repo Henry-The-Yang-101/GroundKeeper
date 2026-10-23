@@ -2,6 +2,12 @@
 #import <Security/Security.h>
 #import <os/log.h>
 
+#ifdef GK_SEARCH_SERVICE
+#define GK_SERVICE_IDENTIFIER @"com.groundkeeper.macos.merchant-search"
+#else
+#define GK_SERVICE_IDENTIFIER @"com.groundkeeper.macos.classifier"
+#endif
+
 // Read only valid signed bundles. Missing, unsigned, or damaged code fails closed.
 static NSDictionary *GKSigningInfo(NSURL *url) {
     SecStaticCodeRef code = NULL;
@@ -28,7 +34,11 @@ static NSString *GKHostRequirement(NSURL *serviceURL) {
         ![app.pathExtension isEqualToString:@"app"]) return nil;
     NSDictionary *host = GKSigningInfo(app), *service = GKSigningInfo(serviceURL);
     if (!host || !service || ![host[(__bridge NSString *)kSecCodeInfoIdentifier] isEqual:@"com.groundkeeper.macos"] ||
-        ![service[(__bridge NSString *)kSecCodeInfoIdentifier] isEqual:@"com.groundkeeper.macos.classifier"]) return nil;
+        !([service[(__bridge NSString *)kSecCodeInfoIdentifier] isEqual:GK_SERVICE_IDENTIFIER]
+#ifdef GK_SEARCH_SERVICE
+          || [service[(__bridge NSString *)kSecCodeInfoIdentifier] isEqual:@"com.groundkeeper.macos.merchant-search.adhoc"]
+#endif
+        )) return nil;
     NSString *team = service[(__bridge NSString *)kSecCodeInfoTeamIdentifier];
     if (team.length) {
         if (![team isEqual:host[(__bridge NSString *)kSecCodeInfoTeamIdentifier]]) return nil;

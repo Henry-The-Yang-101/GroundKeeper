@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import GroundKeeperCore
 
 /// End-to-end smoke mode for the actual signed app/XPC pair, not a development
 /// interpreter. Invoke the app executable with --classifier-smoke.
@@ -14,6 +15,16 @@ import Foundation
             try await verifyConnectionBoundary()
             let handshake = try await client.handshake()
             try await client.verifyProtocolErrors()
+            let search = MerchantSearchClient()
+            try await search.handshake()
+            write(["event": "merchant_search_runtime_verified"])
+            if CommandLine.arguments.contains("--merchant-search-live-smoke") {
+                let query = MerchantSearchQuery.make(merchant: "Staples", description: "Staples", locality: "Waterloo Ontario")!
+                let evidence = try await search.search(query)
+                write(["event": "merchant_search_live", "outcome": evidence.outcome, "sources": evidence.context?.results.count ?? 0, "diagnostic": evidence.diagnostic ?? "none"])
+                guard evidence.outcome == "matched" else { throw ClassifierBridgeError.unavailable }
+            }
+            await search.shutdown()
             if CommandLine.arguments.contains("--classifier-connection-smoke") {
                 write(["event": "connection_smoke_passed", "runtime": handshake.runtime ?? [:]])
                 exit(0)

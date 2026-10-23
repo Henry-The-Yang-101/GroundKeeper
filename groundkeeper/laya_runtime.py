@@ -174,7 +174,20 @@ class LocalLayaCategorizer:
             instructions.append(WALLET_CATEGORY_INSTRUCTIONS)
         if instructions:
             questions = {key: {**value, "instructions": value["instructions"] + " " + " ".join(instructions)} for key, value in QUESTIONS.items()}
-        result = self.agent.predict(laya_receipt_state(inputs), questions, max_len=1024 if instructions else MAX_LEN, head_max_len=768 if instructions else HEAD_MAX_LEN)
+        state = laya_receipt_state(inputs)
+        max_len, head_max_len = (1024, 768) if instructions else (MAX_LEN, HEAD_MAX_LEN)
+        if "merchant_context" in inputs:
+            from .merchant_context import shrink_web_evidence
+            max_len, head_max_len = 2048, 1024
+            internal = {key: self.agent._to_internal(value) for key, value in questions.items()}
+            while True:
+                items = self.agent._encode_state(state, list(questions), internal, max_len=max_len, head_max_len=head_max_len)
+                if not any(item["state_stats"]["truncated"] for item in items):
+                    break
+                if "merchant_context" not in state:
+                    return dict(FALLBACK), {"valid_schema": True, "evidence_too_large": True}
+                state = shrink_web_evidence(state)
+        result = self.agent.predict(state, questions, max_len=max_len, head_max_len=head_max_len)
         return decode(result["answers"])
 
     def suggest(self, inputs):

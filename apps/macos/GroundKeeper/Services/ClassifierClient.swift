@@ -16,9 +16,11 @@ struct ClassifierInput: Codable, Sendable {
     let currency: String?
     var receiptContext: ReceiptContext? = nil
     var walletCategoryRaw: String? = nil
+    var merchantContext: MerchantContext? = nil
     enum CodingKeys: String, CodingKey {
         case description, direction, currency
         case receiptContext = "receipt_context", walletCategoryRaw = "wallet_category_raw"
+        case merchantContext = "merchant_context"
     }
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
@@ -28,6 +30,7 @@ struct ClassifierInput: Codable, Sendable {
         else { try container.encodeNil(forKey: .currency) }
         try container.encodeIfPresent(receiptContext, forKey: .receiptContext)
         try container.encodeIfPresent(walletCategoryRaw, forKey: .walletCategoryRaw)
+        try container.encodeIfPresent(merchantContext, forKey: .merchantContext)
     }
 }
 
@@ -124,7 +127,8 @@ enum ClassifierBridgeError: Error, LocalizedError, Sendable {
 
 /// Owns connection callbacks/continuations outside actor isolation. NSLock protects
 /// the small pending map; no blocking model work executes in the app process.
-private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @unchecked Sendable {
+final class ClassifierTransport: NSObject, ClassifierXPCEvents, @unchecked Sendable {
+    private let serviceName: String
     private let lock = NSLock()
     private var connection: NSXPCConnection?
     private var pending: [String: (@Sendable (Result<Data, any Error>) -> Void)] = [:]
@@ -132,7 +136,8 @@ private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @uncheck
     let events: AsyncStream<ClassifierEvent>
     private let eventContinuation: AsyncStream<ClassifierEvent>.Continuation
 
-    override init() {
+    init(serviceName: String = "com.groundkeeper.macos.classifier") {
+        self.serviceName = serviceName
         let pair = AsyncStream<ClassifierEvent>.makeStream(bufferingPolicy: .bufferingNewest(32))
         events = pair.stream; eventContinuation = pair.continuation
         super.init()
@@ -142,7 +147,7 @@ private final class ClassifierTransport: NSObject, ClassifierXPCEvents, @uncheck
     private func connect() -> NSXPCConnection {
         lock.lock(); defer { lock.unlock() }
         if let connection { return connection }
-        let new = NSXPCConnection(serviceName: "com.groundkeeper.macos.classifier")
+        let new = NSXPCConnection(serviceName: serviceName)
         new.remoteObjectInterface = NSXPCInterface(with: ClassifierXPCService.self)
         new.exportedInterface = NSXPCInterface(with: ClassifierXPCEvents.self)
         // Do not make connection → exportedObject → transport → connection a cycle.
