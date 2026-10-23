@@ -46,14 +46,14 @@ actor CouncilClassifierEngine: CouncilEngine {
             throw failure
         }
     }
-    private static func safeFailure(_ error: any Error) -> CouncilProviderFailure {
+    static func safeFailure(_ error: any Error) -> CouncilProviderFailure {
         if let failure = error as? CouncilProviderFailure { return failure }
         switch error {
         case ClassifierBridgeError.timedOut: return .init(disposition: "timeout", code: "deadline_exceeded")
         case ClassifierBridgeError.invalidResponse: return .init(disposition: "invalid", code: "invalid_response")
         case ClassifierBridgeError.worker(let code, _):
-            let allowed: Set<String> = ["shortcut_rate_limited", "shortcut_unavailable", "deadline_exceeded", "model_not_ready", "runtime_failed", "inference_failed", "invalid_decision", "model_invalid", "busy"]
-            return .init(disposition: code == "deadline_exceeded" ? "timeout" : code == "invalid_decision" ? "invalid" : "unavailable",
+            let allowed: Set<String> = ["shortcut_rate_limited", "shortcut_unavailable", "deadline_exceeded", "model_not_ready", "runtime_failed", "inference_failed", "invalid_decision", "invalid_output", "model_invalid", "busy"]
+            return .init(disposition: code == "deadline_exceeded" ? "timeout" : ["invalid_decision", "invalid_output"].contains(code) ? "invalid" : "unavailable",
                          code: allowed.contains(code) ? code : "provider_unavailable")
         default: return .init(disposition: "unavailable", code: "provider_unavailable")
         }

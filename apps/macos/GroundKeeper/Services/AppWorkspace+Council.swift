@@ -91,17 +91,16 @@ extension AppWorkspace {
         try await store.enqueueCouncil(configID: configuration.id)
         var remaining = try await store.snapshot(limit: 1).pendingJobs
         do {
-        while remaining > 0 {
-            try Task.checkCancellation()
-            let processed = try await CouncilRunner.runBatch(store: store, configuration: configuration, engine: engine, limit: min(remaining, 8), search: { task in
-                _ = try await self.merchantContext(for: task, store: store)
-            }, stage: { message in await MainActor.run { self.classifierStatus = message } })
-            if processed == 0 { break }
-            remaining -= processed
-            try await refresh()
-        }
-        }
-        catch { try? await client.releaseModel(); throw error }
+            while remaining > 0 {
+                try Task.checkCancellation()
+                let processed = try await CouncilRunner.runBatch(store: store, configuration: configuration, engine: engine, limit: min(remaining, 8), search: { task in
+                    _ = try await self.merchantContext(for: task, store: store)
+                }, stage: { message in await MainActor.run { self.classifierStatus = message } })
+                if processed == 0 { break }
+                remaining -= processed
+                try await refresh()
+            }
+        } catch { try? await client.releaseModel(); throw error }
         try? await client.releaseModel()
         try await refresh()
     }

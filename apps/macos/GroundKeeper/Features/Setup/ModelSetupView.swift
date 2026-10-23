@@ -49,7 +49,7 @@ struct ModelSetupView: View {
             Text("In Shortcuts, check Use Model → Cloud, Broad World Knowledge on, Text output, and Follow Up off. Your installed Shortcut controls where inference runs.")
                 .font(.callout).foregroundStyle(AppStyle.muted)
             Divider()
-            CouncilSetupView(installed: installer.installed)
+            CouncilSetupView(installed: installer.installed).disabled(installer.busy)
             Divider()
             HStack { Button("Use manual categorization", action: workspace.useManualCategorization).disabled(workspace.saving || workspace.processing)
                 Spacer(); Text(workspace.classifierStatus).font(.caption).foregroundStyle(AppStyle.muted) }

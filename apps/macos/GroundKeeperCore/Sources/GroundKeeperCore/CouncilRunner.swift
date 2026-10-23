@@ -14,6 +14,8 @@ public enum CouncilRunner {
     @discardableResult public static func runBatch(store: LedgerStore, configuration: CouncilConfiguration, engine: any CouncilEngine,
         limit: Int = 8, search: @Sendable (ClassificationTask) async throws -> Void,
         stage: @Sendable (String) async -> Void = { _ in }) async throws -> Int {
+        let checked = try CouncilConfiguration(members: configuration.members)
+        guard checked.id == configuration.id else { throw LedgerError.invalid("Invalid Council configuration.") }
         var tasks: [ClassificationTask] = []
         do {
             for _ in 0..<max(0, min(limit, 8)) {

@@ -8,6 +8,13 @@ import GroundKeeperCore
         guard AppPreferences.isSetupPreview else { print("council_smoke_requires_setup_preview"); exit(1) }
         let workspace = AppWorkspace()
         do {
+            guard CouncilClassifierEngine.safeFailure(ClassifierBridgeError.worker("invalid_output", "fixture")).disposition == "invalid",
+                  CouncilClassifierEngine.safeFailure(ClassifierBridgeError.timedOut).disposition == "timeout" else {
+                throw LedgerError.invalid("Council error mapping failed.")
+            }
+            if CommandLine.arguments.contains("--checks-only") {
+                print("council_error_mapping_passed"); exit(0)
+            }
             await workspace.start()
             guard let store = workspace.store else { throw LedgerError.unavailable("Disposable vault did not open.") }
             workspace.showingSetup = false; workspace.processingMode = .manual

@@ -16,9 +16,8 @@ struct CouncilEvidenceView: View {
                 Section {
                     Text(report.result.title).font(.headline)
                     if !report.isCurrentRevision {
-                        Text("Saved council result from an earlier transaction revision.").font(.caption).foregroundStyle(AppStyle.muted)
-                    }
-                    if report.result.decision == nil {
+                        Text("Saved council result from an earlier transaction revision. Your current categorization is shown above.").font(.caption).foregroundStyle(AppStyle.muted)
+                    } else if report.result.decision == nil {
                         Text("Council kept the current categorization. Compare the individual suggestions below, or use Retry failed in Sync for another attempt.")
                             .font(.caption).foregroundStyle(AppStyle.muted)
                     } else { Text("Council suggestion · needs your review").font(.caption).foregroundStyle(AppStyle.muted) }

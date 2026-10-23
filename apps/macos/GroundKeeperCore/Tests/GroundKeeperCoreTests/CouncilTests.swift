@@ -328,3 +328,30 @@ extension LedgerStore {
     #expect(!report.isCurrentRevision && report.result.decision?.category == "dining")
     #expect(try await store.snapshot().transactions[0].category == "shopping")
 }
+
+@Test func councilWalletHintUsesImmutableEvidenceWithoutCopyingItsValueIntoAudit() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    var payload = try JSONSerialization.jsonObject(with: capture("council-wallet")) as! [String: Any]
+    payload["wallet_category_raw"] = "Food/Drink"
+    try await store.ingestCapture(data: JSONSerialization.data(withJSONObject: payload), deliveryPath: "wallet.json")
+    let snapshot = try await store.snapshot(), mapping = snapshot.reviews[0]
+    try await store.confirmMapping(sourceID: mapping.sourceID, label: mapping.label, accountID: snapshot.accounts[0].id)
+    for member in councilMembers {
+        try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-18-v1", configuration: "{}", select: false)
+    }
+    let config = try CouncilConfiguration(members: councilMembers)
+    try await store.registerCouncil(config)
+    try await store.enqueueCouncil(configID: config.id)
+    let task = try await store.claimCouncil(configID: config.id)!
+    try await bindNoCouncilSearch(store, task)
+    for member in config.members {
+        let child = try await store.startCouncilMember(member, task: task)
+        #expect(child.input.walletCategoryRaw == "Food/Drink")
+        let audit = try await store.testRows("SELECT input_json,input_sha256 FROM classification_runs WHERE id='\(child.runID)'")[0]
+        let object = try JSONSerialization.jsonObject(with: Data(audit.text("input_json").utf8)) as! [String: Any]
+        #expect(object["wallet_category_raw"] == nil && object["wallet_category_source_event_id"] != nil)
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        #expect(contentHash(try encoder.encode(child.input)) == audit.text("input_sha256"))
+    }
+}

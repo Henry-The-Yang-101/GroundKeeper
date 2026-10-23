@@ -60,7 +60,7 @@ import GroundKeeperCore
     var model: ClassifierModel?
     var lastSync: Date?
     // Views observe readiness through this reference, including setup resumed on a later page.
-    var store: LedgerStore?
+    private(set) var store: LedgerStore?
     @ObservationIgnored let client = ClassifierClient()
     @ObservationIgnored private let merchantSearch = MerchantSearchClient()
     @ObservationIgnored private var merchantSearchTask: Task<MerchantSearchEvidence, any Error>?
