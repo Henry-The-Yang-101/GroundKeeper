@@ -79,6 +79,7 @@ public actor LedgerStore {
     /// A deliberate scheduler stop should not consume an inference retry.
     public func releaseClassification(_ task: ClassificationTask) throws {
         try db.transaction {
+            try db.query("UPDATE classification_runs SET status='unavailable',error_code='paused',finished_at_ms=? WHERE status='running' AND id IN (SELECT member_run_id FROM council_member_inputs WHERE council_run_id=?)", [.integer(nowMS()), .text(task.runID)])
             try db.query("UPDATE classification_runs SET status='unavailable',error_code='paused',finished_at_ms=? WHERE id=? AND status='running'", [.integer(nowMS()), .text(task.runID)])
             try db.query("UPDATE classification_jobs SET status='pending',attempts=max(0,attempts-1),next_attempt_at_ms=0,error_code=NULL WHERE id=? AND run_id=? AND status='running'", [.text(task.id), .text(task.runID)])
         }

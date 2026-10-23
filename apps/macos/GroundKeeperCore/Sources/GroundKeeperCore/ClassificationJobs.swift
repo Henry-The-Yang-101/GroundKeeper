@@ -13,6 +13,14 @@ extension LedgerStore {
         }
     }
     public func enqueueClassifications(modelID: String) throws {
+        try enqueueJobs(targetID: modelID, council: false)
+    }
+    public func enqueueCouncil(configID: String) throws {
+        guard try !db.query("SELECT id FROM council_configs WHERE id=?", [.text(configID)]).isEmpty else { throw LedgerError.invalid("Council is not configured.") }
+        try enqueueJobs(targetID: configID, council: true)
+    }
+    private func enqueueJobs(targetID: String, council: Bool) throws {
+        let targetColumn = council ? "council_config_id" : "model_id"
         try db.transaction {
             try db.query("""
                 UPDATE classification_jobs SET status='obsolete' WHERE status='pending' AND EXISTS(
@@ -24,18 +32,18 @@ extension LedgerStore {
             // jobs; the uniqueness key otherwise prevents enqueueing them again.
             try db.query("""
                 UPDATE classification_jobs SET status='pending',attempts=0,next_attempt_at_ms=0,run_id=NULL,error_code=NULL
-                WHERE model_id=? AND status='obsolete' AND EXISTS (
+                WHERE \(targetColumn)=? AND status='obsolete' AND EXISTS (
                     SELECT 1 FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id
                     JOIN category_assignments a ON a.id=p.current_assignment_id
                     WHERE p.id=classification_jobs.part_id AND t.revision=classification_jobs.input_revision
                     AND t.state='active' AND (a.origin='system' OR (a.origin IN ('model','council') AND EXISTS(SELECT 1 FROM receipt_captures r WHERE r.transaction_id=t.id))) AND a.confirmed_at_ms IS NULL)
-                """, [.text(modelID)])
+                """, [.text(targetID)])
             try db.query("""
-                INSERT OR IGNORE INTO classification_jobs(id,part_id,input_revision,model_id,status,next_attempt_at_ms,created_at_ms,updated_at_ms)
+                INSERT OR IGNORE INTO classification_jobs(id,part_id,input_revision,\(targetColumn),status,next_attempt_at_ms,created_at_ms,updated_at_ms)
                 SELECT lower(hex(randomblob(16))),p.id,t.revision,?,'pending',0,?,?
                 FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id JOIN category_assignments a ON a.id=p.current_assignment_id
                 WHERE t.state='active' AND (a.origin='system' OR (a.origin IN ('model','council') AND EXISTS(SELECT 1 FROM receipt_captures r WHERE r.transaction_id=t.id))) AND a.confirmed_at_ms IS NULL
-                """, [.text(modelID), .integer(nowMS()), .integer(nowMS())])
+                """, [.text(targetID), .integer(nowMS()), .integer(nowMS())])
         }
     }
     public func claimClassification(modelID: String) throws -> ClassificationTask? {
@@ -94,7 +102,7 @@ extension LedgerStore {
         try db.transaction {
             guard let job = try db.query("SELECT * FROM classification_jobs WHERE id=? AND run_id=?", [.text(task.id), .text(task.runID)]).first else { return }
             guard try db.query("SELECT status FROM classification_runs WHERE id=?", [.text(task.runID)]).first?.text("status") == "running" else { return }
-            guard decision.review else { throw LedgerError.invalid("Classifier suggestions must require review.") }
+            try decision.validateSuggestion()
             try db.query("UPDATE classification_runs SET status='succeeded',finished_at_ms=?,type_code=?,category_id=?,needs_review=1,output_json=? WHERE id=? AND status='running'",
                 [.integer(nowMS()), .text(decision.type), .optional(decision.category), .text(try json(decision)), .text(task.runID)])
             let current = try db.query("SELECT t.revision,t.state,a.confirmed_at_ms FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id JOIN category_assignments a ON a.id=p.current_assignment_id WHERE p.id=?", [.text(task.partID)]).first
