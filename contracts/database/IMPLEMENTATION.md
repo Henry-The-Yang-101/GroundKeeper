@@ -7,6 +7,18 @@ convenience unlock. See [setup and protection](../../docs/onboarding.md).
 
 ## Schema audit
 
+Migration 007 extends `classification_jobs` to target exactly one model or
+Council configuration, preserving existing jobs and receipt fingerprints. Its
+uniqueness constraints distinguish part/revision/model and part/revision/Council.
+`council_configs` and `council_config_members` store the versioned equal-vote
+configuration. Registering a member can avoid changing the selected queue target.
+Parent/child runs and `council_votes` retain all outcomes; only the parent may
+append an assignment with `origin=council`. New `council_member_inputs` binds each
+child to its frozen authorized input/hash, transaction part, revision and policy.
+This permits receipt redaction for Apple without relaxing member provenance.
+Input projections cannot be updated. Cancellation, crash recovery and user edits
+use the same persistent queue protections as individual providers.
+
 Migration 006 adds the optional DuckDuckGo merchant-evidence cache and per-run
 search audit metadata. Cache entries expire and are bounded; run input/evidence
 snapshots remain independent of cache cleanup. Search consent/locality and
@@ -56,7 +68,8 @@ Wallet capture payloads when claiming a classification job. They are not copied
 to observation/transaction columns or merchant tables. Run audit JSON records a
 source-event reference instead of the value; its input hash covers the actual
 request. See [capture evidence](../capture/README.md#optional-wallet-category-evidence).
-Council orchestration remains planned.
+Equal-vote Council orchestration is implemented in Swift; see the
+[Council contract](../classifier/README.md#council-orchestration).
 
 The UI now loads persisted transactions, adds accounts, saves confirmed manual
 edits, soft-deletes transactions, and shows pending/failed work. Transaction

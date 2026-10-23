@@ -22,6 +22,9 @@ duplicates, correct details, and confirm category suggestions.
 - Run Qwen through MLX or Laya through PyTorch MPS on your Mac. Every category
   suggestion requires review, and later model replies cannot replace a
   confirmed correction.
+- Use Model council to consult Qwen, Laya and Apple Intelligence with equal votes,
+  saved member decisions and explicit handling of disagreements or missing providers.
+  Every suggestion requires review.
 - Optionally enrich classification with OCR text from a receipt photo, giving
   the selected model purchased-item context beyond the merchant name. Keeping
   the image is optional. See [receipt capture setup](shortcuts/README.md#optional-receipts).

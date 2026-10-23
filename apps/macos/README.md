@@ -202,7 +202,8 @@ tested by logging out or restarting this Mac.
 ## Classifier providers
 
 Settings → Categorization lets you choose a Qwen or Laya data-only package, or
-explicitly enable an Apple Intelligence Shortcut by name. The saved provider is
+explicitly enable an Apple Intelligence Shortcut by name, or select Model council
+with Qwen, Laya and Apple Intelligence using equal votes. The saved provider is
 restored by foreground and background queue processing. Manual mode still waits
 for Process queue. No provider automatically falls back to another.
 
@@ -237,3 +238,24 @@ Temporary input/output files are removed on normal completion, error or cancella
 Verification on this Mac: signed XPC reached `GK Categorize Cloud`, which returned
 Apple's model usage-limit error. A successful Apple Intelligence prediction must
 be checked after that quota resets. No sandbox entitlements were expanded.
+
+
+### Council verification
+
+The core suite includes Council voting, queue recovery, receipt/search consent,
+input provenance, existing-vault migration, quota handling and stale-edit checks.
+A deterministic UI preview uses real temporary persistence with fictional providers:
+
+```sh
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --setup-preview --ui-preview --council-preview
+```
+
+A separate native smoke test prompts for both packages, verifies them through XPC,
+and processes one fictional transaction through the actual Council queue and
+Apple Shortcut. It uses a disposable vault/preferences and may consume Apple quota:
+
+```sh
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --setup-preview --council-smoke --council-smoke-models /absolute/path/to/model-packages
+```
+
+See [Council verification](../../docs/council.md) for results and limitations.

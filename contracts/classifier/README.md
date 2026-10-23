@@ -40,8 +40,8 @@ describes the bundled classifier build. Validate this floor on runtime upgrades.
 Settings > Categorization selects a local model package or an explicit Apple
 Intelligence Shortcut provider for the persistent queue. The selected processing
 mode controls when jobs run. Separate diagnostics can check GPU support and
-classify fictional text without writing a transaction. Council orchestration
-remains planned.
+classify fictional text without writing a transaction. Council orchestration runs
+in Swift using the same provider operations; see [Council](#council-orchestration).
 
 ## Model packages
 
@@ -379,3 +379,41 @@ observes native cancellation and bounds response size. Errors expose safe codes
 (`shortcut_unavailable`, `shortcut_rate_limited`, `invalid_output`, or
 `deadline_exceeded`) rather than private input or dependency logs. No automatic
 local/cloud fallback exists. Only Settings explicitly selects this provider.
+
+
+## Council orchestration
+
+`council-equal-v1` selects one verified Qwen package, one verified Laya package,
+and a named Apple Intelligence Shortcut. All three have weight 1. Council is an
+explicit provider choice; it does not add cloud processing to the individual
+local modes. The Shortcut name/connector identity does not attest its contents
+or pin Apple's serving model. Keep the Shortcut's built-in search off.
+
+Swift claims at most eight parent jobs per batch, freezes one optional merchant
+search snapshot per transaction, and runs Qwen, Laya, then Apple. Only one
+heavyweight model is retained; each local package is prepared once per batch.
+Retrieval/pacing happens outside individual inference deadlines. Completed,
+missing, invalid and timed-out members have separate child runs and dispositions.
+Apple quota/unavailable failures suppress further Apple requests in that queue
+pass. There are no immediate member retries. Explicit Retry failed requeues
+no-consensus jobs; cancellation releases unfinished jobs without spending a retry.
+
+The parent saves common evidence. Each child stores its actual authorized input
+and canonical SHA-256. Local members can consume receipt text while Apple omits
+it unless receipt sharing is enabled. The original Wallet value is reconstructed
+from the immutable source reference; only the hash covers its wire projection.
+Merchant context is retrieved once, reused by all members and retained across
+retries. Disabling search omits it from subsequent member inputs while preserving
+the saved evidence. No member performs a separate search.
+
+Two valid matching `(type, category)` decisions produce a Council suggestion,
+including a degraded result if the third member is missing. All suggestions have
+`review=true`. One valid response or three different decisions produce no
+consensus, preserve the current assignment and leave the parent job failed for
+explicit retry. A successful member never independently assigns a category.
+The parent checks the current transaction revision and confirmation before
+appending the Council assignment. The editor exposes individual suggestions,
+failures, model identities and saved search sources, including prior results
+after a user correction. Vote shares are not confidence estimates.
+
+For repeatable validation, see [Council verification](../../docs/council.md).

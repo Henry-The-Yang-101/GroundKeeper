@@ -146,6 +146,29 @@ Those commands require existing checkpoint and manifest files under `.local/`.
 The [experiment index](README.md#experiments) links to training procedures and
 their dataset requirements.
 
+### Model council
+
+Open **Settings > Install models or choose a provider** and find **Model council**.
+Install both local models if needed, then select the Qwen and Laya packages for
+Council. Installed packages have a **Use installed Qwen/Laya** shortcut; existing
+packages can be selected with the individual directory pickers. Enter the
+installed Apple Intelligence Shortcut name and inspect its Use Model action.
+
+Click **Enable Council with Apple Intelligence** to verify the packages and
+select Council. Each provider gets one vote. Two matching type/category decisions
+produce a suggestion, and every result needs review. If one provider is unavailable,
+the other two can produce a visibly partial result when they agree. Otherwise,
+Council keeps the current categorization and records no consensus.
+
+DuckDuckGo search and sharing receipt text with Apple remain separate settings.
+Search is optional; one saved evidence snapshot is reused across members and
+retries. Receipt text stays local unless the Apple receipt-sharing option is on.
+
+Open a transaction with **Edit** and expand **Member decisions and sources** to
+inspect the saved votes and failures. **Retry failed** in Sync requeues failed
+attempts; in manual mode, click **Process queue** to run them. Package and Shortcut
+edits in Council setup are drafts until **Apply council setup** is clicked.
+
 ### Apple Intelligence through Shortcuts
 
 1. Import [`GK Categorize Cloud.shortcut`](../shortcuts/GK%20Categorize%20Cloud.shortcut)

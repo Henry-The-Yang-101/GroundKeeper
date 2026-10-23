@@ -1,15 +1,13 @@
 # GroundKeeper roadmap
 
-Product direction updated 2026-10-17; implementation status checked 2026-10-18.
-The app currently uses ordinary SQLite with capture ingestion, CSV import,
-reconciliation, editing, durable classification jobs, and configurable queue
-processing. Local models and an explicitly selected Apple Shortcut provider are
-connected. The latest app-to-Shortcut check reached Apple's usage limit;
-successful inference through that path still needs verification.
+Product direction updated 2026-10-17; Council implementation added 2026-10-23.
+The app supports local SQLite/SQLCipher vaults, capture ingestion, CSV import,
+reconciliation, editing, durable classification jobs, queue processing and local
+spending reports. Qwen, Laya, an explicit Apple Shortcut provider and the
+three-member Council are connected. Every classifier suggestion requires review.
 
-Encryption, locked staging, backups, Council orchestration, and analytics below
-remain future work. Their proposed data flow does not describe the current
-unencrypted ledger. See the [current implementation](../contracts/database/IMPLEMENTATION.md)
+Locked staging, backups and the remaining planning features below are future
+work. See the [current implementation](../contracts/database/IMPLEMENTATION.md)
 and [setup guide](setup.md) for working behavior. Historical evidence stays in
 `research/`, `experiments/`, and the [initial scope notes](history/m0-scope.md).
 
@@ -120,7 +118,7 @@ Settings will offer four modes:
 | Fine-tuned Laya | Local instant decision model; typed decisions are serialized into the shared JSON contract. |
 | Fine-tuned Qwen | Local language model using constrained JSON output. |
 | Apple Intelligence Cloud | Invoke a Mac Apple Shortcut that accepts classifier input and returns decision JSON; requires internet and service availability. |
-| Council | Consult all three providers and choose a decision using weighted voting, with explicit disagreement and failure handling. |
+| Council | Consult all three providers with equal votes; two matching decisions produce a reviewable suggestion. Record disagreements and failures. |
 
 Every provider follows [transaction category policy](transaction-categories.md)
 and `groundkeeper/policy.py`. Shared input: `description`, `direction`, `currency`.
@@ -247,8 +245,8 @@ modes may send minimized transaction descriptions to Apple for inference.
   MLX Metal; Laya runs on PyTorch MPS, with GPU availability required. See the
   [bridge contract](../contracts/classifier/README.md). The service has no database
   access. Swift transaction/job integration, durable retries, and an explicit Apple
-  Shortcut adapter are implemented. Council orchestration and locked staging
-  remain future work. Release uses
+  Shortcut adapter and equal-vote Council are implemented. Locked staging
+  remains future work. Release uses
   same-team signing/library validation; local ad hoc Debug has development-only
   exceptions. The pinned native runtime currently requires macOS 26.2+ and arm64.
 - Store transactions, raw events/import provenance, accounts/card mappings,
@@ -429,7 +427,7 @@ encryption, analytics, recovery, and broader operational testing.
 | M5: Unattended operation | Three unattended nights, including a missed 03:00 run, preserve events; retries, provider failures, quarantine, and safe logs verified. |
 | M6: App MVP | Two weeks of capture, manual entry, CSV import, category correction, review, spending/repeated-merchant graphs, automatic calculated insights, sync, and settings without the CLI; insight evidence, refresh/dismissal, locking, failure indicators, and large-history checks work. Optional AI explanations must match calculated facts and respect provider/privacy choices. |
 
-Open decisions: final checkpoints/provider default; Council weights, thresholds,
+Open decisions: final checkpoints/provider default; future calibrated Council weights and acceptance thresholds,
 and partial-result behavior; Apple cloud variant/Shortcut setup; public app/model
 distribution; retention; auto-lock duration; supported CSV mappings;
 budget rollover; goal funding; balance entry/import formats; repeated-spending
