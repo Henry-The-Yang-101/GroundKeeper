@@ -54,11 +54,14 @@ import GroundKeeperCore
     var classifierStatus = "Manual categorization until you choose a provider"
     var processing = false
     var saving = false
+    var councilConfiguration: CouncilConfiguration?
+    var councilQwenURL: URL?
+    var councilLayaURL: URL?
     var model: ClassifierModel?
     var lastSync: Date?
     // Views observe readiness through this reference, including setup resumed on a later page.
-    private var store: LedgerStore?
-    @ObservationIgnored private let client = ClassifierClient()
+    var store: LedgerStore?
+    @ObservationIgnored let client = ClassifierClient()
     @ObservationIgnored private let merchantSearch = MerchantSearchClient()
     @ObservationIgnored private var merchantSearchTask: Task<MerchantSearchEvidence, any Error>?
     @ObservationIgnored private let folder = CaptureFolder()
@@ -71,7 +74,7 @@ import GroundKeeperCore
         self.isBackgroundAgent = isBackgroundAgent
         if !QueueBackgroundService.isSupported && processingMode == .background { processingMode = .whileOpen }
     }
-    @ObservationIgnored private var classifying = false
+    @ObservationIgnored var classifying = false
     @ObservationIgnored private var started = false
     var transactionReviewCount: Int { transactions.filter(\.needsReview).count }
     var reviewCount: Int { transactionReviewCount + reviews.count }
@@ -120,7 +123,12 @@ import GroundKeeperCore
             }
             folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
             if folderBookmark != nil { folderName = "Saved capture folder" }
-            if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
+            restoreCouncilPackages()
+            if classifierProvider == "council" {
+                councilConfiguration = try await store?.selectedCouncil()
+                classifierStatus = councilConfiguration == nil ? "Council needs setup" : "Council · Qwen, Laya and Apple Intelligence · equal votes"
+            }
+            else if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
             else if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
             else if AppPreferences.defaults.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
@@ -350,9 +358,12 @@ import GroundKeeperCore
             try Task.checkCancellation()
             try await refresh()
             if pendingJobs + unqueuedJobs > 0 {
-                if model == nil { try await restoreModel() }
-                try Task.checkCancellation()
-                await classifyPending()
+                if classifierProvider == "council" { try await classifyCouncilPending() }
+                else {
+                    if model == nil { try await restoreModel() }
+                    try Task.checkCancellation()
+                    await classifyPending()
+                }
             }
             await updateQueueCount()
         } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
@@ -388,8 +399,11 @@ import GroundKeeperCore
             self.merchantSearchStatus = "Search cache cleared; classification audit evidence retained"
         }
     }
-    private func merchantContext(for job: ClassificationTask, store: LedgerStore) async throws -> MerchantContext? {
-        guard merchantSearchEnabled else { return nil }
+    func merchantContext(for job: ClassificationTask, store: LedgerStore) async throws -> MerchantContext? {
+        if let saved = try await store.savedCouncilSearch(for: job) {
+            return try await store.bindMerchantSearch(saved, to: job)
+        }
+        guard merchantSearchEnabled else { return try await store.bindMerchantSearch(.init(query: nil, outcome: "disabled"), to: job) }
         let settings = try await store.merchantSearchSettings()
         guard settings.enabled else { return nil }
         guard let query = try await store.merchantSearchQuery(for: job, locality: settings.locality) else {
@@ -446,7 +460,7 @@ import GroundKeeperCore
         try await refresh()
     }
     private func restoreModel() async throws {
-        if classifierProvider == "manual" { return }
+        if classifierProvider == "manual" || classifierProvider == "council" { return }
         if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
         guard let bookmark = AppPreferences.defaults.data(forKey: "classifierModelBookmark") else { return }
         var stale = false
@@ -599,7 +613,7 @@ import GroundKeeperCore
         page = 0; try await refresh(); Task { await processIfAutomatic() }; return count
     }
     func changePage(_ value: Int) { page = max(0, value); perform { try await self.refresh() } }
-    private func perform(_ operation: @escaping @MainActor () async throws -> Void) {
+    func perform(_ operation: @escaping @MainActor () async throws -> Void) {
         guard !saving else { return }; saving = true
         Task { defer { saving = false }; do { try await operation() } catch { errorMessage = error.localizedDescription } }
     }
