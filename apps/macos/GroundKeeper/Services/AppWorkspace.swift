@@ -60,6 +60,7 @@ import GroundKeeperCore
     private var store: LedgerStore?
     @ObservationIgnored private let client = ClassifierClient()
     @ObservationIgnored private let merchantSearch = MerchantSearchClient()
+    @ObservationIgnored private var merchantSearchTask: Task<MerchantSearchEvidence, any Error>?
     @ObservationIgnored private let folder = CaptureFolder()
     @ObservationIgnored private var folderBookmark: Data?
     @ObservationIgnored private var modelURL: URL?
@@ -364,10 +365,19 @@ import GroundKeeperCore
         }
     }
     func setMerchantSearch(_ enabled: Bool) {
+        if !enabled {
+            merchantSearchEnabled = false
+            merchantSearchTask?.cancel()
+        }
         perform {
-            try await self.store?.setMerchantSearchSettings(.init(enabled: enabled, locality: self.merchantSearchLocality))
+            let saved = try await self.store?.merchantSearchSettings() ?? .init()
+            try await self.store?.setMerchantSearchSettings(.init(enabled: enabled, locality: enabled ? self.merchantSearchLocality : saved.locality))
             self.merchantSearchEnabled = enabled
-            if !enabled { await self.merchantSearch.shutdown(); self.merchantSearchStatus = "Web context off" }
+            if !enabled {
+                await self.merchantSearch.shutdown()
+                self.merchantSearchLocality = saved.locality
+                self.merchantSearchStatus = "Web context off"
+            }
             else { self.merchantSearchStatus = "Enabled for pending and future classifications" }
         }
     }
@@ -379,6 +389,7 @@ import GroundKeeperCore
         }
     }
     private func merchantContext(for job: ClassificationTask, store: LedgerStore) async throws -> MerchantContext? {
+        guard merchantSearchEnabled else { return nil }
         let settings = try await store.merchantSearchSettings()
         guard settings.enabled else { return nil }
         guard let query = try await store.merchantSearchQuery(for: job, locality: settings.locality) else {
@@ -386,6 +397,7 @@ import GroundKeeperCore
             return try await store.bindMerchantSearch(.init(query: nil, outcome: "unsafe_query"), to: job)
         }
         if let cached = try await store.cachedMerchantSearch(query) {
+            guard merchantSearchEnabled else { return nil }
             merchantSearchStatus = cached.context == nil ? "Cached search had no reliable match" : "Using cached DuckDuckGo context"
             return try await store.bindMerchantSearch(cached, to: job)
         }
@@ -403,10 +415,19 @@ import GroundKeeperCore
         guard try await store.merchantSearchSettings().enabled else { return nil }
         // Persist a conservative reservation before dispatch, including across process handoffs.
         try await store.setMerchantSearchNotBeforeMS(Int64(Date().timeIntervalSince1970 * 1000) + 45_000)
+        guard merchantSearchEnabled else { return nil }
         merchantSearchStatus = "Searching DuckDuckGo…"
         let evidence: MerchantSearchEvidence
-        do { evidence = try await merchantSearch.search(query) }
-        catch is CancellationError { throw CancellationError() }
+        let task = Task { try await merchantSearch.search(query) }
+        merchantSearchTask = task
+        defer { merchantSearchTask = nil }
+        do {
+            evidence = try await withTaskCancellationHandler { try await task.value } onCancel: { task.cancel() }
+        }
+        catch is CancellationError {
+            if Task.isCancelled { throw CancellationError() }
+            return nil // The user switched web context off; continue without it.
+        }
         catch { evidence = .init(query: query, outcome: "unavailable") }
         let delay: Int64 = evidence.outcome == "blocked" ? 900_000 : evidence.outcome == "unavailable" ? 60_000 : 10_500
         try await store.setMerchantSearchNotBeforeMS(Int64(Date().timeIntervalSince1970 * 1000) + delay)

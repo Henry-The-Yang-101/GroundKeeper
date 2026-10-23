@@ -29,6 +29,7 @@ def test_selection_checks_identity_locality_and_bounds():
     assert context["results"][0]["url"] == "https://example.org/cafe"
     assert validate_context(context) is context
     assert select_context([{**RAW[0], "href": "file:///private/local"}], "Fictional Cafe", "") is None
+    assert select_context([{"title": "Gol’s Lanzhou Noodle Waterloo", "body": "Gol’s Lanzhou Noodle in Waterloo serves noodles.", "href": "https://example.org/gols"}], "Gol's Lanzhou Noodle", "Waterloo") is not None
 
 
 @pytest.mark.parametrize("field,value", [("source", "google"), ("version", "v0"), ("results", []), ("results", RAW)])

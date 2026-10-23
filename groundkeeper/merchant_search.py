@@ -12,6 +12,7 @@ GAP_SECONDS = 10.5
 
 
 def _normal(text):
+    text = text.replace("’", "").replace("'", "")
     return re.sub(r"[^a-z0-9]+", " ", unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()).strip()
 
 
