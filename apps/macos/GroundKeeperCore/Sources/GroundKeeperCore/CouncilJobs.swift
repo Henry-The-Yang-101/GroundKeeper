@@ -10,6 +10,7 @@ public struct CouncilReport: Sendable {
     public let result: CouncilResult
     public let search: MerchantSearchEvidence?
     public let receiptSharedWithApple: Bool
+    public let isCurrentRevision: Bool
 }
 
 extension LedgerStore {
@@ -89,15 +90,18 @@ extension LedgerStore {
         try db.transaction {
             guard try councilTaskIsCurrent(task), let parent = try db.query("""
                 SELECT r.* FROM classification_runs r JOIN council_config_members m ON m.config_id=r.council_config_id
-                WHERE r.id=? AND m.model_version_id=? AND m.weight=1
-                """, [.text(task.runID), .text(member.id)]).first else { throw LedgerError.conflict }
+                JOIN model_versions v ON v.id=m.model_version_id
+                WHERE r.id=? AND m.model_version_id=? AND m.weight=1 AND v.provider=?
+                """, [.text(task.runID), .text(member.id), .text(member.backend)]).first else { throw LedgerError.conflict }
             var audit = try JSONSerialization.jsonObject(with: Data(parent.text("input_json").utf8)) as! [String: Any]
             if member.backend == "apple_shortcut", try !receiptCloudConsent() { audit.removeValue(forKey: "receipt_context") }
             if try !merchantSearchSettings().enabled { audit.removeValue(forKey: "merchant_context") }
             let options: JSONSerialization.WritingOptions = [.sortedKeys, .withoutEscapingSlashes]
             let auditData = try JSONSerialization.data(withJSONObject: audit, options: options)
-            audit.removeValue(forKey: "wallet_category_source_event_id")
-            if let hint = task.walletCategoryRaw { audit["wallet_category_raw"] = hint }
+            let hintReference = audit.removeValue(forKey: "wallet_category_source_event_id") as? String
+            if let hintReference, let value = try db.query("SELECT json_extract(payload_json,'$.wallet_category_raw') AS value FROM raw_event_payloads WHERE event_id=?", [.text(hintReference)]).first?["value"]?.string {
+                audit["wallet_category_raw"] = value
+            }
             let wire = try JSONSerialization.data(withJSONObject: audit, options: options)
             let input = try JSONDecoder().decode(CouncilInput.self, from: wire)
             let runID = identifier(), hash = contentHash(wire), auditText = String(decoding: auditData, as: UTF8.self)
@@ -126,6 +130,7 @@ extension LedgerStore {
     }
     public func completeCouncil(_ task: ClassificationTask, configuration: CouncilConfiguration) throws -> CouncilResult {
         try db.transaction {
+            guard try db.query("SELECT council_config_id FROM classification_runs WHERE id=?", [.text(task.runID)]).first?.text("council_config_id") == configuration.id else { throw LedgerError.conflict }
             let rows = try db.query("SELECT v.*,r.output_json,r.error_code FROM council_votes v JOIN classification_runs r ON r.id=v.member_run_id WHERE v.council_run_id=?", [.text(task.runID)])
             let votes = try configuration.members.map { member -> CouncilVote in
                 guard let row = rows.first(where: { $0.text("model_version_id") == member.id }) else { throw LedgerError.invalid("Council is incomplete.") }
@@ -148,14 +153,15 @@ extension LedgerStore {
     }
     public func councilReport(transactionID: String) throws -> CouncilReport? {
         guard let row = try db.query("""
-            SELECT r.* FROM classification_runs r JOIN transaction_parts p ON p.id=r.part_id
+            SELECT r.*,t.revision AS current_revision FROM classification_runs r JOIN transaction_parts p ON p.id=r.part_id
             JOIN transactions t ON t.id=p.transaction_id
-            WHERE p.transaction_id=? AND r.kind='council' AND r.output_json IS NOT NULL AND r.input_revision=t.revision
+            WHERE p.transaction_id=? AND r.kind='council' AND r.output_json IS NOT NULL
             ORDER BY r.started_at_ms DESC,r.rowid DESC LIMIT 1
             """, [.text(transactionID)]).first else { return nil }
         let result = try JSONDecoder().decode(CouncilResult.self, from: Data(row.text("output_json").utf8))
         let search = try row["merchant_search_json"]?.string.map { try JSONDecoder().decode(MerchantSearchEvidence.self, from: Data($0.utf8)) }
         let shared = try !db.query("SELECT 1 FROM council_member_inputs i JOIN model_versions m ON m.id=i.model_version_id WHERE i.council_run_id=? AND m.provider='apple_shortcut' AND i.receipt_shared=1", [.text(row.text("id"))]).isEmpty
-        return CouncilReport(runID: row.text("id"), result: result, search: search, receiptSharedWithApple: shared)
+        return CouncilReport(runID: row.text("id"), result: result, search: search, receiptSharedWithApple: shared,
+                             isCurrentRevision: row.number("input_revision") == row.number("current_revision"))
     }
 }

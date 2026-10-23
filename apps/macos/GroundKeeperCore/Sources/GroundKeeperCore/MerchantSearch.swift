@@ -127,7 +127,11 @@ extension LedgerStore {
                 WHERE j.id=? AND j.run_id=? AND j.status='running' AND t.revision=?
                 AND t.state='active' AND a.confirmed_at_ms IS NULL
                 """, [.text(task.id), .text(task.runID), .integer(Int64(task.revision))]).isEmpty else { throw LedgerError.conflict }
-            guard let row = try db.query("SELECT input_json FROM classification_runs WHERE id=? AND status='running'", [.text(task.runID)]).first else { throw LedgerError.invalid("Classification is no longer running.") }
+            guard let row = try db.query("SELECT input_json,kind,merchant_search_json FROM classification_runs WHERE id=? AND status='running'", [.text(task.runID)]).first else { throw LedgerError.invalid("Classification is no longer running.") }
+            if row.text("kind") == "council", let saved = row["merchant_search_json"]?.string {
+                let snapshot = try JSONDecoder().decode(MerchantSearchEvidence.self, from: Data(saved.utf8))
+                return settings.enabled ? snapshot.context : nil
+            }
             var audit = try JSONSerialization.jsonObject(with: Data(row.text("input_json").utf8)) as! [String: Any]
             audit.removeValue(forKey: "merchant_context")
             if let context { audit["merchant_context"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(context)) }

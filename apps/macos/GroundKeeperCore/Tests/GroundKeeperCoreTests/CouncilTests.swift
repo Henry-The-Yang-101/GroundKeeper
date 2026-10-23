@@ -218,3 +218,113 @@ func bindNoCouncilSearch(_ store: LedgerStore, _ task: ClassificationTask) async
     #expect(try await reopened.savedCouncilSearch(for: retried)?.outcome == "disabled")
     #expect(try await reopened.integrityCheck())
 }
+
+@Test func councilSearchCannotChangeAfterBindingOrOnRetry() async throws {
+    let (store, _, config) = try await councilFixture()
+    try await store.setMerchantSearchSettings(.init(enabled: true))
+    let task = try await store.claimCouncil(configID: config.id)!
+    let first = MerchantContext(results: [.init(title: "First", body: "Original evidence", url: "https://example.org/first")])
+    let second = MerchantContext(results: [.init(title: "Second", body: "Changed evidence", url: "https://example.org/second")])
+    #expect(try await store.bindMerchantSearch(.init(query: nil, outcome: "matched", context: first), to: task) == first)
+    let before = try await store.testRows("SELECT input_sha256 FROM classification_runs WHERE id='\(task.runID)'")[0].text("input_sha256")
+    #expect(try await store.bindMerchantSearch(.init(query: nil, outcome: "matched", context: second), to: task) == first)
+    try await store.releaseClassification(task)
+    let retried = try await store.claimCouncil(configID: config.id)!
+    #expect(try await store.savedCouncilSearch(for: retried)?.context == first)
+    #expect(try await store.testRows("SELECT input_sha256 FROM classification_runs WHERE id='\(retried.runID)'")[0].text("input_sha256") == before)
+    try await store.setMerchantSearchSettings(.init(enabled: false))
+    let member = try await store.startCouncilMember(config.members[0], task: retried)
+    #expect(member.input.merchantContext == nil)
+}
+
+@Test func councilPreservesModelJobsWhenUpgradingVersionSix() async throws {
+    let (store, url) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    try await ingestMapped(store, id: "migration-seven")
+    let model = try await receiptModel(store)
+    try await store.enqueueClassifications(modelID: model)
+    let before = try await store.testRows("SELECT * FROM classification_jobs")[0]
+    let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("Sources/GroundKeeperCore/Resources/002-processing.sql")
+    let script = try String(contentsOf: source, encoding: .utf8)
+    let table = String(script[script.range(of: "CREATE TABLE classification_jobs")!.lowerBound..<script.range(of: "CREATE INDEX classification_jobs_ready")!.lowerBound])
+        .replacingOccurrences(of: "classification_jobs", with: "legacy_jobs")
+    let schema = try String(contentsOf: source.deletingLastPathComponent().appendingPathComponent("001-schema.sql"), encoding: .utf8)
+    let triggerStart = schema.range(of: "CREATE TRIGGER validate_council_vote")!.lowerBound
+    let triggerEnd = schema.range(of: "\nEND;", range: triggerStart..<schema.endIndex)!.upperBound
+    try await store.simulateCouncilPredecessor(table: table, voteTrigger: String(schema[triggerStart..<triggerEnd]))
+    await store.close()
+    let upgraded = try LedgerStore(url: url)
+    let after = try await upgraded.testRows("SELECT * FROM classification_jobs")[0]
+    #expect(after.text("id") == before.text("id") && after.text("model_id") == model && after.text("status") == "pending")
+    #expect(try await upgraded.claimClassification(modelID: model) != nil)
+    #expect(try await upgraded.integrityCheck())
+}
+
+extension LedgerStore {
+    func simulateCouncilPredecessor(table: String, voteTrigger: String) throws {
+        try db.transaction {
+            try db.executeScript(table)
+            try db.executeScript("ALTER TABLE legacy_jobs ADD COLUMN receipt_context_sha256 TEXT;")
+            try db.executeScript("INSERT INTO legacy_jobs SELECT id,part_id,input_revision,model_id,status,attempts,next_attempt_at_ms,run_id,error_code,created_at_ms,updated_at_ms,receipt_context_sha256 FROM classification_jobs;")
+            try db.executeScript("DROP TABLE classification_jobs; ALTER TABLE legacy_jobs RENAME TO classification_jobs; CREATE INDEX classification_jobs_ready ON classification_jobs(status,next_attempt_at_ms); DROP TRIGGER validate_council_vote; DROP TABLE council_member_inputs; DELETE FROM schema_migrations WHERE version=7;")
+            try db.executeScript(voteTrigger)
+        }
+    }
+}
+
+@Test func councilInvalidAndTimedOutMembersCannotCreateSingleVoteConsensus() async throws {
+    let (store, _, config) = try await councilFixture()
+    let engine = FixtureCouncilEngine(decisions: ["qwen_mlx": .init(type: "unknown", category: "medical", review: true)], failures: ["laya_mps": .init(disposition: "timeout", code: "deadline_exceeded")])
+    try await CouncilRunner.runBatch(store: store, configuration: config, engine: engine, search: { try await bindNoCouncilSearch(store, $0) })
+    let transaction = try await store.snapshot().transactions[0]
+    let report = try await store.councilReport(transactionID: transaction.id)!
+    #expect(report.result.decision == nil && report.result.degraded)
+    #expect(report.result.votes.first { $0.member.backend == "qwen_mlx" }?.disposition == "invalid")
+    #expect(report.result.votes.first { $0.member.backend == "laya_mps" }?.disposition == "timeout")
+    #expect(transaction.origin == "system")
+}
+
+@Test func councilSwitchingModesRevivesOnlyEligibleCouncilJobs() async throws {
+    let (store, _, config) = try await councilFixture()
+    let member = councilMembers[0]
+    try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-18-v1", configuration: "{}")
+    #expect(try await store.snapshot().pendingJobs == 0)
+    try await store.enqueueClassifications(modelID: member.id)
+    try await store.registerCouncil(config)
+    try await store.enqueueCouncil(configID: config.id)
+    #expect(try await store.snapshot().pendingJobs == 1)
+    #expect(try await store.claimClassification(modelID: member.id) == nil)
+    #expect(try await store.claimCouncil(configID: config.id) != nil)
+    #expect(try await store.integrityCheck())
+}
+
+@Test func councilRejectsForgedMemberAndCrossMemberVotes() async throws {
+    let (store, _, config) = try await councilFixture()
+    let task = try await store.claimCouncil(configID: config.id)!
+    let qwen = councilMembers[0], laya = councilMembers[1]
+    do {
+        _ = try await store.startCouncilMember(.init(id: qwen.id, name: qwen.name, backend: "apple_shortcut"), task: task)
+        Issue.record("Forged provider accepted")
+    } catch LedgerError.conflict {}
+    let child = try await store.startCouncilMember(qwen, task: task)
+    do {
+        try await store.recordCouncilVote(.init(member: laya, disposition: "valid", decision: diningDecision), memberRunID: child.runID, task: task)
+        Issue.record("Cross-member vote accepted")
+    } catch {}
+    #expect(try await store.testRows("SELECT * FROM council_votes").isEmpty)
+    #expect(try await store.testRows("SELECT status FROM classification_runs WHERE id='\(child.runID)'")[0].text("status") == "running")
+    try await store.recordCouncilVote(.init(member: qwen, disposition: "valid", decision: diningDecision), memberRunID: child.runID, task: task)
+    #expect(try await store.integrityCheck())
+}
+
+@Test func councilRetainsTheOriginalSuggestionAfterUserConfirmation() async throws {
+    let (store, _, config) = try await councilFixture()
+    try await CouncilRunner.runBatch(store: store, configuration: config, engine: FixtureCouncilEngine(), search: { try await bindNoCouncilSearch(store, $0) })
+    let transaction = try await store.snapshot().transactions[0]
+    try await store.save(.init(id: transaction.id, revision: transaction.revision, description: transaction.description, amountMinor: transaction.amountMinor, currency: transaction.currency,
+                              occurredOn: transaction.occurredOn, accountID: transaction.accountID, type: "expense", category: "shopping", needsReview: false, notes: "User corrected"))
+    let report = try await store.councilReport(transactionID: transaction.id)!
+    #expect(!report.isCurrentRevision && report.result.decision?.category == "dining")
+    #expect(try await store.snapshot().transactions[0].category == "shopping")
+}
