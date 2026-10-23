@@ -1,11 +1,11 @@
-# DuckDuckGo merchant-context diagnostic
+# Merchant-context search diagnostics
 
-Research-only retrieval experiment requested on 2026-10-22. It tests whether
+Research-only retrieval experiments requested on 2026-10-22. They test whether
 DDGS snippets contain enough evidence to describe a public business's type.
 It does not score Qwen, alter the classifier contract, or provide calibrated
 merchant matching or automatic category acceptance.
 
-## Method
+## Original DuckDuckGo method
 
 - Seven distinct merchants: the requested Staples, Farah Foods and Foodie
   Frutie, plus Seven Shores, The Bauer Kitchen, Gol's Lanzhou Noodle and Korner
@@ -18,9 +18,11 @@ merchant matching or automatic category acceptance.
   one search thread and a 12-second HTTP timeout. The engine registry is restricted
   to DuckDuckGo as well, preventing fallback to another search provider.
 - Requests use the installed adapter's POST interface at
-  `https://html.duckduckgo.com/html/`. The guard disables redirects and rejects
+  `https://html.duckduckgo.com/html/`. The original guard disabled redirects and rejected
   other destination hosts. It records statuses, response sizes/hashes and timing;
-  it does not visit returned URLs.
+  it did not visit returned URLs. The extended runner now records and follows
+  up to three ordinary same-provider redirects, and stops before challenge or
+  cross-provider destinations.
 - Each isolated query has a 30-second subprocess bound. Shared-client mode uses
   the same DDGS instance across queries; the outer watchdog bounds that run.
   The run stops on a bot challenge or three consecutive unsuccessful queries.
@@ -45,7 +47,34 @@ uv pip install --python .local/merchant-search-ddgs/venv/bin/python -r experimen
 Outputs refuse overwrite. Use a new output/session directory for an intentional
 new run. Do not repeatedly retry challenges; the runner stops rather than solve
 them, rotate proxies, or switch engines. Historical query success establishes
-neither permission from DuckDuckGo nor future availability.
+neither permission from the provider nor future availability.
+
+## Engine comparison
+
+The runner also accepts `--engine bing`, `--engine brave` or `--engine google`.
+Each process registers exactly one adapter, keeps the same case file, uses a
+shared client, and sets its own exact-host allowlist. Run independent engine
+processes with separate output/session directories. At a twenty-second gap,
+fourteen queries take roughly four and a half minutes if all are reached.
+
+Optional `--response-dir` stores diagnostic HTML in an ignored local directory.
+Never commit it: responses can include ephemeral challenge tokens and network
+identifiers. The manifest records package versions, case/runner hashes and pace.
+
+Two explicit diagnostic variants are available:
+
+- `--engine bing --adapter-variant bing-selectors`: the pinned release disables
+  Bing. Directly register its existing adapter and adapt the title/link selectors
+  to accept an anchor around the heading as well as inside it. This is a parser
+  diagnostic, not an upstream fix or a protection bypass.
+- `--engine google --adapter-variant google-standard-route`: change only the
+  old `/wml/search` endpoint to `/search`; retain the installed adapter's other
+  behavior. The recorded comparison used this for one query to distinguish an
+  endpoint-specific HTTP 403 from a challenge on the ordinary search route.
+
+Even the stock `--engine bing` run explicitly registers the disabled adapter
+for inspection. `upstream_adapter_disabled` records this exception. It does not
+silently use DDGS's automatic fallback.
 
 ## How DDGS works without an LLM
 
@@ -59,4 +88,6 @@ a restaurant, compose an evidence-based summary or verify a purchase's purpose.
 Source: [DuckDuckGo adapter](https://github.com/deedy5/ddgs/blob/main/ddgs/engines/duckduckgo.py),
 [ranking code](https://github.com/deedy5/ddgs/blob/main/ddgs/similarity.py).
 
-See [RESULTS.md](RESULTS.md) for measured results, retrieval failures and limits.
+See [RESULTS.md](RESULTS.md) for the original DuckDuckGo trial and
+[ENGINE_COMPARISON_2026-10-22.md](ENGINE_COMPARISON_2026-10-22.md) for Bing, Brave
+and Google observations.

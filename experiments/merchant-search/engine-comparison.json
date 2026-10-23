@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-10-22",
+  "ddgs_version": "9.16.0",
+  "planned_case_count_per_full_pass": 14,
+  "gap_seconds": 20,
+  "model_calls": 0,
+  "relevance_assessment": "Agent manual reading of returned evidence; not human-labelled classification truth. Nonempty retrieval is scored separately from merchant context.",
+  "runs": {
+    "bing": {
+      "engine": "bing",
+      "adapter_variant": "stock",
+      "upstream_adapter_disabled": true,
+      "attempted_queries": 3,
+      "business_queries_attempted": 3,
+      "business_queries_with_nonempty_results": 0,
+      "http_status_counts": {
+        "200": 3
+      },
+      "blocked_queries": 0,
+      "median_call_seconds": 0.201,
+      "raw_sha256": "0d86d343559aeb8aff97f29216ae37d612d3ec5dd0e551e6ebb6dbb892c2f285",
+      "query_outcomes": [
+        {
+          "id": "staples_local",
+          "query": "Staples Waterloo Ontario",
+          "status": "empty",
+          "nonempty_result_count": 0,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.552,
+          "manual_assessment": null
+        },
+        {
+          "id": "farah_local",
+          "query": "Farah Foods Waterloo Ontario",
+          "status": "empty",
+          "nonempty_result_count": 0,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.185,
+          "manual_assessment": null
+        },
+        {
+          "id": "foodie_local",
+          "query": "Foodie Frutie Waterloo Ontario",
+          "status": "empty",
+          "nonempty_result_count": 0,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.201,
+          "manual_assessment": null
+        }
+      ]
+    },
+    "brave": {
+      "engine": "brave",
+      "adapter_variant": "stock",
+      "upstream_adapter_disabled": false,
+      "attempted_queries": 1,
+      "business_queries_attempted": 1,
+      "business_queries_with_nonempty_results": 0,
+      "http_status_counts": {
+        "429": 1
+      },
+      "blocked_queries": 1,
+      "median_call_seconds": 0.474,
+      "raw_sha256": "c7b845ec16533a2b10a53c8d510989502acac6fce0ab657dd003c49aedf0f74b",
+      "query_outcomes": [
+        {
+          "id": "staples_local",
+          "query": "Staples Waterloo Ontario",
+          "status": "blocked",
+          "nonempty_result_count": 0,
+          "http_statuses": [
+            429
+          ],
+          "block_reason": "http_429",
+          "elapsed_seconds": 0.474,
+          "manual_assessment": null
+        }
+      ]
+    },
+    "google": {
+      "engine": "google",
+      "adapter_variant": "stock",
+      "upstream_adapter_disabled": false,
+      "attempted_queries": 1,
+      "business_queries_attempted": 1,
+      "business_queries_with_nonempty_results": 0,
+      "http_status_counts": {
+        "403": 1
+      },
+      "blocked_queries": 1,
+      "median_call_seconds": 0.697,
+      "raw_sha256": "c240e75a2c74d971f2dbd8ef760f31da6ef99c2b58bf5f11c6cd5e07672737ed",
+      "query_outcomes": [
+        {
+          "id": "staples_local",
+          "query": "Staples Waterloo Ontario",
+          "status": "blocked",
+          "nonempty_result_count": 0,
+          "http_statuses": [
+            403
+          ],
+          "block_reason": "http_403",
+          "elapsed_seconds": 0.697,
+          "manual_assessment": null
+        }
+      ]
+    },
+    "bing-selectors": {
+      "engine": "bing",
+      "adapter_variant": "bing-selectors",
+      "upstream_adapter_disabled": true,
+      "attempted_queries": 14,
+      "business_queries_attempted": 13,
+      "business_queries_with_nonempty_results": 13,
+      "http_status_counts": {
+        "200": 14
+      },
+      "blocked_queries": 0,
+      "median_call_seconds": 0.372,
+      "raw_sha256": "f6eb32ec2f9ef523ef72906c9a370ac6293e1e4ce23e5682677d9c3cab6ef565",
+      "query_outcomes": [
+        {
+          "id": "staples_local",
+          "query": "Staples Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.516,
+          "manual_assessment": "supported_brand_context"
+        },
+        {
+          "id": "farah_local",
+          "query": "Farah Foods Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.43,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "foodie_local",
+          "query": "Foodie Frutie Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.371,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "seven_shores_local",
+          "query": "Seven Shores Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.549,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "bauer_local",
+          "query": "The Bauer Kitchen Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.366,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "gols_local",
+          "query": "Gol's Lanzhou Noodle Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.424,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "korner_local",
+          "query": "Korner Kitchen Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.279,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "staples_name",
+          "query": "Staples",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.295,
+          "manual_assessment": "supported_brand_context"
+        },
+        {
+          "id": "farah_name",
+          "query": "Farah Foods",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.591,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "foodie_name",
+          "query": "Foodie Frutie",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.373,
+          "manual_assessment": "supported_brand_context"
+        },
+        {
+          "id": "staples_descriptor",
+          "query": "STAPLES #021 WATERLOO ON",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.442,
+          "manual_assessment": "supported_brand_context"
+        },
+        {
+          "id": "farah_descriptor",
+          "query": "FARAH FOODS WATERLOO ON",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.341,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "foodie_descriptor",
+          "query": "FOODIE FRUTIE WATERLOO ON",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.252,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        },
+        {
+          "id": "nonexistent_control",
+          "query": "\"Zorblax Quenibble 7F4C\" Waterloo Ontario",
+          "status": "results",
+          "nonempty_result_count": 5,
+          "http_statuses": [
+            200
+          ],
+          "block_reason": null,
+          "elapsed_seconds": 0.361,
+          "manual_assessment": "unrelated_to_requested_merchant"
+        }
+      ],
+      "business_queries_with_supported_merchant_context": 4,
+      "unique_merchants_supported": 2,
+      "negative_control_unrelated_results": 5
+    },
+    "google-standard-route": {
+      "engine": "google",
+      "adapter_variant": "google-standard-route",
+      "upstream_adapter_disabled": false,
+      "attempted_queries": 1,
+      "business_queries_attempted": 1,
+      "business_queries_with_nonempty_results": 0,
+      "http_status_counts": {
+        "302": 1
+      },
+      "blocked_queries": 1,
+      "median_call_seconds": 0.571,
+      "raw_sha256": "32bf40e363695aebc782bdda0c31bcd997659c669e5c04cd0613d9ba3abda562",
+      "query_outcomes": [
+        {
+          "id": "staples_local",
+          "query": "Staples Waterloo Ontario",
+          "status": "blocked",
+          "nonempty_result_count": 0,
+          "http_statuses": [
+            302
+          ],
+          "block_reason": "bot_challenge",
+          "elapsed_seconds": 0.571,
+          "manual_assessment": null
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Bing stock is disabled upstream and was explicitly registered for diagnosis; automatic fallback was unavailable.",
+    "Bing selector variant changes only title/link extraction. It is an experimental adapter variation, not stock DDGS performance.",
+    "Google stock returned 403 on /wml/search. A single /search route diagnostic returned 302 to /sorry/index; that challenge redirect was not followed.",
+    "Brave returned 429; manual inspection of the saved page confirmed a suspicious-request CAPTCHA message.",
+    "All challenged runs stopped after their first query. Missing later cases are unattempted, not successful or blocked observations.",
+    "Previous DuckDuckGo captures are a separate sequential trial, not a randomized or load-matched rate-limit benchmark."
+  ]
+}
