@@ -66,7 +66,7 @@ struct SettingsView: View {
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
                 MerchantSearchSettingsView(workspace: workspace)
-                Text("Choose a Qwen or Laya package for local inference, or explicitly enable the Shortcut above. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
+                Text("Choose Qwen or Laya, Apple Intelligence, or Model council in provider setup. Council consults all three with equal votes. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Categorization").font(VaultTypography.section) }
             Section {

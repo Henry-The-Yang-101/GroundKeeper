@@ -78,6 +78,7 @@ struct TransactionEditor: View {
                          ? "Add a note describing this expense."
                          : "Changes apply to this transaction only. Uncategorized purchases stay in review.")
                 }
+                CouncilEvidenceView(transactionID: original.id.uuidString)
             }
             .formStyle(.grouped).scrollContentBackground(.hidden)
             SheetFooter {
