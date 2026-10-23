@@ -49,6 +49,13 @@ new run. Do not repeatedly retry challenges; the runner stops rather than solve
 them, rotate proxies, or switch engines. Historical query success establishes
 neither permission from the provider nor future availability.
 
+The interval diagnostic accepts finite pauses of at least 0.5 seconds. A pause
+is measured after the preceding search call returns; request duration adds to
+the time between request starts. Request records include monotonic start/end
+times so actual pacing can be checked. Each shared-client batch reuses one
+engine/client, but separate batches create new clients with DDGS's stock random
+browser/OS profile. This is an uncontrolled variable when comparing batches.
+
 ## Engine comparison
 
 The runner also accepts `--engine bing`, `--engine brave` or `--engine google`.
@@ -90,4 +97,6 @@ Source: [DuckDuckGo adapter](https://github.com/deedy5/ddgs/blob/main/ddgs/engin
 
 See [RESULTS.md](RESULTS.md) for the original DuckDuckGo trial and
 [ENGINE_COMPARISON_2026-10-22.md](ENGINE_COMPARISON_2026-10-22.md) for Bing, Brave
-and Google observations.
+and Google observations. The DuckDuckGo-only
+[interval diagnostic](DDG_INTERVALS_2026-10-22.md) records the half-second-grid
+screens separately from complete fixture runs.

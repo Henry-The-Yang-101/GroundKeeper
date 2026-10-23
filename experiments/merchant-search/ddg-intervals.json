@@ -1,0 +1,706 @@
+{
+  "schema_version": 1,
+  "local_dates": [
+    "2026-10-22",
+    "2026-10-23"
+  ],
+  "timezone": "America/Toronto",
+  "backend": "duckduckgo",
+  "adapter_variant": "stock",
+  "packages": {
+    "ddgs": "9.16.0",
+    "primp": "2.0.1",
+    "lxml": "6.1.3",
+    "click": "8.5.0"
+  },
+  "case_fixture_sha256": "fd51fe54c5cd7bb53b5262cbf91c37481481d47a2de61c4ea7617a0dc565c78f",
+  "full_fixture_query_count": 14,
+  "request_count": 58,
+  "model_calls": 0,
+  "shortest_complete_batch_pass_tested_seconds": 10.5,
+  "guaranteed_minimum_seconds": null,
+  "limitations": [
+    "Small sequential experiments with one complete batch per passing interval; no multi-day replication or provider reliability guarantee.",
+    "A two-query screen is not a full batch pass. The Farah-first control never exercised its configured gap.",
+    "Each batch creates a fresh client using the stock random browser/OS profile; this varies uncontrolled across batches.",
+    "Recovery pauses and cumulative traffic differ across batches. Query order was fixed rather than randomized.",
+    "Interval refinement assumes an approximately monotonic relation for screening; untested intervals may behave differently.",
+    "Retrieval outcomes do not measure merchant identity precision, classifier accuracy or permission for deployment."
+  ],
+  "runs": [
+    {
+      "run": "0p5",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T03:45:46.772001+00:00",
+      "configured_gap_seconds": 0.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 0.505,
+        "median": 0.505,
+        "max": 0.505
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 1.25,
+        "median": 1.25,
+        "max": 1.25
+      },
+      "idle_before_first_request_seconds": null,
+      "watchdog_elapsed_seconds": 2.052,
+      "peak_process_tree_rss_bytes": 50085888,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/0p5/results.jsonl",
+      "raw_sha256": "4ae3fb30f5ac528fbce105b977504df90de7ae2788eff9cca0e8985a44015902",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "1p0",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T03:47:48.390427+00:00",
+      "configured_gap_seconds": 1.0,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 1.013,
+        "median": 1.013,
+        "max": 1.013
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 1.754,
+        "median": 1.754,
+        "max": 1.754
+      },
+      "idle_before_first_request_seconds": 120.267,
+      "watchdog_elapsed_seconds": 3.064,
+      "peak_process_tree_rss_bytes": 50167808,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/1p0/results.jsonl",
+      "raw_sha256": "5df768f534291d4855398dbef58a223041383c97873ccfa03f1c53fad10147e0",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "farah-first",
+      "kind": "single_query_control",
+      "started_at_utc": "2026-10-23T03:49:50.546132+00:00",
+      "configured_gap_seconds": 20.0,
+      "configured_gap_exercised": false,
+      "intended_query_count": 1,
+      "attempted_query_count": 1,
+      "ordered_case_ids": [
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results"
+      ],
+      "outcome_counts": {
+        "results": 1
+      },
+      "http_status_counts": {
+        "200": 1
+      },
+      "challenge_case_ids": [],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": null,
+      "actual_request_start_intervals_seconds": null,
+      "idle_before_first_request_seconds": 120.293,
+      "watchdog_elapsed_seconds": 1.035,
+      "peak_process_tree_rss_bytes": 9879552,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/farah-first/results.jsonl",
+      "raw_sha256": "03d42b4cfbde8718d5fa2e35c7c4745ff8798d290099458528ee36d779e922ab",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "1p5",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T03:50:24.368622+00:00",
+      "configured_gap_seconds": 1.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 1.507,
+        "median": 1.507,
+        "max": 1.507
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 2.326,
+        "median": 2.326,
+        "max": 2.326
+      },
+      "idle_before_first_request_seconds": 33.114,
+      "watchdog_elapsed_seconds": 3.066,
+      "peak_process_tree_rss_bytes": 49987584,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/1p5/results.jsonl",
+      "raw_sha256": "520f7f9b71d2651784a2c29eec301c47a0e210ecda05d404b2fc87cb2cb9b90c",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "2p0",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T03:53:37.758705+00:00",
+      "configured_gap_seconds": 2.0,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 2.009,
+        "median": 2.009,
+        "max": 2.009
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 2.888,
+        "median": 2.888,
+        "max": 2.888
+      },
+      "idle_before_first_request_seconds": 190.909,
+      "watchdog_elapsed_seconds": 4.115,
+      "peak_process_tree_rss_bytes": 50266112,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/2p0/results.jsonl",
+      "raw_sha256": "3d6716ea9e7cc7931f389735cee36a747e64b7e1e86ff3fd1dddfdf1c4cfea04",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "5p0",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T03:55:41.248292+00:00",
+      "configured_gap_seconds": 5.0,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 5.015,
+        "median": 5.015,
+        "max": 5.015
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 6.138,
+        "median": 6.138,
+        "max": 6.138
+      },
+      "idle_before_first_request_seconds": 120.344,
+      "watchdog_elapsed_seconds": 7.143,
+      "peak_process_tree_rss_bytes": 50315264,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/5p0/results.jsonl",
+      "raw_sha256": "5cf14949a63d8a15a42896f1909f6a11e94441879343fbb5a1f47399ed1da93b",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "20p0",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T03:58:12.771882+00:00",
+      "configured_gap_seconds": 20.0,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 14,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local",
+        "foodie_local",
+        "seven_shores_local",
+        "bauer_local",
+        "gols_local",
+        "korner_local",
+        "staples_name",
+        "farah_name",
+        "foodie_name",
+        "staples_descriptor",
+        "farah_descriptor",
+        "foodie_descriptor",
+        "nonexistent_control"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "empty"
+      ],
+      "outcome_counts": {
+        "results": 13,
+        "empty": 1
+      },
+      "http_status_counts": {
+        "200": 14
+      },
+      "challenge_case_ids": [],
+      "complete_full_batch_pass": true,
+      "actual_response_to_next_request_seconds": {
+        "min": 20.011,
+        "median": 20.016,
+        "max": 20.029
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 20.625,
+        "median": 20.698,
+        "max": 20.902
+      },
+      "idle_before_first_request_seconds": 145.273,
+      "watchdog_elapsed_seconds": 270.745,
+      "peak_process_tree_rss_bytes": 49790976,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/20p0/results.jsonl",
+      "raw_sha256": "6032dc5616fac4ab76a22e887844e02cd62247628ece8587854b47eadea8789a",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "12p5-prefix",
+      "kind": "two_query_screen",
+      "started_at_utc": "2026-10-23T04:03:10.459228+00:00",
+      "configured_gap_seconds": 12.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 2,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "results"
+      ],
+      "outcome_counts": {
+        "results": 2
+      },
+      "http_status_counts": {
+        "200": 2
+      },
+      "challenge_case_ids": [],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 12.509,
+        "median": 12.509,
+        "max": 12.509
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 13.3,
+        "median": 13.3,
+        "max": 13.3
+      },
+      "idle_before_first_request_seconds": 27.616,
+      "watchdog_elapsed_seconds": 14.333,
+      "peak_process_tree_rss_bytes": 50249728,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/12p5-prefix/results.jsonl",
+      "raw_sha256": "d801fc5fe099d84361fa1104407e936fed9a1aa393285d332495fc19ac4d6257",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "8p5-prefix",
+      "kind": "two_query_screen",
+      "started_at_utc": "2026-10-23T04:03:44.587758+00:00",
+      "configured_gap_seconds": 8.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 2,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 8.52,
+        "median": 8.52,
+        "max": 8.52
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 9.311,
+        "median": 9.311,
+        "max": 9.311
+      },
+      "idle_before_first_request_seconds": 20.294,
+      "watchdog_elapsed_seconds": 10.235,
+      "peak_process_tree_rss_bytes": 50249728,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/8p5-prefix/results.jsonl",
+      "raw_sha256": "fe0e7738970211de8514fc79b47e023f44401d5fd813f2613a9005e6a321928e",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "10p5-prefix",
+      "kind": "two_query_screen",
+      "started_at_utc": "2026-10-23T04:05:54.298724+00:00",
+      "configured_gap_seconds": 10.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 2,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "results"
+      ],
+      "outcome_counts": {
+        "results": 2
+      },
+      "http_status_counts": {
+        "200": 2
+      },
+      "challenge_case_ids": [],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 10.509,
+        "median": 10.509,
+        "max": 10.509
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 11.232,
+        "median": 11.232,
+        "max": 11.232
+      },
+      "idle_before_first_request_seconds": 120.292,
+      "watchdog_elapsed_seconds": 12.283,
+      "peak_process_tree_rss_bytes": 50331648,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/10p5-prefix/results.jsonl",
+      "raw_sha256": "4731df1279beb41c6894dc6d90c5517da6277dbb4a86aa2fb25c230c4f3c20a9",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "9p5-prefix",
+      "kind": "two_query_screen",
+      "started_at_utc": "2026-10-23T04:06:33.200280+00:00",
+      "configured_gap_seconds": 9.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 2,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 1,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 1,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_local"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 9.518,
+        "median": 9.518,
+        "max": 9.518
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 10.201,
+        "median": 10.201,
+        "max": 10.201
+      },
+      "idle_before_first_request_seconds": 27.172,
+      "watchdog_elapsed_seconds": 11.219,
+      "peak_process_tree_rss_bytes": 50167808,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/9p5-prefix/results.jsonl",
+      "raw_sha256": "167311582ba46899e1c0969f525a7b6ae8bcd098b85ddfa42dde32cdd5cf89b3",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "10p0-prefix",
+      "kind": "two_query_screen",
+      "started_at_utc": "2026-10-23T04:08:43.826496+00:00",
+      "configured_gap_seconds": 10.0,
+      "configured_gap_exercised": true,
+      "intended_query_count": 2,
+      "attempted_query_count": 2,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "results"
+      ],
+      "outcome_counts": {
+        "results": 2
+      },
+      "http_status_counts": {
+        "200": 2
+      },
+      "challenge_case_ids": [],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 10.014,
+        "median": 10.014,
+        "max": 10.014
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 10.806,
+        "median": 10.806,
+        "max": 10.806
+      },
+      "idle_before_first_request_seconds": 120.288,
+      "watchdog_elapsed_seconds": 12.251,
+      "peak_process_tree_rss_bytes": 50249728,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/10p0-prefix/results.jsonl",
+      "raw_sha256": "50993feca59cbc6f6d250cfbad04e20daf7ed2076ff385c4619cda5b140edb07",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "10p0-full",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T04:10:55.434677+00:00",
+      "configured_gap_seconds": 10.0,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 9,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local",
+        "foodie_local",
+        "seven_shores_local",
+        "bauer_local",
+        "gols_local",
+        "korner_local",
+        "staples_name",
+        "farah_name"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "blocked"
+      ],
+      "outcome_counts": {
+        "results": 8,
+        "blocked": 1
+      },
+      "http_status_counts": {
+        "200": 8,
+        "202": 1
+      },
+      "challenge_case_ids": [
+        "farah_name"
+      ],
+      "complete_full_batch_pass": false,
+      "actual_response_to_next_request_seconds": {
+        "min": 10.011,
+        "median": 10.015,
+        "max": 10.02
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 10.532,
+        "median": 10.564,
+        "max": 10.814
+      },
+      "idle_before_first_request_seconds": 120.304,
+      "watchdog_elapsed_seconds": 85.882,
+      "peak_process_tree_rss_bytes": 49971200,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/10p0-full/results.jsonl",
+      "raw_sha256": "5eb1b03c1e8ceb70e85629f4a67627f456541416fdb57c868eb1df86acfaf321",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    },
+    {
+      "run": "10p5-full",
+      "kind": "full_batch_attempt",
+      "started_at_utc": "2026-10-23T04:14:20.754363+00:00",
+      "configured_gap_seconds": 10.5,
+      "configured_gap_exercised": true,
+      "intended_query_count": 14,
+      "attempted_query_count": 14,
+      "ordered_case_ids": [
+        "staples_local",
+        "farah_local",
+        "foodie_local",
+        "seven_shores_local",
+        "bauer_local",
+        "gols_local",
+        "korner_local",
+        "staples_name",
+        "farah_name",
+        "foodie_name",
+        "staples_descriptor",
+        "farah_descriptor",
+        "foodie_descriptor",
+        "nonexistent_control"
+      ],
+      "ordered_outcomes": [
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "results",
+        "empty"
+      ],
+      "outcome_counts": {
+        "results": 13,
+        "empty": 1
+      },
+      "http_status_counts": {
+        "200": 14
+      },
+      "challenge_case_ids": [],
+      "complete_full_batch_pass": true,
+      "actual_response_to_next_request_seconds": {
+        "min": 10.507,
+        "median": 10.514,
+        "max": 10.519
+      },
+      "actual_request_start_intervals_seconds": {
+        "min": 11.013,
+        "median": 11.081,
+        "max": 11.638
+      },
+      "idle_before_first_request_seconds": 120.297,
+      "watchdog_elapsed_seconds": 145.924,
+      "peak_process_tree_rss_bytes": 50921472,
+      "watchdog_returncode": 0,
+      "raw_path": ".local/merchant-search-ddgs/interval-probe/10p5-full/results.jsonl",
+      "raw_sha256": "2698ec8e8b5b66e345a20ce5de339faa1ff6e3b5c9ee5f671421f41a235f310d",
+      "runner_sha256": "4a59d915fc42c2c2d9c032b51d3d606c43902e1a5bd69064764432d212ed3eb6"
+    }
+  ]
+}

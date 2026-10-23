@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import hashlib
 import importlib.metadata
 import json
+import math
 from pathlib import Path
 import platform
 import re
@@ -75,13 +76,15 @@ def search_one(case: dict, client=None, engine: str = "duckduckgo", response_dir
         # is recorded and checked. Challenge destinations are never followed.
         kwargs["follow_redirects"] = False
         started = time.monotonic()
-        item = {"method": method, "url": url, "query_parameters": kwargs.get("params", kwargs.get("data"))}
+        item = {"method": method, "url": url, "query_parameters": kwargs.get("params", kwargs.get("data")), "started_monotonic": started}
         requests.append(item)
         try:
             response = original_request(self, method, url, *args, **kwargs)
         except Exception as exc:
-            item.update(elapsed_seconds=round(time.monotonic() - started, 3), error_type=type(exc).__name__)
+            ended = time.monotonic()
+            item.update(elapsed_seconds=round(ended - started, 3), ended_monotonic=ended, error_type=type(exc).__name__)
             raise
+        ended = time.monotonic()
         text = response.text
         marker_seen = any(
             marker in text.lower()
@@ -101,7 +104,8 @@ def search_one(case: dict, client=None, engine: str = "duckduckgo", response_dir
         )
         title_match = re.search(r"<title[^>]*>(.*?)</title>", text, flags=re.IGNORECASE | re.DOTALL)
         item.update(
-            elapsed_seconds=round(time.monotonic() - started, 3),
+            elapsed_seconds=round(ended - started, 3),
+            ended_monotonic=ended,
             status=response.status_code,
             bytes=len(response.content),
             body_sha256=hashlib.sha256(response.content).hexdigest(),
@@ -177,6 +181,8 @@ def main() -> None:
         parser.error("bing-selectors requires --engine bing")
     if args.adapter_variant == "google-standard-route" and args.engine != "google":
         parser.error("google-standard-route requires --engine google")
+    if not math.isfinite(args.gap_seconds) or args.gap_seconds < 0.5:
+        parser.error("The research pause must be finite and at least 0.5 seconds")
     if args.worker:
         print(json.dumps(search_one(json.loads(args.worker), engine=args.engine, response_dir=args.response_dir, adapter_variant=args.adapter_variant)), flush=True)
         return
@@ -194,8 +200,8 @@ def main() -> None:
     if args.validate_only:
         print(json.dumps({"valid": True, "case_count": len(cases), "ids": [c["id"] for c in cases]}))
         return
-    if not args.output or args.gap_seconds < 3:
-        parser.error("An output path and at least a three-second gap are required")
+    if not args.output:
+        parser.error("An output path is required")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     failures = 0
     client = None
