@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "purpose": "Small public-name retrieval diagnostic, not a category-accuracy benchmark.",
+  "cases": [
+    {"id": "staples_local", "merchant": "Staples", "variant": "name_and_locality", "query": "Staples Waterloo Ontario"},
+    {"id": "farah_local", "merchant": "Farah Foods", "variant": "name_and_locality", "query": "Farah Foods Waterloo Ontario"},
+    {"id": "foodie_local", "merchant": "Foodie Frutie", "variant": "name_and_locality", "query": "Foodie Frutie Waterloo Ontario"},
+    {"id": "seven_shores_local", "merchant": "Seven Shores", "variant": "name_and_locality", "query": "Seven Shores Waterloo Ontario"},
+    {"id": "bauer_local", "merchant": "The Bauer Kitchen", "variant": "name_and_locality", "query": "The Bauer Kitchen Waterloo Ontario"},
+    {"id": "gols_local", "merchant": "Gol's Lanzhou Noodle", "variant": "name_and_locality", "query": "Gol's Lanzhou Noodle Waterloo Ontario"},
+    {"id": "korner_local", "merchant": "Korner Kitchen", "variant": "name_and_locality", "query": "Korner Kitchen Waterloo Ontario"},
+    {"id": "staples_name", "merchant": "Staples", "variant": "name_only", "query": "Staples"},
+    {"id": "farah_name", "merchant": "Farah Foods", "variant": "name_only", "query": "Farah Foods"},
+    {"id": "foodie_name", "merchant": "Foodie Frutie", "variant": "name_only", "query": "Foodie Frutie"},
+    {"id": "staples_descriptor", "merchant": "Staples", "variant": "fictional_bank_descriptor", "query": "STAPLES #021 WATERLOO ON"},
+    {"id": "farah_descriptor", "merchant": "Farah Foods", "variant": "fictional_bank_descriptor", "query": "FARAH FOODS WATERLOO ON"},
+    {"id": "foodie_descriptor", "merchant": "Foodie Frutie", "variant": "fictional_bank_descriptor", "query": "FOODIE FRUTIE WATERLOO ON"},
+    {"id": "nonexistent_control", "merchant": "Zorblax Quenibble 7F4C", "variant": "fictional_negative_control", "query": "\"Zorblax Quenibble 7F4C\" Waterloo Ontario"}
+  ]
+}

@@ -1,0 +1,311 @@
+{
+  "attempted_queries": 14,
+  "business_queries": 13,
+  "business_queries_with_nonempty_results": 12,
+  "challenge_responses": 1,
+  "unique_merchants_with_nonempty_results": 7,
+  "median_success_seconds": 0.796,
+  "min_success_seconds": 0.614,
+  "max_success_seconds": 0.96,
+  "request_count": 14,
+  "search_hosts": [
+    "https://html.duckduckgo.com/html/"
+  ],
+  "raw_artifacts": {
+    "stock.jsonl": "7f0157605360cbedb287aa9596a49b7d3d51082bb60ae56a577445cea286e838",
+    "shared.jsonl": "9eaea06d214bf9ed4e83353b9558edf5680168789041d5c7dfeeb568a670b521"
+  },
+  "local_date": "2026-10-22",
+  "assessment_method": "Agent manual reading of returned titles/snippets; not human-labelled truth, an automatic extractor, or a classifier evaluation.",
+  "model_calls": 0,
+  "result_page_fetches": 0,
+  "contexts": [
+    {
+      "merchant": "Staples",
+      "concise_context": "Office-supply and electronics retailer with printing services.",
+      "source_case_id": "staples_local",
+      "evidence": [
+        {
+          "rank": 1,
+          "url": "https://stores.staples.ca/on/waterloo/office-supplies-ca-120.html"
+        },
+        {
+          "rank": 2,
+          "url": "https://stores.staples.ca/on/waterloo/"
+        }
+      ],
+      "limits": "Brand and Waterloo locality supported; purchased item and exact branch unverified."
+    },
+    {
+      "merchant": "Farah Foods",
+      "concise_context": "Grocery/convenience retailer with mixed product lines.",
+      "source_case_id": "farah_descriptor",
+      "evidence": [
+        {
+          "rank": 2,
+          "url": "https://canada.chamberofcommerce.com/business-directory/ontario/waterloo/grocery-store/651196-farah-foods"
+        },
+        {
+          "rank": 4,
+          "url": "https://farah-foods-1.wheree.com/"
+        },
+        {
+          "rank": 5,
+          "url": "https://www.facebook.com/farahs170/"
+        }
+      ],
+      "limits": "Waterloo candidates supported; name-only search mixed multiple cities and one listing emphasized vape products."
+    },
+    {
+      "merchant": "Foodie Frutie",
+      "concise_context": "Restaurant with sushi/Asian-food menu evidence.",
+      "source_case_id": "foodie_local",
+      "evidence": [
+        {
+          "rank": 3,
+          "url": "https://foodie-fruitie.wheree.com/menu"
+        },
+        {
+          "rank": 5,
+          "url": "https://www.tripadvisor.ca/Restaurant_Review-g181736-d12133229-Reviews-Foodie_Fruitie-Waterloo_Region_of_Waterloo_Ontario.html"
+        }
+      ],
+      "limits": "Search resolves to spelling Foodie Fruitie and the Waterloo address; identity remains a candidate."
+    },
+    {
+      "merchant": "Seven Shores",
+      "concise_context": "Community cafe in Uptown Waterloo.",
+      "source_case_id": "seven_shores_local",
+      "evidence": [
+        {
+          "rank": 1,
+          "url": "http://www.sevenshores.ca/"
+        }
+      ],
+      "limits": "Official-site snippet provides type and locality."
+    },
+    {
+      "merchant": "The Bauer Kitchen",
+      "concise_context": "Bistro/restaurant in Waterloo.",
+      "source_case_id": "bauer_local",
+      "evidence": [
+        {
+          "rank": 2,
+          "url": "https://www.opentable.ca/the-bauer-kitchen"
+        },
+        {
+          "rank": 3,
+          "url": "https://www.thebauerkitchen.ca/eats"
+        },
+        {
+          "rank": 5,
+          "url": "https://www.opentable.com/the-bauer-kitchen"
+        }
+      ],
+      "limits": "First result contains mostly contact details; later results supply business type."
+    },
+    {
+      "merchant": "Gol's Lanzhou Noodle",
+      "concise_context": "Noodle restaurant specializing in freshly pulled beef-noodle soup.",
+      "source_case_id": "gols_local",
+      "evidence": [
+        {
+          "rank": 2,
+          "url": "https://www.yelp.ca/biz/gols-lanzhou-noodle-waterloo-2"
+        },
+        {
+          "rank": 4,
+          "url": "https://restaurantguru.com/Gols-Lanzhou-Noodle-Waterloo"
+        },
+        {
+          "rank": 5,
+          "url": "https://lanzhou.ca/"
+        }
+      ],
+      "limits": "Official location result supports Waterloo; later snippets provide cuisine/type."
+    },
+    {
+      "merchant": "Korner Kitchen",
+      "concise_context": "Breakfast/lunch diner.",
+      "source_case_id": "korner_local",
+      "evidence": [
+        {
+          "rank": 1,
+          "url": "https://kornerkitchen.ca/"
+        },
+        {
+          "rank": 4,
+          "url": "https://www.tripadvisor.ca/Restaurant_Review-g181736-d8066171-Reviews-Korner_Kitchen-Waterloo_Region_of_Waterloo_Ontario.html"
+        }
+      ],
+      "limits": "Official-site snippet provides business type; directory result supports Waterloo."
+    }
+  ],
+  "query_outcomes": [
+    {
+      "id": "staples_local",
+      "query": "Staples Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.9,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "farah_local",
+      "query": "Farah Foods Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "blocked",
+      "nonempty_result_count": 0,
+      "elapsed_seconds": 0.475,
+      "http_statuses": [
+        202
+      ]
+    },
+    {
+      "id": "foodie_local",
+      "query": "Foodie Frutie Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.96,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "seven_shores_local",
+      "query": "Seven Shores Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.833,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "bauer_local",
+      "query": "The Bauer Kitchen Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.801,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "gols_local",
+      "query": "Gol's Lanzhou Noodle Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.671,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "korner_local",
+      "query": "Korner Kitchen Waterloo Ontario",
+      "variant": "name_and_locality",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.807,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "staples_name",
+      "query": "Staples",
+      "variant": "name_only",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.614,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "farah_name",
+      "query": "Farah Foods",
+      "variant": "name_only",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.832,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "foodie_name",
+      "query": "Foodie Frutie",
+      "variant": "name_only",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.678,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "staples_descriptor",
+      "query": "STAPLES #021 WATERLOO ON",
+      "variant": "fictional_bank_descriptor",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.736,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "farah_descriptor",
+      "query": "FARAH FOODS WATERLOO ON",
+      "variant": "fictional_bank_descriptor",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.791,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "foodie_descriptor",
+      "query": "FOODIE FRUTIE WATERLOO ON",
+      "variant": "fictional_bank_descriptor",
+      "recorded_status": "results",
+      "nonempty_result_count": 5,
+      "elapsed_seconds": 0.684,
+      "http_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "nonexistent_control",
+      "query": "\"Zorblax Quenibble 7F4C\" Waterloo Ontario",
+      "variant": "fictional_negative_control",
+      "recorded_status": "results",
+      "nonempty_result_count": 0,
+      "elapsed_seconds": 0.736,
+      "http_statuses": [
+        200
+      ]
+    }
+  ],
+  "negative_control": {
+    "id": "nonexistent_control",
+    "raw_result": [
+      {
+        "title": "",
+        "href": "",
+        "body": ""
+      }
+    ],
+    "assessment": "No usable evidence. The stock parser emitted an all-blank result; reject it before enrichment."
+  }
+}
