@@ -112,6 +112,12 @@ import GroundKeeperCore
                     showingSetup = false; selectedTab = .spending
                 }
             }
+            #if DEBUG
+            if InterfacePreview.isEnabled && CommandLine.arguments.contains("--council-preview") {
+                try await CouncilPreview.seed(opened.0)
+                showingSetup = false; showTransactions()
+            }
+            #endif
             shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? false
             let searchSettings = try await store?.merchantSearchSettings() ?? .init()
             merchantSearchEnabled = searchSettings.enabled; merchantSearchLocality = searchSettings.locality

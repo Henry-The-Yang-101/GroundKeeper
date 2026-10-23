@@ -39,9 +39,11 @@ extension AppWorkspace {
         perform {
             guard let store = self.store, let qwen = self.councilQwenURL, let laya = self.councilLayaURL else { return }
             let shortcut = self.shortcutName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let previousStatus = self.classifierStatus
+            var activated = false
             self.model = nil
             var members: [CouncilMember] = []
-            defer { self.model = nil }
+            defer { self.model = nil; if !activated { self.classifierStatus = previousStatus } }
             for (backend, url) in [("qwen_mlx", qwen), ("laya_mps", laya)] {
                 self.classifierStatus = "Council · verifying \(backend == "qwen_mlx" ? "Qwen" : "Laya")…"
                 let access = url.startAccessingSecurityScopedResource()
@@ -58,11 +60,12 @@ extension AppWorkspace {
                 policy: apple.policyVersion, configuration: String(decoding: JSONEncoder().encode(apple), as: UTF8.self), select: false)
             members.append(CouncilMember(id: apple.manifestSHA256, name: apple.modelID, backend: apple.backend))
             let configuration = try CouncilConfiguration(members: members)
+            try await store.registerCouncil(configuration)
             // Keep the active package bookmarks separate from editable setup choices.
             for backend in ["qwen_mlx", "laya_mps"] {
                 AppPreferences.defaults.set(AppPreferences.defaults.data(forKey: "councilPackage.\(backend)"), forKey: "activeCouncilPackage.\(backend)")
             }
-            try await store.registerCouncil(configuration)
+            activated = true
             self.councilConfiguration = configuration; self.classifierProvider = "council"
             AppPreferences.defaults.set("council", forKey: "classifierProvider")
             AppPreferences.defaults.set(shortcut, forKey: "activeCouncilShortcut")
@@ -87,6 +90,7 @@ extension AppWorkspace {
             shortcut: AppPreferences.defaults.string(forKey: "activeCouncilShortcut") ?? "GK Categorize Cloud")
         try await store.enqueueCouncil(configID: configuration.id)
         var remaining = try await store.snapshot(limit: 1).pendingJobs
+        do {
         while remaining > 0 {
             try Task.checkCancellation()
             let processed = try await CouncilRunner.runBatch(store: store, configuration: configuration, engine: engine, limit: min(remaining, 8), search: { task in
@@ -96,7 +100,9 @@ extension AppWorkspace {
             remaining -= processed
             try await refresh()
         }
-        try await client.releaseModel()
+        }
+        catch { try? await client.releaseModel(); throw error }
+        try? await client.releaseModel()
         try await refresh()
     }
     func councilReport(transactionID: String) async throws -> CouncilReport? { try await store?.councilReport(transactionID: transactionID) }

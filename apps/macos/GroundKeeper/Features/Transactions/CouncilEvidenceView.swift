@@ -6,16 +6,28 @@ struct CouncilEvidenceView: View {
     let transactionID: String
     @State private var report: CouncilReport?
     @State private var error: String?
+    @State private var loading = true
+    @State private var expanded = false
     var body: some View {
         Group {
-            if let report {
+            if loading {
+                Section { ProgressView("Loading council details…").controlSize(.small) }
+            } else if let report {
                 Section {
                     Text(report.result.title).font(.headline)
+                    if !report.isCurrentRevision {
+                        Text("Saved council result from an earlier transaction revision.").font(.caption).foregroundStyle(AppStyle.muted)
+                    }
                     if report.result.decision == nil {
                         Text("Council kept the current categorization. Compare the individual suggestions below, or use Retry failed in Sync for another attempt.")
                             .font(.caption).foregroundStyle(AppStyle.muted)
                     } else { Text("Council suggestion · needs your review").font(.caption).foregroundStyle(AppStyle.muted) }
-                    DisclosureGroup("Member decisions and sources") {
+                    Button {
+                        expanded.toggle()
+                    } label: {
+                        Label("Member decisions and sources", systemImage: expanded ? "chevron.down" : "chevron.right")
+                    }.buttonStyle(.plain).accessibilityValue(expanded ? "Expanded" : "Collapsed")
+                    if expanded {
                         VStack(alignment: .leading, spacing: 14) {
                             ForEach(report.result.votes, id: \.member.id) { vote in
                                 VStack(alignment: .leading, spacing: 4) {
@@ -43,6 +55,7 @@ struct CouncilEvidenceView: View {
                 } header: { Text("Model council").font(VaultTypography.section) }
             } else if let error { Section("Model council") { Text(error).font(.caption).foregroundStyle(.red) } }
         }.task(id: transactionID) {
+            defer { loading = false }
             do { report = try await workspace.councilReport(transactionID: transactionID) }
             catch { self.error = "Council details could not be loaded. Reopen this transaction to retry." }
         }
