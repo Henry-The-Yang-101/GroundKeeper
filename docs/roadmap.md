@@ -156,26 +156,46 @@ Shared output: `type`, `category`, `review`.
   Record model/adapter and policy versions. Upgrades and reclassification are
   deliberate; never silently switch a local mode to cloud processing.
 
-### Council proposal
+### Council design
 
-Give all three providers the same input and policy. Sum configurable provider
-weights for valid `(type, category)` decisions and select the strongest supported
-choice. Keep review separate and conservative; validate the final JSON.
+Council explicitly selects Qwen, Laya and an Apple Intelligence Shortcut under
+`groundkeeper-18-v1`. Version `council-equal-v1` gives each provider weight 1.
+Vote on complete `(type, category)` pairs; never combine independently winning
+fields. Two matching valid decisions produce a suggestion. Three different
+answers, a tie, or only one valid response produce no council consensus.
+All suggestions require review, including unanimous results. User-confirmed
+choices are preserved. Review flags and vote shares are not confidence scores.
 
-- Select weights and acceptance thresholds using held-out validation and real
-  calibration data. Do not directly average incomparable confidence scores or
-  assume model agreement proves correctness.
-- Ties, material disagreement, unsupported evidence, and provider review flags
-  require review until a more specific policy is validated.
-- On timeout, quota exhaustion, offline operation, or invalid output, record the
-  missing provider and mark any partial result as degraded/requiring review.
-  Minimum participation, retry/defer behavior, and weight normalization for
-  partial results remain open decisions.
-- Preserve individual decisions, participating providers, weights, versions,
-  disagreement, and the final result for inspection and reproducibility.
-- Council includes cloud processing. Make that clear at selection and send only
-  classifier input, excluding account/card identifiers, amounts, and unrelated
-  notification fields; minimize identifiers within descriptions too.
+- Retrieve optional DuckDuckGo evidence once per transaction attempt and freeze
+  it in the parent run. Members receive the same saved search snapshot; retries
+  reuse it, rather than searching again. Search remains a separate opt-in and
+  failure continues with original evidence. Shared snippets can cause correlated
+  errors; agreement does not verify merchant identity or purchased items.
+- Preserve the common evidence snapshot and each member's actual authorized
+  input/hash. Local members may use receipt context; Apple receives receipt text
+  only with the separate receipt-sharing consent. Bind each child run to its
+  saved projection and the parent transaction/revision/policy.
+- Coordinate bounded batches in Swift, retaining one heavyweight local model
+  at a time. Registering members does not select an individual provider or retire
+  another member's jobs. Only the parent result can create a Council assignment.
+- Record member identities, equal weights, valid outputs, timeouts, invalid
+  responses and unavailable/skipped providers. Two agreeing valid members with
+  a missing third produce a degraded suggestion requiring review. Do not
+  normalize one surviving member into consensus. No consensus leaves the current
+  assignment in place and exposes alternatives for review and explicit retry.
+- Cancellation and process interruption release work through the persistent
+  queue without applying incomplete results. Revision/confirmation checks prevent
+  late results from replacing edits. Apple quota/configuration failures do not
+  trigger immediate retry loops or silently change the selected mode.
+- Selection discloses Apple processing and shows Qwen/Laya package readiness
+  and the configured Shortcut. Search and receipt consent remain separate.
+  Transaction details show member suggestions, failures and saved search sources.
+  Avoid confidence percentages and user-facing weight sliders in this version.
+- Future weights require the same independently reviewed validation cases for
+  every member, including shared retrieval evidence and unseen merchants. Compare
+  equal voting, weighted voting and individual models; reserve an untouched test
+  set. Model size, synthetic scores and incomparable self-confidence values do
+  not establish weights. Apple's underlying serving model is not pinned.
 
 Compare all four modes on decision accuracy, review burden, latency, memory, and
 availability. Synthetic scores are development evidence, not real transaction
