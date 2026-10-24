@@ -104,8 +104,9 @@ struct TransactionEditor: View {
                 CouncilEvidenceView(transactionID: original.id.uuidString)
             }
             .formStyle(.grouped).scrollContentBackground(.hidden)
+            .disabled(workspace.saving)
             SheetFooter {
-                Button("Cancel", action: cancel).keyboardShortcut(.cancelAction)
+                Button("Cancel", action: cancel).keyboardShortcut(.cancelAction).disabled(workspace.saving)
                 Spacer()
                 Button("Save transaction") { save() }
                     .buttonStyle(.brass)
@@ -114,7 +115,7 @@ struct TransactionEditor: View {
             }
         }
         .frame(width: 530, height: 600)
-        .interactiveDismissDisabled(isChanged)
+        .interactiveDismissDisabled(isChanged || workspace.saving)
         .onAppear { merchantFocused = true }
         .onChange(of: draft.accountID) { _, id in
             if let account = workspace.accounts.first(where: { $0.id == id }) { draft.currency = account.currency; draft.account = account.name }
