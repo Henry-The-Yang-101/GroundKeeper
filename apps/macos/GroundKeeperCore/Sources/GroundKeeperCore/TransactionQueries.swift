@@ -77,6 +77,10 @@ extension LedgerStore {
         return LedgerTransactionPage(transactions: rows.map(Self.ledgerTransaction), totalMatches: total, offset: start)
     }
 
+    public func transaction(id: String) throws -> LedgerTransaction? {
+        try db.query(Self.ledgerTransactionSQL + " WHERE t.state='active' AND t.id=?", [.text(id)]).first.map(Self.ledgerTransaction)
+    }
+
     public func transactionReviewCount() throws -> Int {
         Int(try db.query("WITH ledger AS (\(Self.ledgerTransactionSQL)) SELECT count(DISTINCT id) AS n FROM ledger WHERE state='active' AND (needs_review=1 OR open_review=1)").first!.number("n"))
     }

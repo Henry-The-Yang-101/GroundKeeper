@@ -10,6 +10,7 @@ struct ReportEntryRow: View {
                 Text(entry.description).fontWeight(.medium).lineLimit(2).help(entry.description)
                 Text(entry.day + (entry.pending ? " · Pending" : "") + (entry.needsReview ? " · Needs review" : ""))
                     .font(.caption).foregroundStyle(AppStyle.muted)
+                Text(entry.accountName).font(.caption).foregroundStyle(AppStyle.muted)
             }
             Spacer(minLength: 0)
             Text(ReportFormat.money(entry.net, currency)).monospacedDigit().fixedSize()
@@ -22,7 +23,9 @@ struct ReportTransactionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     let drilldown: ReportDrilldown
     @State private var rows: [SpendingEntry] = []
-    @State private var merchantEntry: SpendingEntry?
+    @State private var presentation: ReportEntryPresentation?
+    @State private var openingEntryID: String?
+    @State private var entryError: String?
     @State private var page = 0
     @State private var previous = false
     @State private var loading = false
@@ -44,6 +47,7 @@ struct ReportTransactionsSheet: View {
                 }
                 Text("\(filter.currency) · \(filter.includePending ? "Includes pending" : "Posted only") · \(filter.purchasesOnly ? "Purchase amounts before refunds." : "Refunds reduce spending.") Category and tag filters show only the matching portions of split purchases.")
                     .font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
+                if let entryError { Text(entryError).font(.callout).foregroundStyle(.red) }
                 Divider()
                 if loading { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else if let error { Text(error).frame(maxWidth: .infinity, maxHeight: .infinity) }
@@ -54,7 +58,16 @@ struct ReportTransactionsSheet: View {
                             ForEach(rows) { entry in
                                 HStack {
                                     ReportEntryRow(entry: entry, currency: filter.currency)
-                                    Button { merchantEntry = entry } label: { Image(systemName: "building.2") }
+                                        .contentShape(Rectangle())
+                                        .onTapGesture(count: 2) { open(entry, receipts: false) }
+                                    Button("Edit") { open(entry, receipts: false) }
+                                        .buttonStyle(.borderless).accessibilityLabel("Edit " + entry.description)
+                                        .disabled(openingEntryID != nil)
+                                    Button { open(entry, receipts: true) } label: { Image(systemName: "doc.text") }
+                                        .buttonStyle(.borderless).help("View notes and receipts")
+                                        .accessibilityLabel("Notes and receipts for " + entry.description)
+                                        .disabled(openingEntryID != nil)
+                                    Button { presentation = .merchant(entry) } label: { Image(systemName: "building.2") }
                                         .buttonStyle(.borderless).help("Correct merchant for this entry")
                                         .accessibilityLabel("Correct merchant for " + entry.description)
                                 }
@@ -83,8 +96,81 @@ struct ReportTransactionsSheet: View {
             } catch is CancellationError { return }
             catch { guard !Task.isCancelled else { return }; self.error = error.localizedDescription; loading = false }
         }
-        .sheet(item: $merchantEntry) { TransactionMerchantSheet(entry: $0).environment(workspace).vaultSheet() }
-        .onChange(of: workspace.ready) { if !workspace.ready { rows = []; merchantEntry = nil; dismiss() } }
+        .sheet(item: $presentation) { destination in
+            Group {
+                switch destination {
+                case .merchant(let entry): TransactionMerchantSheet(entry: entry)
+                case .editor(let transaction): ReportEvidenceEditor(transaction: transaction)
+                case .receipts(let transaction): ReportEvidenceReceipts(transaction: transaction)
+                }
+            }.environment(workspace).vaultSheet()
+        }
+        .onChange(of: workspace.ready) { if !workspace.ready { rows = []; presentation = nil; dismiss() } }
+    }
+
+    private func open(_ entry: SpendingEntry, receipts: Bool) {
+        guard openingEntryID == nil else { return }
+        openingEntryID = entry.id; entryError = nil
+        Task {
+            defer { openingEntryID = nil }
+            do {
+                guard let transaction = try await workspace.transaction(id: entry.id) else {
+                    entryError = "This transaction is no longer available. Refresh the report to update its entries."
+                    return
+                }
+                try Task.checkCancellation()
+                presentation = receipts ? .receipts(transaction) : .editor(transaction)
+            } catch is CancellationError { return }
+            catch { entryError = error.localizedDescription }
+        }
+    }
+}
+
+private enum ReportEntryPresentation: Identifiable {
+    case merchant(SpendingEntry)
+    case editor(Transaction)
+    case receipts(Transaction)
+
+    var id: String {
+        switch self {
+        case .merchant(let entry): "merchant-" + entry.id
+        case .editor(let transaction): "editor-" + transaction.id.uuidString
+        case .receipts(let transaction): "receipts-" + transaction.id.uuidString
+        }
+    }
+}
+
+private struct ReportEvidenceEditor: View {
+    @Environment(AppWorkspace.self) private var workspace
+    @Environment(\.dismiss) private var dismiss
+    let transaction: Transaction
+    @State private var saveError: String?
+
+    var body: some View {
+        TransactionEditor(transaction: transaction) { draft in
+            Task {
+                do { try await workspace.saveTransaction(draft); dismiss() }
+                catch { saveError = error.localizedDescription }
+            }
+        }
+        .alert("Transaction could not be saved", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
+            Button("OK") { saveError = nil }
+        } message: { Text(saveError ?? "") }
+    }
+}
+
+private struct ReportEvidenceReceipts: View {
+    let transaction: Transaction
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SheetHeading(title: "Notes & receipts", subtitle: transaction.merchant)
+            ScrollView {
+                ReceiptEvidenceView(transactionID: transaction.id.uuidString, transactionNote: transaction.notes)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(24)
+            }
+            SheetFooter { Spacer(); SheetDoneButton() }
+        }.frame(minWidth: 540, idealWidth: 640, minHeight: 420, idealHeight: 560)
     }
 }
 

@@ -273,6 +273,22 @@ import GroundKeeperCore
     func showTransactions(needingReview: Bool = false) {
         reviewOnly = needingReview; insightsSection = .transactions; selectedTab = .fullInsights
     }
+    func transaction(id: String) async throws -> Transaction? {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to view this transaction.") }
+        let record = try await store.transaction(id: id)
+        guard self.store === store else { throw CancellationError() }
+        return record.map(Transaction.init)
+    }
+    func saveTransaction(_ transaction: Transaction) async throws {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to save this transaction.") }
+        guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then save again.") }
+        saving = true
+        defer { saving = false }
+        try await store.save(transaction.edit)
+        guard self.store === store else { throw CancellationError() }
+        try await refresh()
+        feedback = WorkspaceFeedback(message: "Transaction saved")
+    }
     func save(_ transaction: Transaction) {
         perform {
             guard let store = self.store else { return }
