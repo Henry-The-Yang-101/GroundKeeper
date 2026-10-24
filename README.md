@@ -1,15 +1,23 @@
 # GroundKeeper
 
+GroundKeeper is a native macOS app for tracking and understanding personal
+spending. Bring together iPhone captures, bank CSVs, and manual entries; review
+category suggestions; and explore spending, repeated purchases, and changes
+over time. Reports and statistical findings run locally in Swift and SQL,
+without model calls.
 
-
-GroundKeeper is a local-first system designed to help you keep track of personal spending. Your ledger stays on your Mac, with no hosted GroundKeeper backend or cloud AI required. Your personal iCloud Drive delivers capture files from iPhone to Mac. Optional DuckDuckGo merchant search and Apple Intelligence providers send only the data described in their explicit settings; both can remain off.
+Your ledger stays on your Mac, with optional passphrase encryption and no hosted
+GroundKeeper backend or cloud AI required. Personal iCloud Drive delivers capture
+files from iPhone to Mac. Optional DuckDuckGo merchant search and Apple
+Intelligence providers use the data described in their explicit settings;
+both can remain off.
 
 iPhone Shortcuts capture transactions and pass them to your Mac through files in
 your personal iCloud Drive, the only bridge between the two devices. Your Mac
-processes each file, saves the transaction locally, and removes the file from the
-transfer queue. Captures join imported bank statements and manual entries in a
-local SQLite database that stays on your Mac, where you can review possible
-duplicates, correct details, and confirm category suggestions.
+processes each file and records its imported or quarantined status locally.
+Source files remain in iCloud; saved delivery identities prevent repeated
+imports. In the app, you can reconcile possible duplicates, correct details,
+and confirm category suggestions while preserving the original capture evidence.
 
 ## What you can do
 
@@ -17,21 +25,86 @@ duplicates, correct details, and confirm category suggestions.
 - Import a bank CSV, map its columns, and inspect invalid rows before saving.
 - Read captured transaction files from an iCloud Drive folder, resolve card
   labels to accounts, and review possible matches with existing transactions.
+  Assign an account for one capture or explicitly remember its card for future
+  imports. Settings lets you change or remove remembered mappings; Wallet and
+  bank descriptions are mapped separately.
 - Search, filter, edit, and soft-delete saved transactions. The transaction
   list loads 500 rows per page; search and filters apply to the current page.
+- See the current month's spending on Home and explore the complete ledger in
+  **Spending**: purchases, refunds, net spending, counts, averages, largest
+  purchases, category breakdowns, and charts with exact-value tables.
+- Compare periods and filter reports by account, merchant, category, or existing
+  tag. Use calendar, rolling, all-time, or custom ranges, with separate currencies
+  and configurable reporting timezone, week start, and pending inclusion.
+- See merchant spending and purchase frequency. Explicitly group statement names,
+  undo grouping, or correct a single purchase's merchant without merging purchases.
+- Inspect locally calculated spending changes, merchant concentration, weekly
+  trends, sustained shifts, and unusually large merchant purchases. Findings
+  explain their method and link to supporting transactions; dismiss them or
+  snooze them for seven days.
 - Run Qwen through MLX or Laya through PyTorch MPS on your Mac. Every category
   suggestion requires review, and later model replies cannot replace a
   confirmed correction.
 - Use Model council to consult Qwen, Laya and Apple Intelligence with equal votes,
   saved member decisions and explicit handling of disagreements or missing providers.
   Every suggestion requires review.
-- Optionally enrich classification with OCR text from a receipt photo, giving
-  the selected model purchased-item context beyond the merchant name. Keeping
-  the image is optional. See [receipt capture setup](shortcuts/README.md#optional-receipts).
+- Capture optional notes and receipt OCR alongside a payment, or attach a receipt
+  later. Review them in **Notes & receipts…** on the Mac. Keeping the image is
+  optional; captured notes remain separate from editable transaction notes and
+  are not sent to classifiers. See [receipt and note setup](shortcuts/README.md#optional-receipts-and-notes).
+- Choose an ordinary local database or a passphrase-encrypted vault. Lock the
+  encrypted vault, change its passphrase, or optionally enable convenience unlock
+  in a provisioned build. See [vault protection](docs/onboarding.md#storage-and-unlock).
 - Choose automatic processing while the app is open or run it manually with
   **Process queue**. Failed work has bounded retries and a visible review path.
   Closed-app background processing is available in source builds but disabled
-  in the free release after macOS rejected an ad hoc update.
+  in the free release after macOS rejected an ad hoc update. Encrypted vaults
+  require interactive unlock and cannot process work while the app is closed.
+
+The native interface supports System, Light, and Dark appearances, Reduce Motion,
+and a responsive Spending layout. See the [macOS guide](apps/macos/README.md)
+for interface and processing details.
+
+## Spending reports and findings
+
+Reports query the full ledger independently of the 500-row transaction page.
+Charts and supporting-transaction sheets preserve the selected scope; evidence
+is paginated across all matching records. Merchant reports show distinct purchase
+counts, repeats within the period, average purchase amounts, purchases per week,
+active purchase days, and average gaps. Active days are not verified store visits.
+
+Merchant identity conservatively normalizes statement names. Branch numbers,
+punctuation, and processor prefixes remain significant; ambiguous generic names
+stay unassigned. **Manage groups** lets you explicitly combine names under one
+merchant for existing automatic matches and future imports, then undo that rule.
+Per-purchase corrections survive later grouping changes. Models and web search
+do not decide merchant identities, and grouping never deduplicates purchases.
+
+Findings use deterministic rules and statistical tests over recorded history,
+with adjustable sensitivity and **How this was found** explanations. Supporting
+transactions include the actual analysis and baseline windows. Dismissals and
+seven-day snoozes persist across refreshes; reporting preferences can restore
+hidden findings. Ledger changes invalidate old results and trigger recalculation
+when reports refresh.
+
+Refunds reduce spending on their recorded date; transfers and card payments are
+excluded. Pending purchases are included by default and disclosed, while
+unconfirmed categories remain provisional. Findings require sufficient reviewed
+history and are suppressed by uncertain data in scope. Missing imports can affect
+patterns, and an empty date does not establish zero spending. These reports do
+not establish account completeness, causation, fraud, or future spending.
+Budgets, subscription detection, forecasts, receipt analytics, and insight
+notifications remain future work. See [spending reports and analysis rules](docs/spending-reports.md).
+
+## Classification and optional services
+
+Use a local model, an explicitly selected Apple Intelligence Shortcut, or
+**Model council**. Council gives Qwen, Laya, and Apple one vote each. Two matching
+valid type/category decisions produce a suggestion; if the third provider fails,
+the result is visibly partial. Without consensus, the current categorization
+stays in place. Member decisions and failures remain inspectable, including
+after a user correction. Every suggestion requires review. See [Council setup,
+policy, and verification](docs/council.md).
 
 An optional Apple Intelligence Shortcut provider is also wired into the queue.
 Enabling it sends the description, direction, and currency to the selected
@@ -41,25 +114,42 @@ automatically. See [provider setup and verification](docs/setup.md#choose-a-clas
 Receipt text is shared with this provider only when **Include receipt text with
 Apple Intelligence** is enabled; that separate setting is off by default.
 
+Live Apple inference through the sandboxed app remains unverified in the latest
+recorded checks. Qwen and Laya completed the native Council smoke check with
+Apple recorded unavailable; successful live three-member inference has not been
+demonstrated. See the [Apple availability limitation](docs/council.md#apple-availability-limitation).
+
 Optional **DuckDuckGo merchant search** adds bounded business titles/snippets and
 source URLs to Qwen, Laya, or Apple Intelligence inputs. It runs from the Mac,
 sending cleaned merchant terms and optional city/region to DuckDuckGo. It is off
 by default, caches evidence locally, and paces uncached searches roughly 11
 seconds apart before model processing time. It requires internet access, uses no
 API key or hosted GroundKeeper search backend, and never bypasses review.
-See [search setup](docs/setup.md#optional-duckduckgo-merchant-context).
+Search consent also permits forwarding retrieved context to the selected Apple
+Shortcut, which may process it in the cloud. Local Qwen/Laya inference stays
+local. See [search setup](docs/setup.md#optional-duckduckgo-merchant-context).
+
+Wallet captures can optionally supply a broad category hint as uncertain
+supporting evidence; it never directly assigns a category or overrides explicit
+purchase/receipt evidence. Configuring this requires category-filtered phone
+automations; the standard adapter leaves it blank. See the [Wallet hint guide](shortcuts/README.md#optional-wallet-category-hint).
 
 ## How it works
 
 ```mermaid
 flowchart TD
-    Phone["iPhone capture Shortcut"] --> Files["iCloud Drive JSON files"]
+    Phone["iPhone capture / notes / receipts"] --> Files["iCloud Drive capture files (retained)"]
     Files --> Core["Swift ingestion and reconciliation"]
     CSV["Bank CSV / manual entry"] --> Core
-    Core --> DB[("Local SQLite")]
+    Core --> DB[("Local SQLite / optional SQLCipher encryption")]
     DB --> UI["SwiftUI review and editing"]
+    DB --> Reports["Local Swift / SQL reports and statistical findings"]
+    Reports --> Spending["Home / Spending / supporting transactions"]
     DB --> Jobs["Persistent classification jobs"]
-    Jobs --> XPC["Sandboxed XPC service"]
+    Jobs -. "Optional merchant lookup" .-> Search["Separate search XPC service / DuckDuckGo"]
+    Search -. "Bounded evidence" .-> Routing["Swift provider routing / Council orchestration"]
+    Jobs --> Routing
+    Routing --> XPC["Classifier XPC service / embedded Python"]
     XPC --> Local["Qwen / MLX or Laya / MPS"]
     XPC --> Optional["Optional Apple Shortcut"]
     Local --> Review["Suggestions requiring review"]
@@ -75,12 +165,21 @@ the same record again; possible purchase duplicates still require reconciliation
 A bundled Objective-C XPC host runs CPython and the inference libraries outside
 the UI process. Local model packages have file hashes and a versioned manifest
 that the worker checks before loading. The classifier receives the transaction
-description, direction, currency, and optional bounded receipt OCR context.
-Receipt images are not sent to the classifier. It has no database connection.
+description, direction, currency, and authorized optional evidence: bounded
+receipt OCR, a Wallet category hint, and merchant-search snippets. Receipt images
+and captured notes are not sent to the classifier. It has no database connection.
+Swift orchestrates Council and records member inputs and outcomes. Merchant
+search uses a separate network-enabled XPC service; reporting and statistical
+analysis run locally without inference or search requests.
 
 iCloud transfers capture files. The live database stays in the Mac's sandbox
-container, outside iCloud Drive, and currently uses ordinary, unencrypted SQLite.
-The repository contains no bank login integration or native iPhone app.
+container, outside iCloud Drive. SQLCipher opens an ordinary SQLite database
+without a key, or encrypts the database and WAL with a passphrase. Provisioned
+builds can optionally store the passphrase in a device-local Keychain item,
+requiring Touch ID or the Mac password to retrieve it. Free ad hoc builds retain
+passphrase encryption but hide convenience unlock. Local encryption does not
+encrypt source captures or images retained in iCloud. There is no passphrase
+recovery service, bank login integration, or native iPhone app.
 
 ## Install a release
 
@@ -111,17 +210,26 @@ cd GroundKeeper
 uv sync --locked --python 3.12.9
 uv venv --python .venv/bin/python .local/laya/.venv
 uv pip install --python .local/laya/.venv/bin/python -r experiments/laya/requirements.lock
+uv venv --python .venv/bin/python .local/merchant-search-ddgs/venv
+uv pip install --python .local/merchant-search-ddgs/venv/bin/python -r experiments/merchant-search/requirements.txt
 
 ./apps/macos/run.sh
 ```
 
 The first setup downloads Python and dependencies as needed. The launcher
 packages the pinned Python runtime, builds the app with Xcode, and opens it.
-Both Python environments are required by the current bundle, even if you only
-want to try manual entries or CSV import. Model weights are separate.
+All three Python environments (main, Laya, and DDGS) are required by the current
+bundle, even for manual entries or with merchant search disabled. Model weights
+are separate.
 
-For a first run, add a fictional CAD account in Settings and import
-[`examples/transactions.csv`](examples/transactions.csv) from Sync. The
+On first launch, the setup assistant walks through vault protection, optional
+models, a capture folder, phone setup, and an account. Progress survives relaunch,
+and model/capture setup can be skipped. The assistant and Settings offer local
+model installation from the pinned catalog, with archive and package verification.
+See [onboarding and protection](docs/onboarding.md).
+
+For a first exercise, add a fictional CAD account during setup or in Settings,
+then import [`examples/transactions.csv`](examples/transactions.csv) from Sync. The
 [sample walkthrough](examples/README.md) gives the column mapping and a short
 editing exercise. You can try this workflow without a model or iCloud connection;
 the sample records are saved in the app's normal local database.
@@ -130,6 +238,16 @@ For an isolated spending walkthrough with automatically calculated insights, run
 `./apps/macos/run-demo.sh`. It builds and opens a fresh temporary vault with about
 600 imported fictional transactions. Use `--no-build` to reuse the Debug app;
 see the [demo guide](apps/macos/README.md#fictional-spending-demo) for details.
+For separately identified concurrent demos, use `--instance NAME` with a locally
+signed Debug build. The named copy is for fictional UI work; it does not validate
+live Keychain or classifier XPC behavior.
+
+For phone capture, install the shared writer before its Wallet or experimental
+CIBC adapter, set the inbox/assets destinations, and configure personal
+automations on the receiving phone. Adapter success notifications confirm the
+capture file was saved, not that iCloud uploaded it or the Mac imported it.
+Real Wallet triggers, locked-phone behavior, and CIBC triggering still require
+device verification. See [iPhone setup](shortcuts/README.md#iphone-capture-setup).
 
 See the [setup guide](docs/setup.md) for Xcode selection, signing, local model
 packages, Apple Shortcuts, capture setup, and troubleshooting.
@@ -148,9 +266,17 @@ After installing the Python project dependencies on Apple silicon:
 .venv/bin/python -m pytest -q
 ```
 
-These tests cover parsing, database constraints, reconciliation, classification
-contracts, and experiment utilities. Model inference and signed background
+These tests cover parsing, database constraints and migrations, encryption,
+reconciliation, receipts, full-ledger reporting, merchant identities and grouping,
+statistical patterns, Council, merchant search, classification contracts, and
+experiment utilities. Model inference and signed background
 execution have separate [app smoke checks](apps/macos/README.md#verification).
+After building Debug, `./scripts/check_spending_demo.sh` checks the fictional
+fixture and calculated reports in disposable vaults, including reconciliation,
+repeatable findings, and date boundaries. Recorded test and UI results, with
+their limits, are in the [spending guide](docs/spending-reports.md#verification)
+and [Council guide](docs/council.md). Fictional-data checks do not establish
+real-history detector precision or physical-iPhone behavior.
 Benchmark reports distinguish synthetic or AI-labeled agreement from accuracy
 against independently reviewed transactions.
 
@@ -162,15 +288,15 @@ models or exercise GPU inference, iCloud, or signed app services.
 
 | Path | Contents |
 | --- | --- |
-| [`apps/macos/`](apps/macos/README.md) | SwiftUI app, XPC service, Swift core, and native tests |
-| [`groundkeeper/`](groundkeeper/) | Python classifier worker, policy, constrained decoding, and merchant utilities |
-| [`contracts/`](contracts/) | Database schema, classifier protocol, and runtime pins |
-| [`docs/`](docs/README.md) | Setup, roadmap, category policy, and historical notes |
-| [`shortcuts/`](shortcuts/README.md) | Apple Intelligence exports and capture setup |
+| [`apps/macos/`](apps/macos/README.md) | SwiftUI app, classifier/search XPC services, Swift ledger and analysis core, and native tests |
+| [`groundkeeper/`](groundkeeper/) | Python classifier worker, policy, constrained decoding, receipt helpers, and merchant search |
+| [`contracts/`](contracts/) | Database schema, capture formats, classifier protocol, and runtime pins |
+| [`docs/`](docs/README.md) | Installation, onboarding, spending reports, Council, category policy, and roadmaps |
+| [`shortcuts/`](shortcuts/README.md) | Capture, receipt/OCR, and Apple Intelligence exports, editable sources, and phone setup |
 | [`release/`](release/) | Pinned model catalog, notices, and release notes |
 | [`examples/`](examples/README.md) | Fictional data for trying CSV import |
 | [`tests/`](tests/) | Python unit tests |
-| [`scripts/`](scripts/) | Runtime packaging, dataset preparation, training, and evaluation tools |
+| [`scripts/`](scripts/) | Runtime/release packaging, demo verification, dataset preparation, training, and evaluation tools |
 | [`experiments/`](experiments/) | Experiment configurations, annotations, and measured results |
 | [`research/`](research/) | Dataset investigations and earlier feasibility work |
 
