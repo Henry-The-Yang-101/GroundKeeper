@@ -22,6 +22,7 @@ struct ReportTransactionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     let drilldown: ReportDrilldown
     @State private var rows: [SpendingEntry] = []
+    @State private var merchantEntry: SpendingEntry?
     @State private var page = 0
     @State private var previous = false
     @State private var loading = false
@@ -50,7 +51,15 @@ struct ReportTransactionsSheet: View {
                 else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 6) {
-                            ForEach(rows) { entry in ReportEntryRow(entry: entry, currency: filter.currency); Divider() }
+                            ForEach(rows) { entry in
+                                HStack {
+                                    ReportEntryRow(entry: entry, currency: filter.currency)
+                                    Button { merchantEntry = entry } label: { Image(systemName: "building.2") }
+                                        .buttonStyle(.borderless).help("Correct merchant for this entry")
+                                        .accessibilityLabel("Correct merchant for " + entry.description)
+                                }
+                                Divider()
+                            }
                         }
                     }
                 }
@@ -74,7 +83,8 @@ struct ReportTransactionsSheet: View {
             } catch is CancellationError { return }
             catch { guard !Task.isCancelled else { return }; self.error = error.localizedDescription; loading = false }
         }
-        .onChange(of: workspace.ready) { if !workspace.ready { rows = []; dismiss() } }
+        .sheet(item: $merchantEntry) { TransactionMerchantSheet(entry: $0).environment(workspace).vaultSheet() }
+        .onChange(of: workspace.ready) { if !workspace.ready { rows = []; merchantEntry = nil; dismiss() } }
     }
 }
 
@@ -87,6 +97,9 @@ struct ReportFindingRow: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.headline)
             Text(detail).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
+            if let pattern = finding.pattern {
+                DisclosureGroup("How this was found") { Text(pattern.method).font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true) }
+            }
             ViewThatFits(in: .horizontal) {
                 HStack { evidenceButton; Spacer(); hideButtons }
                 VStack(alignment: .leading, spacing: 8) { evidenceButton; hideButtons }
@@ -94,11 +107,13 @@ struct ReportFindingRow: View {
         }
     }
     private var title: String {
+        if let pattern = finding.pattern { return pattern.title }
         if finding.kind == "purchase_pattern" { return "How purchase totals changed" }
         let name = finding.category.map(ReportFormat.category) ?? "Recorded spending"
         return name + (finding.current > finding.previous ? " increased" : " decreased")
     }
     private var detail: String {
+        if let pattern = finding.pattern { return pattern.detail }
         if finding.kind == "purchase_pattern" {
             let currentAverage = (Decimal(finding.current) / Decimal(finding.currentCount) / 100).formatted(.currency(code: filter.currency))
             let previousAverage = (Decimal(finding.previous) / Decimal(finding.previousCount) / 100).formatted(.currency(code: filter.currency))
@@ -108,9 +123,11 @@ struct ReportFindingRow: View {
     }
     private var evidenceButton: some View {
         Button("See supporting transactions") {
-            var result = filter
-            if let category = finding.category { result.category = category }
-            result.purchasesOnly = finding.kind == "purchase_pattern"
+            var result = finding.pattern?.evidenceFilter ?? filter
+            if finding.pattern == nil {
+                if let category = finding.category { result.category = category }
+                result.purchasesOnly = finding.kind == "purchase_pattern"
+            }
             open(result, title)
         }
     }

@@ -39,6 +39,9 @@ struct SpendingReportsView: View {
     @State private var accountID = ""
     @State private var category = ""
     @State private var tagID = ""
+    @State private var merchantID: String?
+    @State private var merchantChoices: [Merchant] = []
+    @State private var manageMerchants = false
     @State private var customStart = Calendar.current.date(byAdding: .day, value: -29, to: Date())!
     @State private var customEnd = Date()
     @State private var report: SpendingReport?
@@ -51,7 +54,7 @@ struct SpendingReportsView: View {
 
     private var selectionKey: String {
         [period.rawValue, comparison, currency, timezone, String(weekStart), String(includePending), sensitivity.rawValue,
-         accountID, category, tagID, String(customStart.timeIntervalSince1970), String(customEnd.timeIntervalSince1970)].joined(separator: "|")
+         accountID, category, tagID, merchantID ?? "all", String(customStart.timeIntervalSince1970), String(customEnd.timeIntervalSince1970)].joined(separator: "|")
     }
     private var loadKey: String { selectionKey + "|\(workspace.reportingRevision)|\(workspace.ready)|\(refresh)" }
     var body: some View {
@@ -69,6 +72,8 @@ struct SpendingReportsView: View {
                     UnavailableFeature(title: "No spending in this view", symbol: "chart.bar.xaxis", description: "Try another period or adjust the filters. Pending and unclassified entries are shown in the coverage note above.")
                 } else {
                     Surface { ReportTrendChart(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
+                    Surface { ReportPurchaseFrequency(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
+                    Surface { ReportMerchants(report: report, select: { merchantID = $0 }, manage: { manageMerchants = true }) }
                     Surface { ReportCategoryChart(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
                     if report.previous != nil {
                         Surface { ReportComparison(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
@@ -82,8 +87,9 @@ struct SpendingReportsView: View {
         }
         .task(id: loadKey) { await load() }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in refresh += 1 }
+        .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().environment(workspace).vaultSheet() }
         .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).environment(workspace).vaultSheet() }
-        .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = [] } }
+        .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
     }
 
     private var controls: some View {
@@ -113,6 +119,13 @@ struct SpendingReportsView: View {
                                 ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag($0.code) }
                             }
                         }
+                        AlignedFormField(title: "Merchant") {
+                            Picker("Merchant", selection: $merchantID) {
+                                Text("All merchants").tag(String?.none)
+                                Text("Unassigned merchant").tag(String?.some(""))
+                                ForEach(merchantChoices) { Text($0.name).tag(String?.some($0.id)) }
+                            }
+                        }
                         if !tags.isEmpty {
                             AlignedFormField(title: "Tag") {
                                 Picker("Tag", selection: $tagID) { Text("All tags").tag(""); ForEach(tags) { Text($0.name).tag($0.id) } }
@@ -137,16 +150,17 @@ struct SpendingReportsView: View {
                     }
                     Toggle("Include pending purchases", isOn: $includePending)
                     HStack {
-                        Button("Clear filters") { accountID = ""; category = ""; tagID = "" }
-                            .disabled(accountID.isEmpty && category.isEmpty && tagID.isEmpty)
+                        Button("Clear filters") { accountID = ""; category = ""; tagID = ""; merchantID = nil }
+                            .disabled(accountID.isEmpty && category.isEmpty && tagID.isEmpty && merchantID == nil)
+                        Button("Merchant names & groups") { manageMerchants = true }
                         Button("Restore hidden findings") {
                             Task { do { try await workspace.restoreFindings(); refresh += 1 } catch { self.error = error.localizedDescription } }
                         }
                     }.buttonStyle(.borderless)
                 }.padding(.top, 12)
             }.foregroundStyle(AppStyle.text)
-            if !accountID.isEmpty || !category.isEmpty || !tagID.isEmpty {
-                Text([workspace.accounts.first { $0.id == accountID }?.name, category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name].compactMap { $0 }.joined(separator: " · "))
+            if !accountID.isEmpty || !category.isEmpty || !tagID.isEmpty || merchantID != nil {
+                Text([workspace.accounts.first { $0.id == accountID }?.name, category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
                     .font(.caption).foregroundStyle(AppStyle.muted)
             }
         }
@@ -170,10 +184,11 @@ struct SpendingReportsView: View {
             var filter = SpendingFilter(range: ranges.0, baseline: baseline, currency: currency,
                                         accountID: accountID.isEmpty ? nil : accountID, category: category.isEmpty ? nil : category,
                                         tagID: tagID.isEmpty ? nil : tagID, includePending: includePending, timezone: timezone, weekStart: weekStart)
-            filter.sensitivity = sensitivity
+            filter.sensitivity = sensitivity; filter.merchantID = merchantID
+            let directory = try await workspace.merchantDirectory()
             let result = try await workspace.spendingReport(filter)
             try Task.checkCancellation()
-            tags = context.tags; report = result; lastSelectionKey = selectionKey; loading = false
+            tags = context.tags; merchantChoices = directory.merchants; report = result; lastSelectionKey = selectionKey; loading = false
         } catch is CancellationError { return }
         catch { guard !Task.isCancelled else { return }; self.error = error.localizedDescription; loading = false }
     }
@@ -182,7 +197,7 @@ struct SpendingReportsView: View {
         VStack(alignment: .leading, spacing: 18) {
             SectionHeading(title: "What changed", detail: "Calculated on this Mac")
             if report.findings.isEmpty {
-                Text("No new findings for this view. Comparisons need at least three reviewed purchases in each equal-length period, enough history, and a meaningful change. Hidden findings stay hidden.")
+                Text("No new findings for this view. Patterns require reviewed data and enough comparable history: at least three purchases per comparison period, eight complete weeks for trends, or eight earlier purchases for an unusual amount. Hidden findings stay hidden.")
                     .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             }
             ForEach(report.findings) { finding in

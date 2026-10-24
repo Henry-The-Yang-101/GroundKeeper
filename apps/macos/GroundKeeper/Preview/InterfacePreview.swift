@@ -48,6 +48,15 @@ enum InterfacePreview {
                 }
             }
         }
+        if CommandLine.arguments.contains("--spending-preview") {
+            let calendar = try ReportCalendar()
+            let today = calendar.day(Date())
+            // Distinct branches remain separate until the walkthrough confirms a group.
+            for (name, amount) in [("Neighbourhood Café 002", Int64(950)), ("Neighbourhood Café 003", 1100), ("Neighbourhood Café", 12500)] {
+                try await store.save(TransactionEdit(description: name, amountMinor: -amount, currency: "CAD", occurredOn: today,
+                                                    accountID: account.id, type: "expense", category: "dining", needsReview: false, notes: "Fictional merchant preview."))
+            }
+        }
         // Real capture-review controls, backed by the disposable preview vault.
         for (id, wallet, card) in [("preview-wallet", true, "Everyday card · 1234"),
                                    ("preview-bank", false, "CIBC Dividend Visa Card, 5678")] {

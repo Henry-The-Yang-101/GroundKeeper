@@ -221,6 +221,37 @@ import GroundKeeperCore
         guard self.store === store else { throw CancellationError() }
         return result
     }
+    func merchantDirectory() async throws -> (merchants: [Merchant], names: [MerchantName]) {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to manage merchants.") }
+        let merchants = try await store.merchants(), names = try await store.merchantNames()
+        guard self.store === store else { throw CancellationError() }
+        return (merchants, names)
+    }
+    func createMerchant(name: String) async throws -> String {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to manage merchants.") }
+        let id = try await store.createMerchant(name: name)
+        guard self.store === store else { throw CancellationError() }
+        return id
+    }
+    func groupMerchant(_ name: MerchantName, into merchantID: String?) async throws {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to manage merchants.") }
+        if let merchantID { try await store.groupMerchantName(key: name.key, merchantID: merchantID, expectedMerchantID: name.merchantID) }
+        else { try await store.restoreMerchantName(key: name.key, expectedMerchantID: name.merchantID) }
+        guard self.store === store else { throw CancellationError() }
+        try await refresh()
+    }
+    func transactionMerchant(id: String) async throws -> TransactionMerchant {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to manage merchants.") }
+        let result = try await store.transactionMerchant(id: id)
+        guard self.store === store else { throw CancellationError() }
+        return result
+    }
+    func setMerchant(_ transaction: TransactionMerchant, merchantID: String?, automatic: Bool) async throws {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to manage merchants.") }
+        try await store.setTransactionMerchant(id: transaction.transactionID, merchantID: merchantID, automatic: automatic, expectedRevision: transaction.revision)
+        guard self.store === store else { throw CancellationError() }
+        try await refresh()
+    }
     func hideFinding(_ id: String, snooze: Bool) async throws {
         guard let store else { return }
         try await store.setFindingPreference(id: id, dismissed: !snooze, snoozedUntil: snooze ? Date().addingTimeInterval(7 * 86400) : nil)
