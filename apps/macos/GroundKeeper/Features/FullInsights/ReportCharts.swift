@@ -91,7 +91,6 @@ struct ReportTrendChart: View {
 struct ReportCategoryChart: View {
     let report: SpendingReport
     let open: (SpendingFilter, String) -> Void
-    @State private var selected: String?
     @State private var trends = false
     private var calendar: ReportCalendar { try! ReportCalendar(timezone: report.filter.timezone, weekStart: report.filter.weekStart) }
     var body: some View {
@@ -122,12 +121,22 @@ struct ReportCategoryChart: View {
             }
             .chartYScale(domain: report.categories.map { ReportFormat.category($0.category) })
             .chartXScale(domain: .automatic(includesZero: true))
-            .chartYSelection(value: $selected)
-            .frame(height: CGFloat(max(1, report.categories.count)) * 34 + 30)
-            .onChange(of: selected) {
-                guard let selected, let category = report.categories.first(where: { ReportFormat.category($0.category) == selected }) else { return }
-                openCategory(category.category); self.selected = nil
+            // macOS chart value selection follows hover, including while the page scrolls.
+            // Present supporting transactions only after an explicit click inside the plot.
+            .chartOverlay { proxy in
+                GeometryReader { geometry in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .onTapGesture(coordinateSpace: .local) { location in
+                            guard let plotFrame = proxy.plotFrame else { return }
+                            let plot = geometry[plotFrame]
+                            guard plot.contains(location),
+                                  let selected = proxy.value(atY: location.y - plot.minY, as: String.self),
+                                  let category = report.categories.first(where: { ReportFormat.category($0.category) == selected }) else { return }
+                            openCategory(category.category)
+                        }
+                }
             }
+            .frame(height: CGFloat(max(1, report.categories.count)) * 34 + 30)
             }
             ForEach(report.categories) { category in
                 Button { openCategory(category.category) } label: {

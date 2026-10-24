@@ -13,7 +13,8 @@ separate page with its existing editing and review workflow.
 - Explore daily, weekly, or monthly bars and cumulative lines. Select a point
   to open the matching evidence, or use Table for exact values and keyboard access.
 - Category breakdowns show ranked net spending, purchase shares, review counts,
-  and stacked trends. Each category opens matching transaction portions.
+  and stacked trends. Click a category's bar or row to open matching transaction
+  portions. Hovering or scrolling over the chart does not open evidence sheets.
 - Compare with the previous period or the same period a year earlier. Month to
   date uses the same elapsed days where possible. Short months and leap years
   can produce unequal periods; both date ranges and day counts are disclosed,
@@ -160,6 +161,18 @@ open -n .local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app \
 Visual checks should include minimum width, light/dark appearances, expanded
 filters, negative refund bars, empty views, category trends, chart/table selection,
 comparison evidence, and dismiss/snooze behavior.
+
+Category chart regression check: scroll the breakdown under the pointer, including
+scrolling directly over its bars in both directions. No sheet should open. Click
+the Groceries bar and confirm the sheet shows Groceries transactions; dismiss it
+and repeat the scrolling. Click a category row to confirm its action still works.
+Clicks on the numeric axis outside the plot should not open a sheet.
+
+Verified locally on 2026-10-24 for the category popup fix: the original build opened
+a category sheet from scrolling alone. The fixed Debug app built successfully and
+passed the regression check above in a separate disposable fictional preview.
+The chart now handles explicit clicks rather than presenting sheets from macOS's
+hover-driven chart value selection.
 
 Verified locally on 2026-10-21: 43 Swift core tests and 32 Python database-schema
 tests passed. The Debug app built successfully. An isolated fictional preview
