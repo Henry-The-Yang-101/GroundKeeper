@@ -137,9 +137,12 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     try await store.splitReportFixture(transaction)
     let report = try await store.spendingReport(reportFilter())
     #expect(report.totals.purchases == 1 && report.totals.net == 10000)
+    #expect(report.merchants.count == 1 && report.merchants[0].purchases == 1)
+    #expect(report.merchants[0].net == 10000)
     #expect(report.categories.count == 2)
     var groceries = try reportFilter(); groceries.category = "groceries"; groceries.tagID = "report-tag"
     #expect(try await store.spendingReport(groceries).totals.net == 6000)
+    #expect(try await store.spendingReport(groceries).merchants[0].purchases == 1)
     #expect(try await store.spendingEntries(groceries).first?.net == 6000)
 }
 

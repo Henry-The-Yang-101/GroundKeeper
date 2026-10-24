@@ -52,3 +52,28 @@ import Testing
     #expect(try await store.merchantNames().count == 1)
     #expect(try await store.merchantNames()[0].transactionCount == 2)
 }
+
+@Test func merchantReportsCountPurchasesAndKeepRefundsSeparate() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Merchant reports", currency: "CAD")
+    let account = try await store.snapshot().accounts[0].id
+    for (name, amount, type, day) in [("SHOP 1", Int64(-1000), "expense", "2026-10-01"), ("shop 1", -2000, "expense", "2026-10-08"),
+                                      ("SHOP 1", 500, "refund", "2026-10-10"), ("SHOP 2", -9000, "expense", "2026-10-10"),
+                                      ("SHOP 1", -9999, "transfer", "2026-10-11")] {
+        try await store.save(TransactionEdit(description: name, amountMinor: amount, currency: "CAD", occurredOn: day, accountID: account,
+                                            type: type, category: type == "transfer" ? nil : "shopping", needsReview: false, notes: ""))
+    }
+    var filter = SpendingFilter(range: try ReportRange(start: "2026-10-01", end: "2026-10-15"), timezone: "UTC")
+    let report = try await store.spendingReport(filter)
+    let shop = try #require(report.merchants.first { $0.name == "SHOP 1" })
+    #expect(shop.gross == 3000 && shop.refunds == 500 && shop.net == 2500 && shop.purchases == 2)
+    #expect(shop.averageGap(calendar: try ReportCalendar(timezone: "UTC")) == 7)
+    #expect(shop.purchasesPerWeek(in: filter.range, calendar: try ReportCalendar(timezone: "UTC")) == 1)
+    filter.merchantID = shop.id
+    #expect(try await store.spendingReport(filter).totals.purchases == 2)
+    #expect(try await store.spendingEntries(filter).count == 3)
+    let alias = try #require(try await store.merchantNames().first { $0.label == "SHOP 2" })
+    try await store.groupMerchantName(key: alias.key, merchantID: shop.id, expectedMerchantID: alias.merchantID)
+    #expect(try await store.spendingReport(filter).totals.purchases == 3)
+    #expect(try await store.spendingReport(filter).buckets.reduce(0) { $0 + $1.purchases } == 3)
+}

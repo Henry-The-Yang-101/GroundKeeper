@@ -11,7 +11,7 @@ extension LedgerStore {
     }
 
     /// One predicate is shared by summaries, charts, findings and paginated evidence.
-    private func reportSource(_ filter: SpendingFilter, range: ReportRange) throws -> (String, [SQLValue]) {
+    func reportSource(_ filter: SpendingFilter, range: ReportRange) throws -> (String, [SQLValue]) {
         let calendar = try ReportCalendar(timezone: filter.timezone, weekStart: filter.weekStart)
         _ = try ReportRange(start: range.start, end: range.end)
         guard ExactMoney.currencies.contains(filter.currency), calendar.count(range) <= 36600 else {
@@ -20,6 +20,7 @@ extension LedgerStore {
         var bindings: [SQLValue] = [.text(filter.timezone), .text(filter.currency), .text(range.start), .text(range.end)]
         var predicates = ["currency=?", "day>=?", "day<?"]
         if let account = filter.accountID { predicates.append("account_id=?"); bindings.append(.text(account)) }
+        if let merchant = filter.merchantID { predicates.append("coalesce(merchant_id,'')=?"); bindings.append(.text(merchant)) }
         if let category = filter.category { predicates.append("coalesce(category_id,'uncategorized')=?"); bindings.append(.text(category)) }
         if let tag = filter.tagID {
             predicates.append("(EXISTS(SELECT 1 FROM transaction_tags tt WHERE tt.transaction_id=dated.transaction_id AND tt.tag_id=?) OR EXISTS(SELECT 1 FROM part_tags pt WHERE pt.part_id=dated.part_id AND pt.tag_id=?))")
@@ -65,7 +66,7 @@ extension LedgerStore {
             """, bindings).map { SpendingCategoryTotal(category: $0.text("category"), gross: $0.number("gross"), refunds: $0.number("refunds"), net: $0.number("net"), purchases: Int($0.number("purchases")), reviewCount: Int($0.number("review_count"))) }
     }
 
-    private func reportBuckets(_ filter: SpendingFilter, range: ReportRange, unit: String) throws -> [SpendingBucket] {
+    func reportBuckets(_ filter: SpendingFilter, range: ReportRange, unit: String) throws -> [SpendingBucket] {
         let (source, bindings) = try reportSource(filter, range: range)
         let calendar = try ReportCalendar(timezone: filter.timezone, weekStart: filter.weekStart)
         // Aggregate in SQL; only one compact row per observed day crosses the store boundary.
@@ -128,7 +129,8 @@ extension LedgerStore {
                               categories: categories, previousCategories: previousCategories,
                               categoryBuckets: try reportCategoryBuckets(filter, buckets: buckets),
                               largest: try spendingEntries(filter, limit: 5, largest: true), findings: findings,
-                              firstDay: history, revision: context.revision, generatedAt: now, bucketUnit: unit)
+                              firstDay: history, revision: context.revision, merchants: try reportMerchants(filter, range: filter.range),
+                              previousMerchants: try filter.baseline.map { try reportMerchants(filter, range: $0) } ?? [], generatedAt: now, bucketUnit: unit)
     }
 
     private func reportCategoryBuckets(_ filter: SpendingFilter, buckets: [SpendingBucket]) throws -> [SpendingCategoryBucket] {

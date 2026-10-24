@@ -96,6 +96,7 @@ public struct SpendingFilter: Codable, Equatable, Sendable {
     public var weekStart: Int
     public var sensitivity: InsightSensitivity = .balanced
     public var purchasesOnly = false
+    public var merchantID: String? = nil // Empty string selects unassigned merchants.
     public init(range: ReportRange, baseline: ReportRange? = nil, currency: String = "CAD", accountID: String? = nil,
                 category: String? = nil, tagID: String? = nil, includePending: Bool = true,
                 timezone: String = TimeZone.current.identifier, weekStart: Int = 2) {
@@ -185,6 +186,8 @@ public struct SpendingReport: Sendable {
     public var findings: [SpendingFinding]
     public let firstDay: String?
     public let revision: Int64
+    public var merchants: [SpendingMerchantTotal] = []
+    public var previousMerchants: [SpendingMerchantTotal] = []
     public let generatedAt: Date
     public let bucketUnit: String
 }
