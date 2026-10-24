@@ -13,6 +13,8 @@ public actor LedgerStore {
             try db.query("INSERT OR IGNORE INTO sources(id,kind,name,created_at_ms) VALUES ('manual','manual','Manual entry',?)", [.integer(nowMS())])
         }
         try db.transaction {
+            // Preserve explicit identities in vaults created by earlier integrations.
+            try db.query("UPDATE transactions SET merchant_override=1,merchant_resolved=1 WHERE merchant_resolved=0 AND merchant_id IS NOT NULL")
             for row in try db.query("SELECT id,description FROM transactions WHERE merchant_resolved=0") {
                 try Self.resolveMerchant(db: db, transactionID: row.text("id"), description: row.text("description"))
             }

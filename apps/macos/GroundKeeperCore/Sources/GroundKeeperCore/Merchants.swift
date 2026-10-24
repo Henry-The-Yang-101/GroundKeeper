@@ -18,6 +18,7 @@ public enum MerchantIdentity {
 public struct Merchant: Identifiable, Sendable, Equatable {
     public let id: String
     public let name: String
+    public init(id: String, name: String) { self.id = id; self.name = name }
 }
 public struct MerchantName: Identifiable, Sendable {
     public var id: String { key }
@@ -33,6 +34,7 @@ public struct TransactionMerchant: Sendable {
     public let description: String
     public let merchantID: String?
     public let overridden: Bool
+    public let revision: Int64
 }
 
 extension LedgerStore {
@@ -81,7 +83,7 @@ extension LedgerStore {
                   old.text("merchant_id") == expectedMerchantID else { throw LedgerError.conflict }
             guard try db.query("SELECT id FROM merchants WHERE id=? AND archived_at_ms IS NULL", [.text(merchantID)]).count == 1 else { throw LedgerError.invalid("Choose an existing merchant.") }
             try db.query("UPDATE merchant_names SET merchant_id=?,confirmed=1,updated_at_ms=? WHERE key=?", [.text(merchantID), .integer(nowMS()), .text(key)])
-            try db.query("UPDATE transactions SET merchant_id=? WHERE merchant_key=? AND merchant_override=0", [.text(merchantID), .text(key)])
+            try db.query("UPDATE transactions SET merchant_id=?,revision=revision+1,updated_at_ms=? WHERE merchant_key=? AND merchant_override=0", [.text(merchantID), .integer(nowMS()), .text(key)])
             try merchantAudit(entity: "merchant_name", id: key, before: old.text("merchant_id"), after: merchantID)
         }
     }
@@ -90,22 +92,23 @@ extension LedgerStore {
             guard let old = try db.query("SELECT original_merchant_id FROM merchant_names WHERE key=? AND merchant_id=?", [.text(key), .text(expectedMerchantID)]).first else { throw LedgerError.conflict }
             let original = old.text("original_merchant_id")
             try db.query("UPDATE merchant_names SET merchant_id=?,confirmed=0,updated_at_ms=? WHERE key=?", [.text(original), .integer(nowMS()), .text(key)])
-            try db.query("UPDATE transactions SET merchant_id=? WHERE merchant_key=? AND merchant_override=0", [.text(original), .text(key)])
+            try db.query("UPDATE transactions SET merchant_id=?,revision=revision+1,updated_at_ms=? WHERE merchant_key=? AND merchant_override=0", [.text(original), .integer(nowMS()), .text(key)])
             try merchantAudit(entity: "merchant_name", id: key, before: expectedMerchantID, after: original)
         }
     }
     public func transactionMerchant(id: String) throws -> TransactionMerchant {
         guard let r = try db.query("SELECT * FROM transactions WHERE id=? AND state='active'", [.text(id)]).first else { throw LedgerError.conflict }
-        return TransactionMerchant(transactionID: id, description: r.text("description"), merchantID: r["merchant_id"]?.string, overridden: r.number("merchant_override") == 1)
+        return TransactionMerchant(transactionID: id, description: r.text("description"), merchantID: r["merchant_id"]?.string, overridden: r.number("merchant_override") == 1, revision: r.number("revision"))
     }
-    public func setTransactionMerchant(id: String, merchantID: String?, automatic: Bool = false) throws {
+    public func setTransactionMerchant(id: String, merchantID: String?, automatic: Bool = false, expectedRevision: Int64? = nil) throws {
         try db.transaction {
             let old = try transactionMerchant(id: id)
+            if let expectedRevision, old.revision != expectedRevision { throw LedgerError.conflict }
             if let merchantID, !automatic {
                 guard try db.query("SELECT id FROM merchants WHERE id=? AND archived_at_ms IS NULL", [.text(merchantID)]).count == 1 else { throw LedgerError.invalid("Choose an existing merchant.") }
             }
-            try db.query("UPDATE transactions SET merchant_id=?,merchant_override=?,merchant_resolved=1 WHERE id=?",
-                         [.optional(merchantID), .integer(automatic ? 0 : 1), .text(id)])
+            try db.query("UPDATE transactions SET merchant_id=?,merchant_override=?,merchant_resolved=1,revision=revision+1,updated_at_ms=? WHERE id=?",
+                         [.optional(merchantID), .integer(automatic ? 0 : 1), .integer(nowMS()), .text(id)])
             if automatic { try Self.resolveMerchant(db: db, transactionID: id, description: old.description) }
             try merchantAudit(entity: "transaction_merchant", id: id, before: old.merchantID ?? "unassigned", after: automatic ? "automatic" : merchantID ?? "unassigned")
         }
