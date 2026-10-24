@@ -6,6 +6,7 @@ struct ReportMerchants: View {
     let report: SpendingReport
     let select: (String) -> Void
     let manage: () -> Void
+    var pageSize = 10
     @State private var search = ""
     @State private var page = 0
     private var matches: [SpendingMerchantTotal] { report.merchants.filter { search.isEmpty || $0.name.localizedStandardContains(search) } }
@@ -15,15 +16,15 @@ struct ReportMerchants: View {
             Text("Counts are recorded purchases, including same-day repeats. Refunds reduce net spending but do not add purchases. Exact statement names stay separate until you confirm a group.")
                 .font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             TextField("Find a merchant", text: $search).textFieldStyle(.roundedBorder).onChange(of: search) { page = 0 }
-            ForEach(Array(matches.dropFirst(page * 10).prefix(10))) { merchant in
+            ForEach(Array(matches.dropFirst(page * pageSize).prefix(pageSize))) { merchant in
                 MerchantReportRow(merchant: merchant, previous: report.previousMerchants.first { $0.id == merchant.id }, report: report) { select(merchant.id) }
                 Divider()
             }
-            if matches.count > 10 {
+            if matches.count > pageSize {
                 HStack {
                     Button("Previous") { page -= 1 }.disabled(page == 0)
-                    Text("Page \(page + 1) of \(max(1, (matches.count + 9) / 10))").font(.caption)
-                    Button("Next") { page += 1 }.disabled((page + 1) * 10 >= matches.count)
+                    Text("Page \(page + 1) of \(max(1, (matches.count + pageSize - 1) / pageSize))").font(.caption)
+                    Button("Next") { page += 1 }.disabled((page + 1) * pageSize >= matches.count)
                 }
             }
         }.onChange(of: report.revision) { page = 0 }.onChange(of: report.filter) { page = 0 }

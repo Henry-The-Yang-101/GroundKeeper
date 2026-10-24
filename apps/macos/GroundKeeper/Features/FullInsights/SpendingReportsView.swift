@@ -29,6 +29,7 @@ struct ReportDrilldown: Identifiable {
 
 struct SpendingReportsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage("reportCurrency", store: AppPreferences.defaults) private var currency = "CAD"
     @AppStorage("reportTimezone", store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
     @AppStorage("reportWeekStart", store: AppPreferences.defaults) private var weekStart = 2
@@ -51,6 +52,7 @@ struct SpendingReportsView: View {
     @State private var refresh = 0
     @State private var drilldown: ReportDrilldown?
     @State private var lastSelectionKey = ""
+    @State private var showAllFindings = false
 
     private var selectionKey: String {
         [period.rawValue, comparison, currency, timezone, String(weekStart), String(includePending), sensitivity.rawValue,
@@ -71,15 +73,24 @@ struct SpendingReportsView: View {
                 if report.totals.purchases == 0 && report.totals.refunds == 0 {
                     UnavailableFeature(title: "No spending in this view", symbol: "chart.bar.xaxis", description: "Try another period or adjust the filters. Pending and unclassified entries are shown in the coverage note above.")
                 } else {
-                    Surface { ReportTrendChart(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
-                    Surface { ReportPurchaseFrequency(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
-                    Surface { ReportMerchants(report: report, select: { merchantID = $0 }, manage: { manageMerchants = true }) }
-                    Surface { ReportCategoryChart(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
-                    if report.previous != nil {
-                        Surface { ReportComparison(report: report) { filter, title in drilldown = ReportDrilldown(title: title, filter: filter) } }
+                    SpendingDashboardLayout(allowsColumns: !dynamicTypeSize.isAccessibilitySize) {
+                        Surface { ReportTrendChart(report: report, open: openReport) }
+                            .reportColumn(0)
+                        Surface { findings(report) }
+                            .reportColumn(1)
+                        Surface { ReportPurchaseFrequency(report: report, open: openReport) }
+                            .reportColumn(1)
+                        Surface { ReportCategoryChart(report: report, open: openReport) }
+                            .reportColumn(0)
+                        if report.previous != nil {
+                            Surface { ReportComparison(report: report, open: openReport) }
+                                .reportColumn(1)
+                        }
+                        Surface { ReportMerchants(report: report, select: { merchantID = $0 }, manage: { manageMerchants = true }, pageSize: 5) }
+                            .reportColumn(0)
+                        Surface { largest(report) }
+                            .reportColumn(1)
                     }
-                    Surface { findings(report) }
-                    Surface { largest(report) }
                 }
                 Text("Updated \(report.generatedAt.formatted(date: .omitted, time: .shortened)) · \(timezone) · \(currency). Recorded transactions may not cover every purchase.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
@@ -90,6 +101,10 @@ struct SpendingReportsView: View {
         .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().environment(workspace).vaultSheet() }
         .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).environment(workspace).vaultSheet() }
         .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
+    }
+
+    private func openReport(_ filter: SpendingFilter, _ title: String) {
+        drilldown = ReportDrilldown(title: title, filter: filter)
     }
 
     private var controls: some View {
@@ -195,12 +210,18 @@ struct SpendingReportsView: View {
 
     private func findings(_ report: SpendingReport) -> some View {
         VStack(alignment: .leading, spacing: 18) {
-            SectionHeading(title: "What changed", detail: "Calculated on this Mac")
+            HStack(alignment: .firstTextBaseline) {
+                SectionHeading(title: "What changed")
+                if !report.findings.isEmpty {
+                    Text("\(report.findings.count) findings").font(.caption).foregroundStyle(AppStyle.muted).fixedSize()
+                }
+            }
+            Text("Calculated on this Mac").font(.caption).foregroundStyle(AppStyle.muted)
             if report.findings.isEmpty {
                 Text("No new findings for this view. Patterns require reviewed data and enough comparable history: at least three purchases per comparison period, eight complete weeks for trends, or eight earlier purchases for an unusual amount. Hidden findings stay hidden.")
                     .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             }
-            ForEach(report.findings) { finding in
+            ForEach(Array(report.findings.prefix(showAllFindings ? report.findings.count : 2))) { finding in
                 ReportFindingRow(finding: finding, filter: report.filter, open: { filter, title in
                     drilldown = ReportDrilldown(title: title, filter: filter)
                 }, hide: { snooze in
@@ -209,7 +230,12 @@ struct SpendingReportsView: View {
                         catch { self.error = error.localizedDescription }
                     }
                 })
-                if finding.id != report.findings.last?.id { Divider() }
+                if finding.id != report.findings.prefix(showAllFindings ? report.findings.count : 2).last?.id { Divider() }
+            }
+            if report.findings.count > 2 {
+                Button(showAllFindings ? "Show fewer findings" : "Show \(report.findings.count - 2) more findings") {
+                    showAllFindings.toggle()
+                }.buttonStyle(.borderless)
             }
         }
     }
