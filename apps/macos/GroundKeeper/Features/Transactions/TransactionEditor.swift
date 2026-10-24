@@ -1,4 +1,5 @@
 import SwiftUI
+import GroundKeeperCore
 
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
@@ -22,6 +23,12 @@ struct TransactionEditor: View {
     }
 
     private var amount: Decimal? { TransactionInput.positiveAmount(amountText) }
+    private var selectedAccount: Account? {
+        workspace.accounts.first { $0.id == draft.accountID }
+    }
+    private var currencyMismatch: Bool {
+        selectedAccount.map { $0.currency != draft.currency } ?? false
+    }
     private var valid: Bool {
         !draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && validAmount && validDirection && draft.accountID != nil && workspace.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
@@ -55,6 +62,11 @@ struct TransactionEditor: View {
                     Picker("Account", selection: $draft.accountID) {
                         Text("Choose account").tag(nil as String?)
                         ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag(Optional($0.id)) }
+                    }
+                    if currencyMismatch, let account = selectedAccount {
+                        Text("This account uses \(account.currency), but the amount is in \(draft.currency). Use \(account.currency) or choose an account in \(draft.currency).")
+                            .font(.caption).foregroundStyle(.red)
+                        Button("Use \(account.currency) for this amount") { draft.currency = account.currency }
                     }
                     TransactionDirectionPicker(isDebit: $draft.isDebit)
                     LabeledContent("Source", value: draft.source)
