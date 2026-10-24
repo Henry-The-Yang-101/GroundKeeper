@@ -3,20 +3,15 @@ import SwiftUI
 import GroundKeeperCore
 
 /// Report ranges end at the next midnight, so automatic ticks can repeat one date.
-struct ReportDateAxis: AxisContent {
-    let range: ReportRange
-    let calendar: ReportCalendar
-    var desiredCount = 5
-
-    var body: some AxisContent {
-        if calendar.count(range) == 1 {
-            AxisMarks(values: [calendar.date(range.start)]) { _ in
-                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-            }
-        } else {
-            AxisMarks(values: .automatic(desiredCount: desiredCount)) { _ in
-                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-            }
+@AxisContentBuilder
+func reportDateAxis(range: ReportRange, calendar: ReportCalendar, desiredCount: Int = 5) -> some AxisContent {
+    if calendar.count(range) == 1 {
+        AxisMarks(values: [calendar.date(range.start)]) { _ in
+            AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+        }
+    } else {
+        AxisMarks(values: .automatic(desiredCount: desiredCount)) { _ in
+            AxisValueLabel(format: .dateTime.month(.abbreviated).day())
         }
     }
 }
@@ -76,7 +71,7 @@ struct ReportTrendChart: View {
                 }
                 .chartXScale(domain: calendar.date(report.filter.range.start)...calendar.date(report.filter.range.end))
                 .chartYScale(domain: .automatic(includesZero: true))
-                .chartXAxis { ReportDateAxis(range: report.filter.range, calendar: calendar) }
+                .chartXAxis { reportDateAxis(range: report.filter.range, calendar: calendar) }
                 .chartYAxis { AxisMarks(position: .leading) }
                 .chartXSelection(value: $selectedDay)
                 .environment(\.timeZone, calendar.calendar.timeZone)
@@ -126,7 +121,7 @@ struct ReportCategoryChart: View {
                 }
                 .chartForegroundStyleScale(range: [AppStyle.accent, Color.teal.opacity(0.7), Color.brown.opacity(0.7), Color.indigo.opacity(0.65), Color.gray, Color.orange.opacity(0.65)])
                 .chartXScale(domain: calendar.date(report.filter.range.start)...calendar.date(report.filter.range.end))
-                .chartXAxis { ReportDateAxis(range: report.filter.range, calendar: calendar, desiredCount: 4) }
+                .chartXAxis { reportDateAxis(range: report.filter.range, calendar: calendar, desiredCount: 4) }
                 .environment(\.calendar, calendar.calendar).environment(\.timeZone, calendar.calendar.timeZone)
                 .chartYScale(domain: .automatic(includesZero: true)).frame(height: 240)
                 Text("Stacked by category. Select a category below for exact amounts and supporting transactions.")
