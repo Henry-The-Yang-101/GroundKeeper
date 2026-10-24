@@ -26,7 +26,7 @@ struct MerchantManagementSheet: View {
                             ForEach(Array(matches.dropFirst(page * 100).prefix(100))) { name in
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(name.label).lineLimit(2)
-                                    Text("\(name.transactionCount) entries · \(name.confirmed ? "Confirmed grouping" : "Exact name")")
+                                    Text("\(name.transactionCount) \(name.transactionCount == 1 ? "entry" : "entries") · \(name.confirmed ? "Confirmed grouping" : "Exact name")")
                                         .font(.caption).foregroundStyle(AppStyle.muted)
                                 }.tag(name.key)
                             }
@@ -38,8 +38,10 @@ struct MerchantManagementSheet: View {
                         }
                     }
                     if let name = names.first(where: { $0.key == selection }) {
-                        MerchantGroupingEditor(name: name, merchants: merchants) { refresh += 1 }.id(name.key + name.merchantID + String(name.confirmed))
-                            .frame(minWidth: 270, maxWidth: .infinity, alignment: .topLeading)
+                        ScrollView {
+                            MerchantGroupingEditor(name: name, merchants: merchants) { refresh += 1 }.id(name.key + name.merchantID + String(name.confirmed))
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                        }.frame(minWidth: 270, maxWidth: .infinity)
                     } else {
                         Text("Select a statement name to review its merchant grouping.").foregroundStyle(AppStyle.muted)
                             .frame(minWidth: 270, maxWidth: .infinity, alignment: .leading)
@@ -95,7 +97,7 @@ private struct MerchantGroupingEditor: View {
                 }.padding(.top, 8)
             }
             if !target.isEmpty, target != name.merchantID {
-                Text("Confirming moves \(name.transactionCount) recorded entries with this statement name to \(choices.first { $0.id == target }?.name ?? "this merchant"), and applies to future matching imports. Per-entry corrections stay as you set them.")
+                Text("Confirming moves \(name.transactionCount) recorded \(name.transactionCount == 1 ? "entry" : "entries") with this statement name to \(choices.first { $0.id == target }?.name ?? "this merchant"), and applies to future matching imports. Per-entry corrections stay as you set them.")
                     .font(.callout).fixedSize(horizontal: false, vertical: true)
                 Button("Confirm grouping") { save(target) }.buttonStyle(.borderedProminent)
             }

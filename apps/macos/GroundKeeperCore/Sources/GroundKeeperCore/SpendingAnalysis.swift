@@ -70,7 +70,7 @@ extension LedgerStore {
     func spendingPatterns(_ filter: SpendingFilter, totals: SpendingTotals, previous: SpendingTotals?,
                           merchants: [SpendingMerchantTotal], oldMerchants: [SpendingMerchantTotal],
                           categories: [SpendingCategoryTotal], firstDay: String?, now: Date) throws -> [PatternCandidate] {
-        guard !totals.uncertain, totals.purchases >= 3 else { return [] }
+        guard !totals.uncertain, totals.purchases > 0 else { return [] }
         let calendar = try ReportCalendar(timezone: filter.timezone, weekStart: filter.weekStart)
         let minimum = Double(filter.sensitivity.minimumMinor)
         let percent = NSDecimalNumber(decimal: filter.sensitivity.minimumPercent).doubleValue

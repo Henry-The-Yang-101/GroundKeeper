@@ -42,10 +42,10 @@ private struct MerchantReportRow: View {
                 Spacer()
                 Text(ReportFormat.money(merchant.net, report.filter.currency)).monospacedDigit()
             }
-            Text("\(merchant.purchases) purchases · \(max(0, merchant.purchases - 1)) repeats after the first · Average \(merchant.averagePurchase.formatted(.currency(code: report.filter.currency)))")
+            Text("\(merchant.purchases) \(merchant.purchases == 1 ? "purchase" : "purchases") · \(max(0, merchant.purchases - 1)) repeats after the first · Average \(merchant.averagePurchase.formatted(.currency(code: report.filter.currency)))")
                 .font(.callout)
             if let calendar = try? ReportCalendar(timezone: report.filter.timezone, weekStart: report.filter.weekStart) {
-                Text("\(merchant.purchasesPerWeek(in: report.filter.range, calendar: calendar).formatted(.number.precision(.fractionLength(0...1)))) purchases/week over this period · \(merchant.activeDays) active days" + (merchant.averageGap(calendar: calendar).map { " · Average gap \($0.formatted(.number.precision(.fractionLength(0...1)))) days" } ?? ""))
+                Text("\(merchant.purchasesPerWeek(in: report.filter.range, calendar: calendar).formatted(.number.precision(.fractionLength(0...1)))) purchases/week over this period · \(merchant.activeDays) active \(merchant.activeDays == 1 ? "day" : "days")" + (merchant.averageGap(calendar: calendar).map { " · Average gap \($0.formatted(.number.precision(.fractionLength(0...1)))) days" } ?? ""))
                     .font(.caption).foregroundStyle(AppStyle.muted)
             }
             if let previous {
@@ -82,12 +82,12 @@ struct ReportPurchaseFrequency: View {
                         }
                     }
                 }.frame(maxHeight: 260)
-            } else if let calendar = try? ReportCalendar(timezone: report.filter.timezone) {
+            } else if let calendar = try? ReportCalendar(timezone: report.filter.timezone, weekStart: report.filter.weekStart) {
                 Chart(report.buckets) { bucket in
                     BarMark(x: .value("Period", calendar.date(bucket.start), unit: report.bucketUnit == "Monthly" ? .month : report.bucketUnit == "Weekly" ? .weekOfYear : .day), y: .value("Purchases", bucket.purchases))
                         .foregroundStyle(AppStyle.controlAccent)
                         .accessibilityLabel(bucket.start).accessibilityValue("\(bucket.purchases) purchases")
-                }.chartYAxisLabel("Purchases")
+                }.chartYAxisLabel("Purchases").chartYScale(domain: .automatic(includesZero: true))
                     .chartXScale(domain: calendar.date(report.filter.range.start)...calendar.date(report.filter.range.end))
                     .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) { _ in AxisValueLabel(format: .dateTime.month(.abbreviated).day()) } }
                     .frame(height: 180)

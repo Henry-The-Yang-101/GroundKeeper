@@ -60,6 +60,12 @@ private func analysisPurchase(_ store: LedgerStore, _ account: String, _ day: St
     #expect(try await store.testRows("SELECT * FROM insight_evidence WHERE insight_id='\(finding.id)'").count == 11)
     let repeated = try await store.spendingReport(filter)
     #expect(repeated.findings == report.findings)
+    // A merchant-specific view with just one selected purchase can still have a
+    // sufficient historical baseline. Other merchants must not determine eligibility.
+    var single = filter
+    single.range = try ReportRange(start: "2026-10-01", end: "2026-10-02")
+    single.merchantID = finding.pattern?.evidenceFilter.merchantID
+    #expect(try await store.spendingReport(single).findings.contains { $0.kind == "merchant_outlier" })
     try await store.setFindingPreference(id: finding.id, dismissed: true)
     #expect(try await store.spendingReport(filter).findings.allSatisfy { $0.kind != "merchant_outlier" })
     try await store.restoreSpendingFindings()
