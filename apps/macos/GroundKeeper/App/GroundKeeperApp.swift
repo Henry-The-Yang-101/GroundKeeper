@@ -13,7 +13,7 @@ struct GroundKeeperApp: App {
         Window("GroundKeeper", id: "main") {
             Group {
                 if workspace.encrypted && !workspace.ready { VaultUnlockView() }
-                else if workspace.showingSetup { SetupView() }
+                else if workspace.showingSetup { SetupView(reviewMode: workspace.reviewingSetup) }
                 else { RootView() }
             }
                 .environment(workspace)

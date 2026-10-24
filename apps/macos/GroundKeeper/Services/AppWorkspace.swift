@@ -5,6 +5,7 @@ import GroundKeeperCore
 
 @MainActor @Observable final class AppWorkspace {
     var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: "setupCompleted") || CommandLine.arguments.contains("--setup-preview"))
+    var reviewingSetup = false
     var encrypted = VaultAccess.isEncrypted
     var unlocking = false
     var selectedTab: AppTab? = .home

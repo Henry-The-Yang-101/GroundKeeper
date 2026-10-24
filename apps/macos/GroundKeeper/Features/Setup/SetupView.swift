@@ -5,15 +5,18 @@ struct SetupView: View {
     @Environment(AppWorkspace.self) private var workspace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("setupStep") private var savedStep = 0
+    var reviewMode = false
     @AppStorage("vaultProtectionChosen") private var protectionChosen = false
     @AppStorage("phoneSetupConfirmed") private var phoneReady = false
     @State private var installer = ModelInstaller()
     @State private var accountName = ""
     @State private var currency = "CAD"
     @State private var accountKind = "credit_card"
+    @State private var reviewStep = 0
+    @State private var changingProtection = false
     private let titles = ["Welcome", "Privacy", "Intelligence", "iCloud Drive", "iPhone", "Account", "Ready"]
-    private var step: Int { min(max(savedStep, 0), titles.count - 1) }
-    private var canContinue: Bool { workspace.ready && !workspace.saving && !installer.busy && (step != 1 || protectionChosen) }
+    private var step: Int { min(max(reviewMode ? reviewStep : savedStep, 0), titles.count - 1) }
+    private var canContinue: Bool { workspace.ready && !workspace.saving && !installer.busy && (reviewMode || step != 1 || protectionChosen) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,6 +24,11 @@ struct SetupView: View {
                 Label("GroundKeeper", systemImage: "square.grid.3x3.square").font(VaultTypography.wordmark)
                 Spacer()
                 Text("\(titles[step]) · \(step + 1) of \(titles.count)").foregroundStyle(AppStyle.muted)
+                if reviewMode {
+                    Button("Return to app") { workspace.showingSetup = false }
+                        .disabled(workspace.saving || installer.busy)
+                        .keyboardShortcut(.cancelAction)
+                }
             }.padding(.horizontal, 36).padding(.vertical, 24)
             Divider()
             ZStack {
@@ -33,11 +41,13 @@ struct SetupView: View {
             }.animation(reduceMotion ? nil : VaultMotion.feedback, value: step)
             Divider()
             HStack {
-                Button("Back") { savedStep = step - 1 }.disabled(step == 0 || workspace.saving || installer.busy)
+                Button("Back") { move(to: step - 1) }.disabled(step == 0 || workspace.saving || installer.busy)
                 Spacer()
                 if step > 1 && step < 6 { Text("You can revisit this in Settings.").font(.callout).foregroundStyle(AppStyle.muted) }
                 Button(step == 6 ? "Open GroundKeeper" : "Continue") {
-                    if step == 6 { workspace.finishSetup() } else { savedStep = step + 1 }
+                    if step == 6 {
+                        if reviewMode { workspace.showingSetup = false } else { workspace.finishSetup() }
+                    } else { move(to: step + 1) }
                 }.buttonStyle(.brass).controlSize(.large).keyboardShortcut(.defaultAction).disabled(!canContinue)
             }.padding(.horizontal, 36).padding(.vertical, 22)
         }
@@ -57,9 +67,22 @@ struct SetupView: View {
             Text("Setup takes a few minutes. Model downloads and iPhone setup can be completed later. Spending reports run locally; budgeting and planning are coming later.").font(.callout).foregroundStyle(AppStyle.muted)
             if !workspace.ready { Text(workspace.status).foregroundStyle(AppStyle.muted); Button("Retry opening vault") { Task { await workspace.start() } } }
         case 1:
-            header("lock.shield.fill", "Your records.\nYour choice of protection.", "Choose how GroundKeeper stores the transaction database on this Mac. Your existing records are preserved when you change protection.")
-            VaultProtectionView(onboarding: true)
-            if protectionChosen { Label(workspace.encrypted ? "Encrypted vault selected" : "Unencrypted vault selected", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
+            header("lock.shield.fill", "Your records.\nYour choice of protection.", reviewMode
+                   ? "Review how your vault is protected on this Mac. You can continue without changing or reapplying protection."
+                   : "Choose how GroundKeeper stores the transaction database on this Mac. Your existing records are preserved when you change protection.")
+            if reviewMode {
+                LabeledContent("Current protection", value: workspace.ready
+                               ? (workspace.encrypted ? "Encrypted vault" : "Unencrypted vault") : workspace.status)
+                if changingProtection {
+                    VaultProtectionView(onApplied: { changingProtection = false })
+                    Button("Cancel protection change") { changingProtection = false }.disabled(workspace.saving)
+                } else {
+                    Button("Change vault protection…") { changingProtection = true }.disabled(!workspace.ready || workspace.saving)
+                }
+            } else {
+                VaultProtectionView(onboarding: true)
+                if protectionChosen { Label(workspace.encrypted ? "Encrypted vault selected" : "Unencrypted vault selected", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
+            }
         case 2:
             header("sparkles", "Intelligence,\nwhere you want it.", "Install local models, choose Apple Intelligence Cloud, or categorize by hand. You are in control of where your transaction text goes.")
             ModelSetupView(installer: installer)
@@ -107,6 +130,9 @@ struct SetupView: View {
             feature("iphone", "iPhone automation", phoneReady ? "Marked configured by you. Review the first real capture in Sync." : "Still to set up. Return to this guide from Settings.")
             Text("Start with a fictional transaction. Review suggestions, confirm account mappings, and check Sync for anything that needs attention.").foregroundStyle(AppStyle.muted)
         }
+    }
+    private func move(to nextStep: Int) {
+        if reviewMode { reviewStep = nextStep } else { savedStep = nextStep }
     }
     private func header(_ symbol: String, _ title: String, _ subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 18) {

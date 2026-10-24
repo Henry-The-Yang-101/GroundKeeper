@@ -83,7 +83,7 @@ struct SettingsView: View {
             } header: { Text("Accounts").font(VaultTypography.section) }
             CardMappingsSection()
             VaultFormSection("Setup and iPhone") {
-                Button("Review setup assistant…") { AppPreferences.defaults.set(0, forKey: "setupStep"); workspace.showingSetup = true }
+                Button("Review setup assistant…") { workspace.reviewingSetup = true; workspace.showingSetup = true }
                     .disabled(workspace.processing || workspace.saving)
                 Button("iPhone Shortcuts and automation guide…") { showingPhoneGuide = true }
                 Button("Create standard iCloud inbox…", action: workspace.createDefaultCaptureFolder)
