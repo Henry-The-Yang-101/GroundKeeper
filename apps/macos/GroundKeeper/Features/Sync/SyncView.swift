@@ -103,7 +103,8 @@ private struct CaptureCorrection: View {
     @State private var amount = ""
     @State private var accountID = ""
     @State private var date = Date()
-    @State private var isDebit = true
+    @State private var isDebit: Bool?
+    @State private var context: CaptureReviewContext?
     @State private var error: String?
     @State private var saving = false
     @State private var rememberCard = false
@@ -111,13 +112,22 @@ private struct CaptureCorrection: View {
         VStack(spacing: 0) {
             SheetHeading(title: "Correct capture details", subtitle: "Check the amount, direction, and date against the original capture. Source evidence is preserved.")
             Form {
+                if let context { CaptureSourceEvidence(context: context) }
                 TextField("Description", text: $description)
                 TransactionAmountField(text: $amount)
                 if !amount.isEmpty && TransactionInput.positiveAmount(amount) == nil {
                     Text("Use a positive amount, up to two decimal places, and no thousands separators.")
                         .font(.caption).foregroundStyle(.red)
                 }
-                TransactionDirectionPicker(isDebit: $isDebit)
+                Picker("Direction", selection: $isDebit) {
+                    Text("Choose direction").tag(nil as Bool?)
+                    Text("Money out").tag(Optional(true))
+                    Text("Money in").tag(Optional(false))
+                }
+                if isDebit == nil {
+                    Text("The source amount could not establish a direction. Choose money out or money in.")
+                        .font(.caption).foregroundStyle(AppStyle.muted)
+                }
                 TransactionDatePicker(date: $date)
                 Picker("Account", selection: $accountID) {
                     Text("Choose account").tag("")
@@ -125,13 +135,13 @@ private struct CaptureCorrection: View {
                 }
                 if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
-            }.formStyle(.grouped).scrollContentBackground(.hidden).frame(height: 360)
+            }.formStyle(.grouped).scrollContentBackground(.hidden).frame(height: 430).disabled(context == nil || saving)
             if let error { Text(error).foregroundStyle(.red).padding(.horizontal, 24).padding(.bottom, 16) }
             SheetFooter {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction).disabled(saving)
                 Spacer()
                 Button("Save correction") {
-                    guard let value = TransactionInput.positiveAmount(amount) else { return }
+                    guard let value = TransactionInput.positiveAmount(amount), let isDebit else { return }
                     let signedAmount = NSDecimalNumber(decimal: isDebit ? -value : value).stringValue
                     let day = TransactionInput.day(date)
                     saving = true
@@ -141,9 +151,48 @@ private struct CaptureCorrection: View {
                         catch { self.error = error.localizedDescription }
                     }
                 }.keyboardShortcut(.defaultAction)
-                    .disabled(saving || workspace.saving || accountID.isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || TransactionInput.positiveAmount(amount) == nil)
+                    .disabled(context == nil || isDebit == nil || saving || workspace.saving || accountID.isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || TransactionInput.positiveAmount(amount) == nil)
                     .buttonStyle(.brass)
             }
-        }.frame(width: 530).interactiveDismissDisabled(saving).onAppear { description = review.description }
+        }.frame(width: 570).interactiveDismissDisabled(saving)
+            .task(id: review.eventID) {
+                guard context == nil else { return }
+                do {
+                    guard let store = workspace.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
+                    let source = try await store.captureReviewContext(eventID: review.eventID)
+                    let formatter = DateFormatter()
+                    formatter.locale = Locale(identifier: "en_US_POSIX")
+                    formatter.calendar = Calendar(identifier: .gregorian)
+                    formatter.dateFormat = "yyyy-MM-dd"
+                    guard let sourceDate = formatter.date(from: source.day) else { throw LedgerError.invalid("The source date could not be read.") }
+                    description = source.description
+                    date = sourceDate
+                    accountID = source.accountID ?? ""
+                    if let minor = source.amountMinor {
+                        amount = (Decimal(minor.magnitude) / 100).formatted(.number.grouping(.never).precision(.fractionLength(2)))
+                        isDebit = minor < 0
+                    }
+                    context = source
+                } catch { self.error = error.localizedDescription }
+            }
+    }
+}
+
+private struct CaptureSourceEvidence: View {
+    let context: CaptureReviewContext
+    var body: some View {
+        Section("Original capture") {
+            LabeledContent("Date", value: context.day)
+            if let amount = context.amountMinor, let currency = context.currency {
+                LabeledContent("Amount", value: "\((Decimal(amount) / 100).formatted(.currency(code: currency))) \(currency)")
+            } else {
+                LabeledContent("Amount", value: "Could not be parsed — check source below")
+            }
+            LabeledContent("Account", value: context.accountName ?? "Not assigned")
+            DisclosureGroup("Preserved source evidence") {
+                Text(context.payload).font(.caption.monospaced()).textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
     }
 }
