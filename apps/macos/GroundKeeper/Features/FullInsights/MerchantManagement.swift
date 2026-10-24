@@ -34,7 +34,7 @@ struct MerchantManagementSheet: View {
                         }.frame(minWidth: 220)
                         HStack {
                             Button("Previous") { page -= 1 }.disabled(page == 0)
-                            Text("\(matches.count) names").font(.caption)
+                            Text("\(matches.count) \(matches.count == 1 ? "name" : "names")").font(.caption)
                             Button("Next") { page += 1 }.disabled((page + 1) * 100 >= matches.count)
                         }
                     }

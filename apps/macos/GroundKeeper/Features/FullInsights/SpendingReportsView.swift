@@ -228,7 +228,7 @@ struct SpendingReportsView: View {
             HStack(alignment: .firstTextBaseline) {
                 SectionHeading(title: "What changed")
                 if !report.findings.isEmpty {
-                    Text("\(report.findings.count) findings").font(.caption).foregroundStyle(AppStyle.muted).fixedSize()
+                    Text("\(report.findings.count) \(report.findings.count == 1 ? "finding" : "findings")").font(.caption).foregroundStyle(AppStyle.muted).fixedSize()
                 }
             }
             Text("Calculated on this Mac").font(.caption).foregroundStyle(AppStyle.muted)
@@ -248,7 +248,7 @@ struct SpendingReportsView: View {
                 if finding.id != report.findings.prefix(showAllFindings ? report.findings.count : 2).last?.id { Divider() }
             }
             if report.findings.count > 2 {
-                Button(showAllFindings ? "Show fewer findings" : "Show \(report.findings.count - 2) more findings") {
+                Button(showAllFindings ? "Show fewer findings" : "Show \(report.findings.count - 2) more \(report.findings.count == 3 ? "finding" : "findings")") {
                     showAllFindings.toggle()
                 }.buttonStyle(.borderless)
             }
@@ -296,8 +296,8 @@ struct ReportSummary: View {
     private var coverage: String {
         var parts: [String] = []
         if report.totals.pendingCount > 0 { parts.append("\(report.totals.pendingCount) pending, net \(ReportFormat.money(report.totals.pendingNet, report.filter.currency)) (\(report.filter.includePending ? "included" : "excluded"))") }
-        if report.totals.reviewCount > 0 { parts.append("\(report.totals.reviewCount) included entries need review") }
-        if report.totals.unknownCount > 0 { parts.append("\(report.totals.unknownCount) entries with unknown type or payment status excluded") }
+        if report.totals.reviewCount > 0 { parts.append("\(report.totals.reviewCount) included \(report.totals.reviewCount == 1 ? "entry needs" : "entries need") review") }
+        if report.totals.unknownCount > 0 { parts.append("\(report.totals.unknownCount) \(report.totals.unknownCount == 1 ? "entry" : "entries") with unknown type or payment status excluded") }
         return parts.joined(separator: "; ") + ". Totals may change after review."
     }
 }

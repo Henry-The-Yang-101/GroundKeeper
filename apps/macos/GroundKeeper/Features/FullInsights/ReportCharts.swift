@@ -47,7 +47,7 @@ struct ReportTrendChart: View {
                                     y: .value("Net spending", Double(bucket.net) / 100), width: .ratio(0.9))
                                 .foregroundStyle(AppStyle.accent.opacity(selected == nil || selected?.id == bucket.id ? 0.85 : 0.35))
                                 .accessibilityLabel(bucket.start)
-                                .accessibilityValue("\(ReportFormat.money(bucket.net, report.filter.currency)), \(bucket.purchases) purchases")
+                                .accessibilityValue("\(ReportFormat.money(bucket.net, report.filter.currency)), \(bucket.purchases) \(bucket.purchases == 1 ? "purchase" : "purchases")")
                         }
                     }
                     RuleMark(y: .value("Zero", 0)).foregroundStyle(AppStyle.muted.opacity(0.3))
@@ -143,7 +143,7 @@ struct ReportCategoryChart: View {
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(ReportFormat.category(category.category)).fontWeight(.medium)
-                            Text("\(category.purchases) \(category.purchases == 1 ? "purchase" : "purchases")\(category.reviewCount > 0 ? " · \(category.reviewCount) need review" : "")")
+                            Text("\(category.purchases) \(category.purchases == 1 ? "purchase" : "purchases")\(category.reviewCount > 0 ? " · \(category.reviewCount) \(category.reviewCount == 1 ? "needs" : "need") review" : "")")
                                 .font(.caption).foregroundStyle(AppStyle.muted)
                         }
                         Spacer(minLength: 0)
