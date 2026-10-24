@@ -38,7 +38,7 @@ extension LedgerStore {
             """, bindings)
     }
 
-    private func reportTotals(_ filter: SpendingFilter, range: ReportRange) throws -> SpendingTotals {
+    func reportTotals(_ filter: SpendingFilter, range: ReportRange) throws -> SpendingTotals {
         let (source, bindings) = try reportSource(filter, range: range)
         let r = try db.query(source + """
             SELECT coalesce(sum(CASE WHEN type_code='expense' THEN abs(amount_minor) ELSE 0 END),0) AS gross,
@@ -121,16 +121,20 @@ extension LedgerStore {
         let days = calendar.count(filter.range)
         let unit = days > 180 ? "Monthly" : days > 45 ? "Weekly" : "Daily"
         let buckets = try reportBuckets(filter, range: filter.range, unit: unit)
+        let merchants = try reportMerchants(filter, range: filter.range)
+        let previousMerchants = try filter.baseline.map { try reportMerchants(filter, range: $0) } ?? []
+        let patterns = try spendingPatterns(filter, totals: totals, previous: previous, merchants: merchants,
+                                           oldMerchants: previousMerchants, categories: categories, firstDay: history, now: now)
         let findings = try refreshSpendingFindings(filter, totals: totals, previous: previous, categories: categories,
-                                                  previousCategories: previousCategories, firstDay: history, revision: context.revision, now: now)
+                                                  previousCategories: previousCategories, firstDay: history, revision: context.revision, now: now, patterns: patterns)
         return SpendingReport(filter: filter, totals: totals, previous: previous,
                               buckets: buckets,
                               previousBuckets: try filter.baseline.map { try reportBuckets(filter, range: $0, unit: unit) } ?? [],
                               categories: categories, previousCategories: previousCategories,
                               categoryBuckets: try reportCategoryBuckets(filter, buckets: buckets),
                               largest: try spendingEntries(filter, limit: 5, largest: true), findings: findings,
-                              firstDay: history, revision: context.revision, merchants: try reportMerchants(filter, range: filter.range),
-                              previousMerchants: try filter.baseline.map { try reportMerchants(filter, range: $0) } ?? [], generatedAt: now, bucketUnit: unit)
+                              firstDay: history, revision: context.revision, merchants: merchants,
+                              previousMerchants: previousMerchants, generatedAt: now, bucketUnit: unit)
     }
 
     private func reportCategoryBuckets(_ filter: SpendingFilter, buckets: [SpendingBucket]) throws -> [SpendingCategoryBucket] {

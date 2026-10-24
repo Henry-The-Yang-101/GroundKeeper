@@ -171,6 +171,7 @@ public struct SpendingFinding: Identifiable, Codable, Equatable, Sendable {
     public let currentCount: Int
     public let previousCount: Int
     public let revision: Int64
+    public var pattern: SpendingPattern? = nil
 }
 
 public struct SpendingReport: Sendable {

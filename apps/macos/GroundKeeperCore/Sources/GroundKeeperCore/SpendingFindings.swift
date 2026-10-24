@@ -3,7 +3,7 @@ import Foundation
 extension LedgerStore {
     func refreshSpendingFindings(_ filter: SpendingFilter, totals: SpendingTotals, previous: SpendingTotals?,
                                  categories: [SpendingCategoryTotal], previousCategories: [SpendingCategoryTotal],
-                                 firstDay: String?, revision: Int64, now: Date) throws -> [SpendingFinding] {
+                                 firstDay: String?, revision: Int64, now: Date, patterns: [PatternCandidate] = []) throws -> [SpendingFinding] {
         let clock = Int64(now.timeIntervalSince1970 * 1000)
         let calendar = try ReportCalendar(timezone: filter.timezone, weekStart: filter.weekStart)
         // A dismissal follows a growing calendar period. A snooze follows the
@@ -19,7 +19,7 @@ extension LedgerStore {
         // History is observed coverage only. Suppress comparisons when known uncertainty
         // or unequal duration could produce an apparent change.
         if let previous, let baseline = filter.baseline, let firstDay, firstDay <= baseline.start,
-           calendar.count(filter.range) == calendar.count(baseline),
+           baseline.end <= filter.range.start, calendar.count(filter.range) == calendar.count(baseline),
            !totals.uncertain, !previous.uncertain, totals.purchases >= 3, previous.purchases >= 3 {
             func material(_ current: Int64, _ old: Int64) -> Bool {
                 let change = Decimal(current) - Decimal(old)
@@ -49,11 +49,18 @@ extension LedgerStore {
             let left = abs(Decimal($0.current) - Decimal($0.previous)), right = abs(Decimal($1.current) - Decimal($1.previous))
             return left == right ? $0.id < $1.id : left > right
         }
-        candidates = Array(candidates.prefix(5))
+        // Preserve established comparisons, reserving room for different pattern families.
+        candidates = Array(candidates.prefix(patterns.isEmpty ? 5 : 2))
+        candidates += patterns.prefix(6 - candidates.count).map { candidate in
+            SpendingFinding(id: scope + ":" + candidate.key, preferenceKey: snoozeScope + ":" + candidate.key,
+                            kind: candidate.kind, category: candidate.pattern.evidenceFilter.category,
+                            current: 0, previous: 0, currentCount: 0, previousCount: 0, revision: revision, pattern: candidate.pattern)
+        }
         return try db.transaction {
             try db.query("UPDATE insights SET state='stale' WHERE fingerprint LIKE ? AND state='current'", [.text(scope + ":%")])
             var visible: [SpendingFinding] = []
             for finding in candidates {
+                let periods = finding.pattern?.evidenceFilter ?? filter
                 let preference = try db.query("SELECT value_json FROM (SELECT settings_json AS value_json FROM insight_preferences WHERE id=?)", [.text(finding.id)]).first?.text("value_json")
                 let preferenceData = preference.flatMap { $0.data(using: .utf8) }
                 let hidden = preferenceData.flatMap { try? JSONDecoder().decode(FindingPreference.self, from: $0) }
@@ -64,17 +71,19 @@ extension LedgerStore {
                 try db.query("""
                     INSERT INTO insights(id,fingerprint,kind,currency,period_start_on,period_end_on,timezone_id,baseline_start_on,baseline_end_on,
                       metrics_json,caveats_json,rule_version,data_revision,generated_at_ms,state,snoozed_until_ms)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,'spending-v1',?,?,?,?)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     ON CONFLICT(id) DO UPDATE SET metrics_json=excluded.metrics_json,data_revision=excluded.data_revision,
-                      generated_at_ms=excluded.generated_at_ms,state=excluded.state,snoozed_until_ms=excluded.snoozed_until_ms,
-                      period_end_on=excluded.period_end_on,baseline_end_on=excluded.baseline_end_on
-                    """, [.text(finding.id), .text(finding.id), .text(finding.kind), .text(filter.currency), .text(filter.range.start), .text(filter.range.end),
-                           .text(filter.timezone), .optional(filter.baseline?.start), .optional(filter.baseline?.end), .text(try json(finding)),
-                           .text("[\"Based on recorded transactions; account history may be incomplete.\"]"), .integer(revision), .integer(clock), .text(state), .optional(until)])
+                      rule_version=excluded.rule_version,generated_at_ms=excluded.generated_at_ms,state=excluded.state,snoozed_until_ms=excluded.snoozed_until_ms,
+                      period_start_on=excluded.period_start_on,period_end_on=excluded.period_end_on,baseline_start_on=excluded.baseline_start_on,baseline_end_on=excluded.baseline_end_on
+                    """, [.text(finding.id), .text(finding.id), .text(finding.kind), .text(filter.currency), .text(periods.range.start), .text(periods.range.end),
+                           .text(filter.timezone), .optional(periods.baseline?.start), .optional(periods.baseline?.end), .text(try json(finding)),
+                           .text("[\"Based on recorded transactions; account history may be incomplete.\"]"), .text(finding.pattern?.ruleVersion ?? "spending-v1"), .integer(revision), .integer(clock), .text(state), .optional(until)])
                 try db.query("DELETE FROM insight_evidence WHERE insight_id=?", [.text(finding.id)])
-                var evidenceFilter = filter
-                if let category = finding.category { evidenceFilter.category = category }
-                evidenceFilter.purchasesOnly = finding.kind == "purchase_pattern"
+                var evidenceFilter = finding.pattern?.evidenceFilter ?? filter
+                if finding.pattern == nil {
+                    if let category = finding.category { evidenceFilter.category = category }
+                    evidenceFilter.purchasesOnly = finding.kind == "purchase_pattern"
+                }
                 for row in try reportEvidence(evidenceFilter) {
                     try db.query("INSERT INTO insight_evidence(insight_id,transaction_id,transaction_revision) VALUES (?,?,?)",
                                  [.text(finding.id), .text(row.text("transaction_id")), .integer(row.number("revision"))])
@@ -101,7 +110,7 @@ extension LedgerStore {
     public func restoreSpendingFindings() throws {
         try db.transaction {
             try db.query("DELETE FROM insight_preferences WHERE kind='spending_visibility'")
-            try db.query("UPDATE insights SET state='stale',snoozed_until_ms=NULL WHERE rule_version='spending-v1'")
+            try db.query("UPDATE insights SET state='stale',snoozed_until_ms=NULL WHERE rule_version IN ('spending-v1','patterns-v1')")
         }
     }
 }
