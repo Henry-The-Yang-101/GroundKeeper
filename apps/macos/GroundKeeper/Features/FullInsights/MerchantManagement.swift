@@ -12,6 +12,7 @@ struct MerchantManagementSheet: View {
     @State private var refresh = 0
     @State private var page = 0
     private var matches: [MerchantName] { names.filter { search.isEmpty || $0.label.localizedStandardContains(search) } }
+    private var visibleNames: [MerchantName] { Array(matches.dropFirst(page * 100).prefix(100)) }
     var body: some View {
         VStack(spacing: 0) {
             SheetHeading(title: "Merchant names & groups")
@@ -23,7 +24,7 @@ struct MerchantManagementSheet: View {
                 HStack(alignment: .top, spacing: 20) {
                     VStack(alignment: .leading) {
                         List(selection: $selection) {
-                            ForEach(Array(matches.dropFirst(page * 100).prefix(100))) { name in
+                            ForEach(visibleNames) { name in
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(name.label).lineLimit(2)
                                     Text("\(name.transactionCount) \(name.transactionCount == 1 ? "entry" : "entries") · \(name.confirmed ? "Confirmed grouping" : "Exact name")")
@@ -37,7 +38,7 @@ struct MerchantManagementSheet: View {
                             Button("Next") { page += 1 }.disabled((page + 1) * 100 >= matches.count)
                         }
                     }
-                    if let name = names.first(where: { $0.key == selection }) {
+                    if let name = visibleNames.first(where: { $0.key == selection }) {
                         ScrollView {
                             MerchantGroupingEditor(name: name, merchants: merchants) { refresh += 1 }.id(name.key + name.merchantID + String(name.confirmed))
                                 .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -57,6 +58,9 @@ struct MerchantManagementSheet: View {
                 merchants = directory.merchants; names = directory.names; error = nil
             } catch is CancellationError { return }
             catch { self.error = error.localizedDescription }
+        }
+        .onChange(of: visibleNames.map(\.key)) {
+            if !visibleNames.contains(where: { $0.key == selection }) { selection = nil }
         }
         .onChange(of: workspace.ready) { if !workspace.ready { names = []; merchants = []; dismiss() } }
     }
