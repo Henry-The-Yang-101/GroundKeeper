@@ -82,7 +82,8 @@ struct SpendingReportsView: View {
             } else if let report {
                 ReportSummary(report: report) { drilldown = ReportDrilldown(title: "Recorded spending", filter: report.filter) }
                 if report.totals.purchases == 0 && report.totals.refunds == 0 {
-                    UnavailableFeature(title: "No spending in this view", symbol: "chart.bar.xaxis", description: "Try another period or adjust the filters. Pending and unclassified entries are shown in the coverage note above.")
+                    UnavailableFeature(title: "No spending in this view", symbol: "chart.bar.xaxis",
+                                       description: "Try another period or adjust the filters." + (report.totals.uncertain ? " Check the coverage note above for entries that may affect these totals." : ""))
                 } else {
                     SpendingDashboardLayout(allowsColumns: !dynamicTypeSize.isAccessibilitySize) {
                         Surface { ReportTrendChart(report: report, open: openReport) }
