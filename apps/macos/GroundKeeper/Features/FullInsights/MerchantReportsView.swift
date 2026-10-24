@@ -97,7 +97,7 @@ struct ReportPurchaseFrequency: View {
                         .accessibilityLabel(bucket.start).accessibilityValue("\(bucket.purchases) \(bucket.purchases == 1 ? "purchase" : "purchases")")
                 }.chartYAxisLabel("Purchases").chartYScale(domain: .automatic(includesZero: true))
                     .chartXScale(domain: calendar.date(report.filter.range.start)...calendar.date(report.filter.range.end))
-                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) { _ in AxisValueLabel(format: .dateTime.month(.abbreviated).day()) } }
+                    .chartXAxis { ReportDateAxis(range: report.filter.range, calendar: calendar) }
                     .frame(height: 180)
                     .environment(\.timeZone, calendar.calendar.timeZone).environment(\.calendar, calendar.calendar)
             }
