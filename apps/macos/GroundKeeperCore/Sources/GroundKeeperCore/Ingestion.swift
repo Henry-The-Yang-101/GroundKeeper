@@ -125,6 +125,7 @@ extension LedgerStore {
         try db.query("INSERT INTO transaction_parts(id,transaction_id,position,amount_minor) VALUES (?,?,0,?)", [.text(partID), .text(id), .integer(observation.amount!)])
         try assign(partID: partID, type: "unknown", category: "uncategorized", review: true, origin: "system", runID: nil)
         try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(id)])
+        try Self.resolveMerchant(db: db, transactionID: id, description: observation.description)
         return id
     }
     func link(eventID: String, observationID: String, transactionID: String, kind: String, actor: String) throws {

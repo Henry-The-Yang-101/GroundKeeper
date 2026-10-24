@@ -12,6 +12,11 @@ public actor LedgerStore {
             try db.query("UPDATE processing_runs SET status='interrupted',finished_at_ms=? WHERE status='running'", [.integer(nowMS())])
             try db.query("INSERT OR IGNORE INTO sources(id,kind,name,created_at_ms) VALUES ('manual','manual','Manual entry',?)", [.integer(nowMS())])
         }
+        try db.transaction {
+            for row in try db.query("SELECT id,description FROM transactions WHERE merchant_resolved=0") {
+                try Self.resolveMerchant(db: db, transactionID: row.text("id"), description: row.text("description"))
+            }
+        }
         self.db = db
     }
     public func integrityCheck() throws -> Bool {
@@ -105,6 +110,7 @@ public actor LedgerStore {
                     [.text(edit.id), .text(accountID), .text(edit.description), .integer(edit.amountMinor), .text(edit.currency), .text(edit.occurredOn), .text(edit.notes), .integer(nowMS()), .integer(nowMS())])
                 try db.query("INSERT INTO transaction_parts(id,transaction_id,position,amount_minor) VALUES (?,?,0,?)", [.text(identifier()), .text(edit.id), .integer(edit.amountMinor)])
             }
+            try Self.resolveMerchant(db: db, transactionID: edit.id, description: edit.description)
             let part = try db.query("SELECT * FROM transaction_parts WHERE transaction_id=?", [.text(edit.id)]).first!
             try assign(partID: part.text("id"), type: edit.type, category: edit.category, review: edit.needsReview, origin: "user", runID: nil)
             try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(edit.id)])
