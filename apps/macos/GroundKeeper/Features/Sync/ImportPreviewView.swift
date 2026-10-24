@@ -15,6 +15,7 @@ struct ImportPreviewView: View {
     @State private var error: String?
     @State private var result: String?
     @State private var delimiter = ","
+    private var summary: CSVImportSelectionSummary { CSVImportSelectionSummary(rows: rows, skipped: skipped) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,7 +45,26 @@ struct ImportPreviewView: View {
                             Text("Signed amounts: negative is money out, positive is money in. A debit/credit pair must contain exactly one positive value. Select a bank ID only if it uniquely identifies a posted record.").font(.caption)
                         }.formStyle(.grouped).scrollContentBackground(.hidden)
                     } else {
-                        Text("\(rows.count - skipped.count) rows selected · \(rows.filter { $0.error != nil }.count) invalid")
+                        GroupBox("Import summary") {
+                            VStack(alignment: .leading, spacing: 6) {
+                                LabeledContent("Destination account", value: workspace.accounts.first { $0.id == mapping.accountID }?.name ?? "Unavailable account")
+                                LabeledContent("Currency", value: mapping.currency)
+                                Text("\(summary.selectedCount) selected · \(summary.validCount) valid · \(summary.invalidCount) invalid selected · \(summary.skippedCount) skipped")
+                                    .font(.caption)
+                                if let first = summary.firstDay, let last = summary.lastDay {
+                                    LabeledContent("Selected dates", value: first == last ? first : "\(first) – \(last)")
+                                }
+                                HStack(spacing: 24) {
+                                    VStack(alignment: .leading) { Text("Money out").font(.caption); Text(summary.moneyOut.formatted(.currency(code: mapping.currency))) }
+                                    VStack(alignment: .leading) { Text("Money in").font(.caption); Text(summary.moneyIn.formatted(.currency(code: mapping.currency))) }
+                                    VStack(alignment: .leading) { Text("Net change").font(.caption); Text(summary.net.formatted(.currency(code: mapping.currency))) }
+                                }
+                                if summary.invalidCount > 0 {
+                                    Text("Totals include valid selected rows only. Skip invalid rows before importing.")
+                                        .font(.caption).foregroundStyle(.red)
+                                }
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                        }
                         Button("Skip all invalid rows") { skipped.formUnion(rows.filter { $0.error != nil }.map(\.id)) }
                             .disabled(!rows.contains { $0.error != nil && !skipped.contains($0.id) })
                         List(rows.prefix(200)) { row in
@@ -98,7 +118,7 @@ struct ImportPreviewView: View {
                             }
                         }
                     }.buttonStyle(.brass)
-                    .disabled(busy || mapping.accountID.isEmpty || (reviewing && (rows.allSatisfy { skipped.contains($0.id) } || rows.contains { $0.error != nil && !skipped.contains($0.id) })))
+                    .disabled(busy || mapping.accountID.isEmpty || (reviewing && (summary.validCount == 0 || summary.invalidCount > 0)))
                 }
             }
         }.frame(width: 690, height: document != nil && result == nil ? 650 : nil).interactiveDismissDisabled(busy)
