@@ -286,8 +286,11 @@ modes may send minimized transaction descriptions to Apple for inference.
 ## Insights and graphs
 
 Spending reports, category breakdowns, period comparisons, and local overall/category
-findings are implemented; see [current behavior](spending-reports.md). Merchant
-analysis and the planning features below remain future scope.
+findings are implemented. As of 2026-10-24, conservative merchant identities,
+confirmed branch grouping/undo, per-entry corrections, merchant purchase counts,
+frequency/spending views, and deterministic trend/shift/outlier/majority patterns
+are also implemented; see [current behavior](spending-reports.md). Planning,
+subscriptions, budgets, forecasting and notifications below remain future scope.
 
 Graphs are core product features, computed locally from reconciled transactions
 and user-provided planning/balance data. Deliver spending graphs first, then

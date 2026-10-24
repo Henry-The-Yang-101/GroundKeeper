@@ -236,7 +236,7 @@ that revision and mark current insights stale, including assignments that do not
 increment a transaction revision. Existing migrations remain unchanged.
 
 `LedgerStore.spendingReport` queries the complete ledger, independently of the
-paged transaction list. Currency, account, category, tag, reporting date and
+paged transaction list. Currency, account, merchant, category, tag, reporting date and
 pending-state predicates are shared with paginated report evidence. Amounts stay
 integer minor units in SQL; averages use Decimal. SQLite integer overflow fails
 the report rather than wrapping. Splits contribute their own amounts and distinct
@@ -256,10 +256,49 @@ per equal-length period, observed history reaching the baseline, no known pendin
 or unclassified entries in scope, and configured absolute/relative thresholds.
 Reports regenerate findings when viewed/refreshed after a ledger change. Dismissal
 and seven-day snooze preferences survive recomputation and reopening. Restoring
-hidden findings clears those preferences. No merchant identity inference, external
-AI request, or notification delivery is part of this implementation.
+hidden findings clears those preferences. `patterns-v1` additionally persists
+merchant changes/majority, weekly trends/level shifts, and earlier-history merchant
+amount outliers. Their metrics include deterministic prose, raw detector values,
+ranking score, method, and the precise evidence filter. Stored period columns and
+supporting IDs use that filter, including a 90-day earlier baseline for outliers.
+No external AI request or notification delivery is part of this implementation.
+See [analysis rules](../../docs/spending-reports.md#statistical-patterns).
 
 The app clears report views on vault lock and rejects replies from a replaced
 store. Home and Spending observe the ledger revision; evidence sheets query all
 matching records in pages of 100. Report results are not built from the 500-row
 transaction UI snapshot.
+
+
+## Merchant identities (migration 008)
+
+`merchant_names` maps versioned, SHA-256 normalized statement descriptor keys to
+`merchants.id`, preserving `original_merchant_id`, display label, explicit
+confirmation state and update time. Normalization is Unicode canonical composition,
+POSIX lowercase and collapsed whitespace. Numbers, punctuation, accents and
+processor prefixes remain. Generic/unknown descriptors remain unassigned.
+The version is part of both descriptor and deterministic original merchant IDs.
+Changing the normalizer requires an explicit migration/version strategy.
+
+`transactions.merchant_key`, `merchant_override`, and `merchant_resolved` track
+source-name matching separately from per-transaction corrections. Swift resolves
+merchant identity in the same write transaction as creation/import/manual edits.
+Opening an upgraded vault backfills unresolved descriptors transactionally;
+preexisting non-null merchant assignments are preserved as explicit overrides.
+No classifier or enrichment provider writes these identities.
+
+Grouping is an explicit descriptor-to-merchant mapping, not fuzzy matching or
+transaction deduplication. It updates all nonoverride matching transactions and
+future imports. Undo restores that descriptor's original merchant. Groups do not
+chain through other descriptor aliases. Per-transaction overrides (including
+explicit unassigned) survive grouping and description edits; automatic reset uses
+the current descriptor rule. Alias changes use an expected-current-merchant guard;
+UI corrections use the transaction revision. Both increment transaction revisions,
+update timestamps, write change-log audit entries, and invalidate analytics.
+Merchant/name update triggers also invalidate findings. Legacy `merchant_aliases`
+remains untouched; the new versioned mapping is authoritative for this workflow.
+
+Reports group exact integer amounts by canonical merchant, count distinct canonical
+expense transaction IDs across matching parts, and keep refunds separate. Unassigned
+merchants use an empty-string filter key. No purchase merging is performed by
+merchant grouping. See [user workflow](../../docs/spending-reports.md#merchants-and-purchase-frequency).

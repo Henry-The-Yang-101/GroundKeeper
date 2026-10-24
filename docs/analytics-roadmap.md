@@ -1,5 +1,11 @@
 # GroundKeeper analysis features
 
+Current implementation (2026-10-24): spending/category comparisons, conservative
+merchant identities with confirmed grouping/undo, merchant purchase counts and
+frequency charts, plus local trend, level-shift, majority and unusual-amount
+findings are available. See [implemented behavior and limits](spending-reports.md).
+The expanded feature list below still includes future work.
+
 Roadmap, updated 2026-10-21. Spending-over-time reports, category breakdowns,
 period comparisons, and local category/overall findings now have an implementation;
 see [implemented spending reports](spending-reports.md) for behavior and limits.
