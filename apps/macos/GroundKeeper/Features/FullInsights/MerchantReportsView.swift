@@ -7,6 +7,7 @@ struct ReportMerchants: View {
     let select: (String) -> Void
     let manage: () -> Void
     var pageSize = 10
+    var pageChanged: () -> Void = {}
     @State private var search = ""
     @State private var page = 0
     private var matches: [SpendingMerchantTotal] { report.merchants.filter { search.isEmpty || $0.name.localizedStandardContains(search) } }
@@ -27,7 +28,9 @@ struct ReportMerchants: View {
                     Button("Next") { page += 1 }.disabled((page + 1) * pageSize >= matches.count)
                 }
             }
-        }.onChange(of: report.revision) { page = 0 }.onChange(of: report.filter) { page = 0 }
+        }
+        .onChange(of: page) { pageChanged() }
+        .onChange(of: report.revision) { page = 0 }.onChange(of: report.filter) { page = 0 }
     }
 }
 

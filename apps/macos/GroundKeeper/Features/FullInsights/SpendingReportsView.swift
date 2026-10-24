@@ -60,6 +60,17 @@ struct SpendingReportsView: View {
     }
     private var loadKey: String { selectionKey + "|\(workspace.reportingRevision)|\(workspace.ready)|\(refresh)" }
     var body: some View {
+        ScrollViewReader { scroll in
+            reportPage(scroll: scroll)
+        }
+        .task(id: loadKey) { await load() }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in refresh += 1 }
+        .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().environment(workspace).vaultSheet() }
+        .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).environment(workspace).vaultSheet() }
+        .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
+    }
+
+    private func reportPage(scroll: ScrollViewProxy) -> some View {
         PageContent {
             PageHeading(title: "Spending", subtitle: "See where it goes, and what’s changing.")
             controls
@@ -86,7 +97,11 @@ struct SpendingReportsView: View {
                             Surface { ReportComparison(report: report, open: openReport) }
                                 .reportColumn(1)
                         }
-                        Surface { ReportMerchants(report: report, select: { merchantID = $0 }, manage: { manageMerchants = true }, pageSize: 5) }
+                        Surface {
+                            ReportMerchants(report: report, select: { merchantID = $0 }, manage: { manageMerchants = true }, pageSize: 5,
+                                            pageChanged: { scroll.scrollTo("report-merchants", anchor: .top) })
+                        }
+                            .id("report-merchants")
                             .reportColumn(0)
                         Surface { largest(report) }
                             .reportColumn(1)
@@ -96,11 +111,6 @@ struct SpendingReportsView: View {
                     .font(.caption).foregroundStyle(AppStyle.muted)
             }
         }
-        .task(id: loadKey) { await load() }
-        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in refresh += 1 }
-        .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().environment(workspace).vaultSheet() }
-        .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).environment(workspace).vaultSheet() }
-        .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
     }
 
     private func openReport(_ filter: SpendingFilter, _ title: String) {
