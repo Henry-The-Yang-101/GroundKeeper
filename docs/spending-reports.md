@@ -10,6 +10,27 @@ Spending; findings come from the same SQL and Swift analysis as ordinary data.
 Use **Last 90 days** or **All time** for weekly patterns. See the
 [demo guide](../apps/macos/README.md#fictional-spending-demo).
 
+## Layout
+
+The Spending page uses two staggered columns when the available report width is
+at least 820 points, with more room for spending/category charts and merchants.
+Findings, frequency, comparison and largest purchases occupy the supporting
+column. Smaller windows and accessibility text sizes use one column. Each card
+keeps its natural height; expanding findings does not stretch adjacent sections.
+Chart modes and merchant search/pagination survive changes in window width.
+
+Two findings appear initially, with a button to reveal the rest. The merchant
+list displays five rows per page; search and pagination still reach every
+matching merchant. Charts, filters and supporting-transaction controls retain
+their existing behavior. Accessibility groups keep each card's controls together.
+
+Validated in a uniquely identified fictional demo on 2026-10-24: normal and
+wide staggered layouts, narrow single-column layout, chart-mode and merchant-
+search preservation across resizing, findings expansion/collapse, merchant
+pagination, and supporting-transaction sheets. The Debug build and all four
+date cases in `scripts/check_spending_demo.sh` passed. Accessibility grouping
+was inspected through the native accessibility tree; VoiceOver was not tested.
+
 ## Reports
 
 - Select calendar days/weeks/months/quarters/years, completed months/years,

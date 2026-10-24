@@ -6,7 +6,8 @@ private struct ReportColumnKey: LayoutValueKey {
 
 extension View {
     func reportColumn(_ column: Int) -> some View {
-        layoutValue(key: ReportColumnKey.self, value: column)
+        accessibilityElement(children: .contain)
+            .layoutValue(key: ReportColumnKey.self, value: column)
     }
 }
 
@@ -30,7 +31,7 @@ struct SpendingDashboardLayout: Layout {
     }
 
     private func frames(width: CGFloat, subviews: Subviews) -> [CGRect] {
-        let twoColumns = allowsColumns && width >= 940
+        let twoColumns = allowsColumns && width >= 820
         let leadingWidth = twoColumns ? (width - gap) * 0.55 : width
         let trailingWidth = twoColumns ? width - gap - leadingWidth : width
         var bottoms: [CGFloat] = [0, 0]
