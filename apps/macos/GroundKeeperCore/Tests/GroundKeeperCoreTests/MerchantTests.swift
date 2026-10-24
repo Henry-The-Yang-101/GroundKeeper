@@ -77,3 +77,21 @@ import Testing
     #expect(try await store.spendingReport(filter).totals.purchases == 3)
     #expect(try await store.spendingReport(filter).buckets.reduce(0) { $0 + $1.purchases } == 3)
 }
+
+@Test func merchantCorrectionsRejectStaleEditorsAndPreserveLegacyAssignments() async throws {
+    let (store, url) = try vault()
+    try await store.addAccount(name: "Legacy test", currency: "CAD")
+    let account = try await store.snapshot().accounts[0].id
+    try await store.save(TransactionEdit(description: "Original shop", amountMinor: -1000, currency: "CAD", occurredOn: "2026-10-01", accountID: account, type: "expense", category: "dining", needsReview: false, notes: ""))
+    let id = try await store.snapshot().transactions[0].id
+    let old = try await store.transactionMerchant(id: id)
+    let custom = try await store.createMerchant(name: "Confirmed business")
+    try await store.setTransactionMerchant(id: id, merchantID: custom, expectedRevision: old.revision)
+    await #expect(throws: LedgerError.self) { try await store.setTransactionMerchant(id: id, merchantID: nil, expectedRevision: old.revision) }
+    // Simulate an older integration's explicit merchant assignment before descriptor backfill.
+    _ = try await store.testRows("UPDATE transactions SET merchant_resolved=0,merchant_override=0 WHERE id='\(id)'")
+    await store.close()
+    let reopened = try LedgerStore(url: url)
+    let preserved = try await reopened.transactionMerchant(id: id)
+    #expect(preserved.merchantID == custom && preserved.overridden)
+}

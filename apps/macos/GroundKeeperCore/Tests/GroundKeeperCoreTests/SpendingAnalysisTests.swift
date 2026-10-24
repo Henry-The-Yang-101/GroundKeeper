@@ -81,3 +81,24 @@ private func analysisPurchase(_ store: LedgerStore, _ account: String, _ day: St
     filter.merchantID = try await store.merchants().first { $0.name == "Fictional Cafe" }!.id
     #expect(try await store.spendingReport(filter).findings.allSatisfy { $0.kind != "merchant_majority" })
 }
+
+@Test func shiftsAndFrequencyChangesHaveSeparateComparableEvidence() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Analysis", currency: "CAD")
+    let account = try await store.snapshot().accounts[0].id
+    let calendar = try ReportCalendar(timezone: "UTC")
+    for i in 0..<8 { try await analysisPurchase(store, account, calendar.adding(i * 7, to: "2026-06-01"), i < 4 ? 1000 : 10000) }
+    let filter = SpendingFilter(range: try ReportRange(start: "2026-06-01", end: "2026-07-27"), timezone: "UTC")
+    let shift = try #require(try await store.spendingReport(filter, now: calendar.date("2026-08-01")).findings.first { $0.kind == "weekly_shift" })
+    #expect(shift.pattern?.values["firstMedian"] == 1000 && shift.pattern?.values["lastMedian"] == 10000)
+    #expect(shift.pattern?.evidenceFilter.baseline == nil)
+    for _ in 0..<3 { try await analysisPurchase(store, account, "2026-09-01", 2000, name: "Frequency shop") }
+    for _ in 0..<6 { try await analysisPurchase(store, account, "2026-10-01", 1000, name: "Frequency shop") }
+    try await analysisPurchase(store, account, "2026-10-01", 2000, name: "Other shop")
+    let compare = SpendingFilter(range: try ReportRange(start: "2026-10-01", end: "2026-10-05"), baseline: try ReportRange(start: "2026-09-01", end: "2026-09-05"), timezone: "UTC")
+    let frequency = try #require(try await store.spendingReport(compare).findings.first { $0.kind == "merchant_change" })
+    #expect(frequency.pattern?.values["currentGross"] == frequency.pattern?.values["previousGross"])
+    #expect(frequency.pattern?.values["currentCount"] == 6 && frequency.pattern?.values["previousCount"] == 3)
+    var overlap = compare; overlap.baseline = overlap.range
+    #expect(try await store.spendingReport(overlap).findings.allSatisfy { $0.kind != "merchant_change" })
+}
