@@ -30,7 +30,7 @@ import GroundKeeperCore
     var unqueuedJobs = 0
     var countError: String?
     var countUpdatedAt: Date?
-    var queueCount: Int { pendingCaptures + pendingJobs + unqueuedJobs }
+    var queueCount: Int { pendingCaptures + (classifierProvider == "manual" ? 0 : pendingJobs + unqueuedJobs) }
     var processButtonTitle: String { if countError != nil { return "Process queue (count unavailable)" }; return processing ? "Processing… (\(queueCount))" : "Process queue (\(queueCount))" }
     var processingDescription: String {
         switch processingMode {
@@ -423,7 +423,9 @@ import GroundKeeperCore
             }
             try Task.checkCancellation()
             try await refresh()
-            if pendingJobs + unqueuedJobs > 0 {
+            if classifierProvider == "manual", pendingJobs + unqueuedJobs > 0 {
+                status = "Captures checked. Review uncategorized transactions or choose a provider for suggestions."
+            } else if pendingJobs + unqueuedJobs > 0 {
                 if classifierProvider == "council" { try await classifyCouncilPending() }
                 else {
                     if model == nil { try await restoreModel() }
