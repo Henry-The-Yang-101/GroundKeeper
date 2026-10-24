@@ -20,7 +20,7 @@ event identity are treated as a collision.
 
 | Mechanism | Evidence | Status for this requirement |
 | --- | --- | --- |
-| Native Show Notification with a shortcut URL in its body | An older firsthand report says expanding a native notification makes the URL tappable. Another report describes the same approach, followed by a reply that could not trigger it. | Unverified on a physical current iPhone. Worth a narrow test; do not promise it works. |
+| Native Show Notification with a shortcut URL in its body | An older firsthand report says expanding a native notification makes the URL tappable. Another report describes the same approach, followed by a reply that could not trigger it. | The user confirmed that the URL-only probe launched the target on their physical iPhone. Per-event dispatch, persistence, and failure cases still need testing. |
 | Native Show Notification attachment | Apple's guide describes rich media previews. A more recent firsthand attempt to attach a URL produced an image preview. | No verified arbitrary callback/input mechanism found. |
 | Show Notification followed by Wait to Return | A user confirmed this resumes a shortcut after tapping the notification. A separate user reports tapping one of several notifications resumes the other waiting shortcuts too. | A foreground-return workaround, not a verified per-notification dispatch mechanism. Unsuitable as the sole durable routing design. |
 | Confirmation before running the original capture | Apple documents confirmation notifications for automations generally. | Delays the initial save; does not provide save-now/enrich-later by itself. Availability must be checked for the exact trigger/OS. |
@@ -69,7 +69,9 @@ was inspected and confirmed to contain one native Show Notification action with:
 The body contains only the URL, with no attachment or automatic Open URL action.
 The harmless target shortcut is named `GK Research Link Target`. These research
 shortcuts remain available for a physical-iPhone check through the user's existing
-Shortcuts sync. Phone sync and expanded-link behavior are still unverified.
+Shortcuts sync. The user subsequently confirmed on their physical iPhone that
+the notification link opened the target, providing a screenshot of its success
+alert. The exact phone OS version and interaction sequence were not recorded.
 They do not access the inbox or real transaction data.
 
 ### iOS 27.0 simulator
@@ -96,26 +98,58 @@ The simulator's native Notification automation picker allowed Shortcuts as its
 source. Expanding this trigger exposed Automation and Notify switches, without a
 Confirm Before Run switch. No successful deferred-confirmation relay was tested.
 
-## Physical-phone test prepared
+## Physical-phone result and remaining tests
 
-After the phone's sender shows the title `GroundKeeper URL Test v2` and a
-`shortcuts://` URL in its Show Notification body, run
-`GK Research Notification Sender`. Long-press the new notification and try its
-shortcut URL. The earlier `GroundKeeper Research A` / `GKRESEARCH_INPUT event-A`
-notification is obsolete and contains no link. If the link opens the `GroundKeeper Research Link Worked` alert,
-repeat with two different event IDs and reverse the order of taps. Then test
-long delays, locking/unlocking, force-quitting Shortcuts, and restarting the phone.
-Do not use a successful single tap as evidence of durable multi-transaction
-routing.
+The user confirmed that the URL-only sender opened the
+`GroundKeeper Research Link Worked` alert on their physical iPhone. The earlier
+`GroundKeeper Research A` / `GKRESEARCH_INPUT event-A` notification is obsolete
+and contains no link.
 
-If native notification links work, the production design should save payment
+Repeat with two different event IDs, display the received input in the target,
+and reverse the order of taps. Then test long delays, locking/unlocking,
+force-quitting Shortcuts, and restarting the phone. A successful launch of a
+single fixed-message target does not establish durable multi-transaction routing.
+
+The proposed production design should save payment
 JSON first and embed only a validated event ID and safe relative filename in
 each callback. The details helper should validate both against the saved payment
 and write independent attachment events. Notification dismissal must not delete
 the payment or its pending-details record.
 
+## Labeled hyperlink probe
+
+After the URL-only success, the user requested a label such as “Add receipt or
+note” instead of the visible URL. No native separate link-label parameter was
+found. Apple's notification-body API exposes a string; this suggests rich-text
+link attributes may be lost, but does not establish the behavior of the current
+iPhone Shortcuts notification renderer.
+
+A separate `GK Research Styled Link` shortcut was generated locally, signed, and
+installed through Shortcuts. Its native action sequence is:
+
+1. Text: `[Add receipt or note](shortcuts://run-shortcut?name=GK%20Research%20Link%20Target&input=text&text=event-A)`
+2. Make Rich Text from Markdown.
+3. Show Notification with title `GroundKeeper Styled Link Test`, using the
+   conversion output as its body.
+
+An export of the installed shortcut was extracted and inspected: the body magic
+variable references the native converter's output UUID. The working URL-only
+sender was kept unchanged. A Mac run remained active without a visible
+notification and was stopped; this is inconclusive for Mac behavior.
+
+The user ran the probe on their physical iPhone and reported: “Label appears but
+isn’t tappable.” This establishes that the tested Markdown → rich-text → native
+notification body path does not preserve an actionable labeled hyperlink on that
+phone. The URL-only sender remains the working approach. No supported separate
+label/destination setting was found in the native action. A shorter helper name
+and compact event token could reduce the visible URL length, but would not create
+a labeled link; these changes have not been implemented. Other conversions and
+custom notification extensions were not tested.
+
 ## Sources
 
+- [Apple: notification body API](https://developer.apple.com/documentation/usernotifications/unmutablenotificationcontent/body?changes=_7)
+- [Apple: notification appearance customization](https://developer.apple.com/documentation/usernotificationsui/customizing-the-appearance-of-notifications)
 - [Apple: Show Notification](https://support.apple.com/en-ie/guide/shortcuts/apd2175adcab/ios)
 - [Apple: run a shortcut using a URL scheme](https://support.apple.com/guide/shortcuts/run-a-shortcut-from-a-url-apd624386f42/ios)
 - [Apple: automation confirmation overview](https://support.apple.com/en-euro/guide/shortcuts/apd690170742/ios)
