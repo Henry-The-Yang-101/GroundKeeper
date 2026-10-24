@@ -165,7 +165,7 @@ struct SpendingReportsView: View {
                     }
                     Toggle("Include pending purchases", isOn: $includePending)
                     HStack {
-                        Button("Clear filters") { accountID = ""; category = ""; tagID = ""; merchantID = nil }
+                        Button("Clear filters", action: clearFilters)
                             .disabled(accountID.isEmpty && category.isEmpty && tagID.isEmpty && merchantID == nil)
                         Button("Merchant names & groups") { manageMerchants = true }
                         Button("Restore hidden findings") {
@@ -175,12 +175,17 @@ struct SpendingReportsView: View {
                 }.padding(.top, 12)
             }.foregroundStyle(AppStyle.text)
             if !accountID.isEmpty || !category.isEmpty || !tagID.isEmpty || merchantID != nil {
-                Text([workspace.accounts.first { $0.id == accountID }?.name, category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
-                    .font(.caption).foregroundStyle(AppStyle.muted)
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Text([workspace.accounts.first { $0.id == accountID }?.name, category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption).foregroundStyle(AppStyle.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Clear filters", action: clearFilters).buttonStyle(.borderless).fixedSize()
+                }
             }
         }
         .onChange(of: currency) { accountID = "" }
     }
+    private func clearFilters() { accountID = ""; category = ""; tagID = ""; merchantID = nil }
     private var periodPicker: some View { Picker("Period", selection: $period) { ForEach(ReportPeriod.allCases) { Text($0.rawValue).tag($0) } }.frame(maxWidth: 260) }
     private var currencyPicker: some View { Picker("Currency", selection: $currency) { ForEach(ExactMoney.currencies, id: \.self) { Text($0).tag($0) } }.frame(width: 145) }
     private var refreshButton: some View { Button { refresh += 1 } label: { Label("Refresh", systemImage: "arrow.clockwise") }.disabled(loading) }
