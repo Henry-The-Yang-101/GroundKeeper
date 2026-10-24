@@ -95,6 +95,10 @@ public actor LedgerStore {
         guard !edit.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, edit.description.count <= 2048,
               edit.amountMinor != 0, edit.amountMinor != Int64.min, edit.notes.count <= 10000,
               ExactMoney.currencies.contains(edit.currency) else { throw LedgerError.invalid("Invalid transaction fields.") }
+        guard !(edit.type == "expense" && edit.amountMinor > 0),
+              !(["refund", "income"].contains(edit.type) && edit.amountMinor < 0) else {
+            throw LedgerError.invalid("Purchases must be money out; refunds and income must be money in.")
+        }
         _ = try CivilDate.parse(edit.occurredOn)
         guard let accountID = edit.accountID, let selected = try account(accountID), selected.currency == edit.currency else { throw LedgerError.invalid("Select an account with the transaction's currency.") }
         try db.transaction {

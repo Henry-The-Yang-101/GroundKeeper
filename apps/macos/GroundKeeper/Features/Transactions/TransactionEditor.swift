@@ -24,10 +24,11 @@ struct TransactionEditor: View {
     private var amount: Decimal? { TransactionInput.positiveAmount(amountText) }
     private var valid: Bool {
         !draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && validAmount && draft.accountID != nil && workspace.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
+            && validAmount && validDirection && draft.accountID != nil && workspace.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
             && !(draft.kind.usesCategory && draft.category == .other && draft.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
     private var validAmount: Bool { amount != nil }
+    private var validDirection: Bool { draft.kind.requiredDebit.map { $0 == draft.isDebit } ?? true }
     private var isChanged: Bool {
         draft != original || amountText != originalAmountText
     }
@@ -59,6 +60,16 @@ struct TransactionEditor: View {
                     LabeledContent("Source", value: draft.source)
                     Picker("Type", selection: $draft.kind) {
                         ForEach(TransactionKind.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    if let explanation = draft.kind.directionExplanation {
+                        Text(explanation)
+                            .font(.caption)
+                            .foregroundStyle(validDirection ? Color.secondary : Color.red)
+                    }
+                    if !validDirection, let requiredDebit = draft.kind.requiredDebit {
+                        Button(requiredDebit ? "Use Money out" : "Use Money in") {
+                            draft.isDebit = requiredDebit
+                        }
                     }
                 }
                 Section {
@@ -100,6 +111,7 @@ struct TransactionEditor: View {
             if category == .uncategorized { draft.needsReview = true }
         }
         .onChange(of: draft.kind) { _, kind in
+            if let requiredDebit = kind.requiredDebit { draft.isDebit = requiredDebit }
             if kind.usesCategory && draft.category == .uncategorized { draft.needsReview = true }
         }
         .confirmationDialog("Discard your changes?", isPresented: $showingDiscardConfirmation, titleVisibility: .visible) {

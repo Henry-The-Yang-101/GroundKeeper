@@ -58,6 +58,21 @@ enum TransactionKind: String, CaseIterable, Identifiable {
 
     var id: Self { self }
     var usesCategory: Bool { self == .purchase || self == .refund || self == .unknown }
+    var requiredDebit: Bool? {
+        switch self {
+        case .purchase: true
+        case .refund, .income: false
+        default: nil
+        }
+    }
+    var directionExplanation: String? {
+        switch self {
+        case .purchase: "Purchases are money out."
+        case .refund: "Refunds are money in and reduce spending."
+        case .income: "Income is money in."
+        default: nil
+        }
+    }
     var code: String {
         switch self {
         case .unknown: "unknown"
