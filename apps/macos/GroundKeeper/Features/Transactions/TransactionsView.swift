@@ -1,4 +1,5 @@
 import SwiftUI
+import GroundKeeperCore
 
 struct TransactionsView: View {
     @Environment(AppWorkspace.self) private var workspace
@@ -11,14 +12,7 @@ struct TransactionsView: View {
     @State private var deletionCandidate: Transaction?
     @State private var receiptTransaction: Transaction?
 
-    private var filteredTransactions: [Transaction] {
-        workspace.transactions.filter { transaction in
-            (!workspace.reviewOnly || transaction.needsReview)
-                && (category == nil || (transaction.kind.usesCategory && transaction.category == category))
-                && (account == "All accounts" || transaction.account == account)
-                && (search.isEmpty || "\(transaction.merchant) \(transaction.notes) \(transaction.category.rawValue) \(transaction.kind.rawValue)".localizedStandardContains(search))
-        }.sorted(using: sortOrder)
-    }
+    private var filteredTransactions: [Transaction] { workspace.transactions }
 
     private var selectedTransaction: Transaction? {
         filteredTransactions.first { $0.id == selectedID }
@@ -138,6 +132,15 @@ struct TransactionsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(AppStyle.pageBackground)
+        .task { updateQuery() }
+        .onChange(of: search) { updateQuery() }
+        .onChange(of: category) { updateQuery() }
+        .onChange(of: account) { updateQuery() }
+        .onChange(of: workspace.reviewOnly) { updateQuery() }
+        .onChange(of: sortOrder) { updateQuery() }
+        .onChange(of: workspace.transactions.map(\.id)) {
+            if !workspace.transactions.contains(where: { $0.id == selectedID }) { selectedID = nil }
+        }
         .task(id: workspace.focusTransactionSearch) {
             guard workspace.focusTransactionSearch else { return }
             // Let the split-view navigation install its focus scope first.
@@ -172,7 +175,7 @@ struct TransactionsView: View {
 
     private var pagination: some View {
         HStack(spacing: 10) {
-            Text("\(filteredTransactions.count) \(filteredTransactions.count == 1 ? "transaction" : "transactions")")
+            Text(workspace.matchingTransactions == 0 ? "0 transactions" : "\(workspace.page * 500 + 1)–\(workspace.page * 500 + filteredTransactions.count) of \(workspace.matchingTransactions) \(workspace.matchingTransactions == 1 ? "transaction" : "transactions")")
                 .font(.caption).foregroundStyle(AppStyle.muted)
             Button { workspace.changePage(workspace.page - 1) } label: {
                 Image(systemName: "chevron.left")
@@ -180,7 +183,7 @@ struct TransactionsView: View {
             Text("Page \(workspace.page + 1)").font(.caption).monospacedDigit()
             Button { workspace.changePage(workspace.page + 1) } label: {
                 Image(systemName: "chevron.right")
-            }.disabled((workspace.page + 1) * 500 >= workspace.totalTransactions).accessibilityLabel("Next page")
+            }.disabled((workspace.page + 1) * 500 >= workspace.matchingTransactions).accessibilityLabel("Next page")
         }.fixedSize()
     }
 
@@ -197,6 +200,28 @@ struct TransactionsView: View {
             searchFocused = true
             workspace.focusTransactionSearch = false
         }
+    }
+
+    private func updateQuery() {
+        var query = LedgerTransactionQuery()
+        query.search = search
+        query.matchingCategoryCodes = SpendingCategory.allCases.filter { $0.rawValue.localizedStandardContains(search) }.map(\.code)
+        query.matchingTypeCodes = TransactionKind.allCases.filter { $0.rawValue.localizedStandardContains(search) }.map(\.code)
+        query.category = category?.code
+        query.accountID = account == "All accounts" ? nil : workspace.accounts.first { $0.name == account }?.id
+        query.reviewOnly = workspace.reviewOnly
+        query.sort = sortOrder.compactMap { comparator in
+            let column: LedgerTransactionSort.Column
+            switch comparator.keyPath {
+            case \Transaction.date: column = .date
+            case \Transaction.merchant: column = .merchant
+            case \Transaction.amount: column = .amount
+            default: return nil
+            }
+            return LedgerTransactionSort(column, descending: comparator.order == .reverse)
+        }
+        workspace.queryTransactions(query)
+        selectedID = nil
     }
 
     private var hasFilters: Bool { !search.isEmpty || category != nil || account != "All accounts" || workspace.reviewOnly }

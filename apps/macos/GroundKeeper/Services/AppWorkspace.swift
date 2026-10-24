@@ -10,6 +10,11 @@ import GroundKeeperCore
     var selectedTab: AppTab? = .home
     var insightsSection: InsightsSection = .transactions
     var transactions: [Transaction] = []
+    var recentTransactions: [Transaction] = []
+    var matchingTransactions = 0
+    var transactionQuery = LedgerTransactionQuery()
+    var transactionReviewCount = 0
+    @ObservationIgnored private var refreshRequest = 0
     var accounts: [Account] = []
     var cardMappings: [CardAccountMapping] = []
     var reviews: [ReviewRecord] = []
@@ -76,7 +81,6 @@ import GroundKeeperCore
     }
     @ObservationIgnored var classifying = false
     @ObservationIgnored private var started = false
-    var transactionReviewCount: Int { transactions.filter(\.needsReview).count }
     var reviewCount: Int { transactionReviewCount + reviews.count }
     var ready: Bool { store != nil }
 
@@ -183,7 +187,7 @@ import GroundKeeperCore
         guard encrypted, !saving, !changingProcessingMode else { return }
         await stop()
         transactions = []; accounts = []; cardMappings = []; reviews = []; queue = []; editor = nil; showingImportPreview = false
-        totalTransactions = 0; model = nil; status = "Unlock your local vault"
+        totalTransactions = 0; matchingTransactions = 0; transactionReviewCount = 0; recentTransactions = []; model = nil; status = "Unlock your local vault"
     }
     func finishSetup() {
         guard ready else { return }
@@ -194,8 +198,16 @@ import GroundKeeperCore
     }
     func refresh() async throws {
         guard let store else { return }
-        let snapshot = try await store.snapshot(limit: 500, offset: page * 500)
-        transactions = snapshot.transactions.map(Transaction.init)
+        refreshRequest += 1
+        let request = refreshRequest
+        let snapshot = try await store.snapshot(limit: 5)
+        let result = try await store.transactionPage(transactionQuery, offset: page * 500)
+        let reviewTotal = try await store.transactionReviewCount()
+        guard self.store === store, request == refreshRequest else { return }
+        transactions = result.transactions.map(Transaction.init)
+        matchingTransactions = result.totalMatches; page = result.offset / 500
+        recentTransactions = snapshot.transactions.map(Transaction.init)
+        transactionReviewCount = reviewTotal
         accounts = snapshot.accounts; reviews = snapshot.reviews; queue = snapshot.queue
         cardMappings = snapshot.cardMappings
         unqueuedJobs = try await store.unqueuedClassificationCount()
@@ -648,6 +660,11 @@ import GroundKeeperCore
         guard let store else { throw LedgerError.unavailable("Open the vault first.") }
         let count = try await store.importCSV(document, mapping: mapping, skipped: skipped)
         page = 0; try await refresh(); Task { await processIfAutomatic() }; return count
+    }
+    func queryTransactions(_ query: LedgerTransactionQuery) {
+        guard query != transactionQuery else { return }
+        transactionQuery = query; page = 0
+        perform { try await self.refresh() }
     }
     func changePage(_ value: Int) { page = max(0, value); perform { try await self.refresh() } }
     func perform(_ operation: @escaping @MainActor () async throws -> Void) {

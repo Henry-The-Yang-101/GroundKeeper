@@ -73,8 +73,11 @@ Equal-vote Council orchestration is implemented in Swift; see the
 
 The UI now loads persisted transactions, adds accounts, saves confirmed manual
 edits, soft-deletes transactions, and shows pending/failed work. Transaction
-lists are paged in groups of 500; current search/filter/sort controls apply to
-the loaded page. Analytics/planning examples are no longer exposed as live data.
+lists apply search, category/account/review filters, and sorting across the ledger
+before selecting pages of 500. The footer shows the matching range and total;
+filter changes reset the page, and deletions clamp it to the last available page.
+Home review totals and its five latest entries are queried independently of this
+selection. Analytics/planning examples are no longer exposed as live data.
 
 ## Capture queue
 

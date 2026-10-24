@@ -161,6 +161,15 @@ final class Database {
         catch { try? executeScript("ROLLBACK"); throw error }
     }
     private func registerReportingFunctions() throws {
+        let searchResult = sqlite3_create_function_v2(handle, "gk_ledger_contains", 2, SQLITE_UTF8, nil, { context, count, values in
+            guard count == 2, let values, let value = values[0], let needle = values[1],
+                  let valueText = sqlite3_value_text(value), let needleText = sqlite3_value_text(needle) else {
+                sqlite3_result_int(context, 0); return
+            }
+            sqlite3_result_int(context, String(cString: valueText).localizedStandardContains(String(cString: needleText)) ? 1 : 0)
+        }, nil, nil, nil)
+        guard searchResult == SQLITE_OK else { throw LedgerError.storage(searchResult) }
+
         let result = sqlite3_create_function_v2(handle, "gk_report_day", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nil, { context, count, values in
             guard count == 2, let values, let timestamp = values[0], let zone = values[1],
                   let text = sqlite3_value_text(zone),

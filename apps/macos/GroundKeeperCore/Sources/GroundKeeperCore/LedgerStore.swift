@@ -37,20 +37,8 @@ public actor LedgerStore {
     }
     public func snapshot(limit: Int = 500, offset: Int = 0) throws -> LedgerSnapshot {
         let accounts = try db.query("SELECT id,name,currency FROM accounts ORDER BY name,id").map { Account(id: $0.text("id"), name: $0.text("name"), currency: $0.text("currency")) }
-        let rows = try db.query("""
-            SELECT t.*,p.id AS part_id,a.type_code,a.category_id,a.needs_review,a.origin,ac.name AS account_name,
-            EXISTS(SELECT 1 FROM review_items r WHERE r.status='open' AND (r.transaction_id=t.id OR r.part_id=p.id OR r.event_id IN
-              (SELECT event_id FROM transaction_event_links WHERE transaction_id=t.id AND unlinked_at_ms IS NULL))) AS open_review,
-            (SELECT group_concat(DISTINCT s.kind) FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id
-              JOIN sources s ON s.id=e.source_id WHERE l.transaction_id=t.id AND l.unlinked_at_ms IS NULL) AS sources
-            FROM transactions t JOIN transaction_parts p ON p.transaction_id=t.id
-            JOIN category_assignments a ON a.id=p.current_assignment_id LEFT JOIN accounts ac ON ac.id=t.account_id
-            WHERE t.state='active' ORDER BY t.occurred_on DESC,t.id LIMIT ? OFFSET ?
-            """, [.integer(Int64(max(1, min(limit, 5000)))), .integer(Int64(max(0, offset)))])
-        let transactions = rows.map { row in LedgerTransaction(id: row.text("id"), partID: row.text("part_id"), revision: Int(row.number("revision")),
-            description: row.text("description"), amountMinor: row.number("amount_minor"), currency: row.text("currency"), occurredOn: row.text("occurred_on"),
-            accountID: row["account_id"]?.string, accountName: row["account_name"]?.string ?? "Unassigned", type: row.text("type_code"), category: row["category_id"]?.string,
-            needsReview: row.number("needs_review") == 1 || row.number("open_review") == 1, notes: row.text("notes"), sources: row["sources"]?.string ?? "manual", origin: row.text("origin")) }
+        let transactions = try db.query(Self.ledgerTransactionSQL + " WHERE t.state='active' ORDER BY t.occurred_on DESC,t.id LIMIT ? OFFSET ?",
+            [.integer(Int64(max(1, min(limit, 5000)))), .integer(Int64(max(0, offset)))]).map(Self.ledgerTransaction)
         let reviews = try db.query("""
             SELECT r.*,e.source_id,e.external_account_key,o.description FROM review_items r
             JOIN raw_events e ON e.id=r.event_id LEFT JOIN event_observations o ON o.id=(SELECT id FROM event_observations WHERE event_id=e.id ORDER BY parsed_at_ms DESC,rowid DESC LIMIT 1)

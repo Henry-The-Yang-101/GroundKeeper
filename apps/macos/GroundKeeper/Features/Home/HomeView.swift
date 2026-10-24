@@ -22,15 +22,15 @@ struct HomeView: View {
             if !workspace.accounts.isEmpty { HomeSpendingOverview() }
             Surface {
                 SectionHeading(title: "Recent transactions")
-                if workspace.transactions.isEmpty {
+                if workspace.recentTransactions.isEmpty {
                     UnavailableFeature(title: "No transactions yet", symbol: "tray", description: "Import a bank CSV, connect your capture folder, or add a transaction with ⌘N.")
                 } else {
                     VStack(spacing: 0) {
-                        ForEach(workspace.transactions.prefix(5)) { transaction in
+                        ForEach(workspace.recentTransactions.prefix(5)) { transaction in
                             Button { workspace.editor = transaction } label: {
                                 TransactionRow(transaction: transaction).contentShape(Rectangle())
                             }.buttonStyle(VaultRowButtonStyle())
-                            if transaction.id != workspace.transactions.prefix(5).last?.id {
+                            if transaction.id != workspace.recentTransactions.prefix(5).last?.id {
                                 Divider().overlay(AppStyle.separator).padding(.horizontal, 12)
                             }
                         }
