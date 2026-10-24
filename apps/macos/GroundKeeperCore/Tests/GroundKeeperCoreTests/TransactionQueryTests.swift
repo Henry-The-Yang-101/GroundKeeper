@@ -41,9 +41,15 @@ import Testing
     #expect(try await store.transactionPage(query).transactions.first?.id == olderID)
     query.sort = [LedgerTransactionSort(.date)]
     #expect(try await store.transactionPage(query).transactions.first?.id == olderID)
-    query.search = "Dining & takeout"; query.matchingCategoryCodes = ["dining"]
+    query.search = "Dining & takeout"; query.categoryNames = ["dining": "Dining & takeout"]
     #expect(try await store.transactionPage(query).totalMatches == 1)
-    query.search = "purchase"; query.matchingCategoryCodes = []; query.matchingTypeCodes = ["expense"]
+    query.search = "purchase"; query.categoryNames = [:]; query.typeNames = ["expense": "Purchase"]
     #expect(try await store.transactionPage(query, offset: 500).totalMatches == 506)
+    query.categoryNames = ["dining": "Dining & takeout"]
+    query.search = "Dining & takeout Purchase"
+    #expect(try await store.transactionPage(query).transactions.map(\.id) == [olderID])
+    let combined = try await store.workspaceSnapshot(query)
+    #expect(combined.ledger.totalTransactions == 506 && combined.page.totalMatches == 1 && combined.reviewCount == 1)
+    #expect(combined.ledger.transactions.count == 5 && combined.ledger.transactions.first?.occurredOn == "2026-10-24")
     await store.close()
 }

@@ -10,8 +10,8 @@ public struct LedgerTransactionSort: Equatable, Sendable {
 /// Filters and sorting apply to the entire ledger before the result page is selected.
 public struct LedgerTransactionQuery: Equatable, Sendable {
     public var search = ""
-    public var matchingCategoryCodes: [String] = []
-    public var matchingTypeCodes: [String] = []
+    public var categoryNames: [String: String] = [:]
+    public var typeNames: [String: String] = [:]
     public var category: String?
     public var accountID: String?
     public var reviewOnly = false
@@ -23,6 +23,14 @@ public struct LedgerTransactionPage: Sendable {
     public let transactions: [LedgerTransaction]
     public let totalMatches: Int
     public let offset: Int
+}
+
+public struct LedgerWorkspaceSnapshot: Sendable {
+    public let ledger: LedgerSnapshot
+    public let page: LedgerTransactionPage
+    public let reviewCount: Int
+    public let unqueuedJobs: Int
+    public let reportingRevision: Int64
 }
 
 extension LedgerStore {
@@ -53,17 +61,19 @@ extension LedgerStore {
         }
         if let account = query.accountID { predicates.append("account_id=?"); bindings.append(.text(account)) }
         if !query.search.isEmpty {
-            var search = ["gk_ledger_contains(description || ' ' || notes, ?)"]
+            // Keep the same combined display-text search as the transaction table.
+            func displayName(_ column: String, names: [String: String]) -> String {
+                guard !names.isEmpty else { return column }
+                let clauses = names.sorted { $0.key < $1.key }.map { key, value in
+                    bindings += [.text(key), .text(value)]
+                    return "WHEN ? THEN ?"
+                }.joined(separator: " ")
+                return "CASE \(column) \(clauses) ELSE \(column) END"
+            }
+            let category = displayName("coalesce(category_id,'uncategorized')", names: query.categoryNames)
+            let type = displayName("type_code", names: query.typeNames)
+            predicates.append("gk_ledger_contains(description || ' ' || notes || ' ' || (\(category)) || ' ' || (\(type)), ?)")
             bindings.append(.text(query.search))
-            if !query.matchingCategoryCodes.isEmpty {
-                search.append("coalesce(category_id,'uncategorized') IN (\(Array(repeating: "?", count: query.matchingCategoryCodes.count).joined(separator: ",")))")
-                bindings += query.matchingCategoryCodes.map(SQLValue.text)
-            }
-            if !query.matchingTypeCodes.isEmpty {
-                search.append("type_code IN (\(Array(repeating: "?", count: query.matchingTypeCodes.count).joined(separator: ",")))")
-                bindings += query.matchingTypeCodes.map(SQLValue.text)
-            }
-            predicates.append("(" + search.joined(separator: " OR ") + ")")
         }
         let source = "WITH ledger AS (\(Self.ledgerTransactionSQL)) ", condition = predicates.joined(separator: " AND ")
         let total = Int(try db.query(source + "SELECT count(*) AS n FROM ledger WHERE " + condition, bindings).first!.number("n"))
@@ -75,6 +85,12 @@ extension LedgerStore {
         let rows = try db.query(source + "SELECT * FROM ledger WHERE " + condition + " ORDER BY " + sorts.joined(separator: ",") + " LIMIT ? OFFSET ?",
             bindings + [.integer(Int64(size)), .integer(Int64(start))])
         return LedgerTransactionPage(transactions: rows.map(Self.ledgerTransaction), totalMatches: total, offset: start)
+    }
+
+    /// One actor turn keeps dashboard totals, recent entries, and the query page consistent.
+    public func workspaceSnapshot(_ query: LedgerTransactionQuery, limit: Int = 500, offset: Int = 0) throws -> LedgerWorkspaceSnapshot {
+        LedgerWorkspaceSnapshot(ledger: try snapshot(limit: 5), page: try transactionPage(query, limit: limit, offset: offset),
+            reviewCount: try transactionReviewCount(), unqueuedJobs: try unqueuedClassificationCount(), reportingRevision: try spendingRevision())
     }
 
     public func transaction(id: String) throws -> LedgerTransaction? {

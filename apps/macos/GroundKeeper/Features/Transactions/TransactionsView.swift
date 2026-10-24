@@ -208,8 +208,8 @@ struct TransactionsView: View {
     private func updateQuery() {
         var query = LedgerTransactionQuery()
         query.search = search
-        query.matchingCategoryCodes = SpendingCategory.allCases.filter { $0.rawValue.localizedStandardContains(search) }.map(\.code)
-        query.matchingTypeCodes = TransactionKind.allCases.filter { $0.rawValue.localizedStandardContains(search) }.map(\.code)
+        query.categoryNames = Dictionary(uniqueKeysWithValues: SpendingCategory.allCases.map { ($0.code, $0.rawValue) })
+        query.typeNames = Dictionary(uniqueKeysWithValues: TransactionKind.allCases.map { ($0.code, $0.rawValue) })
         query.category = category?.code
         query.accountID = accountID
         query.reviewOnly = workspace.reviewOnly

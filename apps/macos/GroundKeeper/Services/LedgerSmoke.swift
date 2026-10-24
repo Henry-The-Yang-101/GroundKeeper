@@ -14,6 +14,26 @@ import GroundKeeperCore
             let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n".utf8), filename: "fictional.csv")
             let first = try await store.importCSV(csv, mapping: mapping), replay = try await store.importCSV(csv, mapping: mapping)
             guard first == 1, replay == 0 else { throw LedgerError.invalid("Import replay check failed.") }
+            // Read-only filter requests must survive rapid changes even while a
+            // separate write keeps editor controls busy. Use this temporary vault only.
+            let workspace = AppWorkspace()
+            workspace.configureQueueSmoke(store: store, bookmark: Data(), mode: .manual)
+            try await workspace.refresh()
+            workspace.saving = true
+            var query = LedgerTransactionQuery(); query.search = "FICTIONAL"
+            workspace.queryTransactions(query)
+            workspace.changePage(1)
+            query.search = "No matching fictional merchant"
+            workspace.queryTransactions(query)
+            for _ in 0..<200 {
+                if workspace.matchingTransactions == 0 { break }
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            guard workspace.matchingTransactions == 0, workspace.transactions.isEmpty, workspace.page == 0,
+                  workspace.totalTransactions == 1, workspace.recentTransactions.count == 1,
+                  workspace.transactionReviewCount == 1 else { throw LedgerError.invalid("Rapid ledger query refresh failed.") }
+            workspace.saving = false
+            print("ledger_query_refresh_passed")
             if CommandLine.arguments.contains("--ledger-model-picker") {
                 let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true
                 panel.message = "Choose a model for one fictional ledger-to-XPC classification."

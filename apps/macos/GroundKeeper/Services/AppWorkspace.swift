@@ -201,19 +201,19 @@ import GroundKeeperCore
         guard let store else { return }
         refreshRequest += 1
         let request = refreshRequest
-        let snapshot = try await store.snapshot(limit: 5)
-        let result = try await store.transactionPage(transactionQuery, offset: page * 500)
-        let reviewTotal = try await store.transactionReviewCount()
-        guard self.store === store, request == refreshRequest else { return }
-        transactions = result.transactions.map(Transaction.init)
-        matchingTransactions = result.totalMatches; page = result.offset / 500
+        let query = transactionQuery, offset = page * 500
+        let result = try await store.workspaceSnapshot(query, offset: offset)
+        guard self.store === store, request == refreshRequest, transactionQuery == query, page * 500 == offset else { return }
+        let snapshot = result.ledger
+        transactions = result.page.transactions.map(Transaction.init)
+        matchingTransactions = result.page.totalMatches; page = result.page.offset / 500
         recentTransactions = snapshot.transactions.map(Transaction.init)
-        transactionReviewCount = reviewTotal
+        transactionReviewCount = result.reviewCount
         accounts = snapshot.accounts; reviews = snapshot.reviews; queue = snapshot.queue
         cardMappings = snapshot.cardMappings
-        unqueuedJobs = try await store.unqueuedClassificationCount()
+        unqueuedJobs = result.unqueuedJobs
         totalTransactions = snapshot.totalTransactions; pendingJobs = snapshot.pendingJobs; failedJobs = snapshot.failedJobs
-        reportingRevision = try await store.spendingRevision()
+        reportingRevision = result.reportingRevision
     }
 
     func spendingContext(timezone: String) async throws -> SpendingContext {
@@ -696,9 +696,15 @@ import GroundKeeperCore
     func queryTransactions(_ query: LedgerTransactionQuery) {
         guard query != transactionQuery else { return }
         transactionQuery = query; page = 0
-        perform { try await self.refresh() }
+        refreshTransactionQuery()
     }
-    func changePage(_ value: Int) { page = max(0, value); perform { try await self.refresh() } }
+    func changePage(_ value: Int) { page = max(0, value); refreshTransactionQuery() }
+    private func refreshTransactionQuery() {
+        // Invalidate older results before scheduling the read. Reads must not take
+        // the write lock: rapid filter changes must each request their final state.
+        refreshRequest += 1
+        Task { do { try await refresh() } catch { if ready { errorMessage = error.localizedDescription } } }
+    }
     func perform(_ operation: @escaping @MainActor () async throws -> Void) {
         guard !saving else { return }; saving = true
         Task { defer { saving = false }; do { try await operation() } catch { errorMessage = error.localizedDescription } }
