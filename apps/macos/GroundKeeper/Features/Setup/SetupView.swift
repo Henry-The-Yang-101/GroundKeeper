@@ -17,6 +17,7 @@ struct SetupView: View {
     private let titles = ["Welcome", "Privacy", "Intelligence", "iCloud Drive", "iPhone", "Account", "Ready"]
     private var step: Int { min(max(reviewMode ? reviewStep : savedStep, 0), titles.count - 1) }
     private var canContinue: Bool { workspace.ready && !workspace.saving && !installer.busy && (reviewMode || step != 1 || protectionChosen) }
+    private var duplicateAccountName: Bool { workspace.accountNameExists(name: accountName, currency: currency) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -104,7 +105,7 @@ struct SetupView: View {
         case 5:
             header("creditcard.fill", "Start with one account.", "Give your first account a name and currency. You can add more later and match captured card labels to the right account.")
             if !workspace.accounts.isEmpty {
-                ForEach(workspace.accounts) { account in Label("\(account.name) · \(account.currency)", systemImage: "checkmark.circle").foregroundStyle(AppStyle.muted) }
+                ForEach(workspace.accounts) { account in Label("\(account.displayName(in: workspace.accounts)) · \(account.currency)", systemImage: "checkmark.circle").foregroundStyle(AppStyle.muted) }
             }
             TextField("Account name, for example Everyday card", text: $accountName).textFieldStyle(.roundedBorder)
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
@@ -119,8 +120,12 @@ struct SetupView: View {
                     }.labelsHidden()
                 }
             }
+            if duplicateAccountName {
+                Text("An account with this name already uses \(currency). Choose a different name. You can rename existing accounts in Settings.")
+                    .font(.caption).foregroundStyle(.red)
+            }
             Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: accountKind); accountName = "" }
-                .disabled(workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
             Text("No bank login is needed. CSV imports and captured transactions are matched to accounts you create.").foregroundStyle(AppStyle.muted)
         default:
             header("checkmark.seal.fill", "Make yourself at home.", "Your workspace is ready. Here is how GroundKeeper is configured.")

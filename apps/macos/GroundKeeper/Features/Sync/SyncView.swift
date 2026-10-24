@@ -80,7 +80,7 @@ private struct CaptureReviewRow: View {
                 HStack {
                     Picker("Account", selection: $accountID) {
                         Text("Choose account").tag("")
-                        ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
+                        ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag($0.id) }
                     }
                 }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
@@ -177,7 +177,7 @@ private struct CaptureCorrection: View {
                 TransactionDatePicker(date: $date)
                 Picker("Account", selection: $accountID) {
                     Text("Choose account").tag("")
-                    ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
+                    ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag($0.id) }
                 }
                 if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
                 RememberCardChoice(label: review.label, remember: $rememberCard)

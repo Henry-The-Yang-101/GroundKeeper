@@ -301,6 +301,19 @@ import GroundKeeperCore
     func delete(_ transaction: Transaction) {
         perform { try await self.store?.delete(id: transaction.id.uuidString, revision: transaction.revision); try await self.refresh() }
     }
+    func accountNameExists(name: String, currency: String, excludingID: String? = nil) -> Bool {
+        accounts.contains { $0.id != excludingID && $0.currency == currency && Account.normalizedName($0.name) == Account.normalizedName(name) }
+    }
+    func renameAccount(id: String, name: String) async throws {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault to rename an account.") }
+        guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then try again.") }
+        saving = true
+        defer { saving = false }
+        try await store.renameAccount(id: id, name: name)
+        guard self.store === store else { throw CancellationError() }
+        try await refresh()
+        feedback = WorkspaceFeedback(message: "Account renamed")
+    }
     func addAccount(name: String, currency: String, kind: String) {
         perform {
             try await self.store?.addAccount(name: name, currency: currency, kind: kind)

@@ -12,6 +12,8 @@ struct SettingsView: View {
     @State private var showingPhoneGuide = false
     @State private var installer = ModelInstaller()
     @State private var kind = "credit_card"
+    @State private var renamingAccount: Account?
+    private var duplicateAccountName: Bool { workspace.accountNameExists(name: accountName, currency: currency) }
     var body: some View {
         Form {
             VaultFormSection("Appearance") {
@@ -70,15 +72,26 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Categorization").font(VaultTypography.section) }
             Section {
-                ForEach(workspace.accounts) { account in LabeledContent(account.name, value: account.currency) }
+                ForEach(workspace.accounts) { account in
+                    HStack {
+                        LabeledContent(account.displayName(in: workspace.accounts), value: account.currency)
+                        Button("Rename…") { renamingAccount = account }
+                            .disabled(!workspace.ready || workspace.saving)
+                            .accessibilityLabel("Rename \(account.displayName(in: workspace.accounts))")
+                    }
+                }
                 TextField("New account name", text: $accountName)
                 Picker("Currency", selection: $currency) { ForEach(["CAD", "USD", "EUR", "GBP"], id: \.self) { Text($0) } }
                 Picker("Kind", selection: $kind) {
                     Text("Credit card").tag("credit_card"); Text("Chequing").tag("checking")
                     Text("Savings").tag("savings"); Text("Cash").tag("cash"); Text("Other").tag("other")
                 }
+                if duplicateAccountName {
+                    Text("An account with this name already uses \(currency). Choose a different name, or rename the existing account above.")
+                        .font(.caption).foregroundStyle(.red)
+                }
                 Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
-                    .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
                 Text("Choose an account for Wallet and bank captures in Sync, with the option to remember each card description.").font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Accounts").font(VaultTypography.section) }
             CardMappingsSection()
@@ -103,6 +116,7 @@ struct SettingsView: View {
                     .background(AppStyle.pageBackground)
             }
             .frame(maxWidth: PageLayout.contentWidth + 2 * PageLayout.inset).frame(maxWidth: .infinity).background(AppStyle.pageBackground)
+            .sheet(item: $renamingAccount) { account in AccountRenameSheet(account: account).vaultSheet() }
             .sheet(isPresented: $showingProtection) {
                 VStack(spacing: 0) {
                     SheetHeading(title: "Vault protection")

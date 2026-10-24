@@ -30,6 +30,7 @@ public actor LedgerStore {
     public func addAccount(name: String, currency: String, kind: String = "credit_card") throws {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty, name.count <= 100, ExactMoney.currencies.contains(currency),
               ["credit_card", "checking", "cash", "savings", "other"].contains(kind) else { throw LedgerError.invalid("Enter an account name, currency and valid account type.") }
+        let name = try validateAccountName(name, currency: currency)
         try db.query("INSERT INTO accounts(id,name,kind,currency,created_at_ms) VALUES (?,?,?,?,?)", [.text(identifier()), .text(name), .text(kind), .text(currency), .integer(nowMS())])
     }
     func account(_ id: String) throws -> Account? {

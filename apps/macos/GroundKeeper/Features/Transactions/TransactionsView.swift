@@ -6,7 +6,7 @@ struct TransactionsView: View {
     @State private var search = ""
     @FocusState private var searchFocused: Bool
     @State private var category: SpendingCategory?
-    @State private var account = "All accounts"
+    @State private var accountID: String?
     @State private var selectedID: Transaction.ID?
     @State private var sortOrder = [KeyPathComparator(\Transaction.date, order: .reverse)]
     @State private var deletionCandidate: Transaction?
@@ -37,8 +37,11 @@ struct TransactionsView: View {
                         Text("All categories").tag(nil as SpendingCategory?)
                         ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag(Optional($0)) }
                     }.frame(maxWidth: 290)
-                    Picker("Account", selection: $account) {
-                        ForEach(["All accounts"] + workspace.accounts.map(\.name), id: \.self) { Text($0) }
+                    Picker("Account", selection: $accountID) {
+                        Text("All accounts").tag(nil as String?)
+                        ForEach(workspace.accounts) { account in
+                            Text("\(account.displayName(in: workspace.accounts)) · \(account.currency)").tag(Optional(account.id))
+                        }
                     }.frame(maxWidth: 240)
                     Spacer(minLength: 0)
                     if hasFilters {
@@ -135,7 +138,7 @@ struct TransactionsView: View {
         .task { updateQuery() }
         .onChange(of: search) { updateQuery() }
         .onChange(of: category) { updateQuery() }
-        .onChange(of: account) { updateQuery() }
+        .onChange(of: accountID) { updateQuery() }
         .onChange(of: workspace.reviewOnly) { updateQuery() }
         .onChange(of: sortOrder) { updateQuery() }
         .onChange(of: workspace.transactions.map(\.id)) {
@@ -208,7 +211,7 @@ struct TransactionsView: View {
         query.matchingCategoryCodes = SpendingCategory.allCases.filter { $0.rawValue.localizedStandardContains(search) }.map(\.code)
         query.matchingTypeCodes = TransactionKind.allCases.filter { $0.rawValue.localizedStandardContains(search) }.map(\.code)
         query.category = category?.code
-        query.accountID = account == "All accounts" ? nil : workspace.accounts.first { $0.name == account }?.id
+        query.accountID = accountID
         query.reviewOnly = workspace.reviewOnly
         query.sort = sortOrder.compactMap { comparator in
             let column: LedgerTransactionSort.Column
@@ -224,11 +227,11 @@ struct TransactionsView: View {
         selectedID = nil
     }
 
-    private var hasFilters: Bool { !search.isEmpty || category != nil || account != "All accounts" || workspace.reviewOnly }
+    private var hasFilters: Bool { !search.isEmpty || category != nil || accountID != nil || workspace.reviewOnly }
     private func clearFilters() {
         search = ""
         category = nil
-        account = "All accounts"
+        accountID = nil
         workspace.reviewOnly = false
     }
 }

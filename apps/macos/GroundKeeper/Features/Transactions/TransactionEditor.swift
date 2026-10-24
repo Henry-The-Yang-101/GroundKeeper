@@ -61,7 +61,7 @@ struct TransactionEditor: View {
                     TransactionDatePicker(date: $draft.date)
                     Picker("Account", selection: $draft.accountID) {
                         Text("Choose account").tag(nil as String?)
-                        ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag(Optional($0.id)) }
+                        ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag(Optional($0.id)) }
                     }
                     if currencyMismatch, let account = selectedAccount {
                         Text("This account uses \(account.currency), but the amount is in \(draft.currency). Use \(account.currency) or choose an account in \(draft.currency).")

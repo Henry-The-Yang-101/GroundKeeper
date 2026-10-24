@@ -135,7 +135,7 @@ struct SpendingReportsView: View {
                         AlignedFormField(title: "Account") {
                             Picker("Account", selection: $accountID) {
                                 Text("All accounts").tag("")
-                                ForEach(workspace.accounts.filter { $0.currency == currency }) { Text($0.name).tag($0.id) }
+                                ForEach(workspace.accounts.filter { $0.currency == currency }) { Text($0.displayName(in: workspace.accounts)).tag($0.id) }
                             }
                         }
                         AlignedFormField(title: "Category") {

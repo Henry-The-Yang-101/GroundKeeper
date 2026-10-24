@@ -35,7 +35,7 @@ struct ImportPreviewView: View {
                             optionalColumn("Bank record ID (optional)", selection: $mapping.externalIDColumn, document: document)
                             Picker("Account", selection: $mapping.accountID) {
                                 Text("Choose account").tag("")
-                                ForEach(workspace.accounts) { Text("\($0.name) · \($0.currency)").tag($0.id) }
+                                ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag($0.id) }
                             }
                             Picker("Date format", selection: $mapping.dateFormat) {
                                 ForEach(["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"], id: \.self) { Text($0) }
