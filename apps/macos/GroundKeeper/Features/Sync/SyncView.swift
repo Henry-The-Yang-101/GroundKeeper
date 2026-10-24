@@ -127,6 +127,14 @@ private struct CaptureReviewRow: View {
 }
 
 private struct CaptureCorrection: View {
+    private struct Draft: Equatable {
+        let description: String
+        let amount: String
+        let accountID: String
+        let date: Date
+        let isDebit: Bool?
+        let rememberCard: Bool
+    }
     @Environment(AppWorkspace.self) private var workspace
     @Environment(\.dismiss) private var dismiss
     let review: ReviewRecord
@@ -139,6 +147,13 @@ private struct CaptureCorrection: View {
     @State private var error: String?
     @State private var saving = false
     @State private var rememberCard = false
+    @State private var initialDraft: Draft?
+    @State private var showingDiscardConfirmation = false
+    private var draft: Draft {
+        Draft(description: description, amount: amount, accountID: accountID, date: date,
+              isDebit: isDebit, rememberCard: rememberCard)
+    }
+    private var hasChanges: Bool { initialDraft.map { $0 != draft } ?? false }
     var body: some View {
         VStack(spacing: 0) {
             SheetHeading(title: "Correct capture details", subtitle: "Check the amount, direction, and date against the original capture. Source evidence is preserved.")
@@ -169,7 +184,9 @@ private struct CaptureCorrection: View {
             }.formStyle(.grouped).scrollContentBackground(.hidden).frame(height: 430).disabled(context == nil || saving)
             if let error { Text(error).foregroundStyle(.red).padding(.horizontal, 24).padding(.bottom, 16) }
             SheetFooter {
-                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction).disabled(saving)
+                Button("Cancel") {
+                    if hasChanges { showingDiscardConfirmation = true } else { dismiss() }
+                }.keyboardShortcut(.cancelAction).disabled(saving)
                 Spacer()
                 Button("Save correction") {
                     guard let value = TransactionInput.positiveAmount(amount), let isDebit else { return }
@@ -185,7 +202,11 @@ private struct CaptureCorrection: View {
                     .disabled(context == nil || isDebit == nil || saving || workspace.saving || accountID.isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || TransactionInput.positiveAmount(amount) == nil)
                     .buttonStyle(.brass)
             }
-        }.frame(width: 570).interactiveDismissDisabled(saving)
+        }.frame(width: 570).interactiveDismissDisabled(saving || hasChanges)
+            .confirmationDialog("Discard your capture corrections?", isPresented: $showingDiscardConfirmation, titleVisibility: .visible) {
+                Button("Discard changes", role: .destructive) { dismiss() }
+                Button("Keep editing", role: .cancel) { }
+            }
             .task(id: review.eventID) {
                 guard context == nil else { return }
                 do {
@@ -204,6 +225,8 @@ private struct CaptureCorrection: View {
                         isDebit = minor < 0
                     }
                     context = source
+                    // The parsed source seeds one edit session. Loading it is not a user change.
+                    initialDraft = draft
                 } catch { self.error = error.localizedDescription }
             }
     }
