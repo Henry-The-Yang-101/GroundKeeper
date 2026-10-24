@@ -28,11 +28,12 @@ enum SpendingPreview {
             let id = "demo-\(target == everyday.id ? "everyday" : "travel")-\(rows[target]!.count + 1)"
             rows[target]!.append("\(day),\(merchant),\(decimal),\(id)")
         }
-        for dayOffset in 0...calendar.count(try ReportRange(start: start, end: calendar.adding(1, to: today))) - 1 {
+        let days = calendar.count(try ReportRange(start: start, end: calendar.adding(1, to: today)))
+        for dayOffset in 0..<days {
             let day = calendar.adding(dayOffset, to: start)
             let weekIndex = dayOffset / 7
             // A sustained four-week grocery level shift, and a gradual café trend.
-            add(day, "Fictional Market", weekIndex >= 20 ? -5000 : -1800)
+            add(day, "Fictional Market", weekIndex >= 20 ? -6000 : -1800)
             add(day, "City Transit", -350)
             add(day, "Neighbourhood Café", -Int64(500 + weekIndex * 50))
             if weekIndex >= 16 && dayOffset % 7 < 3 { add(day, "Neighbourhood Café", -650) }
@@ -54,6 +55,19 @@ enum SpendingPreview {
             mapping.accountID = account.id
             mapping.externalIDColumn = 3
             imported += try await store.importCSV(document, mapping: mapping)
+        }
+        // The importer conservatively asks about equal-amount purchases close together,
+        // even with distinct bank IDs. These generated rows are known separate purchases;
+        // confirm them with the ordinary reconciliation API, including all review pages.
+        while true {
+            let reviews = try await store.snapshot(limit: 1).reviews
+            if reviews.isEmpty { break }
+            for review in reviews {
+                guard review.reason == "possible_duplicate" else {
+                    throw LedgerError.invalid("Unexpected fictional import review: \(review.reason)")
+                }
+                try await store.resolveMatch(eventID: review.eventID, transactionID: nil)
+            }
         }
         let snapshot = try await store.snapshot(limit: 5000)
         guard snapshot.totalTransactions == imported else {

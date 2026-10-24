@@ -4,7 +4,7 @@ import GroundKeeperCore
 enum VaultAccess {
     static func root() throws -> URL {
         if CommandLine.arguments.contains("--setup-preview") {
-            let root = FileManager.default.temporaryDirectory.appendingPathComponent("GroundKeeper-Setup-Preview-\(ProcessInfo.processInfo.processIdentifier)")
+            let root = FileManager.default.temporaryDirectory.appendingPathComponent("GroundKeeper-Setup-Preview-\(AppPreferences.previewSessionID)")
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
             return root
         }
