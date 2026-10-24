@@ -126,6 +126,11 @@ For a first run, add a fictional CAD account in Settings and import
 editing exercise. You can try this workflow without a model or iCloud connection;
 the sample records are saved in the app's normal local database.
 
+For an isolated spending walkthrough with automatically calculated insights, run
+`./apps/macos/run-demo.sh`. It builds and opens a fresh temporary vault with about
+600 imported fictional transactions. Use `--no-build` to reuse the Debug app;
+see the [demo guide](apps/macos/README.md#fictional-spending-demo) for details.
+
 See the [setup guide](docs/setup.md) for Xcode selection, signing, local model
 packages, Apple Shortcuts, capture setup, and troubleshooting.
 

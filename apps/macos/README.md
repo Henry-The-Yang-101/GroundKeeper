@@ -59,6 +59,48 @@ The local Swift package `GroundKeeperCore` pins Zetetic’s official SQLCipher
 4.19.0 package. It also opens ordinary SQLite when no passphrase is supplied. The XPC service embeds the existing pinned
 Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/README.md).
 
+## Fictional spending demo
+
+Build and open a separate demo instance from the repository root:
+
+```sh
+./apps/macos/run-demo.sh
+```
+
+To reuse the current Debug build, use `./apps/macos/run-demo.sh --no-build`.
+The normal launcher remains `./apps/macos/run.sh`; build without opening either
+mode with `./apps/macos/build.sh`.
+
+Each demo launch uses a fresh temporary vault and separate preferences and opens
+**Spending**. It imports roughly 600 fictional CAD transactions across two
+accounts, covering 24 complete weeks plus the current week through today in
+America/Toronto. It uses the real CSV importer, confirms known separate purchases
+through reconciliation, then applies explicit reviewed categories without a model.
+The existing reporting engine calculates the insights from that ledger.
+
+- **This month:** merchant counts, period changes, concentration, and an unusual
+  café purchase when the selected history meets the detector thresholds.
+- **Last 90 days** or **All time:** weekly trends and sustained level shifts.
+- **Merchant names & groups:** three café statement names remain separate until
+  you confirm grouping. Refunds reduce net spending; income and transfers are excluded.
+
+The fixture uses manual processing and has no connected capture folder or model.
+It does not seed your ordinary vault. Edits and dismissals last only for that
+instance; the next launch starts fresh. Temporary preview files may remain until
+macOS clears them. `--no-build` requires a Debug app built with this demo support.
+The initial dependency setup described above is still required for a fresh checkout.
+
+After building, verify the fixture and report calculations with:
+
+```sh
+./scripts/check_spending_demo.sh
+```
+
+This runs the same fixture against the built Swift core at fixed dates, checking
+full-ledger totals, source provenance, reconciliation, separate merchant branches,
+repeatable findings, year/DST/leap-day boundaries, and vault integrity. It uses
+only disposable test vaults and installed build dependencies.
+
 ## Configure Apple development signing
 
 This is optional. The [free release build](../../docs/releases.md#local-release-build)

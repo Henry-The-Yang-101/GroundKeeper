@@ -4,6 +4,12 @@ Implemented 2026-10-21; merchant identity and statistical patterns added 2026-10
 current month's overview using the same calculations. Transactions remains a
 separate page with its existing editing and review workflow.
 
+For a disposable walkthrough, run `./apps/macos/run-demo.sh` from the repository
+root. The demo imports and categorizes fictional statements before opening
+Spending; findings come from the same SQL and Swift analysis as ordinary data.
+Use **Last 90 days** or **All time** for weekly patterns. See the
+[demo guide](../apps/macos/README.md#fictional-spending-demo).
+
 ## Reports
 
 - Select calendar days/weeks/months/quarters/years, completed months/years,
