@@ -54,9 +54,22 @@ notification. This is inconclusive: macOS delivery/permission behavior was not
 isolated, and this does not establish iPhone behavior. The receiver was disabled
 after the experiment.
 
-The sender was then changed to include a URL to the separate harmless
-`GK Research Link Target` shortcut. These clearly named research shortcuts remain
-available for a physical-iPhone check through the user's existing Shortcuts sync.
+The initial attempt to edit the installed sender did not persist. The user's
+physical-iPhone screenshot showed the original `GKRESEARCH_INPUT event-A` body,
+so that run did not test hyperlink behavior. A locally updated source file was
+insufficient evidence that the installed or synced shortcut had changed.
+
+The installed sender was subsequently edited through the native text controls,
+closed and reopened, and exported from Shortcuts. The exported `Shortcut.wflow`
+was inspected and confirmed to contain one native Show Notification action with:
+
+- Title: `GroundKeeper URL Test v2`
+- Body: `shortcuts://run-shortcut?name=GK%20Research%20Link%20Target&input=text&text=event-A`
+
+The body contains only the URL, with no attachment or automatic Open URL action.
+The harmless target shortcut is named `GK Research Link Target`. These research
+shortcuts remain available for a physical-iPhone check through the user's existing
+Shortcuts sync. Phone sync and expanded-link behavior are still unverified.
 They do not access the inbox or real transaction data.
 
 ### iOS 27.0 simulator
@@ -85,8 +98,11 @@ Confirm Before Run switch. No successful deferred-confirmation relay was tested.
 
 ## Physical-phone test prepared
 
-Run `GK Research Notification Sender`, expand its notification, and try its
-shortcut URL. If the link opens the `GroundKeeper Research Link Worked` alert,
+After the phone's sender shows the title `GroundKeeper URL Test v2` and a
+`shortcuts://` URL in its Show Notification body, run
+`GK Research Notification Sender`. Long-press the new notification and try its
+shortcut URL. The earlier `GroundKeeper Research A` / `GKRESEARCH_INPUT event-A`
+notification is obsolete and contains no link. If the link opens the `GroundKeeper Research Link Worked` alert,
 repeat with two different event IDs and reverse the order of taps. Then test
 long delays, locking/unlocking, force-quitting Shortcuts, and restarting the phone.
 Do not use a successful single tap as evidence of durable multi-transaction
