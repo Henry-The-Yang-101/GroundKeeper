@@ -156,6 +156,7 @@ public struct SpendingEntry: Identifiable, Equatable, Sendable {
     public let id: String
     public let day: String
     public let description: String
+    public let accountID: String?
     public let accountName: String
     public let net: Int64
     public let pending: Bool

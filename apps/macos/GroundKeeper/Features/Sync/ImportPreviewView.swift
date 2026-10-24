@@ -47,7 +47,7 @@ struct ImportPreviewView: View {
                     } else {
                         GroupBox("Import summary") {
                             VStack(alignment: .leading, spacing: 6) {
-                                LabeledContent("Destination account", value: workspace.accounts.first { $0.id == mapping.accountID }?.name ?? "Unavailable account")
+                                LabeledContent("Destination account", value: workspace.accountLabel(id: mapping.accountID, fallback: "Unavailable account"))
                                 LabeledContent("Currency", value: mapping.currency)
                                 Text("\(summary.selectedCount) selected · \(summary.validCount) valid · \(summary.invalidCount) invalid selected · \(summary.skippedCount) skipped")
                                     .font(.caption)

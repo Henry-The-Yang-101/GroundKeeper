@@ -98,14 +98,14 @@ extension LedgerStore {
     public func spendingEntries(_ filter: SpendingFilter, offset: Int = 0, limit: Int = 100, largest: Bool = false) throws -> [SpendingEntry] {
         let (source, bindings) = try reportSource(filter, range: filter.range)
         return try db.query(source + """
-            SELECT i.transaction_id,i.day,t.description,coalesce(ac.name,'Unassigned') AS account_name,sum(i.net) AS net,
+            SELECT i.transaction_id,i.day,t.description,t.account_id,coalesce(ac.name,'Unassigned') AS account_name,sum(i.net) AS net,
               max(i.lifecycle='pending') AS pending,max(i.unreviewed) AS review
             FROM included i JOIN transactions t ON t.id=i.transaction_id LEFT JOIN accounts ac ON ac.id=t.account_id
             \(largest ? "WHERE i.type_code='expense'" : "")
-            GROUP BY i.transaction_id,i.day,t.description,ac.name
+            GROUP BY i.transaction_id,i.day,t.description,t.account_id,ac.name
             ORDER BY \(largest ? "net DESC" : "i.day DESC"),i.transaction_id LIMIT ? OFFSET ?
             """, bindings + [.integer(Int64(max(1, min(limit, 200)))), .integer(Int64(max(0, offset)))]).map {
-                SpendingEntry(id: $0.text("transaction_id"), day: $0.text("day"), description: $0.text("description"), accountName: $0.text("account_name"), net: $0.number("net"), pending: $0.number("pending") == 1, needsReview: $0.number("review") == 1)
+                SpendingEntry(id: $0.text("transaction_id"), day: $0.text("day"), description: $0.text("description"), accountID: $0["account_id"]?.string, accountName: $0.text("account_name"), net: $0.number("net"), pending: $0.number("pending") == 1, needsReview: $0.number("review") == 1)
             }
     }
 

@@ -96,10 +96,10 @@ private struct CaptureReviewRow: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(candidate.description).fontWeight(.medium)
                             Text("\((Decimal(candidate.amountMinor) / 100).formatted(.currency(code: candidate.currency))) \(candidate.currency) · \(candidate.day)")
-                            Text("Account: \(candidate.accountName)").font(.caption)
+                            Text("Account: \(workspace.accountLabel(id: candidate.accountID, fallback: candidate.accountName))").font(.caption)
                             Button("Link to this transaction") { workspace.resolve(review, transactionID: candidate.id) }
                                 .disabled(context == nil)
-                                .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(candidate.accountName)")
+                                .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(workspace.accountLabel(id: candidate.accountID, fallback: candidate.accountName))")
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -233,6 +233,7 @@ private struct CaptureCorrection: View {
 }
 
 private struct CaptureSourceEvidence: View {
+    @Environment(AppWorkspace.self) private var workspace
     let context: CaptureReviewContext
     var body: some View {
         Section("Original capture") {
@@ -242,7 +243,7 @@ private struct CaptureSourceEvidence: View {
             } else {
                 LabeledContent("Amount", value: "Could not be parsed — check source below")
             }
-            LabeledContent("Account", value: context.accountName ?? "Not assigned")
+            LabeledContent("Account", value: workspace.accountLabel(id: context.accountID, fallback: context.accountName ?? "Not assigned"))
             DisclosureGroup("Preserved source evidence") {
                 Text(context.payload).font(.caption.monospaced()).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)

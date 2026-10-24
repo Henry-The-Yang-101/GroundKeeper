@@ -301,6 +301,9 @@ import GroundKeeperCore
     func delete(_ transaction: Transaction) {
         perform { try await self.store?.delete(id: transaction.id.uuidString, revision: transaction.revision); try await self.refresh() }
     }
+    func accountLabel(id: String?, fallback: String) -> String {
+        accounts.first { $0.id == id }?.displayName(in: accounts) ?? fallback
+    }
     func accountNameExists(name: String, currency: String, excludingID: String? = nil) -> Bool {
         accounts.contains { $0.id != excludingID && $0.currency == currency && Account.normalizedName($0.name) == Account.normalizedName(name) }
     }

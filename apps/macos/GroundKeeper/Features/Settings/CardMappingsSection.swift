@@ -19,7 +19,7 @@ struct CardMappingsSection: View {
                         set: { workspace.updateCardMapping(mapping, accountID: $0) }
                     )) {
                         ForEach(workspace.accounts) { account in
-                            Text("\(account.name) · \(account.currency)").tag(account.id)
+                            Text("\(account.displayName(in: workspace.accounts)) · \(account.currency)").tag(account.id)
                         }
                     }
                     Button("Remove mapping", role: .destructive) { workspace.removeCardMapping(mapping) }

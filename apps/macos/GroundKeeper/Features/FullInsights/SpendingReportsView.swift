@@ -187,7 +187,7 @@ struct SpendingReportsView: View {
             }.foregroundStyle(AppStyle.text)
             if !accountID.isEmpty || !category.isEmpty || !tagID.isEmpty || merchantID != nil {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    Text([workspace.accounts.first { $0.id == accountID }?.name, category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
+                    Text([workspace.accounts.first { $0.id == accountID }?.displayName(in: workspace.accounts), category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(AppStyle.muted)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Clear filters", action: clearFilters).buttonStyle(.borderless).fixedSize()

@@ -2,15 +2,19 @@ import SwiftUI
 import GroundKeeperCore
 
 struct ReportEntryRow: View {
+    @Environment(AppWorkspace.self) private var workspace
     let entry: SpendingEntry
     let currency: String
+    private var accountName: String {
+        workspace.accounts.first { $0.id == entry.accountID }?.displayName(in: workspace.accounts) ?? entry.accountName
+    }
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.description).fontWeight(.medium).lineLimit(2).help(entry.description)
                 Text(entry.day + (entry.pending ? " · Pending" : "") + (entry.needsReview ? " · Needs review" : ""))
                     .font(.caption).foregroundStyle(AppStyle.muted)
-                Text(entry.accountName).font(.caption).foregroundStyle(AppStyle.muted)
+                Text(accountName).font(.caption).foregroundStyle(AppStyle.muted)
             }
             Spacer(minLength: 0)
             Text(ReportFormat.money(entry.net, currency)).monospacedDigit().fixedSize()

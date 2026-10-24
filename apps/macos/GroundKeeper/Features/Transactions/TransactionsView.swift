@@ -68,7 +68,7 @@ struct TransactionsView: View {
                     TableColumn("Transaction", value: \Transaction.merchant) { transaction in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
-                            Text(transaction.account).font(.caption).foregroundStyle(AppStyle.muted)
+                            Text(workspace.accountLabel(id: transaction.accountID, fallback: transaction.account)).font(.caption).foregroundStyle(AppStyle.muted)
                         }.padding(.vertical, 15)
                     }.width(min: 140, ideal: 190)
                     TableColumn("Category / type") { transaction in
