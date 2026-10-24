@@ -68,6 +68,23 @@ Build and open a separate demo instance from the repository root:
 ```
 
 To reuse the current Debug build, use `./apps/macos/run-demo.sh --no-build`.
+For concurrent UI work, give the demo a distinct app identity:
+
+```sh
+./apps/macos/run-demo.sh --instance spending-grid
+```
+
+The optional name uses letters, digits and hyphens. Each invocation copies the
+Debug app to an ignored `.local/macos/Demos/` directory, assigns a unique bundle
+ID, and prints both its ID and path for precise computer-control targeting. It
+requires the signing identity used by the Debug build to be available locally.
+Only the copy is re-signed, with sandbox and hardened runtime retained; the
+original app and other demo instances remain intact. The copy omits provisioning
+and keychain entitlements tied to the original app ID and is for fictional UI
+work, not testing live keychain access or classifier XPC services. Combine with
+`--no-build` to reuse the build. Demo bundles remain in that ignored directory
+until you remove them after closing their instances.
+
 The normal launcher remains `./apps/macos/run.sh`; build without opening either
 mode with `./apps/macos/build.sh`.
 
