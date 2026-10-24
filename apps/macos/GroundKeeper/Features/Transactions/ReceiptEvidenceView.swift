@@ -36,7 +36,7 @@ struct ReceiptEvidenceView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         if let image = images[receipt.id] { Image(nsImage: image).resizable().scaledToFit().frame(maxHeight: 280) }
                         Text(receipt.text).font(.caption.monospaced()).textSelection(.enabled)
-                        Text(receipt.producer).font(.caption2).foregroundStyle(AppStyle.muted)
+                        Text(sourceDescription(receipt.producer)).font(.caption2).foregroundStyle(AppStyle.muted)
                         if receipt.imageState == "stored" {
                             Button("Read image again on this Mac") {
                                 busy = true
@@ -53,6 +53,13 @@ struct ReceiptEvidenceView: View {
             }
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
         }.task(id: transactionID) { await load() }
+    }
+    private func sourceDescription(_ producer: String) -> String {
+        switch producer {
+        case "apple_shortcuts": "Text captured with Apple Shortcuts"
+        case "apple_vision", "apple_vision_documents": "Text read from the receipt image on this Mac"
+        default: "Imported receipt text"
+        }
     }
     private func load() async {
         loading = true

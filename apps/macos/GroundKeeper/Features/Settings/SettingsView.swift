@@ -20,7 +20,6 @@ struct SettingsView: View {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented).tint(AppStyle.controlAccent)
-                Text("Brass vault · Fraunces headings").font(.caption).foregroundStyle(AppStyle.muted)
             }
             VaultFormSection("Queue processing") {
                 Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
