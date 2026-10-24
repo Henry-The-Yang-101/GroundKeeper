@@ -36,3 +36,26 @@ import Testing
     #expect(try await store.snapshot().transactions.contains { $0.occurredOn == "2026-10-03" && $0.amountMinor == -675 })
     #expect(try await store.captureReviewContext(eventID: review.eventID).payload == context.payload)
 }
+
+@Test func captureReconciliationShowsCandidateFactsOutsideTheLoadedPage() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fictional statement account", currency: "CAD")
+    var mapping = CSVMapping()
+    mapping.accountID = try await store.snapshot().accounts[0].id
+    let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n2026-10-22,NEWER PURCHASE,-9.00\n".utf8), filename: "fictional.csv")
+    try await store.importCSV(csv, mapping: mapping)
+    try await ingestMapped(store, id: "matching-capture")
+    let review = try #require(try await store.snapshot().reviews.first { $0.reason == "possible_duplicate" })
+    let page = try await store.snapshot(limit: 1)
+    #expect(!page.transactions.contains { review.candidates.contains($0.id) })
+    let source = try await store.captureReviewContext(eventID: review.eventID)
+    let candidates = try await store.captureReconciliationCandidates(transactionIDs: review.candidates + [UUID().uuidString])
+    let candidate = try #require(candidates.first)
+    #expect(candidates.count == 1)
+    #expect(candidate.description == "FICTIONAL CAFE")
+    #expect(candidate.day == "2026-10-17")
+    #expect(candidate.amountMinor == source.amountMinor)
+    #expect(candidate.currency == source.currency)
+    #expect(candidate.accountID == source.accountID)
+    #expect(candidate.accountName == "Fictional statement account")
+}

@@ -61,11 +61,21 @@ private struct CaptureReviewRow: View {
     @State private var accountID = ""
     @State private var rememberCard = false
     @State private var correcting = false
+    @State private var context: CaptureReviewContext?
+    @State private var candidates: [CaptureReconciliationCandidate] = []
+    @State private var contextError: String?
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(review.description.isEmpty ? "Unparsed capture" : review.description).fontWeight(.medium)
             Text(review.reason.replacingOccurrences(of: "_", with: " ")).font(.callout).foregroundStyle(AppStyle.muted)
             if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
+            if let context {
+                CaptureSourceEvidence(context: context)
+            } else if let contextError {
+                Text(contextError).font(.caption).foregroundStyle(.red)
+            } else {
+                ProgressView("Loading capture details…").controlSize(.small)
+            }
             if ["account_mapping_required", "currency_required"].contains(review.reason) {
                 HStack {
                     Picker("Account", selection: $accountID) {
@@ -80,11 +90,25 @@ private struct CaptureReviewRow: View {
                 if workspace.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }
             }
             if review.reason == "possible_duplicate" {
-                ForEach(review.candidates, id: \.self) { id in
-                    let record = workspace.transactions.first { $0.id.uuidString == id }
-                    Button("Link to \(record?.merchant ?? "transaction") · \(record?.date.formatted(date: .abbreviated, time: .omitted) ?? String(id.prefix(8)))") { workspace.resolve(review, transactionID: id) }
+                Text("Compare with existing transactions").font(.headline)
+                ForEach(candidates) { candidate in
+                    GroupBox {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(candidate.description).fontWeight(.medium)
+                            Text("\((Decimal(candidate.amountMinor) / 100).formatted(.currency(code: candidate.currency))) \(candidate.currency) · \(candidate.day)")
+                            Text("Account: \(candidate.accountName)").font(.caption)
+                            Button("Link to this transaction") { workspace.resolve(review, transactionID: candidate.id) }
+                                .disabled(context == nil)
+                                .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(candidate.accountName)")
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                if context != nil && candidates.count < review.candidates.count {
+                    Text("Some suggested transactions are no longer available. Refresh Sync before deciding.")
+                        .font(.caption).foregroundStyle(AppStyle.muted)
                 }
                 Button("Keep as a separate transaction") { workspace.resolve(review, transactionID: nil) }
+                    .disabled(context == nil)
             }
             if !["possible_duplicate", "event_identity_collision"].contains(review.reason) {
                 Button("Correct capture details…") { correcting = true }
@@ -92,6 +116,13 @@ private struct CaptureReviewRow: View {
             Button("Dismiss review") { workspace.dismiss(review) }.font(.caption)
         }.disabled(workspace.saving)
         .sheet(isPresented: $correcting) { CaptureCorrection(review: review).vaultSheet() }
+        .task(id: review.id) {
+            do {
+                guard let store = workspace.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
+                context = try await store.captureReviewContext(eventID: review.eventID)
+                candidates = try await store.captureReconciliationCandidates(transactionIDs: review.candidates)
+            } catch { contextError = error.localizedDescription }
+        }
     }
 }
 

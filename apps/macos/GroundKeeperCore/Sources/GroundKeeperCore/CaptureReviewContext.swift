@@ -11,6 +11,16 @@ public struct CaptureReviewContext: Sendable {
     public let payload: String
 }
 
+public struct CaptureReconciliationCandidate: Identifiable, Sendable {
+    public let id: String
+    public let description: String
+    public let amountMinor: Int64
+    public let currency: String
+    public let day: String
+    public let accountID: String?
+    public let accountName: String
+}
+
 extension LedgerStore {
     public func captureReviewContext(eventID: String) throws -> CaptureReviewContext {
         guard let row = try db.query("""
@@ -24,5 +34,19 @@ extension LedgerStore {
         return CaptureReviewContext(description: row.text("description"), amountMinor: row["amount_minor"]?.int,
             currency: row["currency"]?.string, day: row.text("occurred_on"), accountID: row["account_id"]?.string,
             accountName: row["account_name"]?.string, payload: row.text("payload_json"))
+    }
+
+    /// Fetches candidates by identity, independently of the Transactions page.
+    public func captureReconciliationCandidates(transactionIDs: [String]) throws -> [CaptureReconciliationCandidate] {
+        try transactionIDs.compactMap { id in
+            try db.query("""
+                SELECT t.id,t.description,t.amount_minor,t.currency,t.occurred_on,t.account_id,a.name AS account_name
+                FROM transactions t LEFT JOIN accounts a ON a.id=t.account_id WHERE t.id=? AND t.state='active'
+                """, [.text(id)]).first.map {
+                    CaptureReconciliationCandidate(id: $0.text("id"), description: $0.text("description"),
+                        amountMinor: $0.number("amount_minor"), currency: $0.text("currency"), day: $0.text("occurred_on"),
+                        accountID: $0["account_id"]?.string, accountName: $0["account_name"]?.string ?? "Unassigned")
+                }
+        }
     }
 }
