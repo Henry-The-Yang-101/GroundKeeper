@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct SidebarView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var selection: AppTab?
     let reviewCount: Int
     let queueCount: Int
+    let isProcessingQueue: Bool
 
     var body: some View {
         List(selection: $selection) {
@@ -14,6 +16,8 @@ struct SidebarView: View {
                     } icon: {
                         Image(systemName: tab.symbol(isSelected: selection == tab))
                             .foregroundStyle(selection == tab ? AppStyle.accent : AppStyle.muted)
+                            .symbolEffect(.rotate.clockwise.wholeSymbol,
+                                          isActive: tab == .sync && isProcessingQueue && !reduceMotion)
                     }
                         .badge(badgeCount(for: tab))
                         .tag(tab)
