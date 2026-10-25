@@ -234,7 +234,7 @@ struct SpendingReportsView: View {
             }
             Text("Calculated on this Mac").font(.caption).foregroundStyle(AppStyle.muted)
             if report.findings.isEmpty {
-                Text("No new findings for this view. Patterns require reviewed data and enough comparable history: at least three purchases per comparison period, eight complete weeks for trends, or eight earlier purchases for an unusual amount. Hidden findings stay hidden.")
+                Text(report.emptyFindingsExplanation)
                     .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             }
             ForEach(Array(report.findings.prefix(showAllFindings ? report.findings.count : 2))) { finding in

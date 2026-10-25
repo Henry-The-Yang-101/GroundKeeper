@@ -197,3 +197,21 @@ public struct SpendingReport: Sendable {
 
 public struct ReportTag: Identifiable, Sendable { public let id: String; public let name: String }
 public struct SpendingContext: Sendable { public let firstDay: String?; public let tags: [ReportTag]; public let revision: Int64 }
+
+
+extension SpendingReport {
+    /// Explain the same eligibility gates used by the deterministic detectors.
+    public var emptyFindingsExplanation: String {
+        if totals.uncertain {
+            var reasons: [String] = []
+            if totals.reviewCount > 0 { reasons.append("\(totals.reviewCount) included entries need review") }
+            if totals.unknownCount > 0 { reasons.append("\(totals.unknownCount) entries have an unknown type or payment status") }
+            if totals.pendingCount > 0 { reasons.append("\(totals.pendingCount) entries are still pending") }
+            return "Findings are paused for this view: " + reasons.joined(separator: "; ") + ". Review these entries or narrow the filters to reviewed, posted history. Having more saved transactions does not bypass these checks."
+        }
+        if totals.purchases == 0 {
+            return "No purchases match this date range and these filters. Try a wider date range or check the selected currency, account, and category."
+        }
+        return "No new patterns met the thresholds in this view. Comparisons need at least three reviewed purchases per period and comparable history; trends need eight complete weeks, and unusual amounts need eight earlier purchases. Hidden findings stay hidden."
+    }
+}
