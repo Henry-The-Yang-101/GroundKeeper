@@ -142,7 +142,7 @@ Success envelope:
     "model": {
       "model_id":"laya-epoch3", "backend":"laya_mps",
       "manifest_sha256":"<package identity>",
-      "policy_version":"groundkeeper-18-v1", "device":"mps"
+      "policy_version":"groundkeeper-19-v2", "device":"mps"
     },
     "job_id":"job-uuid", "part_id":"part-uuid", "transaction_revision":3
   }
@@ -388,7 +388,7 @@ local/cloud fallback exists. Only Settings explicitly selects this provider.
 
 ## Council orchestration
 
-`council-equal-v1` selects one verified Qwen package, one verified Laya package,
+`council-equal-v2` selects one verified Qwen package, one verified Laya package,
 and a named Apple Intelligence Shortcut. All three have weight 1. Council is an
 explicit provider choice; it does not add cloud processing to the individual
 local modes. The Shortcut name/connector identity does not attest its contents
@@ -474,3 +474,19 @@ notes invalidates stale inference and can revisit unconfirmed suggestions;
 confirmed categories remain protected. Qwen permits up to 3,072 input tokens
 when notes are present; Laya uses 2,048/1,024 state/head limits and refuses a
 still-truncated projection after optional web evidence is reduced.
+
+## Nullable categories and runtime policy v2
+
+Runtime policy `groundkeeper-19-v2` offers 18 named spending categories plus Other.
+Qwen's finite grammar, Laya's typed choices, Ollama's JSON schema, and both Apple
+Shortcut prompts exclude the old missing-category label. Expense/refund/unknown
+decisions require a category; unknown type uses Other, and missing refund purpose
+also uses Other with review. Non-spending types retain JSON null. Invalid legacy
+model responses are rejected, never saved as a new missing-category suggestion.
+
+Existing `groundkeeper-18-v1` model packages remain loadable; inference applies
+the current prompts and constraints without changing their weight files or
+manifest hashes. Runs record the new runtime policy. Historical training outputs
+and run JSON retain their original labels for reproducibility. Reinstall the
+updated GK Categorize Cloud and GK Categorize On-Device exports to update the
+prompts in Apple's installed Shortcuts.

@@ -18,5 +18,5 @@ def test_user_costco_case_preserves_label_and_only_adds_receipt_evidence():
     assert "GRAPES" in enriched["receipt_context"]["text"]
     assert "member" not in case["receipt_ocr"]["text"].lower()
     different_gold = copy.deepcopy(case)
-    different_gold["expected"] = {"type": "unknown", "category": "uncategorized"}
+    different_gold["expected"] = {"type": "unknown", "category": "other"}
     assert variants(different_gold) == variants(case), "Gold labels must never enter model inputs"

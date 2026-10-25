@@ -12,7 +12,7 @@ from .policy import CATEGORIES, TYPES, WALLET_CATEGORY_INSTRUCTIONS, validate_an
 MAX_LEN = 512
 HEAD_MAX_LEN = 384
 NULL = "not_applicable"
-FALLBACK = {"type": "unknown", "category": "uncategorized", "review": True}
+FALLBACK = {"type": "unknown", "category": "other", "review": True}
 
 TYPE_CRITERIA = {
     "expense": "purchase, service, fee or interest charge",
@@ -44,9 +44,8 @@ CATEGORY_CRITERIA = {
     "financial": "bank or card fees, borrowing interest",
     "taxes": "direct tax or government fees",
     "gifts": "explicit gift or charitable donation",
-    "other": "known purpose outside listed categories; shipping fee",
-    "uncategorized": "insufficient spending purpose or unknown type",
-    NULL: "non-spending type, or refund without original category",
+    "other": "purpose outside listed categories, insufficient spending evidence, or unknown type; shipping fee",
+    NULL: "non-spending type",
 }
 QUESTIONS = {
     "type": {
@@ -56,12 +55,12 @@ QUESTIONS = {
     },
     "category": {
         "type": "choice",
-        "instructions": "Choose spending purpose. Purpose beats subscription or address words. No hidden gift intent. Unspecified pharmacy, digital bill or service fee is uncategorized. Refund uses original category only if explicit. Non-spending types use not_applicable; unknown uses uncategorized.",
+        "instructions": "Choose spending purpose. Purpose beats subscription or address words. No hidden gift intent. Unspecified pharmacy, digital bill or service fee uses other. Refund uses original category if explicit, otherwise other. Non-spending types use not_applicable; unknown uses other.",
         "criteria": CATEGORY_CRITERIA,
     },
     "review": {
         "type": "choice",
-        "instructions": "Does this decision need review under the labeling policy? Review means decision uncertainty, not merely an unfamiliar payer. Require review for conflicting or insufficient evidence, unknown type, uncategorized spending, mixed retailers, unsplit mortgage/installment, or refund with unknown original purpose.",
+        "instructions": "Does this decision need review under the labeling policy? Review means decision uncertainty, not merely an unfamiliar payer. Require review for conflicting or insufficient evidence, unknown type, uncertain spending, mixed retailers, unsplit mortgage/installment, or refund with unknown original purpose.",
         "criteria": {"false": "sufficient unambiguous evidence", "true": "uncertain or policy requires review"},
     },
 }

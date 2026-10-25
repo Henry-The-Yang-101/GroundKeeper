@@ -12,7 +12,7 @@ public struct CouncilMember: Codable, Sendable, Equatable, Identifiable {
 }
 
 public struct CouncilConfiguration: Codable, Sendable, Equatable, Identifiable {
-    public static let algorithm = "council-equal-v1"
+    public static let algorithm = "council-equal-v2"
     public let id: String
     public let members: [CouncilMember]
     public init(members: [CouncilMember]) throws {
@@ -93,12 +93,11 @@ public struct CouncilResult: Codable, Sendable {
 
 extension ClassificationDecision {
     public func validateSuggestion() throws {
-        let categories: Set<String> = ["groceries", "dining", "local_transport", "vehicle", "housing", "utilities", "shopping", "medical", "personal_care", "fitness", "entertainment", "software", "education", "travel", "insurance", "financial", "taxes", "gifts", "other", "uncategorized"]
+        let categories: Set<String> = ["groceries", "dining", "local_transport", "vehicle", "housing", "utilities", "shopping", "medical", "personal_care", "fitness", "entertainment", "software", "education", "travel", "insurance", "financial", "taxes", "gifts", "other"]
         guard review, category.map({ categories.contains($0) }) ?? true else { throw LedgerError.invalid("Invalid classifier suggestion.") }
         switch type {
-        case "expense": guard category != nil else { throw LedgerError.invalid("Expense requires a category.") }
-        case "unknown": guard category == "uncategorized" else { throw LedgerError.invalid("Unknown requires Uncategorized.") }
-        case "refund": break
+        case "expense", "refund": guard category != nil else { throw LedgerError.invalid("AI spending decisions require a category.") }
+        case "unknown": guard category == "other" else { throw LedgerError.invalid("Unknown requires Other.") }
         case "income", "transfer", "card_payment", "loan_principal", "cash_movement", "balance_adjustment":
             guard category == nil else { throw LedgerError.invalid("This transaction type cannot have a spending category.") }
         default: throw LedgerError.invalid("Unknown transaction type.")

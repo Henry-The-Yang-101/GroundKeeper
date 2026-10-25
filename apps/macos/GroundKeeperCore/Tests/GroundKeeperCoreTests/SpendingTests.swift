@@ -5,7 +5,7 @@ import Testing
 private func reportFilter(_ start: String = "2026-10-01", _ end: String = "2026-11-01", baseline: ReportRange? = nil) throws -> SpendingFilter {
     SpendingFilter(range: try ReportRange(start: start, end: end), baseline: baseline, timezone: "America/Toronto")
 }
-private func purchase(_ store: LedgerStore, account: String, day: String, amount: Int64 = -1000, category: String = "dining", type: String = "expense", review: Bool = false) async throws {
+private func purchase(_ store: LedgerStore, account: String, day: String, amount: Int64 = -1000, category: String? = "dining", type: String = "expense", review: Bool = false) async throws {
     try await store.save(TransactionEdit(description: "Fictional purchase", amountMinor: amount, currency: "CAD", occurredOn: day,
                                           accountID: account, type: type, category: ["expense", "refund", "unknown"].contains(type) ? category : nil, needsReview: review, notes: ""))
 }
@@ -67,7 +67,7 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     _ = try await store.testRows("UPDATE transactions SET lifecycle='posted',time_precision='instant',occurred_at_ms=\(ms),utc_offset_minutes=0 WHERE id='\(id)'")
     #expect(try await store.spendingReport(reportFilter()).totals.net == 0)
     #expect(try await store.spendingReport(reportFilter("2026-09-01", "2026-10-01")).totals.net == 1000)
-    try await purchase(store, account: account, day: "2026-10-02", amount: -5000, category: "uncategorized", type: "unknown", review: true)
+    try await purchase(store, account: account, day: "2026-10-02", amount: -5000, category: nil, type: "unknown", review: true)
     let unresolved = try await store.spendingReport(reportFilter())
     #expect(unresolved.totals.net == 0 && unresolved.totals.unknownCount == 1)
     #expect(unresolved.findings.isEmpty)

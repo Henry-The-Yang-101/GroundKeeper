@@ -23,7 +23,7 @@ extension LedgerStore {
                     throw LedgerError.invalid("Verify all Council members before selecting Council.")
                 }
             }
-            try db.query("INSERT OR IGNORE INTO council_configs(id,policy_version_id,algorithm_version,configuration_json,created_at_ms) VALUES (?,'groundkeeper-18-v1',?,?,?)",
+            try db.query("INSERT OR IGNORE INTO council_configs(id,policy_version_id,algorithm_version,configuration_json,created_at_ms) VALUES (?,'groundkeeper-19-v2',?,?,?)",
                          [.text(configuration.id), .text(CouncilConfiguration.algorithm), .text(try json(configuration)), .integer(nowMS())])
             for member in configuration.members {
                 try db.query("INSERT OR IGNORE INTO council_config_members(config_id,model_version_id,weight) VALUES (?,?,1)", [.text(configuration.id), .text(member.id)])
@@ -66,7 +66,7 @@ extension LedgerStore {
                 auditText = previous.text("input_json"); hash = previous.text("input_sha256"); search = previous["merchant_search_json"]?.string
             }
             let runID = identifier()
-            try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,council_config_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version,merchant_search_json) VALUES (?,?,?,'council',?,'groundkeeper-18-v1',?,?,?,'running',?,?)",
+            try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,council_config_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version,merchant_search_json) VALUES (?,?,?,'council',?,'groundkeeper-19-v2',?,?,?,'running',?,?)",
                          [.text(runID), .text(row.text("part_id")), .integer(row.number("input_revision")), .text(configID), .text(auditText), .text(hash), .integer(nowMS()), .optional(context?.version), .optional(search)])
             try db.query("UPDATE classification_jobs SET status='running',attempts=attempts+1,run_id=?,updated_at_ms=?,receipt_context_sha256=? WHERE id=?",
                          [.text(runID), .integer(nowMS()), .optional(context?.evidenceSHA256), .text(row.text("id"))])
@@ -106,7 +106,7 @@ extension LedgerStore {
             let wire = try JSONSerialization.data(withJSONObject: audit, options: options)
             let input = try JSONDecoder().decode(CouncilInput.self, from: wire)
             let runID = identifier(), hash = contentHash(wire), auditText = String(decoding: auditData, as: UTF8.self)
-            try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,model_version_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version,merchant_search_json) VALUES (?,?,?,'model',?,'groundkeeper-18-v1',?,?,?,'running',?,?)",
+            try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,model_version_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version,merchant_search_json) VALUES (?,?,?,'model',?,'groundkeeper-19-v2',?,?,?,'running',?,?)",
                          [.text(runID), .text(task.partID), .integer(Int64(task.revision)), .text(member.id), .text(auditText), .text(hash), .integer(nowMS()), .optional(input.receiptContext?.version), .optional(parent["merchant_search_json"]?.string)])
             try db.query("INSERT INTO council_member_inputs VALUES (?,?,?,?,?,?)", [.text(task.runID), .text(member.id), .text(runID), .text(auditText), .text(hash), .integer(input.receiptContext == nil ? 0 : 1)])
             return CouncilMemberTask(runID: runID, input: input)

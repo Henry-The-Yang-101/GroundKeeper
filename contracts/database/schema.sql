@@ -79,15 +79,14 @@ INSERT INTO categories(id,code,name,kind,sort_order,created_at_ms) VALUES
  ('financial','financial','Financial fees & interest','spending',16,0),
  ('taxes','taxes','Taxes & government charges','spending',17,0),
  ('gifts','gifts','Gifts & donations','spending',18,0),
- ('other','other','Other','other',19,0),
- ('uncategorized','uncategorized','Uncategorized','uncategorized',20,0);
+ ('other','other','Other','other',19,0);
 CREATE TABLE transaction_types (
   code TEXT PRIMARY KEY,
   category_rule TEXT NOT NULL CHECK(category_rule IN ('required','optional','none','uncategorized'))
 ) STRICT;
-INSERT INTO transaction_types VALUES ('expense','required'),('income','none'),('refund','optional'),
+INSERT INTO transaction_types VALUES ('expense','optional'),('income','none'),('refund','optional'),
  ('transfer','none'),('card_payment','none'),('loan_principal','none'),
- ('cash_movement','none'),('balance_adjustment','none'),('unknown','uncategorized');
+ ('cash_movement','none'),('balance_adjustment','none'),('unknown','optional');
 CREATE TABLE policy_versions (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, content_sha256 TEXT NOT NULL,
   definition_json TEXT NOT NULL CHECK(json_valid(definition_json)), created_at_ms INTEGER NOT NULL
@@ -475,20 +474,38 @@ END;
 CREATE TRIGGER validate_assignment BEFORE INSERT ON category_assignments BEGIN
   SELECT RAISE(ABORT,'invalid type/category combination') WHERE
     ((SELECT category_rule FROM transaction_types WHERE code=NEW.type_code)='required' AND NEW.category_id IS NULL)
-    OR ((SELECT category_rule FROM transaction_types WHERE code=NEW.type_code)='none' AND NEW.category_id IS NOT NULL)
-    OR ((SELECT category_rule FROM transaction_types WHERE code=NEW.type_code)='uncategorized'
-      AND NEW.category_id IS NOT (SELECT id FROM categories WHERE kind='uncategorized'));
-  SELECT RAISE(ABORT,'abstention requires review') WHERE NEW.needs_review=0 AND (
-    NEW.type_code='unknown' OR (NEW.type_code='refund' AND NEW.category_id IS NULL)
-    OR NEW.category_id IN (SELECT id FROM categories WHERE kind='uncategorized'));
+    OR ((SELECT category_rule FROM transaction_types WHERE code=NEW.type_code)='none' AND NEW.category_id IS NOT NULL);
+  SELECT RAISE(ABORT,'missing category or unknown type requires review') WHERE NEW.needs_review=0 AND (
+    NEW.type_code='unknown' OR (NEW.type_code IN ('expense','refund') AND NEW.category_id IS NULL));
+  SELECT RAISE(ABORT,'AI spending decisions require a category; use Other for uncertainty')
+    WHERE NEW.origin IN ('model','council') AND NEW.type_code IN ('expense','refund','unknown') AND NEW.category_id IS NULL;
   SELECT RAISE(ABORT,'AI provenance does not match decision') WHERE NEW.origin IN ('model','council') AND NOT EXISTS (
     SELECT 1 FROM classification_runs r WHERE r.id=NEW.run_id AND r.part_id=NEW.part_id
       AND r.status='succeeded' AND r.kind=NEW.origin AND r.type_code=NEW.type_code AND r.category_id IS NEW.category_id
       AND NEW.needs_review>=r.needs_review
   );
 END;
-CREATE UNIQUE INDEX one_uncategorized_category ON categories(kind) WHERE kind='uncategorized';
+
+-- Completed historical runs can contain NULL after conversion. New successful
+-- runs must obey the new contract, including Council members that do not win.
+CREATE TRIGGER validate_run_category_insert BEFORE INSERT ON classification_runs
+WHEN NEW.status='succeeded' AND NEW.type_code IN ('expense','refund','unknown') AND NEW.category_id IS NULL BEGIN
+  SELECT RAISE(ABORT,'AI spending decisions require a category');
+END;
+CREATE TRIGGER validate_run_category_update BEFORE UPDATE OF status,type_code,category_id ON classification_runs
+WHEN NEW.status='succeeded' AND NEW.type_code IN ('expense','refund','unknown') AND NEW.category_id IS NULL BEGIN
+  SELECT RAISE(ABORT,'AI spending decisions require a category');
+END;
+
 CREATE UNIQUE INDEX one_other_category ON categories(kind) WHERE kind='other';
+CREATE TRIGGER categories_no_missing_insert BEFORE INSERT ON categories
+WHEN NEW.kind='uncategorized' OR NEW.code IN ('uncategorized','none') BEGIN
+  SELECT RAISE(ABORT,'missing category must be NULL');
+END;
+CREATE TRIGGER categories_no_missing_update BEFORE UPDATE ON categories
+WHEN NEW.kind='uncategorized' OR NEW.code IN ('uncategorized','none') BEGIN
+  SELECT RAISE(ABORT,'missing category must be NULL');
+END;
 CREATE TRIGGER assignments_append_only BEFORE UPDATE ON category_assignments BEGIN
   SELECT RAISE(ABORT,'append a new assignment instead');
 END;

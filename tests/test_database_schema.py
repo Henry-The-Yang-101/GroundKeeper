@@ -42,7 +42,7 @@ def transaction(db, key='t1', amount=-1250, category='dining', kind='expense', o
 
 def assignment(db, key, part, category='dining', kind='expense', origin='user', **overrides):
     values = dict(id=key, part_id=part, type_code=kind, category_id=category, origin=origin,
-                  needs_review=int(category == 'uncategorized' or (kind == 'refund' and category is None)),
+                  needs_review=int(kind == 'unknown' or (kind in ('expense','refund') and category is None)),
                   selected_at_ms=0)
     if origin == 'user':
         values.update(confirmed_at_ms=0, confirmed_by='local_user')
@@ -86,7 +86,7 @@ def model_run(db, key='r1', part='t1p', kind='model', **overrides):
 def test_foreign_keys_and_seed_categories(db):
     assert db.execute('PRAGMA foreign_keys').fetchone() == (1,)
     assert db.execute('SELECT kind,count(*) FROM categories GROUP BY kind').fetchall() == [
-        ('other', 1), ('spending', 18), ('uncategorized', 1)]
+        ('other', 1), ('spending', 18)]
     with pytest.raises(sqlite3.IntegrityError):
         transaction(db, account_id='nonexistent')
 
@@ -166,7 +166,7 @@ def test_expanding_categories_and_cycle_guard(db):
 
 
 @pytest.mark.parametrize('kind,category,review', [('income','dining',0), ('expense',None,0),
-                                               ('unknown','dining',1), ('expense','uncategorized',0),
+                                               ('unknown','dining',0), ('expense','uncategorized',0),
                                                ('refund',None,0)])
 def test_type_category_and_review_rules(db, kind, category, review):
     transaction(db)

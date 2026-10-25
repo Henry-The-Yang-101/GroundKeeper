@@ -17,7 +17,7 @@ extension LedgerStore {
     let upgraded = try LedgerStore(url: url)
     let after = try await upgraded.snapshot().transactions[0]
     #expect(after.id == before.id && after.revision == before.revision && after.amountMinor == before.amountMinor)
-    #expect(try await upgraded.testRows("SELECT * FROM schema_migrations").count == 9)
+    #expect(try await upgraded.testRows("SELECT * FROM schema_migrations").count == 10)
     #expect(try await upgraded.integrityCheck())
 }
 
@@ -30,7 +30,7 @@ func receiptCapture(_ id: String, parent: String = "payment", text: String = "MI
 }
 func receiptModel(_ store: LedgerStore, backend: String = "qwen_mlx") async throws -> String {
     let model = String(repeating: "a", count: 64)
-    try await store.registerModel(id: model, name: "fixture", backend: backend, policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: model, name: "fixture", backend: backend, policy: "groundkeeper-19-v2", configuration: "{}")
     return model
 }
 @Test func receiptBeforePaymentLinksOnceAndNeverCreatesPurchase() async throws {

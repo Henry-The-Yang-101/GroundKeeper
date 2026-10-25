@@ -118,7 +118,7 @@ extension LedgerStore {
             }
         }
         if filter.category == nil {
-            for category in categories.filter({ $0.category != "uncategorized" && $0.purchases >= 8 && ($0.purchases != totals.purchases || $0.gross != totals.gross) }).prefix(6) {
+            for category in categories.filter({ $0.category != "none" && $0.purchases >= 8 && ($0.purchases != totals.purchases || $0.gross != totals.gross) }).prefix(6) {
                 var scope = filter; scope.category = category.category
                 scopes.append(("category:" + category.category, category.category.capitalized, scope, Double(category.gross) / Double(max(1, totals.gross))))
             }

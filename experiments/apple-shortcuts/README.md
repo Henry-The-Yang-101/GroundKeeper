@@ -5,7 +5,7 @@ It accepts transaction JSON as Shortcut Input, appends it to `prompt.txt`, calls
 Apple's **Cloud** model with **Broad World Knowledge on**, **Text** output and
 **Follow Up off**, then uses **Stop and Output** with the model's Response.
 Missing input uses **Stop and Respond** with
-`{"type":"unknown","category":"uncategorized","review":true}`; the CLI reports
+`{"type":"unknown","category":"other","review":true}`; the CLI reports
 `Running was cancelled` for this branch, so callers must supply input.
 
 The first two Cloud Pro smoke calls failed with `Too many incoming requests`.

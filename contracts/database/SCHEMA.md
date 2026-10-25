@@ -161,7 +161,7 @@ an anonymized replacement for sensitive data.
 ## Category provenance and future categories
 
 Categories are rows, not an SQL enum or Swift-only list. Seed 18 named categories
-plus Other and Uncategorized. Stable IDs/codes survive renames. New categories
+plus Other. Missing categories are SQL NULL, displayed as None. Stable IDs/codes survive renames. New categories
 and optional subcategories are inserts; archive instead of deleting referenced
 categories. `parent_id` supports hierarchy with a cycle guard. Explicit category
 merges set `replaced_by_id`, with a user-approved reassignment operation/history;
@@ -187,7 +187,7 @@ Examples:
 | User changes Dining to Groceries | Append a confirmed user assignment; old category/model remain in history. |
 | Explicit merchant rule applies | `origin=rule`, versioned `rule_id`; show rule provenance. It is not a fresh manual decision or an AI call. |
 | CSV supplied a category | `origin=import`, `import_row_id`; imported labels are not automatically user-confirmed. |
-| No supported decision | `origin=system`, `unknown/uncategorized`, review required. |
+| No supported decision | `origin=system`, `unknown/NULL`, review required. |
 
 The database checks that AI/Council assignments refer to a successful run for the
 same part, method, type and category. Model identity is reached through that
@@ -350,7 +350,7 @@ a category never creates a merchant rule without a separate explicit action.
 
 `review_items` can hold several unresolved reasons simultaneously. Approving a
 category resolves its reason only. Amount/account/duplicate/location issues
-stay open. Unknown/Uncategorized and unassigned refunds require category review.
+stay open. Unknown types and purchases/refunds with no category require category review.
 The current views expose suggested category, confirmation and independent review
 flags so the UI can distinguish provisional and confirmed totals.
 
@@ -505,3 +505,17 @@ algorithm, app integration, real payload availability, encryption or performance
 - [SQLite datatypes](https://www.sqlite.org/datatype3.html): integer storage and date representations.
 - [SQLite WAL](https://www.sqlite.org/wal.html): local shared-memory/WAL behavior and checkpointing.
 - [SQLCipher API](https://www.zetetic.net/sqlcipher/sqlcipher-api/): key setup, cipher verification and encrypted database operations.
+
+### Missing category migration
+
+Migration 010 converts the former missing-category row to SQL NULL in assignments,
+runs and rules, removes obsolete model/category mappings, and deletes that row.
+Assignment IDs, confirmation, supersession and model links are retained. Original
+run output JSON and versioned policies remain historical evidence. New AI spending
+decisions must choose a real category, using Other for uncertainty.
+
+`category_assignments.run_id -> classification_runs.model_version_id ->
+model_versions` retains the actual provider, name and model/package identity.
+Ledger queries expose those saved values, independent of the currently selected
+provider. Unrelated transaction edits preserve attribution; explicit acceptance
+or a category/type change appends a user assignment.

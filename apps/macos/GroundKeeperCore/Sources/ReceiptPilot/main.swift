@@ -37,12 +37,12 @@ import GroundKeeperCore
                 try await store.storeReceiptImage(id: request.id, data: Data(contentsOf: root.appendingPathComponent(request.path)))
             }
             let model = String(repeating: "a", count: 64)
-            try await store.registerModel(id: model, name: "input-contract-only", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+            try await store.registerModel(id: model, name: "input-contract-only", backend: "qwen_mlx", policy: "groundkeeper-19-v2", configuration: "{}")
             try await store.enqueueClassifications(modelID: model)
             var contexts = 0, receiptCount = 0, imageCount = 0, noteCount = 0
             while let task = try await store.claimClassification(modelID: model) {
                 if task.receiptContext != nil { contexts += 1 }
-                try await store.completeClassification(task, decision: .init(type: "unknown", category: "uncategorized", review: true))
+                try await store.completeClassification(task, decision: .init(type: "unknown", category: "other", review: true))
             }
             let final = try await store.snapshot(limit: 5000)
             for transaction in final.transactions {

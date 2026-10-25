@@ -35,7 +35,7 @@ extension LedgerStore {
                 add("spending_change", current: totals.net, old: previous.net, count: totals.purchases, oldCount: previous.purchases)
             }
             let oldCategories = Dictionary(uniqueKeysWithValues: previousCategories.map { ($0.category, $0) })
-            for category in categories where category.category != "uncategorized" {
+            for category in categories where category.category != "none" {
                 if let old = oldCategories[category.category], category.purchases >= 3, old.purchases >= 3, material(category.net, old.net) {
                     add("category_change", category: category.category, current: category.net, old: old.net, count: category.purchases, oldCount: old.purchases)
                 }

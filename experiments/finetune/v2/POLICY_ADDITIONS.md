@@ -1,3 +1,7 @@
+> Historical v2 training notes. The current runtime policy is `groundkeeper-19-v2`:
+> missing spending purpose now uses Other with review, and UI None represents
+> SQL NULL. See `../LABELING_POLICY.md` for current labeling instructions.
+
 # Frozen clarifications for v2 labeling
 
 Read ../LABELING_POLICY.md first. The category/type enums and separation of Other,

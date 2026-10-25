@@ -237,7 +237,7 @@ final class ClassifierTransport: NSObject, ClassifierXPCEvents, @unchecked Senda
 }
 
 actor ClassifierClient {
-    static let policyVersion = "groundkeeper-18-v1"
+    static let policyVersion = "groundkeeper-19-v2"
     private let transport = ClassifierTransport()
     private var categories = Set<String>()
     private var types = Set<String>()
@@ -262,7 +262,7 @@ actor ClassifierClient {
     func handshake() async throws -> ClassifierResult {
         let result = try await call(ClassifierRequest(operation: "handshake"))
         guard result.policyVersion == Self.policyVersion, let categories = result.categories,
-              let types = result.types, categories.contains("uncategorized"), types.contains("unknown") else {
+              let types = result.types, categories.contains("other"), !categories.contains("uncategorized"), types.contains("unknown") else {
             throw ClassifierBridgeError.invalidResponse
         }
         self.categories = Set(categories); self.types = Set(types)
@@ -309,9 +309,8 @@ actor ClassifierClient {
             throw ClassifierBridgeError.invalidResponse
         }
         switch decision.type {
-        case "expense": guard decision.category != nil else { throw ClassifierBridgeError.invalidResponse }
-        case "unknown": guard decision.category == "uncategorized" else { throw ClassifierBridgeError.invalidResponse }
-        case "refund": break
+        case "expense", "refund": guard decision.category != nil else { throw ClassifierBridgeError.invalidResponse }
+        case "unknown": guard decision.category == "other" else { throw ClassifierBridgeError.invalidResponse }
         default: guard decision.category == nil else { throw ClassifierBridgeError.invalidResponse }
         }
         return result

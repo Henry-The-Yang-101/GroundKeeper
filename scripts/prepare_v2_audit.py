@@ -25,7 +25,7 @@ def main():
     for typ in ('income','refund','transfer','card_payment','loan_principal',
                 'cash_movement','balance_adjustment','unknown'):
         take(lambda r:r['answer']['type']==typ,8)
-    for cat in ('gifts','taxes','financial','other','uncategorized','utilities','medical','housing'):
+    for cat in ('gifts','taxes','financial','other','utilities','medical','housing'):
         take(lambda r:r['answer']['category']==cat,8)
     take(lambda r:r['input']['currency']=='CAD',10)
     take(lambda r:r['origin']=='public_synthetic',150-len(selected))

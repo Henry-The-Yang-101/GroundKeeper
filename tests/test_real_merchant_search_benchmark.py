@@ -14,8 +14,8 @@ def prediction(identifier, category, context=False):
 def test_paired_scoring_keeps_failures_and_distinguishes_regressions():
     reference = [{"id": str(i), "answer": {"type": "expense", "category": category, "review": True}}
                  for i, category in enumerate(("dining", "travel", "shopping", "groceries"))]
-    baseline = [prediction(str(i), category) for i, category in enumerate(("dining", "travel", "uncategorized", "uncategorized"))]
-    enriched = [prediction(str(i), category, i < 3) for i, category in enumerate(("dining", "uncategorized", "shopping", "uncategorized"))]
+    baseline = [prediction(str(i), category) for i, category in enumerate(("dining", "travel", "other", "other"))]
+    enriched = [prediction(str(i), category, i < 3) for i, category in enumerate(("dining", "other", "shopping", "other"))]
     result = metrics(reference, enriched)
     assert result["n"] == 4 and result["context_rows"] == 3
     assert result["category_agreement"] == 2

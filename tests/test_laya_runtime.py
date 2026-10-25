@@ -34,7 +34,7 @@ def test_bad_distribution_fails_closed(bad):
     answers = distributions()
     answers["category"]["probabilities"]["dining"] = bad
     answer, detail = decode(answers)
-    assert answer == {"type": "unknown", "category": "uncategorized", "review": True}
+    assert answer == {"type": "unknown", "category": "other", "review": True}
     assert not detail["valid_schema"]
 
 

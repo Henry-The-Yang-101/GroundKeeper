@@ -18,7 +18,7 @@ import traceback
 from .policy import CATEGORIES, TYPES, validate_answer, validate_input
 
 PROTOCOL_VERSION = 1
-POLICY_VERSION = "groundkeeper-18-v1"
+POLICY_VERSION = "groundkeeper-19-v2"
 MAX_DESCRIPTION = 2048
 MAX_PACKAGE_BYTES = 3_000_000_000
 
@@ -64,7 +64,7 @@ def verify_package(root: Path, cancelled):
     encoded = manifest_path.read_bytes()
     try:
         manifest = json.loads(encoded)
-        if type(manifest["format_version"]) is not int or manifest["format_version"] != 1 or manifest["policy_version"] != POLICY_VERSION:
+        if type(manifest["format_version"]) is not int or manifest["format_version"] != 1 or manifest["policy_version"] not in ("groundkeeper-18-v1", POLICY_VERSION):
             raise WorkerError("incompatible_policy", "Unsupported package format or policy")
         if manifest["backend"] not in ("qwen_mlx", "laya_mps"):
             raise WorkerError("invalid_package", "Unsupported local backend")

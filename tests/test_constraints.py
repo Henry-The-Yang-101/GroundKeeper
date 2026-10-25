@@ -24,6 +24,11 @@ def test_every_complete_path_is_legal_and_all_legal_answers_are_reachable():
     assert '{"type":"income","category":null,"review":false}' in grammar.answers
     assert not any('"category":"loan_principal"' in x for x in grammar.answers)
     assert '{"type":"unknown","category":"uncategorized","review":false}' not in grammar.answers
+    assert not any('uncategorized' in answer for answer in grammar.answers)
+    assert '{"type":"unknown","category":"other","review":true}' in grammar.answers
+    for answer in map(json.loads, grammar.answers):
+        if answer['type'] in ('expense', 'refund', 'unknown'):
+            assert answer['category'] is not None
 
 
 def test_invalid_prefix_and_content_after_eos_fail_closed():

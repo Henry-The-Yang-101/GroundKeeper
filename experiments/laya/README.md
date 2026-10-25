@@ -34,7 +34,7 @@ allowed by the existing GroundKeeper JSON schema. This constrains type/category/
 review consistency; it is not calibrated confidence or an accuracy guarantee.
 Reports separately retain independent-head field accuracy, inconsistent raw
 combinations and changes made by constrained decoding. Malformed distributions
-fail closed to unknown/uncategorized/review.
+fail closed to unknown/other/review.
 
 Base and trained weights use the same questions, fp32 inference, neutral
 temperature 1, and constrained decoder. Base shipped temperatures are not used

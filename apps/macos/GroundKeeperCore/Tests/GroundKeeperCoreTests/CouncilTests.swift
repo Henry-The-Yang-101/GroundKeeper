@@ -48,7 +48,7 @@ let shoppingDecision = ClassificationDecision(type: "expense", category: "shoppi
     try await ingestMapped(store, id: "council-register")
     for (index, member) in councilMembers.enumerated() {
         try await store.registerModel(id: member.id, name: member.name, backend: member.backend,
-                                      policy: "groundkeeper-18-v1", configuration: "{}", select: index == 0)
+                                      policy: "groundkeeper-19-v2", configuration: "{}", select: index == 0)
         if index == 0 { try await store.enqueueClassifications(modelID: member.id) }
     }
     #expect(try await store.snapshot().pendingJobs == 1)
@@ -80,7 +80,7 @@ func councilFixture(count: Int = 1, receipt: Bool = false) async throws -> (Ledg
     for index in 0..<count { try await ingestMapped(store, id: "council-\(index)") }
     if receipt { try await store.ingestCapture(data: receiptCapture("council-receipt", parent: "council-0"), deliveryPath: "receipt.json") }
     for member in councilMembers {
-        try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-18-v1", configuration: "{}", select: false)
+        try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-19-v2", configuration: "{}", select: false)
     }
     let config = try CouncilConfiguration(members: councilMembers)
     try await store.registerCouncil(config)
@@ -289,7 +289,7 @@ extension LedgerStore {
 @Test func councilSwitchingModesRevivesOnlyEligibleCouncilJobs() async throws {
     let (store, _, config) = try await councilFixture()
     let member = councilMembers[0]
-    try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-19-v2", configuration: "{}")
     #expect(try await store.snapshot().pendingJobs == 0)
     try await store.enqueueClassifications(modelID: member.id)
     try await store.registerCouncil(config)
@@ -339,7 +339,7 @@ extension LedgerStore {
     let snapshot = try await store.snapshot(), mapping = snapshot.reviews[0]
     try await store.confirmMapping(sourceID: mapping.sourceID, label: mapping.label, accountID: snapshot.accounts[0].id)
     for member in councilMembers {
-        try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-18-v1", configuration: "{}", select: false)
+        try await store.registerModel(id: member.id, name: member.name, backend: member.backend, policy: "groundkeeper-19-v2", configuration: "{}", select: false)
     }
     let config = try CouncilConfiguration(members: councilMembers)
     try await store.registerCouncil(config)

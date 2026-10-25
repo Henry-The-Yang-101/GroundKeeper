@@ -24,6 +24,12 @@ public struct LedgerTransaction: Identifiable, Sendable {
     public let notes: String
     public let sources: String
     public let origin: String
+    public let categoryModelName: String?
+    public let categoryModelProvider: String?
+
+    public var categoryAttribution: CategoryAttribution {
+        .init(origin: origin, modelName: categoryModelName, provider: categoryModelProvider)
+    }
 
     /// Source evidence is independent of who selected the category or edited it.
     public var sourceLabel: String {
@@ -37,11 +43,44 @@ public struct LedgerTransaction: Identifiable, Sendable {
 public struct TransactionEdit: Sendable {
     public var id: String, revision: Int, description: String, amountMinor: Int64, currency: String
     public var occurredOn: String, accountID: String?, type: String, category: String?, needsReview: Bool, notes: String
+    /// Explicit acceptance of an unchanged suggestion; ordinary field edits preserve its origin.
+    public var confirmCategory: Bool = false
     public init(id: String = UUID().uuidString, revision: Int = 0, description: String, amountMinor: Int64,
                 currency: String, occurredOn: String, accountID: String?, type: String, category: String?, needsReview: Bool, notes: String) {
         self.id = id; self.revision = revision; self.description = description; self.amountMinor = amountMinor
         self.currency = currency; self.occurredOn = occurredOn; self.accountID = accountID; self.type = type
         self.category = category; self.needsReview = needsReview; self.notes = notes
+    }
+}
+
+public struct CategoryAttribution: Sendable, Equatable {
+    public let origin: String
+    public let modelName: String?
+    public let provider: String?
+    public init(origin: String, modelName: String? = nil, provider: String? = nil) {
+        self.origin = origin; self.modelName = modelName; self.provider = provider
+    }
+    public var isAI: Bool { origin == "model" || origin == "council" }
+    public var isHuman: Bool { origin == "user" }
+    public var explanation: String {
+        switch origin {
+        case "user": return "Category chosen by user"
+        case "council": return "Category chosen by AI Council"
+        case "model":
+            let model = modelName.flatMap { $0.isEmpty ? nil : $0 }
+            let title: String
+            switch provider {
+            case "ollama": title = model.map { "Ollama · \($0)" } ?? "Ollama"
+            case "qwen_mlx": title = model.map { "GroundKeeper Qwen · \($0)" } ?? "GroundKeeper Qwen"
+            case "laya_mps": title = model.map { "GroundKeeper Laya · \($0)" } ?? "GroundKeeper Laya"
+            case "apple_shortcut": title = model.map { "Apple Intelligence · \($0)" } ?? "Apple Intelligence"
+            default: title = model ?? "AI model"
+            }
+            return "Category chosen by \(title)"
+        case "rule": return "Category chosen by a saved rule"
+        case "import": return "Category supplied by import"
+        default: return "Category source unavailable"
+        }
     }
 }
 public struct ReviewRecord: Identifiable, Sendable {

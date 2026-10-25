@@ -14,7 +14,7 @@ The model output remains a JSON object, as reaffirmed by the user:
 All three fields are training targets. There is no numeric confidence field;
 `review` expresses the labeling policy's need for review, not a calibrated
 probability. The application can require review even if the model returns false.
-Invalid model answers become unknown/uncategorized with review=true. JSON key
+Invalid model answers become unknown/other with review=true. JSON key
 order is immaterial; category-only text is not accepted or trained as the target.
 
 ## Reproduce preparation

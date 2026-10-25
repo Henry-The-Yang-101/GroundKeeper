@@ -34,7 +34,7 @@ def test_quota_error_is_preserved_without_fabricating_prediction(monkeypatch):
 
 
 def test_invalid_output_receives_no_accuracy_credit():
-    abstention = {"type": "unknown", "category": "uncategorized", "review": True}
+    abstention = {"type": "unknown", "category": "other", "review": True}
     rows = [{"id": "a", "answer": ANSWER, "input": INPUT, "source": "synthetic"},
             {"id": "b", "answer": abstention, "input": INPUT, "source": "synthetic"}]
     records = [{"id": "a", "status": "ok", "prediction": ANSWER,

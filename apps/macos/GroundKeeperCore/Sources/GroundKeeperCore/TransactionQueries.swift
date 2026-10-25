@@ -36,19 +36,23 @@ public struct LedgerWorkspaceSnapshot: Sendable {
 extension LedgerStore {
     static let ledgerTransactionSQL = """
         SELECT t.*,p.id AS part_id,a.type_code,a.category_id,a.needs_review,a.origin,ac.name AS account_name,
+        m.model_name AS category_model_name,m.provider AS category_model_provider,
         EXISTS(SELECT 1 FROM review_items r WHERE r.status='open' AND (r.transaction_id=t.id OR r.part_id=p.id OR r.event_id IN
           (SELECT event_id FROM transaction_event_links WHERE transaction_id=t.id AND unlinked_at_ms IS NULL))) AS open_review,
         (SELECT group_concat(DISTINCT s.kind) FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id
           JOIN sources s ON s.id=e.source_id WHERE l.transaction_id=t.id AND l.unlinked_at_ms IS NULL) AS sources
         FROM transactions t JOIN transaction_parts p ON p.transaction_id=t.id
         JOIN category_assignments a ON a.id=p.current_assignment_id LEFT JOIN accounts ac ON ac.id=t.account_id
+        LEFT JOIN classification_runs cr ON cr.id=a.run_id
+        LEFT JOIN model_versions m ON m.id=cr.model_version_id
         """
 
     static func ledgerTransaction(_ row: Row) -> LedgerTransaction {
         LedgerTransaction(id: row.text("id"), partID: row.text("part_id"), revision: Int(row.number("revision")),
             description: row.text("description"), amountMinor: row.number("amount_minor"), currency: row.text("currency"), occurredOn: row.text("occurred_on"),
             accountID: row["account_id"]?.string, accountName: row["account_name"]?.string ?? "Unassigned", type: row.text("type_code"), category: row["category_id"]?.string,
-            needsReview: row.number("needs_review") == 1 || row.number("open_review") == 1, notes: row.text("notes"), sources: row["sources"]?.string ?? "manual", origin: row.text("origin"))
+            needsReview: row.number("needs_review") == 1 || row.number("open_review") == 1, notes: row.text("notes"), sources: row["sources"]?.string ?? "manual", origin: row.text("origin"),
+            categoryModelName: row["category_model_name"]?.string, categoryModelProvider: row["category_model_provider"]?.string)
     }
 
     public func transactionPage(_ query: LedgerTransactionQuery, limit: Int = 500, offset: Int = 0) throws -> LedgerTransactionPage {
@@ -56,7 +60,7 @@ extension LedgerStore {
         var predicates = ["state='active'"], bindings: [SQLValue] = []
         if query.reviewOnly { predicates.append("(needs_review=1 OR open_review=1)") }
         if let category = query.category {
-            predicates.append("type_code IN ('expense','refund','unknown') AND coalesce(category_id,'uncategorized')=?")
+            predicates.append("type_code IN ('expense','refund','unknown') AND coalesce(category_id,'none')=?")
             bindings.append(.text(category))
         }
         if let account = query.accountID { predicates.append("account_id=?"); bindings.append(.text(account)) }
@@ -70,7 +74,7 @@ extension LedgerStore {
                 }.joined(separator: " ")
                 return "CASE \(column) \(clauses) ELSE \(column) END"
             }
-            let category = displayName("coalesce(category_id,'uncategorized')", names: query.categoryNames)
+            let category = displayName("coalesce(category_id,'none')", names: query.categoryNames)
             let type = displayName("type_code", names: query.typeNames)
             predicates.append("gk_ledger_contains(description || ' ' || notes || ' ' || (\(category)) || ' ' || (\(type)), ?)")
             bindings.append(.text(query.search))

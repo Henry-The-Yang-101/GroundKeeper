@@ -7,6 +7,17 @@ convenience unlock. See [setup and protection](../../docs/onboarding.md).
 
 ## Schema audit
 
+Migration 010 removes the missing-category row and converts its references to SQL
+NULL, displayed as None. The 18 named categories and Other remain selectable.
+New AI spending/unknown decisions require a real category and use Other for
+uncertainty; non-spending types retain null. Historical run JSON is kept intact.
+
+Ledger category attribution joins the saved assignment to its run and model
+version, exposing the original provider and exact model name. Ordinary edits
+preserve attribution. Choosing a different category/type or explicitly accepting
+a suggestion appends a user assignment linked to the original AI decision.
+
+
 Migration 007 extends `classification_jobs` to target exactly one model or
 Council configuration, preserving existing jobs and receipt fingerprints. Its
 uniqueness constraints distinguish part/revision/model and part/revision/Council.

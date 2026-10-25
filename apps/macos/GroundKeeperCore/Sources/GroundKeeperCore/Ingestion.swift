@@ -114,7 +114,7 @@ extension LedgerStore {
         try db.query("INSERT INTO transactions(id,account_id,description,amount_minor,currency,occurred_on,time_precision,posted_on,lifecycle,created_at_ms,updated_at_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             [.text(id), .optional(observation.accountID), .text(observation.description), .integer(observation.amount!), .text(observation.currency!), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), observation.dateOnly ? .text(observation.day) : .null, .text(observation.lifecycle), .integer(nowMS()), .integer(nowMS())])
         try db.query("INSERT INTO transaction_parts(id,transaction_id,position,amount_minor) VALUES (?,?,0,?)", [.text(partID), .text(id), .integer(observation.amount!)])
-        try Self.assign(db: db, partID: partID, type: "unknown", category: "uncategorized", review: true, origin: "system", runID: nil)
+        try Self.assign(db: db, partID: partID, type: "unknown", category: nil, review: true, origin: "system", runID: nil)
         try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(id)])
         try Self.resolveMerchant(db: db, transactionID: id, description: observation.description)
         return id

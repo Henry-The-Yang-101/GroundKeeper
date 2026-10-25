@@ -2,9 +2,15 @@ import Foundation
 
 extension LedgerStore {
     public func registerModel(id: String, name: String, backend: String, policy: String, configuration: String, select: Bool = true) throws {
-        guard policy == "groundkeeper-18-v1", ["qwen_mlx", "laya_mps", "apple_shortcut", "ollama"].contains(backend), id.count == 64 else { throw LedgerError.invalid("Unsupported classifier identity.") }
+        guard policy == "groundkeeper-19-v2", ["qwen_mlx", "laya_mps", "apple_shortcut", "ollama"].contains(backend), id.count == 64,
+              !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw LedgerError.invalid("Unsupported classifier identity.") }
         try db.transaction {
-            let definition = try json(["policy": [policy], "categories": ["groceries","dining","local_transport","vehicle","housing","utilities","shopping","medical","personal_care","fitness","entertainment","software","education","travel","insurance","financial","taxes","gifts","other","uncategorized"]])
+            if let existing = try db.query("SELECT provider,model_name FROM model_versions WHERE id=?", [.text(id)]).first {
+                guard existing.text("provider") == backend, existing.text("model_name") == name else {
+                    throw LedgerError.invalid("A saved model identity cannot be relabeled.")
+                }
+            }
+            let definition = try json(["policy": [policy], "categories": ["groceries","dining","local_transport","vehicle","housing","utilities","shopping","medical","personal_care","fitness","entertainment","software","education","travel","insurance","financial","taxes","gifts","other"]])
             try db.query("INSERT OR IGNORE INTO policy_versions(id,name,content_sha256,definition_json,created_at_ms) VALUES (?,?,?,?,?)", [.text(policy), .text(policy), .text(contentHash(Data(definition.utf8))), .text(definition), .integer(nowMS())])
             try db.query("INSERT OR IGNORE INTO model_versions(id,provider,model_name,execution,package_sha256,configuration_json,created_at_ms) VALUES (?,?,?,?,?,?,?)", [.text(id), .text(backend), .text(name), .text(backend == "apple_shortcut" ? "cloud" : "local"), .text(id), .text(configuration), .integer(nowMS())])
             guard select else { return }
@@ -73,7 +79,7 @@ extension LedgerStore {
             // The category value lives only in its immutable source payload.
             // Audit the source reference and hash the actual inference input.
             let audit = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), transaction_notes: notes, receipt_context: context, wallet_category_raw: nil, wallet_category_source_event_id: walletHint?.eventID))
-            try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,model_version_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version) VALUES (?,?,?,'model',?,'groundkeeper-18-v1',?,?,?,'running',?)",
+            try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,model_version_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version) VALUES (?,?,?,'model',?,'groundkeeper-19-v2',?,?,?,'running',?)",
                 [.text(runID), .text(row.text("part_id")), .integer(row.number("input_revision")), .text(modelID), .text(audit), .text(contentHash(Data(input.utf8))), .integer(nowMS()), .optional(context?.version)])
             try db.query("UPDATE classification_jobs SET status='running',attempts=attempts+1,run_id=?,updated_at_ms=?,receipt_context_sha256=? WHERE id=?", [.text(runID), .integer(nowMS()), .optional(context?.evidenceSHA256), .text(row.text("id"))])
             return ClassificationTask(id: row.text("id"), runID: runID, partID: row.text("part_id"), revision: Int(row.number("input_revision")), description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receiptContext: context, walletCategoryRaw: walletHint?.value, transactionNotes: notes)

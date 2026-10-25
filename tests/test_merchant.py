@@ -32,7 +32,7 @@ def test_fuzzy_near_tie_abstains_and_uncalibrated_stays_review():
  assert n.lookup('Cafe Alph',T1)['review'] is True
 def test_credit_and_model_predictions_require_review():
  m=store();m.confirm('Cafe','dining',T0,merchant_scope=True)
- model=lambda _: {'type':'unknown','category':'uncategorized','review':True}
+ model=lambda _: {'type':'unknown','category':'other','review':True}
  result=classify({'description':'Cafe','direction':'credit','currency':'CAD'},m,model,as_of=T1)
  assert result['method']=='model_review'
 def test_same_chain_different_purposes_still_compete():

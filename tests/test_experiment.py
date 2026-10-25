@@ -7,7 +7,7 @@ def test_strict_schema_and_no_generated_confidence():
  with pytest.raises(ValueError):validate_answer({'type':'expense','category':'dining','review':False,'confidence':0.9})
  with pytest.raises(ValueError):validate_answer({'type':'unknown','category':None,'review':True})
  with pytest.raises(ValueError):validate_answer({'type':'income','category':'shopping','review':False})
- assert safe_prediction('not JSON')=={'type':'unknown','category':'uncategorized','review':True}
+ assert safe_prediction('not JSON')=={'type':'unknown','category':'other','review':True}
 def test_no_hidden_label_features():
  with pytest.raises(ValueError):validate_input({'description':'Amazon','direction':'debit','currency':'CAD','source_category':'Gifts'})
  assert len(messages({'description':'Amazon','direction':'debit','currency':'CAD'}))==2

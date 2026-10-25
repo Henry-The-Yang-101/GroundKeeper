@@ -46,7 +46,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
 @Test func migrationsAndPlainSQLite() async throws {
     let (store, url) = try vault()
     #expect(try await store.integrityCheck())
-    #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 9)
+    #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 10)
     let bytes = try Data(contentsOf: url)
     #expect(bytes.starts(with: Data("SQLite format 3".utf8)))
     #expect(throws: (any Error).self) { try LedgerStore(url: url) }
@@ -91,7 +91,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     try await store.addAccount(name: "Test card", currency: "CAD")
     try await ingestMapped(store, id: "w1")
     let model = String(repeating: "a", count: 64)
-    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: model)
     let job = try await store.claimClassification(modelID: model)!
     let record = try await store.snapshot().transactions[0]
@@ -143,7 +143,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     try await store.addAccount(name: "Test", currency: "CAD")
     try await ingestMapped(store, id: "w1")
     let model = String(repeating: "b", count: 64)
-    try await store.registerModel(id: model, name: "fixture", backend: "laya_mps", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: model, name: "fixture", backend: "laya_mps", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: model)
     for _ in 0..<3 {
         let job = try await store.claimClassification(modelID: model)!
@@ -169,7 +169,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.snapshot().pendingJobs == 0)
     #expect(try await store.testRows("SELECT * FROM classification_jobs").isEmpty)
     let model = String(repeating: "c", count: 64)
-    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: model)
     #expect(try await store.unqueuedClassificationCount() == 0)
     #expect(try await store.snapshot().pendingJobs == 1)
@@ -191,7 +191,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     try await store.addAccount(name: "Test", currency: "CAD")
     try await ingestMapped(store, id: "pause-me")
     let model = String(repeating: "d", count: 64)
-    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: model, name: "fixture", backend: "qwen_mlx", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: model)
     for _ in 0..<5 {
         let job = try await store.claimClassification(modelID: model)!
@@ -229,15 +229,15 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     try await store.addAccount(name: "Fixture", currency: "CAD")
     try await ingestMapped(store, id: "provider-switch")
     let local = String(repeating: "a", count: 64), shortcut = String(repeating: "b", count: 64)
-    try await store.registerModel(id: local, name: "Local", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: local, name: "Local", backend: "qwen_mlx", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: local)
-    try await store.registerModel(id: shortcut, name: "Fixture Shortcut", backend: "apple_shortcut", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: shortcut, name: "Fixture Shortcut", backend: "apple_shortcut", policy: "groundkeeper-19-v2", configuration: "{}")
     #expect(try await store.claimClassification(modelID: local) == nil)
-    try await store.registerModel(id: local, name: "Local", backend: "qwen_mlx", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: local, name: "Local", backend: "qwen_mlx", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: local)
     let revived = try await store.claimClassification(modelID: local)!
     try await store.releaseClassification(revived)
-    try await store.registerModel(id: shortcut, name: "Fixture Shortcut", backend: "apple_shortcut", policy: "groundkeeper-18-v1", configuration: "{}")
+    try await store.registerModel(id: shortcut, name: "Fixture Shortcut", backend: "apple_shortcut", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: shortcut)
     let job = try await store.claimClassification(modelID: shortcut)!
     try await store.completeClassification(job, decision: ClassificationDecision(type: "expense", category: "dining", review: true))

@@ -32,6 +32,18 @@ def test_handshake_without_loading_ml_libraries(monkeypatch):
     assert result["result"]["backends"] == ["qwen_mlx", "laya_mps", "apple_shortcut"]
     assert result["result"]["loaded_model"] is None
     assert result["result"]["gpu_required"] is True
+    assert result["result"]["policy_version"] == "groundkeeper-19-v2"
+    assert len(result["result"]["categories"]) == 19
+    assert "uncategorized" not in result["result"]["categories"]
+
+
+def test_existing_package_manifest_remains_loadable_under_new_runtime_policy(tmp_path):
+    root = package(tmp_path, policy_version="groundkeeper-18-v1")
+    before = (root / "classifier.json").read_bytes()
+    manifest, digest = verify_package(root, lambda: False)
+    assert manifest["policy_version"] == "groundkeeper-18-v1"
+    assert digest == hashlib.sha256(before).hexdigest()
+    assert (root / "classifier.json").read_bytes() == before
 
 
 @pytest.mark.parametrize("value,code", [

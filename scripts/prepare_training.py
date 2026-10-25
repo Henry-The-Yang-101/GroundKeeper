@@ -94,9 +94,13 @@ def main():
             label={**label,'merchant_group':'clear' if r['id']=='ddt-57689' else 'swimmingpool'}
         answer={k:label[k] for k in ('type','category','review')}
         if answer['type']=='unknown' and answer['category'] is None:
-            fixes.append({'id':r['id'],'old':answer.copy(),'reason':'Unknown output schema clarification'});answer.update(category='uncategorized',review=True)
+            fixes.append({'id':r['id'],'old':answer.copy(),'reason':'Unknown output schema clarification'});answer.update(category='other',review=True)
         if r['id'] in manual:
             fixes.append({'id':r['id'],'old':answer.copy(),'reason':manual[r['id']]['reason']});answer.update(manual[r['id']]['answer'])
+        if answer['category'] == 'uncategorized' or (answer['type'] in ('expense', 'refund', 'unknown') and answer['category'] is None):
+            fixes.append({'id':r['id'],'old':answer.copy(),'reason':'Legacy missing category mapped to Other for current training policy'})
+            answer.update(category='other',review=True)
+        if answer['category'] == 'other': answer['review'] = True
         validate_answer(answer);validate_input(r['input'])
         if label['disposition']=='reject':excluded.append({'id':r['id'],'reason':'labeler_rejected'});continue
         accepted.append({**r,'answer':answer,'merchant_group':canonical_group(label,r['input']),'evidence':label['evidence'],'label_status':'ai_reviewed_not_human'})

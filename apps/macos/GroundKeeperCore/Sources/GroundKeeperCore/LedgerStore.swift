@@ -112,7 +112,21 @@ public actor LedgerStore {
             }
             try Self.resolveMerchant(db: db, transactionID: edit.id, description: edit.description)
             let part = try db.query("SELECT * FROM transaction_parts WHERE transaction_id=?", [.text(edit.id)]).first!
-            try assign(partID: part.text("id"), type: edit.type, category: edit.category, review: edit.needsReview, origin: "user", runID: nil)
+            let current = try db.query("SELECT * FROM category_assignments WHERE id=?", [.optional(part["current_assignment_id"]?.string)]).first
+            let changedCategory = current == nil || current?.text("type_code") != edit.type || current?["category_id"]?.string != edit.category
+            let accepted = edit.confirmCategory || (current?.number("needs_review") == 1 && !edit.needsReview)
+            if changedCategory || accepted {
+                try assign(partID: part.text("id"), type: edit.type, category: edit.category, review: edit.needsReview, origin: "user", runID: nil)
+            } else if let current, (current.number("needs_review") == 1) != edit.needsReview {
+                // Reopening review does not change who selected the category.
+                let id = identifier()
+                try db.query("""
+                    INSERT INTO category_assignments(id,part_id,type_code,category_id,origin,run_id,rule_id,import_row_id,supersedes_id,needs_review,selected_at_ms,confirmed_at_ms,confirmed_by)
+                    SELECT ?,part_id,type_code,category_id,origin,run_id,rule_id,import_row_id,id,?,?,confirmed_at_ms,confirmed_by
+                    FROM category_assignments WHERE id=?
+                    """, [.text(id), .integer(edit.needsReview ? 1 : 0), .integer(nowMS()), .text(current.text("id"))])
+                try db.query("UPDATE transaction_parts SET current_assignment_id=? WHERE id=?", [.text(id), .text(part.text("id"))])
+            }
             try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(edit.id)])
             try db.query("UPDATE classification_jobs SET status='obsolete',updated_at_ms=? WHERE part_id=? AND status IN ('pending','running')", [.integer(nowMS()), .text(part.text("id"))])
             try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms,before_json,after_json) VALUES (?,?,'transaction',?,'user','edit',?,?,?)",

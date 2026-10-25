@@ -21,7 +21,7 @@ extension LedgerStore {
         var predicates = ["currency=?", "day>=?", "day<?"]
         if let account = filter.accountID { predicates.append("account_id=?"); bindings.append(.text(account)) }
         if let merchant = filter.merchantID { predicates.append("coalesce(merchant_id,'')=?"); bindings.append(.text(merchant)) }
-        if let category = filter.category { predicates.append("coalesce(category_id,'uncategorized')=?"); bindings.append(.text(category)) }
+        if let category = filter.category { predicates.append("coalesce(category_id,'none')=?"); bindings.append(.text(category)) }
         if let tag = filter.tagID {
             predicates.append("(EXISTS(SELECT 1 FROM transaction_tags tt WHERE tt.transaction_id=dated.transaction_id AND tt.tag_id=?) OR EXISTS(SELECT 1 FROM part_tags pt WHERE pt.part_id=dated.part_id AND pt.tag_id=?))")
             bindings += [.text(tag), .text(tag)]
@@ -57,12 +57,12 @@ extension LedgerStore {
     private func reportCategories(_ filter: SpendingFilter, range: ReportRange) throws -> [SpendingCategoryTotal] {
         let (source, bindings) = try reportSource(filter, range: range)
         return try db.query(source + """
-            SELECT coalesce(category_id,'uncategorized') AS category,
+            SELECT coalesce(category_id,'none') AS category,
               sum(CASE WHEN type_code='expense' THEN abs(amount_minor) ELSE 0 END) AS gross,
               sum(CASE WHEN type_code='refund' THEN abs(amount_minor) ELSE 0 END) AS refunds, sum(net) AS net,
               count(DISTINCT CASE WHEN type_code='expense' THEN transaction_id END) AS purchases,
               count(DISTINCT CASE WHEN unreviewed THEN transaction_id END) AS review_count
-            FROM included GROUP BY coalesce(category_id,'uncategorized') ORDER BY net DESC,category
+            FROM included GROUP BY coalesce(category_id,'none') ORDER BY net DESC,category
             """, bindings).map { SpendingCategoryTotal(category: $0.text("category"), gross: $0.number("gross"), refunds: $0.number("refunds"), net: $0.number("net"), purchases: Int($0.number("purchases")), reviewCount: Int($0.number("review_count"))) }
     }
 
@@ -139,7 +139,7 @@ extension LedgerStore {
 
     private func reportCategoryBuckets(_ filter: SpendingFilter, buckets: [SpendingBucket]) throws -> [SpendingCategoryBucket] {
         let (source, bindings) = try reportSource(filter, range: filter.range)
-        let rows = try db.query(source + "SELECT day,coalesce(category_id,'uncategorized') AS category,sum(net) AS net FROM included GROUP BY day,coalesce(category_id,'uncategorized') ORDER BY day", bindings)
+        let rows = try db.query(source + "SELECT day,coalesce(category_id,'none') AS category,sum(net) AS net FROM included GROUP BY day,coalesce(category_id,'none') ORDER BY day", bindings)
         var totals: [String: Int64] = [:], metadata: [String: (SpendingBucket, String)] = [:]
         var index = 0
         for row in rows {

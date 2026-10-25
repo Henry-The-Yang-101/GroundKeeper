@@ -49,7 +49,7 @@ class MerchantMemory:
             ''')
     def confirm(self,raw,category,confirmed_at,transaction_id=None,*,merchant_scope=False,actor='user',merchant_id=None):
         if self.connection is None:raise PermissionError('Merchant memory is locked')
-        if category not in CATEGORIES or category=='uncategorized':raise ValueError('Confirm a supported category')
+        if category not in CATEGORIES:raise ValueError('Confirm a supported category')
         if not merchant_scope and not transaction_id:raise ValueError('Purchase correction needs transaction_id')
         alias=normalize(raw)
         if not alias:raise ValueError('Empty alias')
