@@ -12,6 +12,35 @@ import GroundKeeperCore
         }
         let client = ClassifierClient()
         do {
+            if let index = CommandLine.arguments.firstIndex(of: "--classifier-draft-smoke") {
+                guard AppPreferences.isSetupPreview, CommandLine.arguments.indices.contains(index + 1) else {
+                    throw LedgerError.invalid("Draft smoke requires --setup-preview and an existing sandbox-readable model package path.")
+                }
+                var package = URL(fileURLWithPath: CommandLine.arguments[index + 1], isDirectory: true)
+                if CommandLine.arguments.contains("--classifier-saved-model-smoke") {
+                    // Read only the existing package grant. All test preferences and
+                    // transactions still belong to the disposable preview workspace.
+                    guard let bookmark = UserDefaults.standard.data(forKey: "classifierModelBookmark") else {
+                        throw LedgerError.unavailable("No saved local model package; use the package picker.")
+                    }
+                    var stale = false
+                    package = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
+                    guard !stale else { throw LedgerError.unavailable("Saved model grant is stale; use the package picker.") }
+                }
+                let access = package.startAccessingSecurityScopedResource()
+                defer { if access { package.stopAccessingSecurityScopedResource() } }
+                if CommandLine.arguments.contains("--classifier-model-picker") {
+                    let panel = NSOpenPanel()
+                    panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
+                    panel.directoryURL = package.deletingLastPathComponent()
+                    panel.message = "Choose the existing local package for the fictional draft suggestion test."
+                    guard await panel.begin() == .OK, let selected = panel.url else { throw CancellationError() }
+                    package = selected
+                }
+                try await verifyDraftSuggestions(package: package)
+                write(["event": "draft_suggestion_smoke_passed", "checks": "new_draft, existing_edit, no_ledger_mutation, worker_released"])
+                exit(0)
+            }
             try await verifyConnectionBoundary()
             let handshake = try await client.handshake()
             try await client.verifyProtocolErrors()
@@ -120,6 +149,42 @@ import GroundKeeperCore
             exit(1)
         }
     }
+    private static func verifyDraftSuggestions(package: URL) async throws {
+        let workspace = AppWorkspace()
+        await workspace.start()
+        workspace.processingMode = .manual
+        guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
+        workspace.useInstalledModel(package)
+        while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
+        guard workspace.errorMessage == nil, workspace.classifierProvider == "local" else {
+            throw LedgerError.invalid(workspace.errorMessage ?? "Local provider setup failed.")
+        }
+        try await store.addAccount(name: "Fictional draft test", currency: "CAD")
+        let account = try await store.snapshot().accounts[0].id
+        try await store.save(TransactionEdit(description: "FICTIONAL CAFE", amountMinor: -1250, currency: "CAD",
+            occurredOn: "2026-10-01", accountID: account, type: "expense", category: nil, needsReview: true, notes: ""))
+        let saved = try await store.snapshot().transactions[0]
+        var edit = Transaction(saved)
+        edit.notes = "Fictional lunch"
+        try await store.save(edit.edit)
+        let before = try await store.snapshot().transactions[0]
+        var newDraft = Transaction()
+        newDraft.merchant = "FICTIONAL CAFE coffee and sandwich"
+        for draft in [newDraft, Transaction(before)] {
+            let suggestion = try await workspace.suggestCategory(for: draft)
+            try suggestion.decision.validateSuggestion()
+            let after = try await store.snapshot()
+            guard after.transactions.count == 1, after.transactions[0].revision == before.revision,
+                  after.transactions[0].category == before.category,
+                  !workspace.processing, workspace.model == nil else {
+                throw LedgerError.invalid("Suggestion changed the ledger or retained classifier resources.")
+            }
+            write(["event": "draft_suggestion_verified", "draft_revision": draft.revision, "type": suggestion.decision.type,
+                   "category": suggestion.decision.category ?? "none"])
+        }
+        await workspace.stop()
+    }
+
     private static func verifyConnectionBoundary() async throws {
         func connection() -> NSXPCConnection {
             let value = NSXPCConnection(serviceName: "com.groundkeeper.macos.classifier")

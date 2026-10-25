@@ -417,3 +417,20 @@ The signed app's disposable checks include:
 The lifecycle check initializes the GPU runtimes, disconnects, and verifies that
 the next handshake comes from a new process with no loaded model. The Ollama
 check also verifies draft suggestions leave the ledger unchanged.
+
+The bundled-provider draft regression check exercises both a new draft (revision
+0 in the editor) and an existing edit through Qwen/Laya XPC, while verifying that
+suggestions do not mutate the disposable ledger and release the worker:
+
+```sh
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper \
+  --setup-preview --classifier-smoke --classifier-draft-smoke /path/to/existing/package \
+  --classifier-model-picker
+```
+
+Alternatively, replace `--classifier-model-picker` with
+`--classifier-saved-model-smoke` to read the existing local-model bookmark. That
+option uses the saved package instead of the supplied path; preferences and
+transactions still use the disposable preview workspace. No model is downloaded.
+Draft requests use a positive protocol revision (`max(1, draft.revision)`), since
+the worker rejects revision 0 before inference.

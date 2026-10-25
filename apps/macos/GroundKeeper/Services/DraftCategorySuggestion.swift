@@ -43,7 +43,7 @@ extension AppWorkspace {
                             loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: "activeCouncilPackage.\(member.backend)")
                         }
                         guard loaded.manifestSHA256 == member.id else { throw ClassifierBridgeError.invalidResponse }
-                        let decision = try await draftDecision(client: suggestionClient, input: input, model: loaded, id: draft.id)
+                        let decision = try await draftDecision(client: suggestionClient, input: input, model: loaded, draft: draft)
                         votes.append(CouncilVote(member: member, disposition: "valid", decision: decision))
                     } catch {
                         try Task.checkCancellation()
@@ -61,7 +61,7 @@ extension AppWorkspace {
                 } else {
                     loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: "classifierModelBookmark")
                 }
-                suggestion = DraftCategorySuggestion(decision: try await draftDecision(client: suggestionClient, input: input, model: loaded, id: draft.id), provider: loaded.modelID)
+                suggestion = DraftCategorySuggestion(decision: try await draftDecision(client: suggestionClient, input: input, model: loaded, draft: draft), provider: loaded.modelID)
             }
             try suggestion.decision.validateSuggestion()
             try Task.checkCancellation()
@@ -83,8 +83,10 @@ extension AppWorkspace {
         return try await client.prepareModel(at: url)
     }
 
-    private func draftDecision(client: ClassifierClient, input: ClassifierInput, model: ClassifierModel, id: UUID) async throws -> ClassificationDecision {
-        let result = try await client.classify(input, model: model, partID: id.uuidString, revision: 0)
+    private func draftDecision(client: ClassifierClient, input: ClassifierInput, model: ClassifierModel, draft: Transaction) async throws -> ClassificationDecision {
+        // Unsaved drafts use a positive request revision; persisted edits retain
+        // their revision. This is request identity only and never writes the ledger.
+        let result = try await client.classify(input, model: model, partID: draft.id.uuidString, revision: max(1, draft.revision))
         guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
         return ClassificationDecision(type: decision.type, category: decision.category, review: decision.review)
     }
