@@ -13,7 +13,12 @@ struct ReceiptCropView: View {
     @State private var crop = CGRect(x: 0, y: 0, width: 1, height: 1)
     @State private var busy = false
     @State private var error: String?
-    private var image: NSImage? { NSImage(data: source.data) }
+    private let image: NSImage?
+
+    init(source: ReceiptCropSource, onUse: @escaping (Data) -> Void) {
+        self.source = source; self.onUse = onUse
+        image = NSImage(data: source.data)
+    }
 
     var body: some View {
         VStack(spacing: 0) {

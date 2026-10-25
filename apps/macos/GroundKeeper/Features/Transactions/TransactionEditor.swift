@@ -12,7 +12,7 @@ struct TransactionEditor: View {
     @State private var suggestionError: String?
     @State private var suggestionTask: Task<Void, Never>?
     @State private var suggesting = false
-    @State private var receiptsLoading = true
+    @State private var receiptsLoading = false
     @FocusState private var merchantFocused: Bool
     private let original: Transaction
     private let originalAmountText: String

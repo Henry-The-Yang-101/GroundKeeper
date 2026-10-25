@@ -157,7 +157,7 @@ private struct TransactionLocationMap: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Map(initialPosition: .region(MKCoordinateRegion(center: coordinate,
-                latitudinalMeters: max(600, (location.accuracyMeters ?? 0) * 4), longitudinalMeters: max(600, (location.accuracyMeters ?? 0) * 4)))) {
+                latitudinalMeters: min(50_000, max(600, (location.accuracyMeters ?? 0) * 4)), longitudinalMeters: min(50_000, max(600, (location.accuracyMeters ?? 0) * 4))))) {
                 Marker(location.label ?? merchant, coordinate: coordinate).tint(AppStyle.accent)
             }
             .mapControls { MapZoomStepper(); MapCompass() }
@@ -169,7 +169,7 @@ private struct TransactionLocationMap: View {
                     Text(String(format: "%.5f, %.5f", location.latitude, location.longitude))
                         .font(.caption.monospaced()).textSelection(.enabled)
                     if let accuracy = location.accuracyMeters {
-                        Text("Recorded accuracy: about \(Int(accuracy.rounded())) m").font(.caption)
+                        Text("Recorded accuracy: about \(accuracy.formatted(.number.precision(.fractionLength(0)))) m").font(.caption)
                     }
                 }.foregroundStyle(AppStyle.muted)
                 Spacer()

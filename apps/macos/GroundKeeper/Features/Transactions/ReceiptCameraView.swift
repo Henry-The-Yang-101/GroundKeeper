@@ -89,6 +89,10 @@ private final class ReceiptCamera: NSObject, AVCapturePhotoCaptureDelegate, @unc
             self.output.capturePhoto(with: AVCapturePhotoSettings(), delegate: self)
         }
     }
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings, error: Error?) {
+        guard let error else { return }
+        queue.async { self.completion?(.failure(error)); self.completion = nil }
+    }
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         let data = photo.fileDataRepresentation()
         queue.async {

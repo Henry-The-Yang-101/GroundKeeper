@@ -4,7 +4,7 @@ import Testing
 
 extension LedgerStore {
     func simulatePreReceiptVault() throws {
-        try db.executeScript("DROP TABLE receipt_images; DROP TABLE receipt_ocr_runs; DROP TABLE receipt_captures; ALTER TABLE classification_jobs DROP COLUMN receipt_context_sha256; ALTER TABLE classification_runs DROP COLUMN context_version; DELETE FROM schema_migrations WHERE version=3;")
+        try db.executeScript("DROP TABLE receipt_images; DROP TABLE receipt_ocr_runs; DROP TABLE receipt_captures; ALTER TABLE classification_jobs DROP COLUMN receipt_context_sha256; ALTER TABLE classification_runs DROP COLUMN context_version; DROP TABLE capture_note_imports; DROP TABLE capture_file_cleanups; DELETE FROM schema_migrations WHERE version IN (3,9);")
     }
 }
 @Test func existingVersionTwoVaultUpgradesWithoutChangingPurchases() async throws {
