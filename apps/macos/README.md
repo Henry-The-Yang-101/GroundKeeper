@@ -53,6 +53,16 @@ environments on a fresh checkout. Then build and launch with:
 ./apps/macos/run.sh
 ```
 
+To rebuild and restart an already open instance while keeping its existing vault:
+
+```sh
+./apps/macos/update_existing_build.sh
+```
+
+Save any in-progress edits first. The script builds before requesting a normal
+quit, waits for the app to close, and reopens the same app with its saved
+transactions and preferences. If the build fails, the running app stays open.
+
 The app is built at
 `.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app`.
 The local Swift package `GroundKeeperCore` pins Zetetic’s official SQLCipher
