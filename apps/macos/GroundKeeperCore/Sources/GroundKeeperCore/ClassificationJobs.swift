@@ -2,7 +2,7 @@ import Foundation
 
 extension LedgerStore {
     public func registerModel(id: String, name: String, backend: String, policy: String, configuration: String, select: Bool = true) throws {
-        guard policy == "groundkeeper-18-v1", ["qwen_mlx", "laya_mps", "apple_shortcut"].contains(backend), id.count == 64 else { throw LedgerError.invalid("Unsupported classifier identity.") }
+        guard policy == "groundkeeper-18-v1", ["qwen_mlx", "laya_mps", "apple_shortcut", "ollama"].contains(backend), id.count == 64 else { throw LedgerError.invalid("Unsupported classifier identity.") }
         try db.transaction {
             let definition = try json(["policy": [policy], "categories": ["groceries","dining","local_transport","vehicle","housing","utilities","shopping","medical","personal_care","fitness","entertainment","software","education","travel","insurance","financial","taxes","gifts","other","uncategorized"]])
             try db.query("INSERT OR IGNORE INTO policy_versions(id,name,content_sha256,definition_json,created_at_ms) VALUES (?,?,?,?,?)", [.text(policy), .text(policy), .text(contentHash(Data(definition.utf8))), .text(definition), .integer(nowMS())])
