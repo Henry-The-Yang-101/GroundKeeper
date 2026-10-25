@@ -68,8 +68,8 @@ struct CategoryLabel: View {
     }
 }
 
-/// Use a passive, nonanimated popover: SwiftUI's presentation dismisses on a
-/// click and can take focus from the table. This card never consumes row clicks.
+/// A nonactivating child panel keeps placement in explicit screen coordinates.
+/// NSPopover's automatic positioning drifts inside SwiftUI's flipped table cells.
 private struct CategoryHoverCard: NSViewRepresentable {
     let text: String
     let isPresented: Bool
@@ -87,7 +87,6 @@ private struct CategoryHoverCard: NSViewRepresentable {
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: AnchorView, context: Context) -> CGSize? {
-        // The background must occupy the complete pill, not NSView's empty ideal size.
         CGSize(width: proposal.width ?? 0, height: proposal.height ?? 0)
     }
 
@@ -97,12 +96,9 @@ private struct CategoryHoverCard: NSViewRepresentable {
 
     final class AnchorView: NSView {
         var text = ""
-        private var card: NSPopover?
+        private var card: HoverPanel?
         private var presentationRequested = false
-
-        private var anchorRect: NSRect {
-            NSRect(x: bounds.midX - 0.5, y: bounds.minY, width: 1, height: bounds.height)
-        }
+        private var observers: [NSObjectProtocol] = []
 
         override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
@@ -127,42 +123,80 @@ private struct CategoryHoverCard: NSViewRepresentable {
         }
 
         private func updatePresentation() {
-            guard presentationRequested else { dismiss(); return }
-            guard window != nil, !visibleRect.isEmpty else { return }
-            if let card {
-                card.positioningRect = anchorRect
-                return
+            guard presentationRequested, let window, !isHiddenOrHasHiddenAncestor,
+                  !visibleRect.isEmpty else { dismiss(); return }
+            // NSView -> window -> screen handles flipped views and window origins.
+            // Screen coordinates increase upwards, so maxY is always the pill's top.
+            let pill = window.convertToScreen(convert(bounds, to: nil))
+            if card == nil {
+                let panel = HoverPanel(contentRect: .zero,
+                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+                panel.isOpaque = false
+                panel.backgroundColor = .clear
+                panel.hasShadow = true
+                panel.hidesOnDeactivate = true
+                panel.ignoresMouseEvents = true
+                panel.isReleasedWhenClosed = false
+                let content = NSHostingView(rootView: CardContent(text: text))
+                panel.contentView = content
+                panel.setContentSize(content.fittingSize)
+                card = panel
+                window.addChildWindow(panel, ordered: .above)
+                observe(NSWindow.didResizeNotification, object: window)
+                if let clipView = enclosingScrollView?.contentView {
+                    observe(NSView.boundsDidChangeNotification, object: clipView)
+                }
             }
-            let popover = NSPopover()
-            popover.animates = false
-            popover.behavior = .semitransient
-            popover.contentViewController = NSHostingController(rootView: CardContent(text: text))
-            card = popover
-            // A narrow center anchor prevents AppKit from choosing another point
-            // along a wide pill. The pointer position never affects placement.
-            popover.show(relativeTo: anchorRect, of: self, preferredEdge: .maxY)
+            guard let card else { return }
+            card.setFrameOrigin(NSPoint(x: pill.midX - card.frame.width / 2, y: pill.maxY + 4))
+            card.orderFront(nil)
+        }
+
+        private func observe(_ name: Notification.Name, object: AnyObject) {
+            observers.append(NotificationCenter.default.addObserver(forName: name, object: object, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updatePresentation() }
+            })
         }
 
         func dismiss() {
+            for observer in observers { NotificationCenter.default.removeObserver(observer) }
+            observers.removeAll()
             guard let card else { return }
+            card.parent?.removeChildWindow(card)
             card.close()
             self.card = nil
         }
+    }
+
+    private final class HoverPanel: NSPanel {
+        override var canBecomeKey: Bool { false }
+        override var canBecomeMain: Bool { false }
     }
 
     private struct CardContent: View {
         let text: String
 
         var body: some View {
-            Text(text)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(AppStyle.text)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .frame(maxWidth: 320)
-                .fixedSize(horizontal: false, vertical: true)
-                .background(AppStyle.pageBackground)
+            VStack(spacing: 0) {
+                Text(text)
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(AppStyle.text)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .frame(width: 320)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background(AppStyle.pageBackground, in: .rect(cornerRadius: 16))
+                Path { path in
+                    path.move(to: .zero)
+                    path.addLine(to: CGPoint(x: 9, y: 8))
+                    path.addLine(to: CGPoint(x: 18, y: 0))
+                    path.closeSubpath()
+                }
+                .fill(AppStyle.pageBackground)
+                .frame(width: 18, height: 8)
+            }
+            .fixedSize()
         }
     }
 }
