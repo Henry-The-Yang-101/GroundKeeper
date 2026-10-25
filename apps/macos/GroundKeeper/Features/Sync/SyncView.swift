@@ -18,7 +18,12 @@ struct SyncView: View {
                 }.disabled(!workspace.ready || workspace.saving)
                 QueueControls()
                 Text(workspace.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
-                Text("Files stay in iCloud; committed delivery IDs prevent re-importing them. Test captures never become transactions.").font(.caption).foregroundStyle(AppStyle.muted)
+                Text("Imported JSON and receipt images are removed from iCloud after they are safely stored in your local vault. Invalid files stay in the queue for review.").font(.caption).foregroundStyle(AppStyle.muted)
+                if workspace.captureFolderNeedsReconnect {
+                    Text("Reconnect this folder once to allow GroundKeeper to remove processed files.").font(.caption)
+                    Button("Reconnect capture folder…", action: workspace.selectFolder)
+                }
+                if let message = workspace.cleanupMessage { Text(message).font(.caption).foregroundStyle(AppStyle.muted) }
             }
             Surface {
                 HStack {

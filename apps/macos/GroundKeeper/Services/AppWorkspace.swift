@@ -30,7 +30,10 @@ import GroundKeeperCore
     var unqueuedJobs = 0
     var countError: String?
     var countUpdatedAt: Date?
-    var queueCount: Int { pendingCaptures + (classifierProvider == "manual" ? 0 : pendingJobs + unqueuedJobs) }
+    var pendingFileWork = 0
+    var cleanupMessage: String?
+    var captureFolderNeedsReconnect: Bool { hasCaptureFolder && !AppPreferences.defaults.bool(forKey: "captureFolderWritable") }
+    var queueCount: Int { pendingCaptures + pendingFileWork + (classifierProvider == "manual" ? 0 : pendingJobs + unqueuedJobs) }
     var processButtonTitle: String { if countError != nil { return "Process queue (count unavailable)" }; return processing ? "Processing… (\(queueCount))" : "Process queue (\(queueCount))" }
     var processingDescription: String {
         switch processingMode {
@@ -388,7 +391,9 @@ import GroundKeeperCore
         } catch { errorMessage = error.localizedDescription }
     }
     private func connectCaptureFolder(_ url: URL, exact: Bool) throws {
-        let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+        let bookmark = try url.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
+        AppPreferences.defaults.set(true, forKey: "captureFolderWritable")
+        cleanupMessage = nil
         folderBookmark = bookmark
         AppPreferences.defaults.set(bookmark, forKey: "captureFolderBookmark")
         AppPreferences.defaults.set(exact, forKey: "captureFolderIsExact")
@@ -402,7 +407,8 @@ import GroundKeeperCore
             if let folderBookmark {
                 let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: false, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
                 pendingCaptures = scan.pending; waitingCaptures = scan.waiting
-            } else { pendingCaptures = 0; waitingCaptures = 0 }
+                pendingFileWork = try await store.pendingFileCleanups().count + store.receiptImageRequests().count
+            } else { pendingCaptures = 0; waitingCaptures = 0; pendingFileWork = 0 }
             try await refresh(); countError = nil; countUpdatedAt = Date()
             backgroundStatus = QueueBackgroundService.status
         } catch is CancellationError {} catch { countError = error.localizedDescription }
@@ -450,6 +456,8 @@ import GroundKeeperCore
                     if scan.files.count < 200 { break }
                 } while remaining > 0
                 try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+                let failed = try await folder.cleanStoredFiles(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+                cleanupMessage = failed == 0 ? nil : "Saved safely in the vault. Reconnect the capture folder to remove \(failed) queued files."
             }
             try Task.checkCancellation()
             try await refresh()
@@ -547,6 +555,38 @@ import GroundKeeperCore
         try await store.cacheMerchantSearch(evidence)
         merchantSearchStatus = evidence.context != nil ? "DuckDuckGo context added" : evidence.outcome == "blocked" ? "DuckDuckGo blocked searches; paused for 15 minutes" : "No reliable web context; using transaction evidence"
         return try await store.bindMerchantSearch(evidence, to: job)
+    }
+    func transactionNote(transactionID: String) async throws -> TransactionNote {
+        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
+        return try await store.transactionNote(transactionID: transactionID)
+    }
+    func saveTransactionNote(transactionID: String, text: String, revision: Int) async throws {
+        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
+        try await store.saveTransactionNote(transactionID: transactionID, text: text, revision: revision)
+        try await refresh()
+    }
+    func addReceiptImage(transactionID: String) async throws {
+        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.jpeg, .png, .heic]
+        panel.allowsMultipleSelection = false; panel.canChooseDirectories = false
+        panel.prompt = "Add receipt"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        let data = try await Task.detached {
+            let file = try FileHandle(forReadingFrom: url); defer { try? file.close() }
+            return try file.read(upToCount: 8_388_609) ?? Data()
+        }.value
+        // A readable image is useful even when OCR finds no text.
+        let ocr = try? await ReceiptOCR.recognize(data)
+        try await store.addReceiptImage(transactionID: transactionID, data: data, ocrText: ocr?.text ?? "", producer: ocr?.producer ?? "apple_vision_documents")
+        try await refresh()
+    }
+    func setReceiptRemoved(id: String, transactionID: String, removed: Bool) async throws {
+        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
+        try await store.setReceiptRemoved(id: id, transactionID: transactionID, removed: removed)
+        try await refresh()
     }
     func captureNotes(transactionID: String) async throws -> [CaptureNote] { try await store?.captureNotes(transactionID: transactionID) ?? [] }
     func receiptRecords(transactionID: String) async throws -> [ReceiptRecord] { try await store?.receipts(transactionID: transactionID) ?? [] }
@@ -711,7 +751,7 @@ import GroundKeeperCore
                 do {
                     let context = try await merchantContext(for: job, store: store)
                     let input = ClassifierInput(description: job.description, direction: job.direction, currency: job.currency,
-                                                receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw, merchantContext: context)
+                                                transactionNotes: job.transactionNotes, receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw, merchantContext: context)
                     let decision: ClassificationDecision
                     if selectedModel.backend == "ollama" {
                         guard let selected = ollamaModel, selected.identity == selectedModel.manifestSHA256 else { throw OllamaError.modelChanged }

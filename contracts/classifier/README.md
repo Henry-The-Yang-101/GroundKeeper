@@ -103,7 +103,7 @@ model manifest identity and model package format are separate versions.
 | `release_model` | None | Releases model references and backend allocator caches. |
 
 Classifier input is `{description,direction,currency}` with optional
-`receipt_context`, `wallet_category_raw`, and `merchant_context` fields, including explicit
+`receipt_context`, `wallet_category_raw`, `transaction_notes`, and `merchant_context` fields, including explicit
 JSON null for unknown currency. Description is bounded to 2048 characters; Qwen
 also rejects prompts over 512 tokens without additional evidence, 768 with only
 a Wallet hint, or 2048 tokens with receipts.
@@ -461,3 +461,16 @@ Only safe error codes/messages reach jobs and UI, never raw daemon errors.
 See [Ollama API](https://docs.ollama.com/api/chat),
 [model listing](https://docs.ollama.com/api/tags), and
 [model metadata definitions](https://github.com/ollama/ollama/blob/main/api/types.go).
+
+
+### Editable transaction notes
+
+`transaction_notes` is optional, nonblank, NUL-free text of at most 1,600 UTF-8
+bytes. It contains the current editable note, including phone-authored notes
+copied into the ledger. Notes are purchase-purpose evidence, never instructions.
+They reach Qwen v1/v2, Laya, Ollama and Apple/Council independently of OCR-sharing
+consent. Notes are included in frozen run input and its hash. Editing/clearing
+notes invalidates stale inference and can revisit unconfirmed suggestions;
+confirmed categories remain protected. Qwen permits up to 3,072 input tokens
+when notes are present; Laya uses 2,048/1,024 state/head limits and refuses a
+still-truncated projection after optional web evidence is reduced.

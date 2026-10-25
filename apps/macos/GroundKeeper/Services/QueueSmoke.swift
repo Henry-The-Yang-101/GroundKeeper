@@ -23,7 +23,7 @@ import Synchronization
                 try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -10)], ofItemAtPath: url.path)
             }
             let store = try LedgerStore(url: directory.appendingPathComponent("test.sqlite"))
-            let bookmark = try inbox.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+            let bookmark = try inbox.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
             let workspace = AppWorkspace()
             workspace.configureQueueSmoke(store: store, bookmark: bookmark, mode: .manual)
             if !QueueBackgroundService.isSupported {
@@ -40,7 +40,22 @@ import Synchronization
             try check(try await store.snapshot().queue.isEmpty, "Automatic call bypassed manual mode")
             await workspace.sync()
             try check(workspace.queueCount == 0, "Manual processing did not drain the backlog")
-            try check(try await store.captureDeliveryStates().count == 205, "Not all captures were processed")
+            try check(try FileManager.default.contentsOfDirectory(atPath: inbox.path).isEmpty, "Committed JSON files remained in the queue")
+            let assets = inbox.appendingPathComponent("assets")
+            try FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
+            let png = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=")!
+            try png.write(to: assets.appendingPathComponent("fixture.png"))
+            let receipt: [String: Any] = ["schema_version": 3, "source": "receipt_attachment", "event_id": "fixture-receipt",
+                "captured_at": "2026-10-20T10:00:00-04:00", "target": ["source": "wallet_transaction", "app": "Wallet", "event_id": "future-payment"],
+                "receipt": ["ocr": ["producer": "apple_shortcuts", "text": "Fictional receipt"], "image": ["path": "assets/fixture.png"]]]
+            let receiptFile = inbox.appendingPathComponent("receipt.json")
+            try JSONSerialization.data(withJSONObject: receipt).write(to: receiptFile)
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -10)], ofItemAtPath: receiptFile.path)
+            await workspace.sync()
+            try check(!FileManager.default.fileExists(atPath: receiptFile.path), "Receipt JSON was not drained")
+            try check(!FileManager.default.fileExists(atPath: assets.appendingPathComponent("fixture.png").path), "Stored receipt image was not drained")
+            try check(try await store.pendingFileCleanups().isEmpty, "File cleanup was not acknowledged")
+            try check(try await store.captureDeliveryStates().count == 206, "Receipt delivery was not persisted")
             try check(try await store.snapshot().transactions.isEmpty, "Test captures created transactions")
             let fresh = CaptureFolder()
             let inventory = try await fresh.scan(bookmark: bookmark, store: store, readFiles: false)
@@ -81,7 +96,7 @@ import Synchronization
                 }
                 try Data("passed".utf8).write(to: backgroundResult, options: .atomic)
             }
-            print("queue_smoke_passed: manual inventory, 205-file drain, restart count, automatic mode, retry backoff, CSV gating")
+            print("queue_smoke_passed: manual inventory, 205-file JSON drain, receipt-image drain, restart count, automatic mode, retry backoff, CSV gating")
             exit(0)
         } catch { print("queue_smoke_failed: \(error.localizedDescription)"); exit(1) }
     }

@@ -189,8 +189,9 @@ prove background execution; check the helper heartbeat.
 All classifier suggestions require review. Editing confirms an assignment and
 protects it from late classifier replies. Unknown notification formats can be
 corrected without overwriting the original capture. Possible duplicates can be
-linked or retained separately. Source files remain in iCloud; persisted delivery
-identities prevent replay.
+linked or retained separately. Successful imports drain JSON and receipt images from iCloud after durable
+vault storage and a hash check. Persisted delivery identities prevent replay.
+Reconnect an older capture-folder selection once to grant cleanup access.
 
 ## Queue processing modes
 

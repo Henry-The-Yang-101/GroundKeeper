@@ -167,14 +167,7 @@ private struct ReportEvidenceReceipts: View {
     let transaction: Transaction
 
     var body: some View {
-        VStack(spacing: 0) {
-            SheetHeading(title: "Notes & receipts", subtitle: transaction.merchant)
-            ScrollView {
-                ReceiptEvidenceView(transactionID: transaction.id.uuidString, transactionNote: transaction.notes)
-                    .frame(maxWidth: .infinity, alignment: .leading).padding(24)
-            }
-            SheetFooter { Spacer(); SheetDoneButton() }
-        }.frame(minWidth: 540, idealWidth: 640, minHeight: 420, idealHeight: 560)
+        ReceiptEvidenceView(transactionID: transaction.id.uuidString, title: transaction.merchant)
     }
 }
 

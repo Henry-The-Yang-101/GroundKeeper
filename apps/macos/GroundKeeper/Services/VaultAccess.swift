@@ -98,6 +98,7 @@ actor CaptureFolder {
         guard !stale, root.startAccessingSecurityScopedResource() else { throw LedgerError.unavailable("Reconnect the capture folder.") }
         defer { root.stopAccessingSecurityScopedResource() }
         let inbox = (exactFolder || root.lastPathComponent == "inbox" ? root : root.appendingPathComponent("inbox")).resolvingSymlinksInPath()
+        try await store.reuseStoredReceiptImages()
         for image in try await store.receiptImageRequests() {
             try Task.checkCancellation()
             let url = inbox.appendingPathComponent(image.path)
@@ -129,4 +130,27 @@ actor CaptureFolder {
             catch LedgerError.invalid { try await store.markReceiptImageInvalid(id: image.id) }
         }
     }
+    func cleanStoredFiles(bookmark: Data, store: LedgerStore, exactFolder: Bool) async throws -> Int {
+        var stale = false
+        let root = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
+        guard !stale, root.startAccessingSecurityScopedResource() else { throw LedgerError.unavailable("Reconnect the capture folder to remove stored queue files.") }
+        defer { root.stopAccessingSecurityScopedResource() }
+        let inbox = exactFolder || root.lastPathComponent == "inbox" ? root : root.appendingPathComponent("inbox")
+        var failed = 0
+        for request in try await store.pendingFileCleanups() {
+            try Task.checkCancellation()
+            do {
+                if try CaptureQueueFileCleaner.removeStoredCopy(request, inbox: inbox) {
+                    try await store.completeFileCleanup(id: request.id)
+                } else {
+                    try await store.failFileCleanup(id: request.id, changed: true)
+                }
+            } catch {
+                failed += 1
+                try await store.failFileCleanup(id: request.id)
+            }
+        }
+        return failed
+    }
+
 }

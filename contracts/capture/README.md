@@ -20,7 +20,7 @@ An optional image `sha256` must describe the actual stored bytes. Without one,
 the Mac computes it. Images are limited to 8 MiB and 40 million pixels, validated
 by ImageIO, and stored as BLOBs inside the local vault. SQLCipher consequently
 protects retained images when the vault is encrypted. Plain vaults remain plain.
-The iCloud transport copy has its existing iCloud protection and is retained.
+The iCloud transport copy is removed after the Mac verifies durable vault storage.
 
 The schema 4 phone writer collects optional details before saving payment JSON.
 Cancellation or failure in a selected step aborts that capture. Explicit Skip
@@ -83,8 +83,9 @@ for details added during the initial capture. Later attachments remain schema 3.
 
 The Shortcut uses conservative character limits before saving: 2,000 for notes,
 8,000 for OCR and 16,000 for serialized JSON. The importer enforces byte limits.
-Captured notes are immutable source evidence, displayed in **Notes & receipts…**;
-they never replace editable ledger notes or enter classifier requests.
+Captured notes remain immutable source evidence and are copied once into editable
+transaction notes. **Notes & receipts…** can edit or clear them. A bounded note
+excerpt is included in classifier requests.
 
 Names follow `<description>_<app>_CAPTURE_<yyyy-MM-dd_HH-mm-ss-SSS>.json`, using
 the merchant/subtitle and source app. Unsafe filename characters and spaces are
@@ -92,3 +93,10 @@ underscores; description/app components are each limited to 60 ASCII characters.
 The timestamp is local capture time. The envelope retains its offset-bearing
 `captured_at` and unique event ID. Names are descriptive only: import, replay,
 receipt association and matching use payload identity. See `payment-details-example.json`.
+
+
+After successful ingestion, the Mac acknowledges the queue by deleting matching
+JSON and image copies from iCloud. The payload, note, OCR and retained image bytes
+remain in the local vault. Deletion retries after interruption or access failure;
+invalid files are retained. Existing folder connections need read/write access.
+Receipt images can also be added or removed in **Notes & receipts…** on the Mac.

@@ -14,11 +14,13 @@ struct ClassifierInput: Codable, Sendable {
     let description: String
     let direction: String
     let currency: String?
+    var transactionNotes: String? = nil
     var receiptContext: ReceiptContext? = nil
     var walletCategoryRaw: String? = nil
     var merchantContext: MerchantContext? = nil
     enum CodingKeys: String, CodingKey {
         case description, direction, currency
+        case transactionNotes = "transaction_notes"
         case receiptContext = "receipt_context", walletCategoryRaw = "wallet_category_raw"
         case merchantContext = "merchant_context"
     }
@@ -28,6 +30,7 @@ struct ClassifierInput: Codable, Sendable {
         try container.encode(direction, forKey: .direction)
         if let currency { try container.encode(currency, forKey: .currency) }
         else { try container.encodeNil(forKey: .currency) }
+        try container.encodeIfPresent(transactionNotes, forKey: .transactionNotes)
         try container.encodeIfPresent(receiptContext, forKey: .receiptContext)
         try container.encodeIfPresent(walletCategoryRaw, forKey: .walletCategoryRaw)
         try container.encodeIfPresent(merchantContext, forKey: .merchantContext)

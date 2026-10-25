@@ -37,7 +37,7 @@ that context may also be processed by Apple's service. The original transaction
 input and separate receipt-sharing consent remain intact.
 
 GroundKeeper sends description, direction, and currency. In Settings, the separate
-**Include receipt text with Apple Intelligence** option is off by default. Turning
+**Include receipt text with Apple Intelligence** option defaults to on and honors a saved off choice. Turning
 it on also sends a bounded receipt excerpt to the chosen Shortcut. Cloud inference
 can send that text to Apple's service. Images never enter classifier requests. The app validates the returned
 `type`, `category`, and `review` fields and requires review of every suggestion.
@@ -85,7 +85,7 @@ Transaction; Attach Receipt Later → Add Receipt. Select the installed helper e
    personal automation or card selection.
 5. On the Mac, connect the exact inbox in setup or **Sync > Connect folder**.
    Existing saved parent-folder connections remain supported. Process a fictional event first, then confirm captured card
-   labels against your accounts. The importer preserves source files and
+   labels against your accounts. The importer stores source evidence in the vault and
    detects repeated deliveries.
 
 ### Optional Wallet category hint
@@ -180,10 +180,14 @@ last-payment variable. Install all updated helpers together when upgrading.
 
 On the Mac, **Notes & receipts…** displays the phone note alongside receipt
 evidence. Captured notes are preserved separately from editable transaction
-notes and are not sent to classifiers. Receipt text/image processing and
+notes as original evidence. Phone notes are also copied once into editable
+transaction notes; the current edited text is included in classifier context. Receipt text/image processing and
 classification consent remain unchanged. The importer accepts both old and new
-captures and does not rely on the filename. Source JSON stays in the inbox;
-optional images can arrive later and are imported into the local vault.
+captures and does not rely on the filename. Source JSON and optional images are removed from the inbox after the Mac safely
+stores their contents and verifies the queued copies. Images can arrive after
+JSON; receipt metadata waits in the vault until then. After a payment JSON has
+left the queue, use **Notes & receipts…** on the Mac to attach another receipt;
+the older phone **Attach Receipt Later** helper requires that JSON still exist.
 
 Receiving-phone camera behavior, permissions, automation input and locked-phone
 menus still require a device check. See the [capture contract](../contracts/capture/README.md).
@@ -229,3 +233,8 @@ directory. Those three native JSON outputs were imported into an isolated
 SQLCipher vault: three transactions, two captured notes, one receipt, no
 quarantined files and a passing integrity check. The app built successfully;
 29 Swift core tests and 39 Python capture/schema checks passed.
+
+
+Transaction notes now enter model context as `transaction_notes` (up to 1,600
+UTF-8 bytes). The maintained classifier Shortcut sources describe this field as
+untrusted purchase-purpose evidence. Images are still never passed to the model.

@@ -170,14 +170,7 @@ struct TransactionsView: View {
             Text("This hides the transaction while retaining its source evidence and history. Re-importing the same capture will not recreate it.")
         }
         .sheet(item: $receiptTransaction) { transaction in
-            VStack(spacing: 0) {
-                SheetHeading(title: transaction.merchant, subtitle: "Transaction notes and captured receipts stay with this purchase.")
-                ContentSizedScrollView {
-                    ReceiptEvidenceView(transactionID: transaction.id.uuidString, transactionNote: transaction.notes)
-                        .padding(.horizontal, 24).padding(.bottom, 24)
-                }
-                SheetFooter { Spacer(); SheetDoneButton() }
-            }.frame(width: 650).vaultSheet()
+            ReceiptEvidenceView(transactionID: transaction.id.uuidString, title: transaction.merchant).vaultSheet()
         }
     }
 

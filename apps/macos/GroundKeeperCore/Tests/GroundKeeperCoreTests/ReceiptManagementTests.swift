@@ -4,6 +4,10 @@ import Testing
 
 private let receiptPNG = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=")!
 
+@Test func unreadableReceiptDimensionsAreRejectedBeforeOCR() async {
+    await #expect(throws: LedgerError.self) { try await ReceiptOCR.recognize(receiptPNG) }
+}
+
 @Test func capturedNotesAreEditableContextWithoutChangingConfirmedCategories() async throws {
     var (store, url) = try vault()
     try await store.addAccount(name: "Fixture", currency: "CAD")

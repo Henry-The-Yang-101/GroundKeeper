@@ -85,7 +85,8 @@ selection. Analytics/planning examples are no longer exposed as live data.
 
 In setup or Sync, select the exact capture directory. Existing saved bookmarks
 for a parent `GroundKeeper` folder retain their original `inbox` resolution.
-The app stores a read-only security-scoped bookmark. Settings controls automatic
+The app stores a read/write security-scoped bookmark. Existing read-only bookmarks
+require a one-time folder reconnect to permit queue cleanup. Settings controls automatic
 background processing, processing only while the app is open (the default), or
 manual processing. Automatic passes run every 15 seconds. It coordinates reads, requests downloads for iCloud placeholders,
 waits for stable file modification times, rejects symlinks, bounds JSON reads,
@@ -94,9 +95,12 @@ in successive batches on a processing request. An in-memory metadata cache
 avoids rereading completed unchanged files; the database remains the authority
 after restart. Retry clears this optimization cache.
 
-Source files are **retained**, not moved or deleted. Imported/quarantined status
+Successfully imported source JSON and receipt images are **removed from iCloud only
+after durable local storage and a matching content-hash check**. Invalid/quarantined
+files remain for review. A durable cleanup journal retries failed deletions and
+recovers after a crash between deletion and acknowledgement. Imported/quarantined status
 is local database state. This avoids deleting the only source after a failed
-write. Queue removal/retention is not part of this implementation.
+write.
 
 Read-only inventory counts pending files independently of processing and excludes
 persisted imported/quarantined deliveries even after restarting. Classification
@@ -321,3 +325,32 @@ Reports group exact integer amounts by canonical merchant, count distinct canoni
 expense transaction IDs across matching parts, and keep refunds separate. Unassigned
 merchants use an empty-string filter key. No purchase merging is performed by
 merchant grouping. See [user workflow](../../docs/spending-reports.md#merchants-and-purchase-frequency).
+
+
+## Receipt management and editable notes (migration 009)
+
+Receipt image bytes remain in `receipt_images` inside the vault (at most 8 MiB
+and 40 million pixels per image). They follow vault encryption and backup;
+images never enter classifier requests. The app can add JPEG, PNG and HEIC images
+directly to any active transaction and run Apple OCR locally. Removing a receipt
+sets `removed_at_ms`, hides it and excludes its OCR from classifier context;
+Undo restores it. Removed receipts retain their local evidence for recovery.
+
+`capture_file_cleanups` records the path and exact stored hash of each imported
+JSON/image. A coordinated file operation checks the bytes again before deletion.
+Changed files, symlinks and paths outside the selected inbox are never deleted.
+Acknowledgements survive restarts and receipt removal. Images shared by several
+pending receipts wait until all have a local copy. A later content-addressed
+reference can reuse a stored image without depending on iCloud retention.
+
+`capture_note_imports` copies each linked phone note into editable transaction
+notes exactly once, including old captures during upgrade. Editing or clearing
+those notes is authoritative; replay/reopen never resurrects the original text.
+Raw capture notes remain immutable source evidence. Note-only edits preserve
+confirmed categories, increment the transaction revision and obsolete stale jobs.
+Unconfirmed suggestions can be revisited after a note/receipt change.
+
+Classifier input adds optional `transaction_notes`, a nonblank UTF-8 excerpt of
+at most 1,600 bytes, treated as untrusted purchase-purpose evidence. All selected
+providers, including Council members and Apple, receive it. The separate Apple
+receipt-sharing setting governs OCR only. Full notes remain editable locally.

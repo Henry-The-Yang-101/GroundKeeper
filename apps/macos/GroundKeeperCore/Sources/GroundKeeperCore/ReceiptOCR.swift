@@ -1,5 +1,6 @@
 import Foundation
 import Vision
+import ImageIO
 
 public struct ReceiptOCRResult: Codable, Sendable {
     public let text: String
@@ -11,6 +12,13 @@ public enum ReceiptOCR {
     /// Local Apple OCR. No model provider or network access is involved.
     public static func recognize(_ data: Data) async throws -> ReceiptOCRResult {
         guard !data.isEmpty, data.count <= 8_388_608 else { throw LedgerError.invalid("Receipt image must be smaller than 8 MiB.") }
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int,
+              width >= 32, height >= 32, width <= 20_000, height <= 20_000, width * height <= 40_000_000 else {
+            throw LedgerError.invalid("Choose a readable receipt image at least 32 pixels wide and tall.")
+        }
         let start = ContinuousClock.now
         let text: String, producer: String, tableCount: Int
         if #available(macOS 26, *) {

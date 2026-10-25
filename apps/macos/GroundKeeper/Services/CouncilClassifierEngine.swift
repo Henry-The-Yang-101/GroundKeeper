@@ -35,7 +35,7 @@ actor CouncilClassifierEngine: CouncilEngine {
         guard let loaded, loaded.manifestSHA256 == member.id else { throw CouncilProviderFailure(disposition: "unavailable", code: "model_not_ready") }
         do {
             let result = try await client.classify(ClassifierInput(description: input.description, direction: input.direction, currency: input.currency,
-                receiptContext: input.receiptContext, walletCategoryRaw: input.walletCategoryRaw, merchantContext: input.merchantContext),
+                transactionNotes: input.transactionNotes, receiptContext: input.receiptContext, walletCategoryRaw: input.walletCategoryRaw, merchantContext: input.merchantContext),
                 model: loaded, partID: task.partID, revision: task.revision, jobID: task.id)
             guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
             return .init(type: decision.type, category: decision.category, review: decision.review)
