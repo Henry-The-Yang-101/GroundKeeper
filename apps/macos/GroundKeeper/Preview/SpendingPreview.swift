@@ -56,18 +56,9 @@ enum SpendingPreview {
             mapping.externalIDColumn = 3
             imported += try await store.importCSV(document, mapping: mapping)
         }
-        // The importer conservatively asks about equal-amount purchases close together,
-        // even with distinct bank IDs. These generated rows are known separate purchases;
-        // confirm them with the ordinary reconciliation API, including all review pages.
-        while true {
-            let reviews = try await store.snapshot(limit: 1).reviews
-            if reviews.isEmpty { break }
-            for review in reviews {
-                guard review.reason == "possible_duplicate" else {
-                    throw LedgerError.invalid("Unexpected fictional import review: \(review.reason)")
-                }
-                try await store.resolveMatch(eventID: review.eventID, transactionID: nil)
-            }
+        // CSV rows remain separate, including repeated merchant/amount combinations.
+        guard try await store.snapshot(limit: 1).reviews.isEmpty else {
+            throw LedgerError.invalid("Fictional CSV rows should not require duplicate review.")
         }
         let snapshot = try await store.snapshot(limit: 5000)
         guard snapshot.totalTransactions == imported else {

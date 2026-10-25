@@ -69,5 +69,6 @@ extension LedgerStore {
             try db.query("UPDATE review_items SET status='resolved',resolved_at_ms=?,resolution='automation_window_recheck' WHERE id=?",
                 [.integer(nowMS()), .text(row.text("review_id"))])
         }
+        if !reviews.isEmpty { try resolveReceiptLinks(db: db) }
     }
 }

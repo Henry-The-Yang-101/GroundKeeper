@@ -24,6 +24,15 @@ public struct LedgerTransaction: Identifiable, Sendable {
     public let notes: String
     public let sources: String
     public let origin: String
+
+    /// Source evidence is independent of who selected the category or edited it.
+    public var sourceLabel: String {
+        let kinds = Set(sources.split(separator: ",").map(String.init))
+        let labels = [("bank_notification", "Bank App Automation"), ("apple_wallet", "Wallet Automation"),
+                      ("manual", "Manually input"), ("csv", "Imported from CSV")]
+        let known = labels.filter { kinds.contains($0.0) }.map { $0.1 }
+        return known.isEmpty ? "Manually input" : known.joined(separator: " + ")
+    }
 }
 public struct TransactionEdit: Sendable {
     public var id: String, revision: Int, description: String, amountMinor: Int64, currency: String

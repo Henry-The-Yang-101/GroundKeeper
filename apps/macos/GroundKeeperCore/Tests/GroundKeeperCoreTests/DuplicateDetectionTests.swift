@@ -117,3 +117,45 @@ extension LedgerStore {
     store = try LedgerStore(url: url)
     #expect(try await store.snapshot().transactions.count == 2)
 }
+
+@Test func reopeningKeepsEligibleAmbiguityAndPrunesStaleCandidates() async throws {
+    var (store, url) = try await mappedStore()
+    try await store.ingestCapture(data: capture("wallet-two"), deliveryPath: "wallet-two.json")
+    try await store.ingestCapture(data: capture("bank", wallet: false), deliveryPath: "bank.json")
+    let review = try #require(try await store.snapshot().reviews.first { $0.reason == "possible_duplicate" })
+    await store.close()
+    store = try LedgerStore(url: url)
+    #expect(try await store.snapshot().reviews.first?.candidates.count == 2)
+    _ = try await store.testRows("UPDATE raw_events SET captured_at_ms=captured_at_ms-600000 WHERE id IN (SELECT event_id FROM transaction_event_links WHERE transaction_id='\(review.candidates[0])')")
+    await store.close()
+    store = try LedgerStore(url: url)
+    #expect(try await store.snapshot().reviews.first?.candidates == [review.candidates[1]])
+    #expect(try await store.snapshot().transactions.count == 2)
+    try await store.resolveMatch(eventID: review.eventID, transactionID: review.candidates[1])
+    #expect(try await store.snapshot().reviews.isEmpty)
+    #expect(try await store.integrityCheck())
+}
+
+@Test(arguments: [true, false])
+func reopeningSeparatesLegacySameSourceAndDistantAutomationFlags(wallet: Bool) async throws {
+    var (store, url) = try await mappedStore()
+    let existing = try await store.snapshot().transactions[0]
+    let data = try capture("legacy", wallet: wallet, time: wallet ? "2026-10-17T10:00:00-04:00" : "2026-10-18T10:00:00-04:00")
+    try await store.ingestCapture(data: data, deliveryPath: "legacy.json")
+    let separate = try #require(try await store.snapshot().transactions.first { $0.id != existing.id })
+    _ = try await store.stageLegacyDuplicate(transactionID: separate.id, candidates: [existing.id])
+    if wallet {
+        try await store.ingestCapture(data: receiptCapture("legacy-receipt", parent: "legacy"), deliveryPath: "legacy-receipt.json")
+    }
+    await store.close()
+    store = try LedgerStore(url: url)
+    let state = try await store.snapshot()
+    #expect(state.transactions.count == 2)
+    #expect(state.reviews.isEmpty)
+    #expect(state.transactions.contains { $0.sourceLabel == (wallet ? "Wallet Automation" : "Bank App Automation") })
+    if wallet {
+        let restored = try #require(state.transactions.first { $0.id != existing.id })
+        #expect(try await store.receipts(transactionID: restored.id).count == 1)
+    }
+    #expect(try await store.integrityCheck())
+}

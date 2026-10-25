@@ -135,7 +135,8 @@ and optional reliable posted-record IDs. Money uses checked integer arithmetic.
 The preview validates the entire file; users can skip rows, including all
 invalid rows. An invalid unskipped row rolls back the entire import. File hash
 plus source/account prevents reimporting a committed batch. Different exports
-use reliable record IDs or review; a merchant/amount hash is never a purchase ID.
+use reliable record IDs when supplied; rows without them stay separate. A
+merchant/amount hash is never a purchase ID.
 
 Wallet and bank captures require an explicitly chosen account, either for that
 capture alone or through a remembered card mapping. Sync's **Remember this card
@@ -159,8 +160,21 @@ label, excluding linked captures, dismissed reviews, and identity conflicts.
 Automatic linking requires one unambiguous complementary capture with the same
 account, currency, amount and normalized merchant within five minutes, and no
 existing capture of the incoming source kind. Separate Wallet events remain
-separate purchases. CSV/date-only matches and ties require confirmation. Both
-arrival orders are supported. Review actions link to an existing transaction,
+separate purchases. Only Bank App Automation ↔ Wallet Automation pairs qualify,
+with an inclusive 300,000 ms capture-time window. The same restriction applies
+to potential-duplicate reviews and user linking; CSV import times, manual entries,
+and same-kind captures never qualify. Matching does not use a civil-date window,
+so captures straddling midnight can qualify. Ties require confirmation. Both
+arrival orders are supported. On vault opening, unresolved old duplicate flags
+are rechecked: ineligible events become separate transactions with their original
+evidence, while eligible candidate lists are refreshed. Resolved/dismissed reviews
+and existing links are preserved. Replay and reliable CSV record-ID handling remain
+identity checks independent of heuristic duplicate detection.
+
+Transactions displays a Source column derived from active event links: Bank App
+Automation, Wallet Automation, Manually input, or Imported from CSV. A linked
+automation pair displays both labels; later category/manual edits do not relabel
+the original source. Review actions link to an existing transaction,
 keep a separate transaction, confirm a source-account mapping, correct missing
 details, or dismiss an issue. Original evidence and previous observations stay
 intact. A posted CSV link updates settlement status without replacing a known

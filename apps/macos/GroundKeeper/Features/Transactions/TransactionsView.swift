@@ -83,6 +83,11 @@ struct TransactionsView: View {
                             }
                         }
                     }.width(min: 120, ideal: 190)
+                    TableColumn("Source") { transaction in
+                        Text(transaction.source)
+                            .font(.callout).foregroundStyle(AppStyle.muted)
+                            .lineLimit(3).help(transaction.source)
+                    }.width(min: 130, ideal: 175, max: 240)
                     TableColumn("Amount", value: \Transaction.amount) { transaction in
                         VStack(alignment: .trailing, spacing: 3) {
                             Text(transaction.formattedAmount).monospacedDigit()

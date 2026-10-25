@@ -38,7 +38,7 @@ struct Transaction: Identifiable, Equatable {
     var category: SpendingCategory = .uncategorized
     var needsReview = true
     var notes = ""
-    var source = "Manual entry"
+    var source = "Manually input"
 
     var formattedAmount: String {
         (isDebit ? -amount : amount).formatted(.currency(code: currency))
@@ -158,7 +158,7 @@ extension Transaction {
         date = formatter.date(from: stored.occurredOn) ?? Date()
         kind = TransactionKind.allCases.first { $0.code == stored.type } ?? .unknown
         category = SpendingCategory.allCases.first { $0.code == stored.category } ?? .uncategorized
-        needsReview = stored.needsReview; notes = stored.notes; source = "\(stored.sources) · \(stored.origin)"
+        needsReview = stored.needsReview; notes = stored.notes; source = stored.sourceLabel
     }
     var edit: TransactionEdit {
         get throws {

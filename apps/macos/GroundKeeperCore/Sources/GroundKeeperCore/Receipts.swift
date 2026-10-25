@@ -89,6 +89,9 @@ extension LedgerStore {
     }
     /// The phone's explicit parent identity authorizes this association. Never match on amount alone.
     func resolveReceiptLinks() throws {
+        try Self.resolveReceiptLinks(db: db)
+    }
+    static func resolveReceiptLinks(db: Database) throws {
         let rows = try db.query("""
             SELECT r.id,e.id AS event_id,l.transaction_id FROM receipt_captures r
             JOIN raw_events e ON e.source_id=r.parent_source_id AND e.source_event_id=r.parent_event_id
@@ -99,10 +102,13 @@ extension LedgerStore {
         for row in rows {
             try db.query("UPDATE receipt_captures SET capture_event_id=?,transaction_id=? WHERE id=? AND transaction_id IS NULL",
                          [.text(row.text("event_id")), .text(row.text("transaction_id")), .text(row.text("id"))])
-            try receiptEvidenceChanged(transactionID: row.text("transaction_id"))
+            try Self.receiptEvidenceChanged(db: db, transactionID: row.text("transaction_id"))
         }
     }
     func receiptEvidenceChanged(transactionID: String) throws {
+        try Self.receiptEvidenceChanged(db: db, transactionID: transactionID)
+    }
+    static func receiptEvidenceChanged(db: Database, transactionID: String) throws {
         try db.query("UPDATE transactions SET revision=revision+1,updated_at_ms=? WHERE id=?", [.integer(nowMS()), .text(transactionID)])
         try db.query("UPDATE classification_jobs SET status='obsolete' WHERE status IN ('pending','running') AND part_id IN (SELECT id FROM transaction_parts WHERE transaction_id=?)", [.text(transactionID)])
     }
@@ -171,7 +177,7 @@ extension LedgerStore {
             guard enabled != (try receiptCloudConsent()) else { return }
             try db.query("INSERT INTO app_settings(key,value_json,updated_at_ms) VALUES ('receipt_cloud_consent',?,?) ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json,updated_at_ms=excluded.updated_at_ms", [.text(enabled ? "true" : "false"), .integer(nowMS())])
             for row in try db.query("SELECT DISTINCT transaction_id FROM receipt_captures WHERE transaction_id IS NOT NULL") {
-                try receiptEvidenceChanged(transactionID: row.text("transaction_id"))
+                try Self.receiptEvidenceChanged(db: db, transactionID: row.text("transaction_id"))
             }
         }
     }
