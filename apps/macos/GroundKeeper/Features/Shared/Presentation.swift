@@ -135,13 +135,9 @@ struct VaultFormSection<Content: View>: View {
 
 struct PageHeading: View {
     let title: String
-    let subtitle: String
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(VaultTypography.page).foregroundStyle(AppStyle.text)
-                .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
-            Text(subtitle).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
-        }
+        Text(title).font(VaultTypography.page).foregroundStyle(AppStyle.text)
+            .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
     }
 }
 

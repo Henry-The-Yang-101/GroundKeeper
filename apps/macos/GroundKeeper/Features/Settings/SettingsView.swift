@@ -110,7 +110,7 @@ struct SettingsView: View {
             // The grouped form supplies 20 points; match the page's 28-point edge.
             .padding(.horizontal, PageLayout.inset - 20)
             .safeAreaInset(edge: .top, spacing: 0) {
-                PageHeading(title: "Settings", subtitle: "Make this space your own.")
+                PageHeading(title: "Settings")
                     .frame(maxWidth: .infinity, alignment: .leading).padding(PageLayout.inset)
                     .background(AppStyle.pageBackground)
             }

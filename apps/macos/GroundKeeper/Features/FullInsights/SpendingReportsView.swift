@@ -72,7 +72,7 @@ struct SpendingReportsView: View {
 
     private func reportPage(scroll: ScrollViewProxy) -> some View {
         PageContent {
-            PageHeading(title: "Spending", subtitle: "See where it goes, and what’s changing.")
+            PageHeading(title: "Spending")
             controls
             if loading {
                 ProgressView("Calculating spending…").frame(maxWidth: .infinity, minHeight: 160)

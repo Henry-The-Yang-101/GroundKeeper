@@ -4,7 +4,7 @@ struct HomeView: View {
     @Environment(AppWorkspace.self) private var workspace
     var body: some View {
         PageContent {
-            PageHeading(title: "Your vault", subtitle: workspace.status)
+            PageHeading(title: "Your vault")
             VStack(alignment: .leading, spacing: 18) {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 18) {
                     Metric(label: "Saved transactions", value: "\(workspace.totalTransactions)")

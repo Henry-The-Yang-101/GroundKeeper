@@ -22,7 +22,7 @@ struct TransactionsView: View {
         @Bindable var workspace = workspace
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
-                PageHeading(title: "Transactions", subtitle: "Every entry, kept in order.")
+                PageHeading(title: "Transactions")
                 HStack(spacing: 12) {
                     TextField("Search transactions", text: $search)
                         .textFieldStyle(.roundedBorder)

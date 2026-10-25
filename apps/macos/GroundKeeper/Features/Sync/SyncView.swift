@@ -5,7 +5,7 @@ struct SyncView: View {
     @Environment(AppWorkspace.self) private var workspace
     var body: some View {
         PageContent {
-            PageHeading(title: "Sync", subtitle: "Capture on your iPhone. Review on your Mac.")
+            PageHeading(title: "Sync")
             Surface {
                 SectionHeading(title: "iCloud capture folder", detail: workspace.captureFolderPath)
                     .textSelection(.enabled)

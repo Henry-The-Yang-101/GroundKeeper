@@ -5,7 +5,7 @@ struct PlanningView: View {
 
     var body: some View {
         PageContent {
-            PageHeading(title: "Planning", subtitle: "Budgets, goals, and balances in one place.")
+            PageHeading(title: "Planning")
             Picker("Planning view", selection: $selection) {
                 ForEach(PlanningSection.allCases) { Text($0.rawValue).tag($0) }
             }.pickerStyle(.segmented).tint(AppStyle.controlAccent).labelsHidden().frame(maxWidth: 420)
