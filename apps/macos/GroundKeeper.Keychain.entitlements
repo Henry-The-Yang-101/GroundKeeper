@@ -16,5 +16,6 @@
 	<array>
 		<string>$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	</array>
+<key>com.apple.security.device.camera</key><true/>
 </dict>
 </plist>

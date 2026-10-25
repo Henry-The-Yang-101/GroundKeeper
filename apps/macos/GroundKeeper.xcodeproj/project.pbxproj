@@ -217,6 +217,7 @@
                 ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = GroundKeeper;
+                INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo of a receipt to attach to a transaction.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				MARKETING_VERSION = 0.1.0;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
@@ -245,6 +246,7 @@
                 ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = GroundKeeper;
+                INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo of a receipt to attach to a transaction.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				MARKETING_VERSION = 0.1.0;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
