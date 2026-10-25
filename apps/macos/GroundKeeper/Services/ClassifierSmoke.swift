@@ -25,6 +25,19 @@ import GroundKeeperCore
                 guard evidence.outcome == "matched" else { throw ClassifierBridgeError.unavailable }
             }
             await search.shutdown()
+            if CommandLine.arguments.contains("--classifier-lifecycle-smoke") {
+                let firstPID = await client.processIdentifier
+                _ = try await client.probeGPU()
+                await client.shutdown()
+                try await Task.sleep(for: .seconds(2))
+                let fresh = try await client.handshake()
+                let secondPID = await client.processIdentifier
+                guard let firstPID, let secondPID, firstPID > 0, secondPID > 0,
+                      firstPID != secondPID, fresh.loadedModel == nil else { throw ClassifierBridgeError.invalidResponse }
+                await client.shutdown()
+                write(["event": "lifecycle_smoke_passed", "previous_pid": firstPID, "fresh_pid": secondPID])
+                exit(0)
+            }
             if CommandLine.arguments.contains("--classifier-connection-smoke") {
                 write(["event": "connection_smoke_passed", "runtime": handshake.runtime ?? [:]])
                 exit(0)

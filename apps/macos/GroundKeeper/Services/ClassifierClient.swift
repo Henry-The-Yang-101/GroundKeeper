@@ -171,6 +171,10 @@ final class ClassifierTransport: NSObject, ClassifierXPCEvents, @unchecked Senda
         old?.invalidationHandler = nil; old?.interruptionHandler = nil; old?.invalidate()
         for completion in completions { completion(.failure(ClassifierBridgeError.unavailable)) }
     }
+    var processIdentifier: Int32? {
+        lock.lock(); defer { lock.unlock() }
+        return connection?.processIdentifier
+    }
     func invalidate() {
         lock.lock(); let current = connection; lock.unlock()
         if let current { disconnected(expected: current) }
@@ -243,6 +247,7 @@ actor ClassifierClient {
     private var types = Set<String>()
     var events: AsyncStream<ClassifierEvent> { transport.events }
     func shutdown() { transport.invalidate() }
+    var processIdentifier: Int32? { transport.processIdentifier }
 
     private func call(_ request: ClassifierRequest) async throws -> ClassifierResult {
         let data = try JSONEncoder().encode(request)

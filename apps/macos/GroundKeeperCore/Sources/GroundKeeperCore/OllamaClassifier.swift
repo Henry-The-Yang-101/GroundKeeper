@@ -139,7 +139,7 @@ public actor OllamaClassifier {
         // Never send transaction evidence to a missing, updated or cloud-backed tag.
         try await verify(model)
         let data = try await request("/api/chat", body: [
-            "model": model.name, "stream": false, "think": false, "keep_alive": "1m", "truncate": false, "shift": false,
+            "model": model.name, "stream": false, "think": false, "keep_alive": 0, "truncate": false, "shift": false,
             "messages": [["role": "system", "content": Self.systemPrompt], ["role": "user", "content": input]],
             "format": Self.outputSchema,
             "options": ["temperature": 0, "num_predict": 256, "num_ctx": 8192]

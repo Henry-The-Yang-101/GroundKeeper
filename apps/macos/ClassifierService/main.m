@@ -55,6 +55,8 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
 @property(strong) NSMutableDictionary<NSString *,GKJob *> *pending;
 @property(strong) NSURL *activePackage;
 @property(strong) NSMapTable<NSXPCConnection *,NSString *> *authorized;
+@property NSUInteger connectionCount;
+@property BOOL receivedConnection;
 @property BOOL pythonReady;
 @property BOOL attemptedPython;
 @property(strong) NSURL *runtimeHostAccess;
@@ -76,6 +78,9 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
     // Only the bounded authorization method is usable until a code requirement
     // and fresh connection nonce have been established. The worker's sandbox
     // needs a transient read grant to inspect the enclosing app's signature.
+    [self.condition lock];
+    self.connectionCount += 1; self.receivedConnection=YES;
+    [self.condition unlock];
     connection.exportedInterface=[NSXPCInterface interfaceWithProtocol:@protocol(GKClassifierService)];
     connection.exportedObject=self;
     connection.remoteObjectInterface=[NSXPCInterface interfaceWithProtocol:@protocol(GKClassifierEvents)];
@@ -86,6 +91,8 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
         [service.condition lock];
         if (weakConnection) [service.authorized removeObjectForKey:weakConnection];
         for (GKJob *job in service.pending.allValues) if (job.connection==weakConnection) atomic_store(&job->cancelled,true);
+        service.connectionCount -= 1;
+        [service.condition signal];
         [service.condition unlock];
     };
     [connection resume];
@@ -193,7 +200,12 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
     PyObject *dispatch=NULL;
     for (;;) @autoreleasepool {
         [self.condition lock];
-        while (!self.queue.count) [self.condition wait];
+        while (!self.queue.count) {
+            // Finish/cancel accepted jobs before exiting. Process teardown returns
+            // Python, Metal and MPS allocator memory; release_model alone does not.
+            if (self.receivedConnection && self.connectionCount==0) _exit(0);
+            [self.condition wait];
+        }
         GKJob *job=self.queue.firstObject; [self.queue removeObjectAtIndex:0];
         [self.condition unlock];
         currentJob=job;

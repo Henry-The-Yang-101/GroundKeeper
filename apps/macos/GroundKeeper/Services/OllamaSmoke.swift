@@ -50,7 +50,7 @@ import GroundKeeperCore
             let second = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-21,FICTIONAL BOOK SHOP,-9.25\n".utf8), filename: "ollama-second.csv")
             _ = try await reopened.importCSV(second, mapping: mapping, skipped: [])
             await reopened.sync()
-            guard reopened.errorMessage == nil, reopened.model?.backend == "ollama", reopened.pendingJobs == 0,
+            guard reopened.errorMessage == nil, reopened.model == nil, reopened.pendingJobs == 0,
                   reopened.failedJobs == 0 else { throw LedgerError.invalid(reopened.errorMessage ?? "Restored Ollama provider did not process the queue.") }
             await reopened.stop()
             print("ollama_smoke_passed: sandboxed_local_connection, provider_selection, queue_classification, mandatory_review, persisted_selection, draft_suggestion_without_saving, empty_description_rejected")

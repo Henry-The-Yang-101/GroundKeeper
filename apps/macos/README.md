@@ -386,3 +386,34 @@ Apple Shortcut. It uses a disposable vault/preferences and may consume Apple quo
 ```
 
 See [Council verification](../../docs/council.md) for results and limitations.
+
+### On-demand classifier lifetime
+
+Opening the app and refreshing queue counts do not start the classifier. A queue
+pass checks retry eligibility before loading a saved local provider. Provider
+verification and classification release their XPC connection on completion,
+failure, or cancellation; the worker exits after accepted jobs finish or cancel,
+returning Python and GPU allocator memory. Council retains its model only while
+processing a batch. Diagnostics also release the worker after each operation.
+Ollama classification requests use `keep_alive: 0` to unload the selected model
+after each response; GroundKeeper does not quit the separately managed Ollama app.
+
+The transaction editor offers **Suggest category** after a description is entered.
+It uses the configured provider with the draft description, direction, currency,
+and notes, without saving a transaction. **Use suggestion** accepts the displayed
+type/category as the user's choice; saving the transaction remains a separate
+step. Editing classifier inputs or closing the editor cancels an outstanding
+suggestion. Manual categorization mode directs the user to provider settings.
+
+The signed app's disposable checks include:
+
+```sh
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper \
+  --setup-preview --classifier-smoke --classifier-lifecycle-smoke
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper \
+  --setup-preview --ollama-smoke --ollama-model <installed-model-name>
+```
+
+The lifecycle check initializes the GPU runtimes, disconnects, and verifies that
+the next handshake comes from a new process with no loaded model. The Ollama
+check also verifies draft suggestions leave the ledger unchanged.

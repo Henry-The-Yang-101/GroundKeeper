@@ -65,10 +65,10 @@ extension AppWorkspace {
             }
             try suggestion.decision.validateSuggestion()
             try Task.checkCancellation()
-            await suggestionClient.shutdown()
+            await releaseClassifierResources()
             return suggestion
         } catch {
-            await suggestionClient.shutdown()
+            await releaseClassifierResources()
             throw error
         }
     }

@@ -6,7 +6,7 @@ import AppKit
 struct ClassifierDiagnosticsView: View {
     @State private var client = ClassifierClient()
     @State private var status = "Not started"
-    @State private var model: ClassifierModel?
+    @State private var packageURL: URL?
     @State private var sample = "EXAMPLE CAFE"
     @State private var running: Task<Void, Never>?
     @State private var busy = false
@@ -14,7 +14,7 @@ struct ClassifierDiagnosticsView: View {
     var body: some View {
         Section {
             LabeledContent("Service", value: status)
-            if let model { LabeledContent("Loaded model", value: "\(model.modelID) · \(model.device)") }
+            if let packageURL { LabeledContent("Selected package", value: packageURL.lastPathComponent) }
             HStack {
                 Button("Check Metal GPU") {
                     run {
@@ -24,27 +24,30 @@ struct ClassifierDiagnosticsView: View {
                         status = "MLX GPU and PyTorch MPS verified"
                     }
                 }
-                Button("Load model package…") {
+                Button("Choose model package…") {
                     let panel = NSOpenPanel()
                     panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
                     panel.message = "Choose a GroundKeeper data-only model package containing classifier.json."
                     guard panel.runModal() == .OK, let url = panel.url else { return }
-                    run { model = try await client.prepareModel(at: url); status = "Ready" }
+                    packageURL = url; status = "Selected · loads when classifying"
                 }
-                if model != nil {
-                    Button("Release model") { run { try await client.releaseModel(); model = nil; status = "Model released" } }
+                if packageURL != nil {
+                    Button("Clear selection") { packageURL = nil }
                 }
             }.disabled(busy)
             TextField("Fictional transaction description", text: $sample)
             HStack {
                 Button("Classify sample") {
-                    guard let model else { return }
+                    guard let packageURL else { return }
                     run {
+                        let access = packageURL.startAccessingSecurityScopedResource()
+                        defer { if access { packageURL.stopAccessingSecurityScopedResource() } }
+                        let model = try await client.prepareModel(at: packageURL)
                         let result = try await client.classify(ClassifierInput(description: sample, direction: "debit", currency: "CAD"),
                             model: model, partID: UUID().uuidString, revision: 1)
                         status = "\(result.decision?.type ?? "unknown") · \(result.decision?.category ?? "none") · review required"
                     }
-                }.disabled(busy || model == nil || sample.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }.disabled(busy || packageURL == nil || sample.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 if busy { Button("Cancel") { running?.cancel() } }
             }
         } header: {
@@ -63,7 +66,8 @@ struct ClassifierDiagnosticsView: View {
             defer { busy = false; running = nil }
             do { try await operation() }
             catch is CancellationError { status = "Cancelled" }
-            catch { status = error.localizedDescription; model = nil }
+            catch { status = error.localizedDescription }
+            await client.shutdown()
         }
     }
 }

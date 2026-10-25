@@ -146,10 +146,13 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     try await store.registerModel(id: model, name: "fixture", backend: "laya_mps", policy: "groundkeeper-19-v2", configuration: "{}")
     try await store.enqueueClassifications(modelID: model)
     for _ in 0..<3 {
+        #expect(try await store.prepareSelectedClassifications())
         let job = try await store.claimClassification(modelID: model)!
         try await store.failClassification(job, code: "busy", retryable: true)
+        #expect(try await !store.prepareSelectedClassifications())
         try await store.makeRetriesDue()
     }
+    #expect(try await !store.prepareSelectedClassifications())
     #expect(try await store.claimClassification(modelID: model) == nil)
     #expect(try await store.snapshot().failedJobs == 1)
     try await store.retryClassificationFailures()

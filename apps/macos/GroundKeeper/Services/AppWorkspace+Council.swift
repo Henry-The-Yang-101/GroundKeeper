@@ -100,8 +100,8 @@ extension AppWorkspace {
                 remaining -= processed
                 try await refresh()
             }
-        } catch { try? await client.releaseModel(); throw error }
-        try? await client.releaseModel()
+        } catch { await releaseClassifierResources(); throw error }
+        await releaseClassifierResources()
         try await refresh()
     }
     func councilReport(transactionID: String) async throws -> CouncilReport? { try await store?.councilReport(transactionID: transactionID) }

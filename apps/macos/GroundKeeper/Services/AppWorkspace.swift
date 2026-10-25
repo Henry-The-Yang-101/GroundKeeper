@@ -466,13 +466,16 @@ import GroundKeeperCore
             } else if pendingJobs + unqueuedJobs > 0 {
                 if classifierProvider == "council" { try await classifyCouncilPending() }
                 else {
-                    if model == nil { try await restoreModel() }
-                    try Task.checkCancellation()
-                    await classifyPending()
+                    if try await store.prepareSelectedClassifications() {
+                        if model == nil { try await restoreModel() }
+                        try Task.checkCancellation()
+                        await classifyPending()
+                    }
                 }
             }
             await updateQueueCount()
         } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
+        await releaseClassifierResources()
     }
     func setReceiptSharing(_ enabled: Bool) {
         perform {
@@ -778,10 +781,6 @@ import GroundKeeperCore
                     classifierStatus = error.localizedDescription
                     errorMessage = error.localizedDescription
                     if selectedModel.backend == "apple_shortcut" { model = nil }
-                    if retryable, let url = modelURL {
-                        // Reconnect and prepare without replaying an uncommitted job immediately.
-                        do { try await loadModel(url) } catch { model = nil; classifierStatus = "Model unavailable — select it again to resume" }
-                    }
                     break
                 }
             }
@@ -807,6 +806,16 @@ import GroundKeeperCore
     }
     func perform(_ operation: @escaping @MainActor () async throws -> Void) {
         guard !saving else { return }; saving = true
-        Task { defer { saving = false }; do { try await operation() } catch { errorMessage = error.localizedDescription } }
+        Task {
+            defer { saving = false }
+            do { try await operation() } catch { errorMessage = error.localizedDescription }
+            if !processing && !classifying { await releaseClassifierResources() }
+        }
+    }
+
+    func releaseClassifierResources() async {
+        // Disconnecting lets the service exit, freeing Python and GPU allocator caches too.
+        await client.shutdown()
+        model = nil; modelURL = nil; ollamaModel = nil
     }
 }

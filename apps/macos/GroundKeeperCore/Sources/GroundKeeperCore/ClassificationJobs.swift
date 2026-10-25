@@ -18,6 +18,23 @@ extension LedgerStore {
             try db.query("INSERT INTO app_settings(key,value_json,updated_at_ms) VALUES ('classifier_model',?,?) ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json,updated_at_ms=excluded.updated_at_ms", [.text(try json(id)), .integer(nowMS())])
         }
     }
+    /// Enqueue using saved metadata and check retry eligibility before loading weights.
+    public func prepareSelectedClassifications() throws -> Bool {
+        guard let value = try db.query("SELECT value_json FROM app_settings WHERE key='classifier_model'").first?.text("value_json"),
+              let id = try? JSONDecoder().decode(String.self, from: Data(value.utf8)) else {
+            // Older/new vaults may need provider registration first.
+            return true
+        }
+        try enqueueClassifications(modelID: id)
+        return try !db.query("""
+            SELECT j.id FROM classification_jobs j
+            JOIN transaction_parts p ON p.id=j.part_id JOIN transactions t ON t.id=p.transaction_id
+            JOIN category_assignments a ON a.id=p.current_assignment_id
+            WHERE j.status='pending' AND j.model_id=? AND j.next_attempt_at_ms<=? AND j.attempts<3
+              AND t.state='active' AND t.revision=j.input_revision AND a.confirmed_at_ms IS NULL LIMIT 1
+            """, [.text(id), .integer(nowMS())]).isEmpty
+    }
+
     public func enqueueClassifications(modelID: String) throws {
         try enqueueJobs(targetID: modelID, council: false)
     }
