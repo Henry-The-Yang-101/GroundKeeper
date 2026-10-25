@@ -22,7 +22,9 @@ use the same persistent queue protections as individual providers.
 Migration 006 adds the optional DuckDuckGo merchant-evidence cache and per-run
 search audit metadata. Cache entries expire and are bounded; run input/evidence
 snapshots remain independent of cache cleanup. Search consent/locality and
-cross-process cooldown/backoff live in vault settings. The queue binds enriched
+cross-process cooldown/backoff live in vault settings. Merchant search and Apple
+receipt sharing default to enabled when their setting is absent; saved settings
+take precedence. The queue binds enriched
 input and its canonical hash before inference, with original transaction/capture
 data preserved. See the [search contract](../classifier/README.md#merchant-search-evidence).
 

@@ -111,6 +111,8 @@ func bindNoCouncilSearch(_ store: LedgerStore, _ task: ClassificationTask) async
 
 @Test func councilFreezesOneSearchAndRedactsAppleReceipts() async throws {
     let (store, _, config) = try await councilFixture(receipt: true)
+    try await store.setReceiptCloudConsent(false)
+    try await store.enqueueCouncil(configID: config.id)
     try await store.setMerchantSearchSettings(.init(enabled: true))
     let context = MerchantContext(results: [.init(title: "Fictional Cafe", body: "A cafe.", url: "https://example.org/cafe")])
     let engine = FixtureCouncilEngine()
@@ -136,9 +138,8 @@ func bindNoCouncilSearch(_ store: LedgerStore, _ task: ClassificationTask) async
     #expect(try await store.integrityCheck())
 }
 
-@Test func councilReceiptOptInIsAppliedToTheAppleProjection() async throws {
+@Test func councilIncludesAppleReceiptContextByDefault() async throws {
     let (store, _, config) = try await councilFixture(receipt: true)
-    try await store.setReceiptCloudConsent(true)
     try await store.enqueueCouncil(configID: config.id)
     let engine = FixtureCouncilEngine()
     try await CouncilRunner.runBatch(store: store, configuration: config, engine: engine, search: { try await bindNoCouncilSearch(store, $0) })

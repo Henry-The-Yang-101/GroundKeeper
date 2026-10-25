@@ -83,8 +83,11 @@ func receiptModel(_ store: LedgerStore, backend: String = "qwen_mlx") async thro
     let after = try await store.snapshot().transactions[0]
     #expect(after.category == "dining" && after.amountMinor == t.amountMinor && after.currency == t.currency)
 }
-@Test func cloudReceiptSharingIsExplicitAndAudited() async throws {
+@Test func cloudReceiptSharingDefaultsOnAndHonorsSavedChoices() async throws {
     let (store, _) = try vault()
+    #expect(try await store.receiptCloudConsent())
+    try await store.setReceiptCloudConsent(false)
+    #expect(try await !store.receiptCloudConsent())
     try await store.addAccount(name: "Fixture", currency: "CAD")
     try await ingestMapped(store, id: "payment")
     try await store.ingestCapture(data: receiptCapture("receipt"), deliveryPath: "r.json")

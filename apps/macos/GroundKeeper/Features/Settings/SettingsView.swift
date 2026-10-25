@@ -61,7 +61,7 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Toggle("Include receipt text with Apple Intelligence", isOn: Binding(get: { workspace.shareReceiptContextWithApple }, set: workspace.setReceiptSharing))
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
-                Text("Off by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
+                Text("On by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Button("Use Apple Intelligence Shortcut", action: workspace.useShortcut)
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)

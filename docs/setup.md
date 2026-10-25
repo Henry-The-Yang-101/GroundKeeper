@@ -68,10 +68,14 @@ package; the build does not download or train a model.
 
 ## Optional DuckDuckGo merchant context
 
-In **Settings > Categorization**, enable **Use DuckDuckGo merchant search**.
-It is off by default and applies to pending/future classifications for Qwen,
+In **Settings > Categorization**, **Use DuckDuckGo merchant search** is on by
+default and applies to pending/future classifications for Qwen,
 Laya, and the selected Apple Intelligence Shortcut. Confirmed assignments are
 preserved. Optionally enter a city/region and click **Save search locality**.
+
+**Include receipt text with Apple Intelligence** is also on by default. Both
+settings preserve saved choices, including an explicit off setting, and can be
+turned off independently in Settings.
 
 The Mac sends only a cleaned merchant name (or cleaned transaction description)
 and optional locality to DuckDuckGo's HTML search endpoint through DDGS 9.16.0.

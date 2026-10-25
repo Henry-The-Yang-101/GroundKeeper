@@ -15,6 +15,8 @@ import Testing
 
 @Test func merchantEvidenceCacheConsentAuditAndCleanup() async throws {
     let (store, _) = try vault()
+    #expect(try await store.merchantSearchSettings().enabled)
+    try await store.setMerchantSearchSettings(.init(enabled: false))
     #expect(try await !store.merchantSearchSettings().enabled)
     try await store.addAccount(name: "Fixture", currency: "CAD")
     try await store.ingestCapture(data: capture("web-evidence"), deliveryPath: "capture.json")

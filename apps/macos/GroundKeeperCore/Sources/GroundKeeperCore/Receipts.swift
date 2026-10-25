@@ -164,7 +164,7 @@ extension LedgerStore {
         }
     }
     public func receiptCloudConsent() throws -> Bool {
-        try db.query("SELECT value_json FROM app_settings WHERE key='receipt_cloud_consent'").first?.text("value_json") == "true"
+        (try db.query("SELECT value_json FROM app_settings WHERE key='receipt_cloud_consent'").first?.text("value_json") ?? "true") == "true"
     }
     public func setReceiptCloudConsent(_ enabled: Bool) throws {
         try db.transaction {

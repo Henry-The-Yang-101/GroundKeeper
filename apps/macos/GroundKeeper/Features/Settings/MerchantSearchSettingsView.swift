@@ -5,7 +5,7 @@ struct MerchantSearchSettingsView: View {
     var body: some View {
         Toggle("Use DuckDuckGo merchant search", isOn: Binding(get: { workspace.merchantSearchEnabled }, set: workspace.setMerchantSearch))
             .disabled(!workspace.ready || workspace.saving)
-        Text("Off by default. Search runs from this Mac using DDGS and sends a cleaned merchant name or transaction description, plus optional city/region, to DuckDuckGo. No API key or GroundKeeper search server is used. With an Apple Intelligence Shortcut, retrieved context may also be processed in Apple's cloud.")
+        Text("On by default. Search runs from this Mac using DDGS and sends a cleaned merchant name or transaction description, plus optional city/region, to DuckDuckGo. No API key or GroundKeeper search server is used. With an Apple Intelligence Shortcut, retrieved context may also be processed in Apple's cloud.")
             .font(.caption).foregroundStyle(AppStyle.muted)
         Text("Experimental. Accuracy improvements are not established; every suggestion requires review.")
             .font(.caption).foregroundStyle(AppStyle.muted)

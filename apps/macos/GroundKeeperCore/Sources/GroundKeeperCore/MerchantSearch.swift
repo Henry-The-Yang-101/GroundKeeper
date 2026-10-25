@@ -25,9 +25,9 @@ public struct MerchantContext: Codable, Sendable, Equatable {
 }
 
 public struct MerchantSearchSettings: Codable, Sendable, Equatable {
-    public var enabled = false
+    public var enabled = true
     public var locality = ""
-    public init(enabled: Bool = false, locality: String = "") { self.enabled = enabled; self.locality = locality }
+    public init(enabled: Bool = true, locality: String = "") { self.enabled = enabled; self.locality = locality }
 }
 
 public struct MerchantSearchQuery: Codable, Sendable, Equatable {

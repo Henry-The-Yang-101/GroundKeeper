@@ -119,7 +119,7 @@ Shortcut. Its **Use Model** action controls whether inference runs on device
 or in the cloud. Apple usage limits apply, and the app never switches providers
 automatically. See [provider setup and verification](docs/setup.md#choose-a-classifier).
 Receipt text is shared with this provider only when **Include receipt text with
-Apple Intelligence** is enabled; that separate setting is off by default.
+Apple Intelligence** is enabled; that separate setting is on by default.
 
 Live Apple inference through the sandboxed app remains unverified in the latest
 recorded checks. Qwen and Laya completed the native Council smoke check with
@@ -128,7 +128,7 @@ demonstrated. See the [Apple availability limitation](docs/council.md#apple-avai
 
 Optional **DuckDuckGo merchant search** adds bounded business titles/snippets and
 source URLs to Qwen, Laya, or Apple Intelligence inputs. It runs from the Mac,
-sending cleaned merchant terms and optional city/region to DuckDuckGo. It is off
+sending cleaned merchant terms and optional city/region to DuckDuckGo. It is on
 by default, caches evidence locally, and paces uncached searches roughly 11
 seconds apart before model processing time. It requires internet access, uses no
 API key or hosted GroundKeeper search backend, and never bypasses review.

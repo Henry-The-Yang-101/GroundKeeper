@@ -41,8 +41,8 @@ import GroundKeeperCore
     }
     var pendingJobs = 0
     var failedJobs = 0
-    var shareReceiptContextWithApple = false
-    var merchantSearchEnabled = false
+    var shareReceiptContextWithApple = true
+    var merchantSearchEnabled = true
     var merchantSearchLocality = ""
     var merchantSearchStatus = ""
     var page = 0
@@ -126,7 +126,7 @@ import GroundKeeperCore
                 showingSetup = false; showTransactions()
             }
             #endif
-            shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? false
+            shareReceiptContextWithApple = try await store?.receiptCloudConsent() ?? true
             let searchSettings = try await store?.merchantSearchSettings() ?? .init()
             merchantSearchEnabled = searchSettings.enabled; merchantSearchLocality = searchSettings.locality
             if InterfacePreview.isEnabled && CommandLine.arguments.contains("--merchant-search-preview") {
