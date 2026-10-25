@@ -19,7 +19,7 @@ func reportDateAxis(range: ReportRange, calendar: ReportCalendar, desiredCount: 
 struct ReportTrendChart: View {
     let report: SpendingReport
     let open: (SpendingFilter, String) -> Void
-    @State private var mode = "Bars"
+    @State private var mode = "Histogram"
     @State private var selectedDay: Date?
     private var calendar: ReportCalendar { try! ReportCalendar(timezone: report.filter.timezone, weekStart: report.filter.weekStart) }
     private var selected: SpendingBucket? {
@@ -31,7 +31,7 @@ struct ReportTrendChart: View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeading(title: "Spending over time", detail: "\(report.bucketUnit) · \(report.filter.currency)")
             Picker("Chart view", selection: $mode) {
-                Text("Bars").tag("Bars"); Text("Cumulative").tag("Cumulative"); Text("Table").tag("Table")
+                Text("Histogram").tag("Histogram"); Text("Cumulative").tag("Cumulative"); Text("Table").tag("Table")
             }.pickerStyle(.segmented).labelsHidden().tint(AppStyle.controlAccent).frame(maxWidth: 320)
             if mode == "Table" {
                 ScrollView {
