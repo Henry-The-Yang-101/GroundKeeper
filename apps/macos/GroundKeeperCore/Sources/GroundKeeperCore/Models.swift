@@ -8,6 +8,13 @@ public struct Account: Identifiable, Sendable, Equatable {
 public struct CardAccountMapping: Identifiable, Sendable, Equatable {
     public let id: String, sourceID: String, sourceName: String, label: String, accountID: String
 }
+public struct TransactionLocation: Sendable, Equatable {
+    public let latitude: Double
+    public let longitude: Double
+    public let accuracyMeters: Double?
+    public let label: String?
+}
+
 public struct LedgerTransaction: Identifiable, Sendable {
     public let id: String
     public let partID: String
@@ -26,6 +33,8 @@ public struct LedgerTransaction: Identifiable, Sendable {
     public let origin: String
     public let categoryModelName: String?
     public let categoryModelProvider: String?
+    public var location: TransactionLocation? = nil
+    public var hasReceiptImage: Bool = false
 
     public var categoryAttribution: CategoryAttribution {
         .init(origin: origin, modelName: categoryModelName, provider: categoryModelProvider)

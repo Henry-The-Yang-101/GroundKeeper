@@ -45,6 +45,9 @@ struct Transaction: Identifiable, Equatable {
     var source = "Manually input"
     var categoryAttribution = CategoryAttribution(origin: "user")
     var confirmCategory = false
+    var location: TransactionLocation?
+    var hasReceiptImage = false
+    var hasNote: Bool { !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var formattedAmount: String {
         (isDebit ? -amount : amount).formatted(.currency(code: currency))
@@ -166,6 +169,8 @@ extension Transaction {
         category = SpendingCategory.allCases.first { $0.code == stored.category } ?? .none
         needsReview = stored.needsReview; notes = stored.notes; source = stored.sourceLabel
         categoryAttribution = stored.categoryAttribution
+        location = stored.location
+        hasReceiptImage = stored.hasReceiptImage
     }
     var edit: TransactionEdit {
         get throws {

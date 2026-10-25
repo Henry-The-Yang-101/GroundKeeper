@@ -37,6 +37,10 @@ extension LedgerStore {
     static let ledgerTransactionSQL = """
         SELECT t.*,p.id AS part_id,a.type_code,a.category_id,a.needs_review,a.origin,ac.name AS account_name,
         m.model_name AS category_model_name,m.provider AS category_model_provider,
+        g.latitude AS location_latitude,g.longitude AS location_longitude,
+        g.horizontal_accuracy_m AS location_accuracy,g.label AS location_label,
+        EXISTS(SELECT 1 FROM receipt_captures r JOIN receipt_images i ON i.receipt_id=r.id
+          WHERE r.transaction_id=t.id AND r.removed_at_ms IS NULL AND r.image_state='stored') AS has_receipt_image,
         EXISTS(SELECT 1 FROM review_items r WHERE r.status='open' AND (r.transaction_id=t.id OR r.part_id=p.id OR r.event_id IN
           (SELECT event_id FROM transaction_event_links WHERE transaction_id=t.id AND unlinked_at_ms IS NULL))) AS open_review,
         (SELECT group_concat(DISTINCT s.kind) FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id
@@ -45,6 +49,10 @@ extension LedgerStore {
         JOIN category_assignments a ON a.id=p.current_assignment_id LEFT JOIN accounts ac ON ac.id=t.account_id
         LEFT JOIN classification_runs cr ON cr.id=a.run_id
         LEFT JOIN model_versions m ON m.id=cr.model_version_id
+        LEFT JOIN geotags g ON g.id=coalesce(t.selected_geotag_id,
+          (SELECT id FROM geotags WHERE transaction_id=t.id ORDER BY measured_at_ms DESC,id LIMIT 1),
+          (SELECT geo.id FROM geotags geo JOIN transaction_event_links link ON link.event_id=geo.event_id
+            WHERE link.transaction_id=t.id AND link.unlinked_at_ms IS NULL ORDER BY geo.measured_at_ms DESC,geo.id LIMIT 1))
         """
 
     static func ledgerTransaction(_ row: Row) -> LedgerTransaction {
@@ -52,7 +60,16 @@ extension LedgerStore {
             description: row.text("description"), amountMinor: row.number("amount_minor"), currency: row.text("currency"), occurredOn: row.text("occurred_on"),
             accountID: row["account_id"]?.string, accountName: row["account_name"]?.string ?? "Unassigned", type: row.text("type_code"), category: row["category_id"]?.string,
             needsReview: row.number("needs_review") == 1 || row.number("open_review") == 1, notes: row.text("notes"), sources: row["sources"]?.string ?? "manual", origin: row.text("origin"),
-            categoryModelName: row["category_model_name"]?.string, categoryModelProvider: row["category_model_provider"]?.string)
+            categoryModelName: row["category_model_name"]?.string, categoryModelProvider: row["category_model_provider"]?.string,
+            location: location(row), hasReceiptImage: row.number("has_receipt_image") == 1)
+    }
+
+    private static func location(_ row: Row) -> TransactionLocation? {
+        guard let latitude = row["location_latitude"]?.string.flatMap(Double.init),
+              let longitude = row["location_longitude"]?.string.flatMap(Double.init),
+              latitude.isFinite, longitude.isFinite, (-90...90).contains(latitude), (-180...180).contains(longitude) else { return nil }
+        return TransactionLocation(latitude: latitude, longitude: longitude,
+            accuracyMeters: row["location_accuracy"]?.string.flatMap(Double.init), label: row["location_label"]?.string)
     }
 
     public func transactionPage(_ query: LedgerTransactionQuery, limit: Int = 500, offset: Int = 0) throws -> LedgerTransactionPage {

@@ -53,3 +53,27 @@ import Testing
     #expect(combined.ledger.transactions.count == 5 && combined.ledger.transactions.first?.occurredOn == "2026-10-24")
     await store.close()
 }
+
+@Test func transactionDetailsIncludeLocationAndOnlyActiveReceiptImages() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    try await ingestMapped(store, id: "details")
+    let transaction = try #require(try await store.snapshot().transactions.first)
+    #expect(transaction.location == nil && !transaction.hasReceiptImage)
+    try await store.seedDetailLocation(transactionID: transaction.id)
+    let located = try #require(try await store.transaction(id: transaction.id))
+    #expect(located.location?.latitude == 43.4723)
+    #expect(located.location?.longitude == -80.5449)
+    #expect(located.location?.label == "Fictional shop")
+    let png = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=")!
+    let receipt = try await store.addReceiptImage(transactionID: transaction.id, data: png)
+    #expect(try await store.transactionPage(.init()).transactions[0].hasReceiptImage)
+    try await store.setReceiptRemoved(id: receipt, transactionID: transaction.id, removed: true)
+    #expect(try await store.transaction(id: transaction.id)?.hasReceiptImage == false)
+}
+
+extension LedgerStore {
+    func seedDetailLocation(transactionID: String) throws {
+        try db.query("INSERT INTO geotags(id,transaction_id,latitude,longitude,measured_at_ms,origin,label,created_at_ms) VALUES (?,?,43.4723,-80.5449,1,'import','Fictional shop',1)", [.text(identifier()), .text(transactionID)])
+    }
+}
