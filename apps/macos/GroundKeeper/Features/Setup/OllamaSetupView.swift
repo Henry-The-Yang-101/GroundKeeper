@@ -11,7 +11,16 @@ struct OllamaSetupView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Ollama", systemImage: "desktopcomputer").font(VaultTypography.section)
+            Label {
+                Text("Ollama")
+            } icon: {
+                Image("OllamaLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 28)
+                    .accessibilityHidden(true)
+            }
+            .font(VaultTypography.section)
             Text("Use a model you already have in Ollama. No GroundKeeper model download is needed. Open Ollama on this Mac, then refresh the list. Only local text-generation models are supported.")
                 .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             HStack {
