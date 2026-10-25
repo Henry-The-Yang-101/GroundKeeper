@@ -19,9 +19,6 @@ struct CategoryLabel: View {
     }
     var body: some View {
         HStack(spacing: 5) {
-            Text(category.rawValue)
-                .foregroundStyle(category == .none ? AppStyle.muted : AppStyle.text)
-                .lineLimit(1)
             if category != .none {
                 if attribution.isAI {
                     Image(systemName: "sparkles")
@@ -35,6 +32,9 @@ struct CategoryLabel: View {
                         .accessibilityHidden(true)
                 }
             }
+            Text(category.rawValue)
+                .foregroundStyle(category == .none ? AppStyle.unassigned : AppStyle.text)
+                .lineLimit(1)
         }
         .fixedSize(horizontal: false, vertical: true)
         .contentShape(.rect)

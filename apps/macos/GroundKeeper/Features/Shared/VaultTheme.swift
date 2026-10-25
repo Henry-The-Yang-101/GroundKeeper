@@ -11,6 +11,7 @@ enum AppStyle {
     static let separator = Color("VaultLine")
     static let text = Color("VaultText")
     static let muted = Color("VaultMuted")
+    static let unassigned = Color("VaultUnassigned")
     static let selection = Color("VaultSelection")
     static let accentInk = Color("VaultAccentInk")
     // Native selected segments draw white labels in both appearances.
