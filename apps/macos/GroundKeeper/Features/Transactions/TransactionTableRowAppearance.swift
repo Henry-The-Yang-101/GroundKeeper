@@ -5,17 +5,13 @@ import AppKit
 /// highlight. Attach once in the first column and keep native selection, sorting,
 /// keyboard navigation and context menus intact.
 struct TransactionTableRowAppearance: NSViewRepresentable {
-    let selected: Bool
-
     func makeNSView(context: Context) -> RowAnchor { RowAnchor() }
     func updateNSView(_ view: RowAnchor, context: Context) {
-        view.selected = selected
         view.attach()
     }
     static func dismantleNSView(_ view: RowAnchor, coordinator: ()) { view.detach() }
 
     final class RowAnchor: NSView {
-        var selected = false { didSet { updateColor() } }
         private weak var row: NSTableRowView?
         private let decoration = RowBackground()
 
@@ -65,7 +61,6 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
         }
 
         private func updateColor() {
-            decoration.selected = selected
             decoration.updateColor()
         }
     }
@@ -102,7 +97,6 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
     }
 
     final class RowBackground: NSView {
-        var selected = false
         private var hovered = false
         private var tracking: NSTrackingArea?
 
@@ -129,9 +123,7 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
             effectiveAppearance.performAsCurrentDrawingAppearance {
                 let surface = NSColor(named: "VaultSurface") ?? .controlBackgroundColor
                 let selection = NSColor(named: "VaultSelection") ?? .unemphasizedSelectedContentBackgroundColor
-                layer?.backgroundColor = surface.blended(withFraction: selected ? 0.72 : hovered ? 0.42 : 0, of: selection)?.cgColor
-                layer?.borderColor = selection.cgColor
-                layer?.borderWidth = selected ? 1 : 0
+                layer?.backgroundColor = surface.blended(withFraction: hovered ? 0.42 : 0, of: selection)?.cgColor
             }
         }
 

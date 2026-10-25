@@ -65,7 +65,7 @@ struct TransactionsView: View {
                                 Text(transaction.date, format: .dateTime.year()).font(.caption)
                             }.foregroundStyle(AppStyle.muted)
                         }
-                        .background(TransactionTableRowAppearance(selected: selectedID == transaction.id))
+                        .background(TransactionTableRowAppearance())
                     }.width(min: 65, ideal: 75, max: 95)
                     TableColumn("Transaction", value: \Transaction.merchant) { transaction in
                         cell(transaction) {
