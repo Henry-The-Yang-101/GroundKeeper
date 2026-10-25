@@ -8,6 +8,10 @@ struct TransactionEditor: View {
     @State private var draft: Transaction
     @State private var amountText: String
     @State private var showingDiscardConfirmation = false
+    @State private var suggestion: DraftCategorySuggestion?
+    @State private var suggestionError: String?
+    @State private var suggestionTask: Task<Void, Never>?
+    @State private var suggesting = false
     @FocusState private var merchantFocused: Bool
     private let original: Transaction
     private let originalAmountText: String
@@ -48,6 +52,30 @@ struct TransactionEditor: View {
                 VaultFormSection("Transaction") {
                     TextField("Merchant or description", text: $draft.merchant)
                         .focused($merchantFocused)
+                    HStack {
+                        Button(action: suggestCategory) {
+                            Label(suggesting ? "Suggesting…" : "Suggest category", systemImage: "sparkles")
+                        }
+                        .disabled(draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || suggesting || workspace.processing)
+                        if suggesting { ProgressView().controlSize(.small) }
+                    }
+                    if let suggestionError {
+                        Text(suggestionError).font(.caption).foregroundStyle(.red)
+                    }
+                    if let suggestion {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("Suggested: \(suggestion.kind.rawValue) · \(suggestion.category.rawValue)", systemImage: "sparkles")
+                            Text(suggestion.provider).font(.caption).foregroundStyle(.secondary)
+                            Button("Use suggestion") {
+                                draft.kind = suggestion.kind
+                                draft.category = suggestion.category
+                                draft.confirmCategory = true
+                                draft.categoryAttribution = .init(origin: "user")
+                                draft.needsReview = suggestion.kind == .unknown
+                                self.suggestion = nil
+                            }
+                        }
+                    }
                     HStack {
                         TransactionAmountField(text: $amountText, currency: draft.currency)
                         Picker("Currency", selection: $draft.currency) {
@@ -118,12 +146,17 @@ struct TransactionEditor: View {
                 Button("Save transaction") { save() }
                     .buttonStyle(.brass)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!valid || workspace.saving)
+                    .disabled(!valid || workspace.saving || suggesting)
             }
         }
         .frame(width: 530, height: 600)
         .interactiveDismissDisabled(isChanged || workspace.saving)
         .onAppear { merchantFocused = true }
+        .onDisappear { suggestionTask?.cancel() }
+        .onChange(of: suggestionInput) { _, _ in
+            suggestionTask?.cancel()
+            suggestion = nil; suggestionError = nil
+        }
         .onChange(of: draft.accountID) { _, id in
             if let account = workspace.accounts.first(where: { $0.id == id }) { draft.currency = account.currency; draft.account = account.name }
         }
@@ -141,6 +174,26 @@ struct TransactionEditor: View {
         .confirmationDialog("Discard your changes?", isPresented: $showingDiscardConfirmation, titleVisibility: .visible) {
             Button("Discard changes", role: .destructive) { dismiss() }
             Button("Keep editing", role: .cancel) { }
+        }
+    }
+
+    private var suggestionInput: [String] {
+        [draft.merchant, draft.currency, draft.isDebit ? "debit" : "credit", draft.notes]
+    }
+
+    private func suggestCategory() {
+        let input = suggestionInput
+        let snapshot = draft
+        suggestion = nil; suggestionError = nil; suggesting = true
+        suggestionTask = Task {
+            defer { suggesting = false }
+            do {
+                let result = try await workspace.suggestCategory(for: snapshot)
+                try Task.checkCancellation()
+                guard suggestionInput == input else { return }
+                suggestion = result
+            } catch is CancellationError { }
+            catch { if !Task.isCancelled { suggestionError = error.localizedDescription } }
         }
     }
 
