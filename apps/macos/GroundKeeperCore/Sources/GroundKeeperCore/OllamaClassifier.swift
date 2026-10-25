@@ -58,6 +58,7 @@ public actor OllamaClassifier {
         session = URLSession(configuration: configuration, delegate: OllamaRedirectGuard(), delegateQueue: nil)
     }
     init(session: URLSession) { self.session = session }
+    deinit { session.invalidateAndCancel() }
     public func shutdown() { session.invalidateAndCancel() }
 
     private func request(_ path: String, body: [String: Any]? = nil, timeout: TimeInterval = 5, limit: Int = 1_048_576) async throws -> Data {
@@ -71,6 +72,7 @@ public actor OllamaClassifier {
         }
         do {
             let (bytes, response) = try await session.bytes(for: request)
+            defer { bytes.task.cancel() }
             guard let response = response as? HTTPURLResponse else { throw OllamaError.invalidResponse }
             guard response.statusCode == 200 else {
                 if response.statusCode == 404 { throw OllamaError.modelUnavailable }
@@ -137,7 +139,7 @@ public actor OllamaClassifier {
         // Never send transaction evidence to a missing, updated or cloud-backed tag.
         try await verify(model)
         let data = try await request("/api/chat", body: [
-            "model": model.name, "stream": false, "think": false, "keep_alive": "1m",
+            "model": model.name, "stream": false, "think": false, "keep_alive": "1m", "truncate": false, "shift": false,
             "messages": [["role": "system", "content": Self.systemPrompt], ["role": "user", "content": input]],
             "format": Self.outputSchema,
             "options": ["temperature": 0, "num_predict": 256, "num_ctx": 8192]

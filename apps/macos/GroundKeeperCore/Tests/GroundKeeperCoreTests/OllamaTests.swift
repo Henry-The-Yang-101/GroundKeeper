@@ -87,6 +87,7 @@ private let ollamaInput = Data("{\"description\":\"FICTIONAL CAFE\",\"direction\
     while stream.hasBytesAvailable { let n = stream.read(&buffer, maxLength: buffer.count); if n <= 0 { break }; bytes.append(contentsOf: buffer.prefix(n)) }
     let body = try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
     #expect(body["stream"] as? Bool == false && body["think"] as? Bool == false)
+    #expect(body["truncate"] as? Bool == false && body["shift"] as? Bool == false)
     #expect((body["format"] as? [String: Any])?["additionalProperties"] as? Bool == false)
     #expect((body["messages"] as? [[String: String]])?.last?["content"] == String(decoding: ollamaInput, as: UTF8.self))
     await client.shutdown()

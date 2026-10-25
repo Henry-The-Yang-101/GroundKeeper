@@ -85,7 +85,7 @@ struct SetupView: View {
                 if protectionChosen { Label(workspace.encrypted ? "Encrypted vault selected" : "Unencrypted vault selected", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
             }
         case 2:
-            header("sparkles", "Intelligence,\nwhere you want it.", "Install local models, choose Apple Intelligence Cloud, or categorize by hand. You are in control of where your transaction text goes.")
+            header("sparkles", "Intelligence,\nwhere you want it.", "Install local models, use Ollama, choose Apple Intelligence Cloud, or categorize by hand. You are in control of where your transaction text goes.")
             ModelSetupView(installer: installer)
         case 3:
             header("icloud.fill", "From your iPhone.\nTo your Mac.", "Choose an iCloud Drive inbox for the transaction files your iPhone captures. Both devices must use the same Apple Account and have iCloud Drive enabled.")

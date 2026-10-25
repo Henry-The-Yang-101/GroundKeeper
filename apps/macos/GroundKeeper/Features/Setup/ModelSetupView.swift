@@ -37,6 +37,8 @@ struct ModelSetupView: View {
             else { Text(installer.status).font(.callout).foregroundStyle(AppStyle.muted) }
             if let error = installer.error { Text(error).foregroundStyle(.red) }
             Divider()
+            OllamaSetupView()
+            Divider()
             Label("Apple Intelligence Cloud", systemImage: "apple.intelligence").font(VaultTypography.section)
             Text("No local model download needed. The included Shortcut uses Cloud with Broad World Knowledge. Description, direction, and currency go to the Shortcut and may be processed by Apple’s cloud service. Internet access, a compatible Mac, and Apple Intelligence are required; usage limits can apply.")
                 .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)

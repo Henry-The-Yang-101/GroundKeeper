@@ -146,6 +146,40 @@ Those commands require existing checkpoint and manifest files under `.local/`.
 The [experiment index](README.md#experiments) links to training procedures and
 their dataset requirements.
 
+### Ollama
+
+You can use an existing local Ollama model instead of downloading GroundKeeper's
+Qwen or Laya packages:
+
+1. Install [Ollama for macOS](https://ollama.com/download/mac) if needed, open it,
+   and install a chat or instruction model through Ollama.
+2. In Setup's **Intelligence** step or **Settings > Install models or choose a
+   provider**, find **Ollama** and click **Refresh Ollama models**.
+3. Select an installed model and click **Use Ollama model**. This saves the choice
+   for future launches and queue processing. In manual processing mode, click
+   **Process queue** to request suggestions.
+
+GroundKeeper connects to `127.0.0.1:11434`; custom ports and remote servers are
+not supported. It does not download models, start Ollama, change its settings,
+or fall back to another provider. Ollama must be running whenever classification
+is needed. Cloud tags and aliases reporting a remote model/host are excluded;
+embedding-only models cannot be used. General models vary in quality and speed
+and have not been evaluated against GroundKeeper's fine-tuned models.
+
+Inputs use the existing description/direction/currency contract, with available
+receipt evidence, Wallet hints, and separately enabled merchant search context.
+Raw amounts, images, capture notes and the vault database are not sent. Output
+uses the same category policy and always requires review. Invalid output leaves
+the existing categorization intact and records a failed attempt. Temporary
+connection/deadline errors use the queue's existing bounded retries; **Retry
+failed** explicitly retries failed work. When a model is removed or its digest
+changes, refresh and select it again. Its new identity gets separate audit/jobs.
+
+Ollama runs as a separate user-managed process. GroundKeeper checks its model
+metadata before sending evidence and rejects HTTP redirects and proxies. For
+Ollama's own local-only configuration, see its
+[cloud settings](https://docs.ollama.com/faq#how-do-i-disable-ollamas-cloud-features).
+
 ### Model council
 
 Open **Settings > Install models or choose a provider** and find **Model council**.

@@ -417,3 +417,42 @@ failures, model identities and saved search sources, including prior results
 after a user correction. Vote shares are not confidence estimates.
 
 For repeatable validation, see [Council verification](../../docs/council.md).
+
+
+## Native Ollama provider
+
+Ollama is an explicit standalone provider (`classifierProvider=ollama`, ledger
+backend `ollama`, execution `local`), outside the offline Python/XPC worker.
+`GroundKeeperCore.OllamaClassifier` connects only to `http://127.0.0.1:11434` with
+an ephemeral URLSession, proxies disabled and redirects rejected. No model pull,
+provider fallback, server configuration, or automatic server launch occurs.
+
+Discovery uses `GET /api/tags`, filtering remote metadata, cloud names and known
+embedding-only models. Selection and each inference preflight use `/api/tags`
+and `POST /api/show` to require an unchanged content digest, positive local size,
+no remote host/model, and `completion` capability. The same checks run before
+committing the response. This trusts the user-managed local Ollama server's
+metadata; it is not attestation of that process. Concurrent external tag mutation
+cannot be made atomic with an inference request.
+
+`POST /api/chat` uses the existing authorized classifier input, a versioned policy
+prompt, a JSON schema, `stream=false`, `think=false`, temperature 0, an 8,192-token
+context and a 256-token output ceiling. `truncate=false` and `shift=false`
+request failure instead of discarding evidence when context is exhausted. Ollama retains its model for one minute
+after a request. Inputs are bounded to 16 KiB, metadata to 1 MiB, and inference
+responses to 64 KiB. Metadata requests have five-second timeouts; inference has a
+120-second request timeout and the session has a 125-second resource deadline.
+Task cancellation cancels the URLSession request. Invalid/truncated/incomplete
+responses are rejected; no prose repair is attempted. The exact output keys and
+type/category combinations are validated; review is always forced true.
+
+Model identity hashes `ollama-local-v1`, model name, installed digest and the
+policy prompt. `ollama-local-v1` pins the schema and generation options above;
+changes to those require a version bump. The persisted model configuration
+records name/digest/size. Existing Swift queue claims, input hashes, evidence,
+revision checks, retries and review-required assignments apply unchanged.
+Only safe error codes/messages reach jobs and UI, never raw daemon errors.
+
+See [Ollama API](https://docs.ollama.com/api/chat),
+[model listing](https://docs.ollama.com/api/tags), and
+[model metadata definitions](https://github.com/ollama/ollama/blob/main/api/types.go).

@@ -98,13 +98,20 @@ notifications remain future work. See [spending reports and analysis rules](docs
 
 ## Classification and optional services
 
-Use a local model, an explicitly selected Apple Intelligence Shortcut, or
+Use a bundled local model, an installed Ollama model, an explicitly selected Apple Intelligence Shortcut, or
 **Model council**. Council gives Qwen, Laya, and Apple one vote each. Two matching
 valid type/category decisions produce a suggestion; if the third provider fails,
 the result is visibly partial. Without consensus, the current categorization
 stays in place. Member decisions and failures remain inspectable, including
 after a user correction. Every suggestion requires review. See [Council setup,
 policy, and verification](docs/council.md).
+
+If Ollama is already installed, open it and choose **Settings > Install models or
+choose a provider > Ollama**. Refresh the model list, pick an installed chat or
+instruction model, and click **Use Ollama model**. No GroundKeeper Qwen/Laya
+download is required. The adapter connects only to Ollama on this Mac, excludes
+cloud-backed models, and keeps every suggestion subject to review. See
+[Ollama setup](docs/setup.md#ollama).
 
 An optional Apple Intelligence Shortcut provider is also wired into the queue.
 Enabling it sends the description, direction, and currency to the selected

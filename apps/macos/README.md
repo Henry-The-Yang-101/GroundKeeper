@@ -59,6 +59,34 @@ The local Swift package `GroundKeeperCore` pins Zetetic’s official SQLCipher
 4.19.0 package. It also opens ordinary SQLite when no passphrase is supplied. The XPC service embeds the existing pinned
 Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/README.md).
 
+## Ollama provider
+
+Setup and Settings include an **Ollama** section that discovers installed local
+models and saves an explicit selection. It runs through the native Swift queue,
+so users do not need a GroundKeeper Qwen/Laya package for this provider. See
+[Ollama setup](../../docs/setup.md#ollama) and the
+[adapter contract](../../contracts/classifier/README.md#native-ollama-provider).
+
+After building, run the actual sandboxed app against an already installed model
+using a disposable vault and preferences:
+
+```sh
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper \
+  --setup-preview --ollama-smoke --ollama-model <installed-model-name>
+```
+
+This uses fictional CSV inputs and checks selection, classification, required
+review and persisted selection in a recreated workspace. It does not download a
+model or alter the ordinary vault/provider preferences. Unit tests cover local
+model filtering, changed/removed tags, malformed output, cancellation, bounded
+responses, safe failures and queue persistence/provider switching.
+
+Local verification on 2026-10-25 passed a signed sandboxed Debug build, all
+91 Swift core tests, and the native Ollama smoke using the already installed
+`qwen3:4b-instruct` model and fictional transactions. The setup UI discovered
+three installed models and explicitly selected `gemma3:4b` in separate preview
+preferences. These checks establish integration behavior, not model accuracy.
+
 ## Fictional spending demo
 
 Build and open a separate demo instance from the repository root:

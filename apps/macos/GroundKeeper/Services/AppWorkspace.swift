@@ -58,6 +58,7 @@ import GroundKeeperCore
     var shortcutName = AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
     var classifierProvider = AppPreferences.defaults.string(forKey: "classifierProvider") ?? (AppPreferences.defaults.data(forKey: "classifierModelBookmark") == nil ? "manual" : "local")
     var classifierStatus = "Manual categorization until you choose a provider"
+    var ollamaModelName = AppPreferences.defaults.string(forKey: "ollamaModelName") ?? ""
     var processing = false
     var saving = false
     var councilConfiguration: CouncilConfiguration?
@@ -68,6 +69,8 @@ import GroundKeeperCore
     // Views observe readiness through this reference, including setup resumed on a later page.
     private(set) var store: LedgerStore?
     @ObservationIgnored let client = ClassifierClient()
+    @ObservationIgnored let ollama = OllamaClassifier()
+    @ObservationIgnored private var ollamaModel: OllamaModel?
     @ObservationIgnored private let merchantSearch = MerchantSearchClient()
     @ObservationIgnored private var merchantSearchTask: Task<MerchantSearchEvidence, any Error>?
     @ObservationIgnored private let folder = CaptureFolder()
@@ -140,6 +143,7 @@ import GroundKeeperCore
                 classifierStatus = councilConfiguration == nil ? "Council needs setup" : "Council · Qwen, Laya and Apple Intelligence · equal votes"
             }
             else if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
+            else if classifierProvider == "ollama" { classifierStatus = "Ollama · \(ollamaModelName) · connects when processing needs it" }
             else if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
             else if AppPreferences.defaults.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
@@ -545,6 +549,13 @@ import GroundKeeperCore
     }
     private func restoreModel() async throws {
         if classifierProvider == "manual" || classifierProvider == "council" { return }
+        if classifierProvider == "ollama" {
+            guard let data = AppPreferences.defaults.data(forKey: "ollamaSelectedModel"),
+                  let selected = try? JSONDecoder().decode(OllamaModel.self, from: data) else {
+                throw LedgerError.unavailable("Choose an installed Ollama model in Settings.")
+            }
+            try await loadOllama(selected); return
+        }
         if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
         guard let bookmark = AppPreferences.defaults.data(forKey: "classifierModelBookmark") else { return }
         var stale = false
@@ -602,6 +613,31 @@ import GroundKeeperCore
             AppPreferences.defaults.set(bookmark, forKey: "classifierModelBookmark")
             await self.processIfAutomatic()
         }
+    }
+    func useOllama(_ selected: OllamaModel) {
+        guard !processing, !saving else { return }
+        perform {
+            try await self.loadOllama(selected)
+            AppPreferences.defaults.set(try JSONEncoder().encode(selected), forKey: "ollamaSelectedModel")
+            AppPreferences.defaults.set(selected.name, forKey: "ollamaModelName")
+            AppPreferences.defaults.set("ollama", forKey: "classifierProvider")
+            self.ollamaModelName = selected.name
+            self.classifierProvider = "ollama"
+            await self.processIfAutomatic()
+        }
+    }
+    private func loadOllama(_ selected: OllamaModel) async throws {
+        try await ollama.verify(selected)
+        // Release the bundled worker's GPU weights before using Ollama.
+        if let model, model.backend != "ollama" { try? await client.releaseModel() }
+        await client.shutdown()
+        model = nil; modelURL = nil; ollamaModel = nil
+        let loaded = ClassifierModel(modelID: selected.name, backend: "ollama", manifestSHA256: selected.identity,
+                                     policyVersion: ClassifierClient.policyVersion, device: "Ollama · local")
+        try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend,
+            policy: loaded.policyVersion, configuration: String(decoding: JSONEncoder().encode(selected), as: UTF8.self))
+        modelURL = nil; ollamaModel = selected; model = loaded
+        classifierStatus = "Ollama · \(selected.name) · local"
     }
     func useShortcut() {
         guard !processing, !saving else { return }
@@ -664,10 +700,18 @@ import GroundKeeperCore
                 guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
                 do {
                     let context = try await merchantContext(for: job, store: store)
-                    let result = try await client.classify(ClassifierInput(description: job.description, direction: job.direction, currency: job.currency, receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw, merchantContext: context),
-                        model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
-                    guard let decision = result.decision else { throw ClassifierBridgeError.invalidResponse }
-                    try await store.completeClassification(job, decision: ClassificationDecision(type: decision.type, category: decision.category, review: decision.review))
+                    let input = ClassifierInput(description: job.description, direction: job.direction, currency: job.currency,
+                                                receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw, merchantContext: context)
+                    let decision: ClassificationDecision
+                    if selectedModel.backend == "ollama" {
+                        guard let selected = ollamaModel, selected.identity == selectedModel.manifestSHA256 else { throw OllamaError.modelChanged }
+                        decision = try await ollama.classify(inputJSON: JSONEncoder().encode(input), model: selected)
+                    } else {
+                        let result = try await client.classify(input, model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
+                        guard let value = result.decision else { throw ClassifierBridgeError.invalidResponse }
+                        decision = ClassificationDecision(type: value.type, category: value.category, review: value.review)
+                    }
+                    try await store.completeClassification(job, decision: decision)
                 } catch is CancellationError {
                     try await store.releaseClassification(job)
                     throw CancellationError()
@@ -676,6 +720,9 @@ import GroundKeeperCore
                     if case ClassifierBridgeError.worker(let workerCode, _) = error {
                         code = workerCode
                         retryable = ["busy", "deadline_exceeded", "model_not_ready", "runtime_failed", "inference_failed"].contains(code)
+                    }
+                    if let ollamaError = error as? OllamaError {
+                        code = ollamaError.code; retryable = ollamaError.retryable
                     }
                     try await store.failClassification(job, code: code, retryable: retryable)
                     classifierStatus = error.localizedDescription
