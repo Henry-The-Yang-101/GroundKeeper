@@ -12,7 +12,6 @@ struct TransactionsView: View {
     @State private var deletionCandidate: Transaction?
     @State private var receiptTransaction: Transaction?
     @State private var viewedTransaction: Transaction?
-    @State private var hoveredID: Transaction.ID?
 
     private var filteredTransactions: [Transaction] { workspace.transactions }
 
@@ -66,6 +65,7 @@ struct TransactionsView: View {
                                 Text(transaction.date, format: .dateTime.year()).font(.caption)
                             }.foregroundStyle(AppStyle.muted)
                         }
+                        .background(TransactionTableRowAppearance(selected: selectedID == transaction.id))
                     }.width(min: 65, ideal: 75, max: 95)
                     TableColumn("Transaction", value: \Transaction.merchant) { transaction in
                         cell(transaction) {
@@ -201,11 +201,7 @@ struct TransactionsView: View {
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .background(hoveredID == transaction.id ? AppStyle.selection.opacity(0.6) : .clear)
-        .onHover { hovering in
-            if hovering { hoveredID = transaction.id }
-            else if hoveredID == transaction.id { hoveredID = nil }
-        }
+        .foregroundStyle(AppStyle.text)
         .help("View transaction")
         .accessibilityHint("Opens transaction details")
     }
