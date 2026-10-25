@@ -277,6 +277,19 @@ service access to the selected model. Smoke mode uses a separate temporary
 fictional database, never the primary database. Use a whole-process timeout
 when automating smoke checks.
 
+To check the same sandbox access used by models installed inside the app,
+run the classifier smoke with an existing local package:
+
+```sh
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper \
+  --setup-preview --classifier-smoke --classifier-installed-model-smoke \
+  --classifier-model-picker /absolute/path/to/model-package
+```
+
+Select that package in the picker. This copies it into a disposable app-owned
+folder, checks inference with fictional text, and checks a saved selection after
+reconnecting XPC. It downloads nothing and does not use the primary vault.
+
 Queue verification recorded on 2026-10-17: 12 core tests passed. The Debug queue
 smoke checked a 205-file inventory/drain, manual-mode gating, restart deduplication, automatic processing,
 retry backoff and CSV classification gating against temporary fictional data.

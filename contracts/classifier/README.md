@@ -76,6 +76,11 @@ the implicit sandbox extension, and retains that access only while the model is
 loaded. App-scoped persistent bookmarks are a separate mechanism and must not
 be passed as another process's app-scoped grant. The app's picker entitlement
 allows read-only access; the service receives no vault path or unlock key.
+For these freshly created transient bookmarks, a stale-metadata flag does not
+mean access was denied. App-owned installations can resolve with that flag in
+the separate service container. The service uses the resolved URL and still
+requires full package and checksum validation; a bookmark that fails to resolve
+is rejected.
 
 ## Wire contract v1
 

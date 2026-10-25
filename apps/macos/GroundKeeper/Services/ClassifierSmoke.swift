@@ -52,15 +52,25 @@ import GroundKeeperCore
                 panel.directoryURL = url.deletingLastPathComponent()
                 panel.message = "Select the model package for this fictional-transaction test: \(url.lastPathComponent)"
                 guard panel.runModal() == .OK, let selected = panel.url else { throw CancellationError() }
+                var package = selected
+                var ownedRoot: URL?
+                if CommandLine.arguments.contains("--classifier-installed-model-smoke") {
+                    let root = FileManager.default.temporaryDirectory.appendingPathComponent("installed-model-smoke-\(UUID().uuidString)")
+                    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+                    package = root.appendingPathComponent(selected.lastPathComponent)
+                    try FileManager.default.copyItem(at: selected, to: package)
+                    ownedRoot = root
+                }
+                defer { if let ownedRoot { try? FileManager.default.removeItem(at: ownedRoot) } }
                 do {
-                    _ = try await client.prepareModel(at: selected, timeoutMS: 100)
+                    _ = try await client.prepareModel(at: package, timeoutMS: 100)
                     throw ClassifierBridgeError.invalidResponse
                 } catch ClassifierBridgeError.worker(let code, _) {
                     guard code == "deadline_exceeded" else { throw ClassifierBridgeError.worker(code, "Deadline smoke check failed") }
                     write(["event": "deadline_verified"])
                 }
                 let start = Date()
-                let model = try await client.prepareModel(at: selected)
+                let model = try await client.prepareModel(at: package)
                 write(["event": "model_loaded", "model_id": model.modelID, "device": model.device,
                        "load_seconds": Date().timeIntervalSince(start)])
                 for iteration in 0..<3 {
@@ -72,6 +82,22 @@ import GroundKeeperCore
                            "review": result.decision?.review ?? false])
                 }
                 try await client.releaseModel()
+                if ownedRoot != nil {
+                    // Match the saved selection used after closing provider setup
+                    // and after the XPC process is recreated.
+                    let bookmark = try package.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+                    await client.shutdown()
+                    var stale = false
+                    let restored = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
+                    guard !stale else { throw ClassifierBridgeError.invalidResponse }
+                    let access = restored.startAccessingSecurityScopedResource()
+                    defer { if access { restored.stopAccessingSecurityScopedResource() } }
+                    let reloaded = try await client.prepareModel(at: restored)
+                    guard reloaded == model else { throw ClassifierBridgeError.invalidResponse }
+                    _ = try await client.classify(ClassifierInput(description: "FICTIONAL CAFE", direction: "debit", currency: "CAD"), model: reloaded, partID: "owned-package-reload", revision: 1)
+                    try await client.releaseModel()
+                    write(["event": "installed_model_reload_verified"])
+                }
                 write(["event": "model_released"])
             }
             write(["event": "smoke_passed"])

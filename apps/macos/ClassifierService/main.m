@@ -244,11 +244,18 @@ PyMODINIT_FUNC PyInit_gk_native(void) { return PyModule_Create(&nativeModule); }
                     NSString *bookmark=request[@"package_bookmark"];
                     NSData *data=[bookmark isKindOfClass:NSString.class] ? [[NSData alloc] initWithBase64EncodedString:bookmark options:0] : nil;
                     BOOL stale=NO;
+                    NSError *bookmarkError=nil;
                     candidate=data ? [NSURL URLByResolvingBookmarkData:data options:NSURLBookmarkResolutionWithoutUI
-                        relativeToURL:nil bookmarkDataIsStale:&stale error:NULL] : nil;
+                        relativeToURL:nil bookmarkDataIsStale:&stale error:&bookmarkError] : nil;
+                    if (!candidate) os_log_error(OS_LOG_DEFAULT,
+                        "Model bookmark resolution failed: stale=%{public}d domain=%{public}@ code=%{public}ld",
+                        stale, bookmarkError.domain ?: @"none", (long)bookmarkError.code);
                     // Resolving a transient cross-process bookmark implicitly starts
-                    // its sandbox extension. Balance it exactly once on release.
-                    if (candidate && stale) { [candidate stopAccessingSecurityScopedResource]; candidate=nil; }
+                    // its sandbox extension. Container-relative metadata can be stale
+                    // in this service even for a freshly created bookmark. Staleness
+                    // is not access denial: use the resolved URL and let the worker's
+                    // full package validation check its contents and readability.
+                    // Balance the extension exactly once on release.
                 }
                 if (prepare && !candidate) result=failure(job.requestID,@"package_access_denied",@"Select the model package again to grant read access");
                 else {
