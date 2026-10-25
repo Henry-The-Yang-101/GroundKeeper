@@ -11,6 +11,8 @@ struct TransactionsView: View {
     @State private var sortOrder = [KeyPathComparator(\Transaction.date, order: .reverse)]
     @State private var deletionCandidate: Transaction?
     @State private var receiptTransaction: Transaction?
+    @State private var viewedTransaction: Transaction?
+    @State private var hoveredID: Transaction.ID?
 
     private var filteredTransactions: [Transaction] { workspace.transactions }
 
@@ -58,40 +60,51 @@ struct TransactionsView: View {
             GeometryReader { geometry in
                 Table(filteredTransactions, selection: $selectedID, sortOrder: $sortOrder) {
                     TableColumn("Date", value: \Transaction.date) { transaction in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(transaction.date, format: .dateTime.month(.abbreviated).day())
-                            Text(transaction.date, format: .dateTime.year()).font(.caption)
+                        cell(transaction) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(transaction.date, format: .dateTime.month(.abbreviated).day())
+                                Text(transaction.date, format: .dateTime.year()).font(.caption)
+                            }.foregroundStyle(AppStyle.muted)
                         }
-                        .foregroundStyle(AppStyle.muted)
-                        .accessibilityElement(children: .combine)
-                    }.width(min: 65, ideal: 80, max: 95)
+                    }.width(min: 65, ideal: 75, max: 95)
                     TableColumn("Transaction", value: \Transaction.merchant) { transaction in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
-                            Text(workspace.accountLabel(id: transaction.accountID, fallback: transaction.account)).font(.caption).foregroundStyle(AppStyle.muted)
-                        }.padding(.vertical, 15)
-                    }.width(min: 140, ideal: 190)
-                    TableColumn("Category / type") { transaction in
-                        VStack(alignment: .leading, spacing: 4) {
-                            CategoryLabel(transaction: transaction)
-                            if transaction.needsReview {
-                                Label("Needs review", systemImage: "circle.dashed")
-                                    .font(.caption).foregroundStyle(AppStyle.muted)
-                            } else if transaction.kind != .purchase {
-                                Text(transaction.kind.rawValue).font(.caption).foregroundStyle(AppStyle.muted)
+                        cell(transaction) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
+                                Text(workspace.accountLabel(id: transaction.accountID, fallback: transaction.account))
+                                    .font(.caption).foregroundStyle(AppStyle.muted).lineLimit(1)
                             }
                         }
-                    }.width(min: 120, ideal: 190)
+                    }.width(min: 135, ideal: 190)
+                    TableColumn("Category") { transaction in
+                        cell(transaction) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                CategoryLabel(transaction: transaction)
+                                if transaction.needsReview {
+                                    Label("Needs review", systemImage: "circle.dashed").font(.caption).foregroundStyle(AppStyle.muted)
+                                }
+                            }
+                        }
+                    }.width(min: 120, ideal: 170)
+                    TableColumn("Type") { transaction in
+                        cell(transaction) { Text(transaction.kind.rawValue).font(.callout).foregroundStyle(AppStyle.muted) }
+                    }.width(min: 85, ideal: 100, max: 125)
+                    TableColumn("Additional data") { transaction in
+                        cell(transaction) { TransactionDataIndicators(transaction: transaction) }
+                    }.width(min: 105, ideal: 110, max: 125)
                     TableColumn("Source") { transaction in
-                        Text(transaction.source)
-                            .font(.callout).foregroundStyle(AppStyle.muted)
-                            .lineLimit(3).help(transaction.source)
-                    }.width(min: 130, ideal: 175, max: 240)
+                        cell(transaction) {
+                            Text(transaction.source).font(.callout).foregroundStyle(AppStyle.muted)
+                                .lineLimit(3).help(transaction.source)
+                        }
+                    }.width(min: 100, ideal: 135, max: 200)
                     TableColumn("Amount", value: \Transaction.amount) { transaction in
-                        VStack(alignment: .trailing, spacing: 3) {
-                            Text(transaction.formattedAmount).monospacedDigit()
-                            Text(transaction.currency).font(.caption2).foregroundStyle(AppStyle.muted)
-                        }.frame(maxWidth: .infinity, alignment: .trailing)
+                        cell(transaction, alignment: .trailing) {
+                            VStack(alignment: .trailing, spacing: 3) {
+                                Text(transaction.formattedAmount).monospacedDigit()
+                                Text(transaction.currency).font(.caption2).foregroundStyle(AppStyle.muted)
+                            }
+                        }
                     }.width(min: 100, ideal: 110, max: 150).alignment(.trailing)
                 }
                 .scrollContentBackground(.hidden)
@@ -99,12 +112,13 @@ struct TransactionsView: View {
                 .background(AppStyle.surface)
                 .contextMenu(forSelectionType: Transaction.ID.self) { ids in
                     if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
+                        Button("View transaction…") { viewedTransaction = transaction }
                         Button("Edit transaction…") { workspace.editor = transaction }
                         Button("Notes & receipts…") { receiptTransaction = transaction }
                         Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
                     }
                 } primaryAction: { ids in
-                    if let id = ids.first { workspace.editor = workspace.transactions.first { $0.id == id } }
+                    if let id = ids.first { viewedTransaction = workspace.transactions.first { $0.id == id } }
                 }
                 .overlay {
                     if filteredTransactions.isEmpty {
@@ -168,9 +182,32 @@ struct TransactionsView: View {
         } message: {
             Text("This hides the transaction while retaining its source evidence and history. Re-importing the same capture will not recreate it.")
         }
+        .sheet(item: $viewedTransaction) { transaction in
+            TransactionDetailView(transaction: transaction).vaultSheet()
+        }
         .sheet(item: $receiptTransaction) { transaction in
             ReceiptEvidenceView(transactionID: transaction.id.uuidString, title: transaction.merchant).vaultSheet()
         }
+    }
+
+    private func cell<Content: View>(_ transaction: Transaction, alignment: Alignment = .leading,
+                                      @ViewBuilder content: () -> Content) -> some View {
+        Button {
+            selectedID = transaction.id
+            viewedTransaction = transaction
+        } label: {
+            content()
+                .frame(maxWidth: .infinity, minHeight: 58, alignment: alignment)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .background(hoveredID == transaction.id ? AppStyle.selection.opacity(0.6) : .clear)
+        .onHover { hovering in
+            if hovering { hoveredID = transaction.id }
+            else if hoveredID == transaction.id { hoveredID = nil }
+        }
+        .help("View transaction")
+        .accessibilityHint("Opens transaction details")
     }
 
     private var pagination: some View {
@@ -190,7 +227,7 @@ struct TransactionsView: View {
     private var selectionActions: some View {
         HStack(spacing: 10) {
             Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
-            Button("Notes & receipts…") { receiptTransaction = selectedTransaction }
+            Button("View…") { viewedTransaction = selectedTransaction }.keyboardShortcut(.return, modifiers: [])
             Button("Edit…") { workspace.editor = selectedTransaction }.keyboardShortcut("e", modifiers: .command)
         }.disabled(selectedTransaction == nil).fixedSize()
     }

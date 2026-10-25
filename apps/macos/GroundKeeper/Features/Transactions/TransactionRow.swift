@@ -26,3 +26,26 @@ struct TransactionRow: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+struct TransactionDataIndicators: View {
+    let transaction: Transaction
+    var body: some View {
+        HStack(spacing: 10) {
+            if transaction.location != nil { Image(systemName: "mappin.and.ellipse").help("Location recorded") }
+            if transaction.hasNote { Image(systemName: "note.text").help("Has notes") }
+            if transaction.hasReceiptImage { Image(systemName: "receipt").help("Receipt image attached") }
+            if transaction.location == nil && !transaction.hasNote && !transaction.hasReceiptImage {
+                Text("–").foregroundStyle(AppStyle.muted)
+            }
+        }
+        .foregroundStyle(AppStyle.accent)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(description)
+    }
+    private var description: String {
+        let values = [transaction.location != nil ? "Location recorded" : nil,
+                      transaction.hasNote ? "Has notes" : nil,
+                      transaction.hasReceiptImage ? "Receipt image attached" : nil].compactMap { $0 }
+        return values.isEmpty ? "No additional data" : values.joined(separator: ", ")
+    }
+}
