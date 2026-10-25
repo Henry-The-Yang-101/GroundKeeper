@@ -43,11 +43,16 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
             while let view = parent {
                 if let table = view as? NSTableView {
                     table.selectionHighlightStyle = .none
-                    if !table.subviews.contains(where: { $0 is HoverObserver }) {
-                        let observer = HoverObserver()
+                    let observer: HoverObserver
+                    if let existing = table.subviews.first(where: { $0 is HoverObserver }) as? HoverObserver {
+                        observer = existing
+                    } else {
+                        observer = HoverObserver()
                         observer.table = table
                         table.addSubview(observer)
                     }
+                    // A reused/newly visible row must not inherit an old hover.
+                    observer.applyHover(to: decoration, in: target)
                     break
                 }
                 parent = view.superview
@@ -56,6 +61,7 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
         }
 
         func detach() {
+            decoration.setHovered(false)
             decoration.removeFromSuperview()
             row = nil
         }
@@ -66,29 +72,68 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
     }
 
     /// Observe the table's pointer events once, including gutters between cells.
-    /// Native table cell hosts can consume tracking-area transitions as they reuse
-    /// rows. This observer never consumes or changes an input event.
+    /// Own hover state centrally: row tracking-area transitions can arrive out of
+    /// order during reuse. Observe clip bounds after scrolling, too, since the
+    /// scroll-wheel event arrives before the rows move under a stationary pointer.
+    /// This observer never consumes or changes an input event.
     final class HoverObserver: NSView {
         weak var table: NSTableView?
         private var monitor: Any?
+        private var tracking: NSTrackingArea?
 
         override func hitTest(_ point: NSPoint) -> NSView? { nil }
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             if let monitor { NSEvent.removeMonitor(monitor); self.monitor = nil }
-            guard window != nil else { return }
+            if let tracking { table?.removeTrackingArea(tracking); self.tracking = nil }
+            NotificationCenter.default.removeObserver(self)
+            guard window != nil else { updateHover(); return }
             setAccessibilityElement(false)
             window?.acceptsMouseMovedEvents = true
+            if let table {
+                // Keep receiving exits when the pointer leaves the window and
+                // there are no further local mouse-moved events.
+                let area = NSTrackingArea(rect: .zero,
+                    options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect, .enabledDuringMouseDrag],
+                    owner: self, userInfo: nil)
+                table.addTrackingArea(area)
+                tracking = area
+            }
             monitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .otherMouseDown, .scrollWheel]) { [weak self] event in
-                MainActor.assumeIsolated { self?.updateHover(event) }
+                MainActor.assumeIsolated { self?.updateHover() }
                 return event
             }
+            if let clip = table?.enclosingScrollView?.contentView {
+                clip.postsBoundsChangedNotifications = true
+                clip.postsFrameChangedNotifications = true
+                for name in [NSView.boundsDidChangeNotification, NSView.frameDidChangeNotification] {
+                    NotificationCenter.default.addObserver(self, selector: #selector(updateHover), name: name, object: clip)
+                }
+            }
+            for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
+                NotificationCenter.default.addObserver(self, selector: #selector(updateHover), name: name, object: window)
+            }
+            updateHover()
         }
-        private func updateHover(_ event: NSEvent) {
+
+        override func mouseEntered(with event: NSEvent) { updateHover() }
+        override func mouseExited(with event: NSEvent) { updateHover() }
+
+        private var hoveredRowIndex: Int {
+            guard let table, let window, window.isKeyWindow, window.attachedSheet == nil else { return -1 }
+            let point = table.convert(window.mouseLocationOutsideOfEventStream, from: nil)
+            return table.visibleRect.contains(point) ? table.row(at: point) : -1
+        }
+
+        func applyHover(to background: RowBackground, in row: NSTableRowView) {
             guard let table else { return }
-            let point = table.convert(event.locationInWindow, from: nil)
-            let index = event.window === window && window?.attachedSheet == nil && table.visibleRect.contains(point)
-                ? table.row(at: point) : -1
+            let index = hoveredRowIndex
+            background.setHovered(index >= 0 && table.row(for: row) == index)
+        }
+
+        @objc private func updateHover() {
+            guard let table else { return }
+            let index = hoveredRowIndex
             table.enumerateAvailableRowViews { row, rowIndex in
                 for case let background as RowBackground in row.subviews { background.setHovered(rowIndex == index) }
             }
@@ -104,7 +149,7 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
             super.updateTrackingAreas()
             if let tracking { removeTrackingArea(tracking) }
             let area = NSTrackingArea(rect: .zero,
-                options: [.mouseEnteredAndExited, .cursorUpdate, .activeInKeyWindow, .inVisibleRect, .enabledDuringMouseDrag],
+                options: [.cursorUpdate, .activeInKeyWindow, .inVisibleRect, .enabledDuringMouseDrag],
                 owner: self, userInfo: nil)
             addTrackingArea(area)
             tracking = area
@@ -114,8 +159,6 @@ struct TransactionTableRowAppearance: NSViewRepresentable {
             hovered = value
             updateColor()
         }
-        override func mouseEntered(with event: NSEvent) { setHovered(true) }
-        override func mouseExited(with event: NSEvent) { setHovered(false) }
         override func cursorUpdate(with event: NSEvent) { NSCursor.pointingHand.set() }
         override func viewDidChangeEffectiveAppearance() { super.viewDidChangeEffectiveAppearance(); updateColor() }
 
