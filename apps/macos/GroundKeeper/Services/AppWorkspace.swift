@@ -150,8 +150,7 @@ import GroundKeeperCore
             loop = Task { [weak self] in
                 while !Task.isCancelled {
                     guard let self else { break }
-                    await self.updateQueueCount()
-                    if !self.showingSetup && self.processingMode.automaticallyProcesses { await self.sync(automatic: true) }
+                    await self.processIfAutomatic()
                     do { try await Task.sleep(for: .seconds(15)) } catch { break }
                 }
             }
@@ -413,6 +412,17 @@ import GroundKeeperCore
         else { await updateQueueCount() }
     }
     func sync(automatic: Bool = false) async {
+        // Inventory is read-only. An idle timer tick must not take the UI's
+        // processing lock or briefly disable settings and model selection.
+        if automatic {
+            guard !showingSetup, processingMode.automaticallyProcesses else { return }
+            await updateQueueCount()
+            if queueCount == 0 {
+                // A committed capture may still be waiting for its receipt asset.
+                guard let store, folderBookmark != nil,
+                      (try? await store.receiptImageRequests().isEmpty) == false else { return }
+            }
+        }
         guard !processing, !saving, store != nil, !changingProcessingMode, !Task.isCancelled,
               !automatic || processingMode.automaticallyProcesses else { return }
         processing = true

@@ -1,6 +1,8 @@
 import Foundation
 import ServiceManagement
 import GroundKeeperCore
+import Observation
+import Synchronization
 
 /// Exercises app scheduling and scanner inventory against fictional files and a temporary vault.
 @MainActor enum QueueSmoke {
@@ -43,6 +45,12 @@ import GroundKeeperCore
             let fresh = CaptureFolder()
             let inventory = try await fresh.scan(bookmark: bookmark, store: store, readFiles: false)
             try check(inventory.pending == 0, "Restart inventory counted completed files")
+            workspace.showingSetup = false
+            workspace.processingMode = .whileOpen
+            let idleProcessingChanged = Mutex(false)
+            withObservationTracking { _ = workspace.processing } onChange: { idleProcessingChanged.withLock { $0 = true } }
+            await workspace.processIfAutomatic()
+            try check(!idleProcessingChanged.withLock { $0 }, "Idle polling briefly locked settings")
             let malformed = inbox.appendingPathComponent("malformed.json")
             try Data("broken".utf8).write(to: malformed)
             try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -10)], ofItemAtPath: malformed.path)
@@ -51,6 +59,7 @@ import GroundKeeperCore
             try check(try await store.snapshot().queue.contains { $0.path == "malformed.json" && $0.attempts == 1 }, "While-open mode did not process")
             await workspace.sync()
             try check(try await store.snapshot().queue.first { $0.path == "malformed.json" }?.attempts == 1, "Backoff was bypassed")
+            try FileManager.default.removeItem(at: malformed)
             workspace.processingMode = .manual
             try await store.addAccount(name: "Fictional account", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
@@ -58,6 +67,12 @@ import GroundKeeperCore
             _ = try await workspace.importCSV(document, mapping: mapping, skipped: [])
             await workspace.processIfAutomatic()
             try check(workspace.pendingJobs == 0 && workspace.unqueuedJobs == 1 && workspace.model == nil, "CSV import bypassed manual classification mode")
+            workspace.classifierProvider = "manual"
+            workspace.processingMode = .whileOpen
+            let manualProcessingChanged = Mutex(false)
+            withObservationTracking { _ = workspace.processing } onChange: { manualProcessingChanged.withLock { $0 = true } }
+            await workspace.processIfAutomatic()
+            try check(!manualProcessingChanged.withLock { $0 }, "Manual categorization backlog briefly locked settings")
             try check(try await store.integrityCheck(), "Integrity check failed")
             await workspace.stop()
             if CommandLine.arguments.contains("--background-smoke-agent") {
