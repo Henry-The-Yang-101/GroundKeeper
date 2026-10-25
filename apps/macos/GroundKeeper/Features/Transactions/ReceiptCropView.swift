@@ -38,6 +38,7 @@ struct ReceiptCropView: View {
                             .frame(width: crop.width * size.width, height: crop.height * size.height)
                             .offset(x: crop.minX * size.width, y: crop.minY * size.height)
                     }
+                    .frame(width: size.width, height: size.height)
                     .contentShape(.rect)
                     .gesture(DragGesture(minimumDistance: 2).onChanged { value in
                         let start = CGPoint(x: min(max(value.startLocation.x / size.width, 0), 1), y: min(max(value.startLocation.y / size.height, 0), 1))

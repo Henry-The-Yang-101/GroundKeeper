@@ -318,7 +318,7 @@ import GroundKeeperCore
             let data = receipt.data
             // The import flow already produced the bounded JPEG; OCR never blocks
             // saving a readable receipt if recognition is unavailable.
-            let ocr = try? await ReceiptOCR.recognize(data)
+            let ocr = try? await ReceiptOCR.recognizeText(data)
             edit.receiptAdditions.append(ReceiptAddition(image: data, text: ocr?.text ?? "", producer: ocr?.producer ?? "apple_vision_documents"))
         }
         return edit
@@ -591,7 +591,7 @@ import GroundKeeperCore
     func addReceiptImage(transactionID: String, data: Data) async throws {
         guard let store else { throw LedgerError.unavailable("Open the vault first.") }
         // A readable image is useful even when OCR finds no text.
-        let ocr = try? await ReceiptOCR.recognize(data)
+        let ocr = try? await ReceiptOCR.recognizeText(data)
         try await store.addReceiptImage(transactionID: transactionID, data: data, ocrText: ocr?.text ?? "", producer: ocr?.producer ?? "apple_vision_documents")
         try await refresh()
     }

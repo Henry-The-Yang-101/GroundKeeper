@@ -143,6 +143,7 @@ struct TransactionEditor: View {
             SheetFooter {
                 Button("Cancel", action: cancel).keyboardShortcut(.cancelAction).disabled(workspace.saving)
                 Spacer()
+                if workspace.saving { ProgressView("Saving…").controlSize(.small) }
                 Button("Save transaction") { save() }
                     .buttonStyle(.brass)
                     .keyboardShortcut(.defaultAction)
