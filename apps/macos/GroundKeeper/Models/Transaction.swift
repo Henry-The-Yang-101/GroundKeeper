@@ -2,6 +2,10 @@ import Foundation
 import GroundKeeperCore
 
 enum TransactionInput {
+    static func amountText(_ amount: Decimal) -> String {
+        amount.formatted(.number.grouping(.never).precision(.fractionLength(2)))
+    }
+
     static func positiveAmount(_ text: String) -> Decimal? {
         let input = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let parts = input.components(separatedBy: Locale.current.decimalSeparator ?? ".")

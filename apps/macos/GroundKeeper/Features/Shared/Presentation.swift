@@ -68,10 +68,34 @@ struct ContentSizedScrollView<Content: View>: View {
 
 struct TransactionAmountField: View {
     @Binding var text: String
+    var currency: String? = nil
+    @FocusState private var isFocused: Bool
+
+    private var currencySymbol: String? {
+        currency.map { Locale(identifier: "en_US@currency=\($0)").currencySymbol ?? $0 }
+    }
 
     var body: some View {
-        TextField("Amount", text: $text)
-            .accessibilityHint("Enter a positive amount without thousands separators. Choose Money out or Money in for its direction.")
+        LabeledContent("Amount") {
+            HStack(spacing: 4) {
+                if let currencySymbol {
+                    Text(currencySymbol).accessibilityHidden(true)
+                }
+                TextField("Amount", text: $text, prompt: Text("0.00"))
+                    .labelsHidden()
+                    .fixedSize()
+                    .focused($isFocused)
+                    .accessibilityLabel(currency.map { "Amount in \($0)" } ?? "Amount")
+                    .accessibilityHint("Enter a positive amount without thousands separators. Choose Money out or Money in for its direction.")
+            }
+            // Keep the symbol physically to the left, including in RTL locales.
+            .environment(\.layoutDirection, .leftToRight)
+        }
+        .onChange(of: isFocused) { _, focused in
+            if !focused, let amount = TransactionInput.positiveAmount(text) {
+                text = TransactionInput.amountText(amount)
+            }
+        }
     }
 }
 

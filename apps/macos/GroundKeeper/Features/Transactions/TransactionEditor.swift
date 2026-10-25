@@ -16,7 +16,7 @@ struct TransactionEditor: View {
     init(transaction: Transaction, onSave: @escaping (Transaction) -> Void) {
         original = transaction
         _draft = State(initialValue: transaction)
-        let initialAmount = transaction.amount == 0 ? "" : transaction.amount.formatted(.number.grouping(.never))
+        let initialAmount = transaction.amount == 0 ? "" : TransactionInput.amountText(transaction.amount)
         originalAmountText = initialAmount
         _amountText = State(initialValue: initialAmount)
         self.onSave = onSave
@@ -49,7 +49,7 @@ struct TransactionEditor: View {
                     TextField("Merchant or description", text: $draft.merchant)
                         .focused($merchantFocused)
                     HStack {
-                        TransactionAmountField(text: $amountText)
+                        TransactionAmountField(text: $amountText, currency: draft.currency)
                         Picker("Currency", selection: $draft.currency) {
                             ForEach(["CAD", "USD", "EUR", "GBP"], id: \.self) { Text($0) }
                         }.labelsHidden().frame(width: 85)
