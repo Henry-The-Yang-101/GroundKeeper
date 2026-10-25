@@ -12,6 +12,7 @@ struct TransactionEditor: View {
     @State private var suggestionError: String?
     @State private var suggestionTask: Task<Void, Never>?
     @State private var suggesting = false
+    @State private var receiptsLoading = true
     @FocusState private var merchantFocused: Bool
     private let original: Transaction
     private let originalAmountText: String
@@ -134,6 +135,7 @@ struct TransactionEditor: View {
                          ? "Other includes spending whose purpose is uncertain. You can add details in Notes."
                          : "Changes apply to this transaction only. Purchases with no category stay in review.")
                 }
+                TransactionReceiptEditor(transaction: $draft, loading: $receiptsLoading)
                 CouncilEvidenceView(transactionID: original.id.uuidString)
             }
             .formStyle(.grouped).scrollContentBackground(.hidden)
@@ -144,10 +146,10 @@ struct TransactionEditor: View {
                 Button("Save transaction") { save() }
                     .buttonStyle(.brass)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!valid || workspace.saving || suggesting)
+                    .disabled(!valid || workspace.saving || suggesting || receiptsLoading)
             }
         }
-        .frame(width: 530, height: 600)
+        .frame(width: 580, height: 700)
         .interactiveDismissDisabled(isChanged || workspace.saving)
         .onAppear { merchantFocused = true }
         .onDisappear { suggestionTask?.cancel() }

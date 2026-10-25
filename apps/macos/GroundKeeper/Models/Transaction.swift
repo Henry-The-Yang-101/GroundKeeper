@@ -27,6 +27,11 @@ enum TransactionInput {
     }
 }
 
+struct DraftReceiptImage: Identifiable, Equatable {
+    let id = UUID()
+    let data: Data
+}
+
 /// Editable presentation of a persisted account-side transaction.
 struct Transaction: Identifiable, Equatable {
     var id = UUID()
@@ -47,7 +52,7 @@ struct Transaction: Identifiable, Equatable {
     var confirmCategory = false
     var location: TransactionLocation?
     var hasReceiptImage = false
-    var newReceiptImages: [Data] = []
+    var newReceiptImages: [DraftReceiptImage] = []
     var removedReceiptIDs: [String] = []
     var hasNote: Bool { !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
@@ -185,7 +190,7 @@ extension Transaction {
                 needsReview: needsReview || kind == .unknown || (kind.usesCategory && category == .none), notes: notes)
             result.confirmCategory = confirmCategory
             result.removedReceiptIDs = removedReceiptIDs
-            result.receiptAdditions = newReceiptImages.map { ReceiptAddition(image: $0) }
+            result.receiptAdditions = newReceiptImages.map { ReceiptAddition(image: $0.data) }
             return result
         }
     }

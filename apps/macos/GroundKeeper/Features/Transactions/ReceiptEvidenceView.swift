@@ -38,13 +38,10 @@ struct ReceiptEvidenceView: View {
                         Text("Long notes are shortened for classification; the full note stays saved here.").font(.caption).foregroundStyle(AppStyle.muted)
                     }
                     Divider()
-                    HStack {
-                        Text("Receipts").font(.headline)
-                        Spacer()
-                        Button("Add receipt image…") {
-                            Task { await perform { try await workspace.addReceiptImage(transactionID: transactionID) } }
-                        }.disabled(busy || loading)
-                    }
+                    Text("Receipts").font(.headline)
+                    ReceiptImportControls { data in
+                        Task { await perform { try await workspace.addReceiptImage(transactionID: transactionID, data: data) } }
+                    }.disabled(busy || loading)
                     if loading { ProgressView("Loading notes and receipts…").controlSize(.small) }
                     else if busy { ProgressView("Updating transaction…").controlSize(.small) }
                     if !loading && records.isEmpty { Text("No receipts attached.").foregroundStyle(AppStyle.muted) }
