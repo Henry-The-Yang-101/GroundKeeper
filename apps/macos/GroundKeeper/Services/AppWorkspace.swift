@@ -119,6 +119,9 @@ import GroundKeeperCore
                 try await InterfacePreview.seed(opened.0)
                 status = "Preview vault · fictional transactions"
                 processingMode = .manual
+                if CommandLine.arguments.contains("--transaction-preview") {
+                    showingSetup = false; showTransactions()
+                }
                 if CommandLine.arguments.contains("--spending-preview") {
                     showingSetup = false; selectedTab = .spending
                 }
@@ -291,6 +294,7 @@ import GroundKeeperCore
         saving = true
         defer { saving = false }
         let edit = try await self.prepareTransactionEdit(transaction)
+        guard self.store === store else { throw CancellationError() }
         try await store.save(edit)
         guard self.store === store else { throw CancellationError() }
         try await refresh()
@@ -300,6 +304,7 @@ import GroundKeeperCore
         perform {
             guard let store = self.store else { return }
             let edit = try await self.prepareTransactionEdit(transaction)
+            guard self.store === store else { throw CancellationError() }
             try await store.save(edit)
             self.editor = nil
             try await self.refresh()

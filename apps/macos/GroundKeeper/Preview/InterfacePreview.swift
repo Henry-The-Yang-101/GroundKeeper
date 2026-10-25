@@ -13,6 +13,10 @@ enum InterfacePreview {
 
     static func seed(_ store: LedgerStore) async throws {
         guard isEnabled, try await store.snapshot(limit: 1).accounts.isEmpty else { return }
+        if CommandLine.arguments.contains("--transaction-preview") {
+            try await TransactionPreview.seed(store)
+            return
+        }
         if CommandLine.arguments.contains("--spending-preview") {
             try await SpendingPreview.seed(store)
             return
