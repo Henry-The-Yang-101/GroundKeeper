@@ -434,3 +434,38 @@ option uses the saved package instead of the supplied path; preferences and
 transactions still use the disposable preview workspace. No model is downloaded.
 Draft requests use a positive protocol revision (`max(1, draft.revision)`), since
 the worker rejects revision 0 before inference.
+
+## Transaction viewer and receipt editing
+
+Click a transaction once to open **View transaction**. The summary shows the
+merchant, amount, direction, date, account, category and type; notes, recorded
+location and receipt images follow below. **Edit** in the upper-right corner opens
+the transaction editor. Table rows highlight on hover, and the **Additional data**
+column identifies recorded locations, notes and stored receipt images.
+
+Use **Photos**, **Files…**, or **Take photo…** in the editor's Receipts section.
+Each image opens in a crop screen with drag selection and keyboard-accessible edge
+sliders. Imports become metadata-free JPEGs of at most 8 MiB. Save commits the
+transaction and receipt changes together; Cancel discards staged additions and
+removals. Removed receipts remain in vault history, outside the viewer and
+classifier context. Manual imports use local Apple text OCR; unreadable text does
+not prevent saving an image.
+
+The map displays coordinates already recorded on the transaction or its linked
+capture. Existing bundled Shortcuts do not collect location. See the
+[optional captured-location contract](../../contracts/capture/README.md#optional-captured-location)
+for producers that provide it. The Mac does not guess a merchant location.
+
+For a disposable demonstration with a fictional map pin, note and receipt:
+
+```sh
+./apps/macos/run-demo.sh --no-build --transactions --instance transaction-view
+```
+
+Verification on 2026-10-25: the Debug macOS build and all 117 core tests passed.
+Native UI checks covered single-click viewing, map/receipt rendering, empty
+states, opening the editor, Photos picker presentation, file import, cropping,
+local OCR, saving/replacing/removing receipts, discard behavior and table-indicator
+refresh. The camera entitlement and usage description were verified in the built
+app; physical webcam capture and selecting an actual Photos-library image still
+require a device walkthrough. Test changes used a disposable fictional vault.
