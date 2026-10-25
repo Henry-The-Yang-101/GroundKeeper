@@ -290,7 +290,8 @@ import GroundKeeperCore
         guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then save again.") }
         saving = true
         defer { saving = false }
-        try await store.save(transaction.edit)
+        let edit = try await self.prepareTransactionEdit(transaction)
+        try await store.save(edit)
         guard self.store === store else { throw CancellationError() }
         try await refresh()
         feedback = WorkspaceFeedback(message: "Transaction saved")
@@ -298,12 +299,25 @@ import GroundKeeperCore
     func save(_ transaction: Transaction) {
         perform {
             guard let store = self.store else { return }
-            try await store.save(transaction.edit)
+            let edit = try await self.prepareTransactionEdit(transaction)
+            try await store.save(edit)
             self.editor = nil
             try await self.refresh()
             self.feedback = WorkspaceFeedback(message: "Transaction saved")
         }
     }
+    private func prepareTransactionEdit(_ transaction: Transaction) async throws -> TransactionEdit {
+        var edit = try transaction.edit
+        edit.receiptAdditions = []
+        for data in transaction.newReceiptImages {
+            // The import flow already produced the bounded JPEG; OCR never blocks
+            // saving a readable receipt if recognition is unavailable.
+            let ocr = try? await ReceiptOCR.recognize(data)
+            edit.receiptAdditions.append(ReceiptAddition(image: data, text: ocr?.text ?? "", producer: ocr?.producer ?? "apple_vision_documents"))
+        }
+        return edit
+    }
+
     func delete(_ transaction: Transaction) {
         perform { try await self.store?.delete(id: transaction.id.uuidString, revision: transaction.revision); try await self.refresh() }
     }

@@ -49,11 +49,22 @@ public struct LedgerTransaction: Identifiable, Sendable {
         return known.isEmpty ? "Manually input" : known.joined(separator: " + ")
     }
 }
+public struct ReceiptAddition: Sendable {
+    public let image: Data
+    public let text: String
+    public let producer: String
+    public init(image: Data, text: String = "", producer: String = "apple_vision_documents") {
+        self.image = image; self.text = text; self.producer = producer
+    }
+}
+
 public struct TransactionEdit: Sendable {
     public var id: String, revision: Int, description: String, amountMinor: Int64, currency: String
     public var occurredOn: String, accountID: String?, type: String, category: String?, needsReview: Bool, notes: String
     /// Explicit acceptance of an unchanged suggestion; ordinary field edits preserve its origin.
     public var confirmCategory: Bool = false
+    public var receiptAdditions: [ReceiptAddition] = []
+    public var removedReceiptIDs: [String] = []
     public init(id: String = UUID().uuidString, revision: Int = 0, description: String, amountMinor: Int64,
                 currency: String, occurredOn: String, accountID: String?, type: String, category: String?, needsReview: Bool, notes: String) {
         self.id = id; self.revision = revision; self.description = description; self.amountMinor = amountMinor

@@ -166,3 +166,26 @@ extension LedgerStore {
     #expect(try await store.snapshot().transactions[0].notes == "Rewritten note")
     #expect(try await store.integrityCheck())
 }
+
+@Test func transactionAndReceiptEditsCommitTogetherOrRollBack() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    let account = try #require(try await store.snapshot().accounts.first)
+    var edit = TransactionEdit(description: "Receipt fixture", amountMinor: -500, currency: "CAD", occurredOn: "2026-10-25",
+        accountID: account.id, type: "expense", category: "groceries", needsReview: false, notes: "")
+    edit.receiptAdditions = [ReceiptAddition(image: receiptPNG, text: "Milk")]
+    try await store.save(edit)
+    let receipt = try #require(try await store.receipts(transactionID: edit.id).first)
+    edit.revision = try #require(try await store.transaction(id: edit.id)).revision
+    edit.description = "Should roll back"
+    edit.removedReceiptIDs = [receipt.id]
+    edit.receiptAdditions = [ReceiptAddition(image: Data("invalid".utf8))]
+    await #expect(throws: LedgerError.self) { try await store.save(edit) }
+    #expect(try await store.transaction(id: edit.id)?.description == "Receipt fixture")
+    #expect(try await store.receipts(transactionID: edit.id).map(\.id) == [receipt.id])
+    edit.receiptAdditions = []
+    try await store.save(edit)
+    #expect(try await store.receipts(transactionID: edit.id).isEmpty)
+    await #expect(throws: LedgerError.self) { try await store.save(edit) }
+    #expect(try await store.integrityCheck())
+}

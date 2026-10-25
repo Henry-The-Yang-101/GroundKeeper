@@ -166,29 +166,31 @@ extension LedgerStore {
         }
     }
     @discardableResult public func addReceiptImage(transactionID: String, data: Data, ocrText: String = "", producer: String = "apple_vision_documents") throws -> String {
+        try db.transaction { try insertManualReceipt(transactionID: transactionID, data: data, ocrText: ocrText, producer: producer) }
+    }
+    @discardableResult func insertManualReceipt(transactionID: String, data: Data, ocrText: String, producer: String) throws -> String {
         guard ocrText.utf8.count <= 32_768, !ocrText.contains("\0") else { throw LedgerError.invalid("Receipt text is too long.") }
-        return try db.transaction {
-            _ = try transactionNote(transactionID: transactionID)
-            let id = identifier()
-            try db.query("INSERT INTO receipt_captures(id,source_event_id,payload_sha256,payload_json,captured_at_ms,parent_source_id,parent_event_id,transaction_id,image_state) VALUES (?,?,?,'{}',?,'manual',?,?,'pending')",
-                [.text(id), .text("manual:" + id), .text(contentHash(data)), .integer(nowMS()), .text(transactionID), .text(transactionID)])
-            try insertReceiptImage(id: id, data: data)
-            try insertReceiptOCR(receiptID: id, producer: producer, text: ocrText)
-            try receiptEvidenceChanged(transactionID: transactionID)
-            return id
-        }
+        _ = try transactionNote(transactionID: transactionID)
+        let id = identifier()
+        try db.query("INSERT INTO receipt_captures(id,source_event_id,payload_sha256,payload_json,captured_at_ms,parent_source_id,parent_event_id,transaction_id,image_state) VALUES (?,?,?,'{}',?,'manual',?,?,'pending')",
+            [.text(id), .text("manual:" + id), .text(contentHash(data)), .integer(nowMS()), .text(transactionID), .text(transactionID)])
+        try insertReceiptImage(id: id, data: data)
+        try insertReceiptOCR(receiptID: id, producer: producer, text: ocrText)
+        try receiptEvidenceChanged(transactionID: transactionID)
+        return id
     }
     /// Removal is reversible. Retained evidence is excluded from display and model context.
     public func setReceiptRemoved(id: String, transactionID: String, removed: Bool) throws {
-        try db.transaction {
-            _ = try transactionNote(transactionID: transactionID)
-            guard let row = try db.query("SELECT removed_at_ms FROM receipt_captures WHERE id=? AND transaction_id=?", [.text(id), .text(transactionID)]).first else {
-                throw LedgerError.invalid("This receipt is no longer available.")
-            }
-            guard (row["removed_at_ms"]?.int != nil) != removed else { return }
-            try db.query("UPDATE receipt_captures SET removed_at_ms=? WHERE id=?", [removed ? .integer(nowMS()) : .null, .text(id)])
-            try receiptEvidenceChanged(transactionID: transactionID)
+        try db.transaction { try updateReceiptRemoved(id: id, transactionID: transactionID, removed: removed) }
+    }
+    func updateReceiptRemoved(id: String, transactionID: String, removed: Bool) throws {
+        _ = try transactionNote(transactionID: transactionID)
+        guard let row = try db.query("SELECT removed_at_ms FROM receipt_captures WHERE id=? AND transaction_id=?", [.text(id), .text(transactionID)]).first else {
+            throw LedgerError.invalid("This receipt is no longer available.")
         }
+        guard (row["removed_at_ms"]?.int != nil) != removed else { return }
+        try db.query("UPDATE receipt_captures SET removed_at_ms=? WHERE id=?", [removed ? .integer(nowMS()) : .null, .text(id)])
+        try receiptEvidenceChanged(transactionID: transactionID)
     }
     public func markReceiptImageInvalid(id: String) throws {
         try db.query("UPDATE receipt_captures SET image_state='invalid',image_error='invalid_receipt_image' WHERE id=?", [.text(id)])

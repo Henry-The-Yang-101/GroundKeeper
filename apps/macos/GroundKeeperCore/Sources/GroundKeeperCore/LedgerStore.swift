@@ -128,6 +128,12 @@ public actor LedgerStore {
                 try db.query("UPDATE transaction_parts SET current_assignment_id=? WHERE id=?", [.text(id), .text(part.text("id"))])
             }
             try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(edit.id)])
+            for id in Set(edit.removedReceiptIDs) {
+                try updateReceiptRemoved(id: id, transactionID: edit.id, removed: true)
+            }
+            for receipt in edit.receiptAdditions {
+                try insertManualReceipt(transactionID: edit.id, data: receipt.image, ocrText: receipt.text, producer: receipt.producer)
+            }
             try db.query("UPDATE classification_jobs SET status='obsolete',updated_at_ms=? WHERE part_id=? AND status IN ('pending','running')", [.integer(nowMS()), .text(part.text("id"))])
             try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms,before_json,after_json) VALUES (?,?,'transaction',?,'user','edit',?,?,?)",
                 [.text(identifier()), .text(identifier()), .text(edit.id), .integer(nowMS()), .optional(try old.map { try json($0.mapValues { $0.string ?? $0.int.map(String.init) ?? "" }) }), .text(try json(["description": edit.description, "amount_minor": String(edit.amountMinor), "type": edit.type, "category": edit.category ?? ""]))])

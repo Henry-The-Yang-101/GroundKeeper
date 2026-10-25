@@ -47,6 +47,8 @@ struct Transaction: Identifiable, Equatable {
     var confirmCategory = false
     var location: TransactionLocation?
     var hasReceiptImage = false
+    var newReceiptImages: [Data] = []
+    var removedReceiptIDs: [String] = []
     var hasNote: Bool { !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var formattedAmount: String {
@@ -182,6 +184,8 @@ extension Transaction {
                 category: kind.usesCategory && category != .none ? category.code : nil,
                 needsReview: needsReview || kind == .unknown || (kind.usesCategory && category == .none), notes: notes)
             result.confirmCategory = confirmCategory
+            result.removedReceiptIDs = removedReceiptIDs
+            result.receiptAdditions = newReceiptImages.map { ReceiptAddition(image: $0) }
             return result
         }
     }
