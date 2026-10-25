@@ -100,3 +100,43 @@ JSON and image copies from iCloud. The payload, note, OCR and retained image byt
 remain in the local vault. Deletion retries after interruption or access failure;
 invalid files are retained. Existing folder connections need read/write access.
 Receipt images can also be added or removed in **Notes & receipts…** on the Mac.
+
+
+## Optional captured location
+
+Schema 4 accepts an optional `location` object with numeric `latitude` (-90…90)
+and `longitude` (-180…180), optional `horizontal_accuracy_m` (0…10,000,000),
+optional offset-bearing ISO 8601 `measured_at` (defaults to `captured_at`), and an
+optional NUL-free `label` of at most 500 UTF-8 bytes. Coordinates must be finite.
+Invalid supplied locations reject the entire capture. Location evidence is saved
+atomically in `geotags` against the immutable event and follows active transaction
+links. Replayed deliveries do not duplicate it. No database migration is needed;
+these tables have existed since migration 001.
+
+The current bundled Shortcuts do **not** request or emit location. Existing
+transactions therefore have no map unless coordinates were supplied by a capture
+producer or already exist in the vault. The Mac does not infer purchase locations
+from merchants, receipt metadata, or the Mac's current position. A captured phone
+location is evidence of where the phone was, not a verified merchant address.
+
+## Viewing transactions and adding images on Mac
+
+Click a transaction once to open **View transaction**, including notes, any
+recorded location in Apple Maps, and attached receipt images. **Edit** opens the
+transaction editor. The table has separate **Type** and **Additional data** columns;
+the latter shows location, note and stored receipt-image symbols when present.
+Pending, text-only and removed receipts do not claim that an image is attached.
+
+The editor offers **Photos**, **Files…**, and **Take photo…**. Each route opens a
+crop preview before staging the attachment. The shared encoder bakes orientation,
+flattens transparency onto white, strips image metadata, and writes JPEG at no more
+than 8 MiB. Sources are bounded to 128 MiB and downsampled to at most 6,000 pixels
+on the longest edge before cropping; quality and dimensions reduce further if
+needed. Camera access is requested only when the camera sheet is opened.
+
+Receipt additions and removals commit atomically with transaction fields on
+**Save transaction**. **Cancel** discards staged changes. **Remove receipt** hides
+the evidence from the viewer and classifier context; the original bytes remain
+in vault history under the existing reversible-removal policy. The older
+**Notes & receipts…** sheet uses the same import/crop pipeline and applies changes
+immediately. OCR failure does not prevent attaching a readable image.

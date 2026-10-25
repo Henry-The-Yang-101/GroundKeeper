@@ -16,5 +16,11 @@
       "producer": "apple_shortcuts",
       "text": "COFFEE BEANS 12.50"
     }
+  },
+  "location": {
+    "latitude": 43.4723,
+    "longitude": -80.5449,
+    "horizontal_accuracy_m": 15,
+    "label": "Fictional campus shop"
   }
 }

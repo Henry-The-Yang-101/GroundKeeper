@@ -116,6 +116,17 @@ public struct LedgerSnapshot: Sendable {
     public let cardMappings: [CardAccountMapping]
     public let totalTransactions: Int, pendingJobs: Int, failedJobs: Int
 }
+public struct CaptureLocation: Codable, Sendable {
+    public let latitude: Double, longitude: Double
+    public let horizontalAccuracyMeters: Double?
+    public let measuredAt: String?
+    public let label: String?
+    enum CodingKeys: String, CodingKey {
+        case latitude, longitude, label
+        case horizontalAccuracyMeters = "horizontal_accuracy_m", measuredAt = "measured_at"
+    }
+}
+
 public struct CaptureEnvelope: Codable, Sendable {
     public let schemaVersion: Int
     public let eventID: String
@@ -123,6 +134,7 @@ public struct CaptureEnvelope: Codable, Sendable {
     public let capturedAt: String
     public let app: String?
     public let note: String?
+    public let location: CaptureLocation?
     let receipt: ReceiptEnvelope.Payload?
     public let inputShape: String?
     public let isTest: Bool?
@@ -131,7 +143,7 @@ public struct CaptureEnvelope: Codable, Sendable {
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version", eventID = "event_id", source, capturedAt = "captured_at", app
         case inputShape = "input_shape", isTest = "is_test", title, subtitle, body, merchant, amount
-        case cardOrPass = "card_or_pass", name, transaction, note, receipt
+        case cardOrPass = "card_or_pass", name, transaction, note, receipt, location
     }
     var sourceKind: String { source == "wallet_transaction" ? "apple_wallet" : "bank_notification" }
     var sourceID: String { "capture:" + contentHash(Data("\(sourceKind)|\(app ?? "")".utf8)) }

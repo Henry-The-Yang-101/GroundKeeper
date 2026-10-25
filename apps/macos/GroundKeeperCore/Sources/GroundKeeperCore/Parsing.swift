@@ -51,7 +51,7 @@ enum CaptureParser {
         guard [1, 2, 4].contains(value.schemaVersion), !value.eventID.isEmpty, value.eventID.count <= 128,
               ["wallet_transaction", "bank_notification", "test_notification"].contains(value.source),
               value.source != "test_notification" || value.isTest == true else { throw LedgerError.invalid("unsupported_capture") }
-        guard value.schemaVersion == 4 || (value.note == nil && value.receipt == nil) else {
+        guard value.schemaVersion == 4 || (value.note == nil && value.receipt == nil && value.location == nil) else {
             throw LedgerError.invalid("unsupported_capture_details")
         }
         if let note = value.note {
@@ -59,6 +59,15 @@ enum CaptureParser {
                   !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw LedgerError.invalid("invalid_capture_note")
             }
+        }
+        if let location = value.location {
+            guard location.latitude.isFinite, location.longitude.isFinite,
+                  (-90...90).contains(location.latitude), (-180...180).contains(location.longitude),
+                  location.horizontalAccuracyMeters.map({ $0.isFinite && (0...10_000_000).contains($0) }) ?? true,
+                  location.label.map({ $0.utf8.count <= 500 && !$0.contains("\0") }) ?? true else {
+                throw LedgerError.invalid("invalid_capture_location")
+            }
+            if let measuredAt = location.measuredAt { _ = try timestamp(measuredAt) }
         }
         if let receipt = value.receipt { try ReceiptEnvelope.validate(receipt) }
         return value

@@ -365,3 +365,20 @@ Classifier input adds optional `transaction_notes`, a nonblank UTF-8 excerpt of
 at most 1,600 bytes, treated as untrusted purchase-purpose evidence. All selected
 providers, including Council members and Apple, receive it. The separate Apple
 receipt-sharing setting governs OCR only. Full notes remain editable locally.
+
+
+## Transaction viewer evidence and receipt edit sessions
+
+Transaction queries project the selected geotag, falling back to the latest direct
+transaction geotag and then the latest geotag on an actively linked capture. The
+image indicator uses an active receipt with stored image bytes, excluding removed,
+pending and text-only evidence. Notes use the editable transaction note.
+Schema 4 optional location ingestion is documented in
+[capture contracts](../capture/README.md#optional-captured-location).
+
+`TransactionEdit` can include receipt additions and removal IDs. They are applied
+inside the same database transaction as the optimistic-revision-checked field
+edit. Invalid images, invalid receipt ownership and stale revisions roll back the
+whole save. Receipt mutations invalidate old classification jobs as before; image
+bytes and removal history stay in the vault. UI imports are cropped and converted
+to JPEG no larger than 8 MiB before local OCR and the atomic save.

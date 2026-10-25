@@ -9,6 +9,15 @@ extension LedgerStore {
     // Called inside the payment import transaction, before reconciliation. Either
     // the payment and all its evidence commit together, or none of them do.
     func storeCaptureDetails(_ envelope: CaptureEnvelope, eventID: String, data: Data, hash: String) throws {
+        if let location = envelope.location {
+            try db.query("""
+                INSERT INTO geotags(id,event_id,latitude,longitude,horizontal_accuracy_m,measured_at_ms,origin,label,created_at_ms)
+                VALUES (?,?,?,?,?,?,'phone_capture',?,?)
+                """, [.text(identifier()), .text(eventID), .text(String(location.latitude)), .text(String(location.longitude)),
+                       .optional(location.horizontalAccuracyMeters.map { String($0) }),
+                       .integer(try CaptureParser.timestamp(location.measuredAt ?? envelope.capturedAt).0),
+                       .optional(location.label), .integer(nowMS())])
+        }
         if let note = envelope.note {
             try db.query("INSERT INTO capture_notes(event_id,text) VALUES (?,?)", [.text(eventID), .text(note)])
         }
