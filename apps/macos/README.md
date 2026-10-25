@@ -59,6 +59,32 @@ The local Swift package `GroundKeeperCore` pins Zetetic’s official SQLCipher
 4.19.0 package. It also opens ordinary SQLite when no passphrase is supplied. The XPC service embeds the existing pinned
 Python/MLX/PyTorch runtime; see [classifier setup](../../contracts/classifier/README.md).
 
+## Category attribution and None
+
+The Transactions table, Home's recent entries and transaction editor show a brass
+person for user choices and a purple sparkle for AI suggestions. Hover over the
+category text or icon for the saved provider/model name or AI Council. Unrelated
+field edits preserve attribution; **Use this category** explicitly accepts a
+suggestion and retains the previous AI assignment in history.
+
+Missing categories display as muted **None**, without an attribution icon, and
+are stored as SQL NULL. Migration 010 converts the former category on vault open.
+AI spending decisions use **Other** for uncertainty. All AI suggestions require
+review. See [category policy](../../docs/transaction-categories.md).
+
+For a disposable preview containing user, AI and missing-category entries:
+
+```sh
+./apps/macos/run-demo.sh --no-build --instance category-provenance --categories
+```
+
+Verification on 2026-10-25: 110 Swift core tests, 182 Python tests, signed Debug
+build, and sandboxed Ollama smoke with the already installed `qwen3:4b-instruct`
+passed. The category preview was inspected in light and dark appearances; the
+None filter and notes-only edit preserved the expected category attribution.
+Apple Shortcut source/export prompts were updated; real Apple inference was not
+part of this validation.
+
 ## Ollama provider
 
 Setup and Settings include an **Ollama** section that discovers installed local

@@ -34,6 +34,19 @@ enum InterfacePreview {
                 needsReview: example.3, notes: "Fictional UI preview record."
             ))
         }
+        if CommandLine.arguments.contains("--category-preview") {
+            var mapping = CSVMapping(); mapping.accountID = account.id
+            let document = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-22,Fictional Ollama suggestion,-15.50\n".utf8), filename: "category-preview.csv")
+            _ = try await store.importCSV(document, mapping: mapping)
+            let identity = String(repeating: "a", count: 64)
+            try await store.registerModel(id: identity, name: "gemma3:4b", backend: "ollama", policy: "groundkeeper-19-v2", configuration: "{\"fictional_preview\":true}")
+            try await store.enqueueClassifications(modelID: identity)
+            if let task = try await store.claimClassification(modelID: identity) {
+                try await store.completeClassification(task, decision: .init(type: "expense", category: "dining", review: true))
+            }
+            try await store.save(.init(description: "Fictional purchase with no category", amountMinor: -3400, currency: "CAD",
+                                      occurredOn: "2026-10-23", accountID: account.id, type: "expense", category: nil, needsReview: true, notes: "Fictional UI preview record."))
+        }
         try await store.addAccount(name: "Travel card · Demo", currency: "CAD")
         // Real capture-review controls, backed by the disposable preview vault.
         for (id, wallet, card) in [("preview-wallet", true, "Everyday card · 1234"),

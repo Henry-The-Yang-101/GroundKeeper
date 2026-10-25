@@ -53,12 +53,13 @@ private func edit(_ row: LedgerTransaction) -> TransactionEdit {
     try await ingestMapped(store, id: "no-category")
     #expect(try await store.snapshot().transactions[0].category == nil)
     try await store.save(.init(description: "Unassigned purchase", amountMinor: -2000, currency: "CAD", occurredOn: "2026-10-25", accountID: account, type: "expense", category: nil, needsReview: true, notes: ""))
+    try await store.save(.init(description: "Fictional income", amountMinor: 5000, currency: "CAD", occurredOn: "2026-10-25", accountID: account, type: "income", category: nil, needsReview: false, notes: ""))
     #expect(try await store.testRows("SELECT * FROM categories").count == 19)
     #expect(try await store.testRows("SELECT category_id FROM category_assignments WHERE category_id IS NOT NULL").isEmpty)
     var query = LedgerTransactionQuery(); query.category = "none"
-    #expect(try await store.transactionPage(query).totalMatches == 2)
+    #expect(try await store.transactionPage(query).totalMatches == 3)
     query.search = "None"; query.categoryNames = ["none": "None"]
-    #expect(try await store.transactionPage(query).totalMatches == 2)
+    #expect(try await store.transactionPage(query).totalMatches == 3)
     var filter = SpendingFilter(range: try .init(start: "2026-10-01", end: "2026-11-01"), timezone: "America/Toronto")
     filter.category = "none"
     let report = try await store.spendingReport(filter)

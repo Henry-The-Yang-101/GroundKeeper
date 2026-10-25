@@ -462,7 +462,7 @@ import GroundKeeperCore
             try Task.checkCancellation()
             try await refresh()
             if classifierProvider == "manual", pendingJobs + unqueuedJobs > 0 {
-                status = "Captures checked. Review uncategorized transactions or choose a provider for suggestions."
+                status = "Captures checked. Review transactions with no category or choose a provider for suggestions."
             } else if pendingJobs + unqueuedJobs > 0 {
                 if classifierProvider == "council" { try await classifyCouncilPending() }
                 else {

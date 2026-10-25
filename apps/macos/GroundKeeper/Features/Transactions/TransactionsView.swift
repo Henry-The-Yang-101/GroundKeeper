@@ -73,13 +73,12 @@ struct TransactionsView: View {
                     }.width(min: 140, ideal: 190)
                     TableColumn("Category / type") { transaction in
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(transaction.kind.usesCategory ? transaction.category.rawValue : transaction.kind.rawValue)
-                                .lineLimit(1).help(transaction.category.rawValue)
+                            CategoryLabel(transaction: transaction)
                             if transaction.needsReview {
                                 Label("Needs review", systemImage: "circle.dashed")
                                     .font(.caption).foregroundStyle(AppStyle.muted)
-                            } else if transaction.kind == .refund {
-                                Text("Refund").font(.caption).foregroundStyle(AppStyle.muted)
+                            } else if transaction.kind != .purchase {
+                                Text(transaction.kind.rawValue).font(.caption).foregroundStyle(AppStyle.muted)
                             }
                         }
                     }.width(min: 120, ideal: 190)

@@ -8,13 +8,13 @@ enum SampleData {
 
     static let transactions: [Transaction] = [
         Transaction(merchant: "Vincenzo’s", date: date(10), amount: 64.28, category: .groceries, needsReview: false, source: "Wallet · sample"),
-        Transaction(merchant: "Amazon", date: date(10), amount: 38.49, category: .uncategorized, notes: "Choose a category based on what you purchased.", source: "Bank alert · sample"),
+        Transaction(merchant: "Amazon", date: date(10), amount: 38.49, category: .none, notes: "Choose a category based on what you purchased.", source: "Bank alert · sample"),
         Transaction(merchant: "Balzac’s Coffee", date: date(9), amount: 6.75, category: .dining, needsReview: false, source: "Wallet · sample"),
         Transaction(merchant: "Grand River Transit", date: date(9), amount: 3.75, category: .transport, needsReview: false, source: "Wallet · sample"),
         Transaction(merchant: "Farm Boy", date: date(8), amount: 52.16, category: .groceries, needsReview: false, source: "Wallet · sample"),
         Transaction(merchant: "Interac e-Transfer", date: date(8), amount: 75, account: "Chequing", kind: .adjustment, notes: "Confirm the purpose and transaction type.", source: "Bank alert · sample"),
         Transaction(merchant: "GitHub", date: date(7), amount: 5.50, category: .software, needsReview: false, source: "Manual entry"),
-        Transaction(merchant: "WatCard", date: date(6), amount: 24.80, category: .uncategorized, notes: "Was this food, printing, or something else?", source: "Wallet · sample"),
+        Transaction(merchant: "WatCard", date: date(6), amount: 24.80, category: .none, notes: "Was this food, printing, or something else?", source: "Wallet · sample"),
         Transaction(merchant: "Uniqlo", date: date(5), amount: 29.90, kind: .refund, category: .shopping, needsReview: false, source: "Bank alert · sample"),
         Transaction(merchant: "Payroll", date: date(2), amount: 850, account: "Chequing", kind: .income, needsReview: false, source: "Manual entry"),
     ]
@@ -46,6 +46,6 @@ enum SampleData {
         .init(category: .shopping, amount: 142.75),
         .init(category: .transport, amount: 68.25),
         .init(category: .software, amount: 35.50),
-        .init(category: .uncategorized, amount: 25),
+        .init(category: .none, amount: 25),
     ]
 }

@@ -124,7 +124,7 @@ Every provider follows [transaction category policy](transaction-categories.md)
 and `groundkeeper/policy.py`. Shared input: `description`, `direction`, `currency`.
 Shared output: `type`, `category`, `review`.
 
-- Use 18 spending categories plus Uncategorized/Other fallbacks. Needs review is
+- Use 18 spending categories plus Other and a nullable category displayed as None. Needs review is
   a separate status; subscription/recurrence and trip/business use are tags.
 - Store categories as expandable reference rows with stable IDs/codes, editable
   names, optional parent categories and archival/replacement metadata. Adding a
@@ -157,7 +157,7 @@ Shared output: `type`, `category`, `review`.
 ### Council design
 
 Council explicitly selects Qwen, Laya and an Apple Intelligence Shortcut under
-`groundkeeper-18-v1`. Version `council-equal-v1` gives each provider weight 1.
+`groundkeeper-19-v2`. Version `council-equal-v2` gives each provider weight 1.
 Vote on complete `(type, category)` pairs; never combine independently winning
 fields. Two matching valid decisions produce a suggestion. Three different
 answers, a tie, or only one valid response produce no council consensus.
@@ -299,7 +299,7 @@ budgets/recurring costs, goals/cash flow, and net worth/debt.
 | Insight | Planned behavior and graphs |
 | --- | --- |
 | Time-based spending | Day/week/month/quarter/year/all-time/custom and rolling 7/30/90-day views; totals, average spend, purchase count, daily/weekly/monthly bars, and cumulative lines. |
-| Category breakdown | Ranked category bars, stacked trends, and account/category/merchant/tag filters; show Uncategorized and provisional suggestions explicitly. |
+| Category breakdown | Ranked category bars, stacked trends, and account/category/merchant/tag filters; show None and provisional suggestions explicitly. |
 | Period comparisons | Dollar/percentage changes, side-by-side bars, and cumulative lines; compare equal elapsed portions separately from complete periods. |
 | Automatic insights | Proactively surface meaningful spending patterns and changes using local calculations/rules, with optional AI explanations; evidence-linked summaries on Home and Full insights. |
 | Merchant and repeated spending | Identify frequently visited merchants; purchase counts, total/net spend, average ticket, typical gap between purchases, and frequency changes; ranked bars, spend/visit trends, and transaction timelines. |

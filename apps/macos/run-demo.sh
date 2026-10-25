@@ -5,13 +5,15 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd "$script_dir/../.." && pwd)"
 build=true
 instance=""
+preview_mode="--spending-preview"
 usage() {
-  echo "Usage: $0 [--no-build] [--instance NAME]"
+  echo "Usage: $0 [--no-build] [--instance NAME] [--categories]"
   echo "Open a fresh fictional spending demo; --instance gives UI automation a unique app identity."
 }
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --no-build) build=false; shift ;;
+    --categories) preview_mode="--category-preview"; shift ;;
     --instance)
       [[ $# -ge 2 && "$2" =~ ^[a-zA-Z][a-zA-Z0-9-]{0,39}$ ]] || { echo "Instance names must be 1–40 letters, digits or hyphens, starting with a letter." >&2; exit 2; }
       instance="$2"; shift 2 ;;
@@ -52,5 +54,5 @@ if [[ -n "$instance" ]]; then
   echo "Demo bundle ID: $bundle_id"
 fi
 # Passing preview flags to an existing live-vault instance is unsafe: always -n.
-open -n "$app" --args --setup-preview --ui-preview --spending-preview
+open -n "$app" --args --setup-preview --ui-preview "$preview_mode"
 echo "Demo app: $app"

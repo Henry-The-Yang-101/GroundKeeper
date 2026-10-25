@@ -2,7 +2,7 @@
 
 Implemented 2026-10-23. Council is selected explicitly in provider setup and uses
 Qwen, Laya and an Apple Intelligence Shortcut with one vote each. The versioned
-policy is `council-equal-v1`; the [roadmap design](roadmap.md#council-design)
+policy is `council-equal-v2`; the [roadmap design](roadmap.md#council-design)
 records the decisions and the [classifier contract](../contracts/classifier/README.md#council-orchestration)
 describes the queue and evidence boundaries.
 

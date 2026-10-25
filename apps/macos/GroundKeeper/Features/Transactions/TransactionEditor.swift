@@ -32,7 +32,6 @@ struct TransactionEditor: View {
     private var valid: Bool {
         !draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && validAmount && validDirection && draft.accountID != nil && workspace.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
-            && !(draft.kind.usesCategory && draft.category == .other && draft.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
     private var validAmount: Bool { amount != nil }
     private var validDirection: Bool { draft.kind.requiredDebit.map { $0 == draft.isDebit } ?? true }
@@ -89,17 +88,25 @@ struct TransactionEditor: View {
                         Picker("Category", selection: $draft.category) {
                             ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag($0) }
                         }
+                        CategoryLabel(transaction: draft)
+                        if draft.category != .none && draft.categoryAttribution.isAI && !draft.confirmCategory {
+                            Button("Use this category") {
+                                draft.confirmCategory = true
+                                draft.categoryAttribution = .init(origin: "user")
+                                if draft.kind != .unknown { draft.needsReview = false }
+                            }
+                        }
                     }
                     Toggle("Needs review", isOn: $draft.needsReview)
-                        .disabled(draft.kind.usesCategory && draft.category == .uncategorized)
+                        .disabled(draft.kind.usesCategory && draft.category == .none)
                     TextField("Notes", text: $draft.notes, axis: .vertical)
                         .lineLimit(3...5)
                 } header: {
                     Text("Details").font(VaultTypography.section)
                 } footer: {
                     Text(draft.kind.usesCategory && draft.category == .other
-                         ? "Add a note describing this expense."
-                         : "Changes apply to this transaction only. Uncategorized purchases stay in review.")
+                         ? "Other includes spending whose purpose is uncertain. You can add details in Notes."
+                         : "Changes apply to this transaction only. Purchases with no category stay in review.")
                 }
                 CouncilEvidenceView(transactionID: original.id.uuidString)
             }
@@ -121,11 +128,15 @@ struct TransactionEditor: View {
             if let account = workspace.accounts.first(where: { $0.id == id }) { draft.currency = account.currency; draft.account = account.name }
         }
         .onChange(of: draft.category) { _, category in
-            if category == .uncategorized { draft.needsReview = true }
+            if category == .none { draft.needsReview = true }
+            draft.categoryAttribution = category == original.category && draft.kind == original.kind && !draft.confirmCategory
+                ? original.categoryAttribution : .init(origin: "user")
         }
         .onChange(of: draft.kind) { _, kind in
             if let requiredDebit = kind.requiredDebit { draft.isDebit = requiredDebit }
-            if kind.usesCategory && draft.category == .uncategorized { draft.needsReview = true }
+            if kind.usesCategory && draft.category == .none { draft.needsReview = true }
+            draft.categoryAttribution = kind == original.kind && draft.category == original.category && !draft.confirmCategory
+                ? original.categoryAttribution : .init(origin: "user")
         }
         .confirmationDialog("Discard your changes?", isPresented: $showingDiscardConfirmation, titleVisibility: .visible) {
             Button("Discard changes", role: .destructive) { dismiss() }
@@ -141,8 +152,8 @@ struct TransactionEditor: View {
         guard valid, let amount else { return }
         draft.amount = amount
         draft.merchant = draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !draft.kind.usesCategory { draft.category = .uncategorized }
-        if draft.kind.usesCategory && draft.category == .uncategorized { draft.needsReview = true }
+        if !draft.kind.usesCategory { draft.category = .none }
+        if draft.kind.usesCategory && draft.category == .none { draft.needsReview = true }
         onSave(draft)
     }
 }

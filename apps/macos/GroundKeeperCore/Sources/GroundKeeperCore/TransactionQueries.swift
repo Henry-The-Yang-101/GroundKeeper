@@ -60,8 +60,8 @@ extension LedgerStore {
         var predicates = ["state='active'"], bindings: [SQLValue] = []
         if query.reviewOnly { predicates.append("(needs_review=1 OR open_review=1)") }
         if let category = query.category {
-            predicates.append("type_code IN ('expense','refund','unknown') AND coalesce(category_id,'none')=?")
-            bindings.append(.text(category))
+            if category == "none" { predicates.append("category_id IS NULL") }
+            else { predicates.append("category_id=?"); bindings.append(.text(category)) }
         }
         if let account = query.accountID { predicates.append("account_id=?"); bindings.append(.text(account)) }
         if !query.search.isEmpty {

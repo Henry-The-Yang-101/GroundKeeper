@@ -270,7 +270,7 @@ re-enable the service or reconnect folders if saved permissions stop working.
 | Installed runtime differs from the lock | Check Python 3.12.9 and both pinned dependency files. Avoid upgrading packages independently. `--rebuild` does not bypass a version mismatch. |
 | Xcode cannot find the macOS SDK | Select the full Xcode installation and complete its first launch. |
 | Model package rejected | Select the exported directory with `classifier.json`. A raw model folder or modified file set will fail verification. |
-| Transactions stay uncategorized | Choose a valid provider and check queue mode, pending work, and failures. Every successful suggestion still requires review. |
+| Transactions have no category | Choose a valid provider and check queue mode, pending work, and failures. Every successful suggestion still requires review. |
 | Background service is registered but idle | Check Login Items approval, re-enable the service after updates, and check the helper status shown in Settings. Registration alone does not establish that it is running. |
 
 For changes to the core or worker, run the tests in the

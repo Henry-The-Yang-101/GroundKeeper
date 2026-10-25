@@ -3,7 +3,7 @@ import GroundKeeperCore
 
 enum ReportFormat {
     static func money(_ minor: Int64, _ currency: String) -> String { (Decimal(minor) / 100).formatted(.currency(code: currency)) }
-    static func category(_ code: String) -> String { SpendingCategory.allCases.first { $0.code == code }?.rawValue ?? "Uncategorized" }
+    static func category(_ code: String) -> String { SpendingCategory.allCases.first { $0.code == code }?.rawValue ?? "None" }
     static func range(_ range: ReportRange, timezone: String) -> String {
         guard let calendar = try? ReportCalendar(timezone: timezone) else { return "" }
         var format = Date.FormatStyle(date: .abbreviated, time: .omitted)

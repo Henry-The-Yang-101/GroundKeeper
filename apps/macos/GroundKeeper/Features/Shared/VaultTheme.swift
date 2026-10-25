@@ -4,6 +4,7 @@ import SwiftUI
 /// Shared palette; the asset catalog supplies light, dark and increased-contrast variants.
 enum AppStyle {
     static let accent = Color.accentColor
+    static let ai = Color("VaultAI")
     static let pageBackground = Color("VaultBackground")
     static let surface = Color("VaultSurface")
     static let sidebar = Color("VaultSidebar")

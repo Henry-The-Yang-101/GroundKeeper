@@ -25,25 +25,23 @@ tracked separately.
 | 17 | Taxes & government charges | Direct tax payments, licences, administrative government fees; exclude vehicle registration |
 | 18 | Gifts & donations | Charitable donations, monetary gifts, purchases explicitly identified as gifts |
 
-## Uncategorized / Other / Needs review
+## None, Other, and Needs review
 
-Provide an **Uncategorized / Other** fallback when there is not enough information
-to assign one of the 18 spending categories, or when a known expense does not fit
-the current category set. This fallback is outside the 18 defined categories.
+**None** means no category has been selected. It is stored as SQL `NULL`, not a
+category row, and appears as muted text without a provenance icon. A purchase or
+refund with no category stays in review.
 
-**Needs review** is a separate status, not a spending category. Uncategorized
-transactions should enter review. A transaction with a suggested category can
-also need review if the suggestion is uncertain or the purchase spans categories.
+**Other** is the nineteenth category. AI uses it when the spending purpose is
+uncertain or falls outside the 18 named categories. Uncertain decisions always
+require review; optional notes can explain the expense. Income, transfers, card
+payments, loan principal, cash movements and balance adjustments have no spending
+category. AI refunds without an original category use Other with review required.
 
-- **Uncategorized:** no supported category is available yet.
-- **Other:** an expense is understood but does not fit the defined categories;
-  preserve a note describing its purpose so repeated cases can inform a future
-  category.
-- **Needs review:** a person must confirm or correct the transaction. Keep any
-  suggested category separate from the confirmed category.
-
-Do not force an uncertain prediction into a category. Avoid training a broad
-catch-all Other class that mixes unrelated expenses and missing information.
+**Needs review** is independent of category. Every AI suggestion requires review.
+The UI shows a brass person for a user choice and a purple sparkle for an AI
+choice. Hovering over the category identifies the saved provider/model or AI
+Council. Accepting a suggestion appends a user assignment while retaining its AI
+history. Editing unrelated fields preserves the original attribution.
 
 ## Labeling rules
 

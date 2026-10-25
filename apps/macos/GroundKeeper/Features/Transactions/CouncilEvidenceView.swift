@@ -61,7 +61,8 @@ struct CouncilEvidenceView: View {
     }
     static func decisionText(_ decision: ClassificationDecision) -> String {
         let type = TransactionKind.allCases.first { $0.code == decision.type }?.rawValue ?? decision.type
-        let category = decision.category.map { code in SpendingCategory.allCases.first { $0.code == code }?.rawValue ?? code }
+        // Historical output JSON is immutable, including the retired missing-category label.
+        let category = decision.category.map { code in code == "uncategorized" ? "None" : SpendingCategory.allCases.first { $0.code == code }?.rawValue ?? code }
         return category.map { "\(type) · \($0)" } ?? type
     }
     static func failureText(_ vote: CouncilVote) -> String {

@@ -35,10 +35,12 @@ struct Transaction: Identifiable, Equatable {
     var revision = 0
     var isDebit = true
     var kind: TransactionKind = .purchase
-    var category: SpendingCategory = .uncategorized
+    var category: SpendingCategory = .none
     var needsReview = true
     var notes = ""
     var source = "Manually input"
+    var categoryAttribution = CategoryAttribution(origin: "user")
+    var confirmCategory = false
 
     var formattedAmount: String {
         (isDebit ? -amount : amount).formatted(.currency(code: currency))
@@ -107,7 +109,7 @@ enum SpendingCategory: String, CaseIterable, Identifiable {
     case fees = "Financial fees & interest"
     case taxes = "Taxes & government charges"
     case gifts = "Gifts & donations"
-    case uncategorized = "Uncategorized"
+    case none = "None"
     case other = "Other"
 
     var id: Self { self }
@@ -140,7 +142,7 @@ enum SpendingCategory: String, CaseIterable, Identifiable {
         case .fees: "percent"
         case .taxes: "building.columns"
         case .gifts: "gift"
-        case .uncategorized: "questionmark"
+        case .none: "questionmark"
         case .other: "ellipsis"
         }
     }
@@ -157,18 +159,21 @@ extension Transaction {
         formatter.calendar = Calendar(identifier: .gregorian); formatter.dateFormat = "yyyy-MM-dd"
         date = formatter.date(from: stored.occurredOn) ?? Date()
         kind = TransactionKind.allCases.first { $0.code == stored.type } ?? .unknown
-        category = SpendingCategory.allCases.first { $0.code == stored.category } ?? .uncategorized
+        category = SpendingCategory.allCases.first { $0.code == stored.category } ?? .none
         needsReview = stored.needsReview; notes = stored.notes; source = stored.sourceLabel
+        categoryAttribution = stored.categoryAttribution
     }
     var edit: TransactionEdit {
         get throws {
             let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX")
             formatter.calendar = Calendar(identifier: .gregorian); formatter.dateFormat = "yyyy-MM-dd"
             let minor = try ExactMoney.parse(NSDecimalNumber(decimal: amount).stringValue, currency: currency)
-            return TransactionEdit(id: id.uuidString, revision: revision, description: merchant, amountMinor: isDebit ? -minor : minor,
+            var result = TransactionEdit(id: id.uuidString, revision: revision, description: merchant, amountMinor: isDebit ? -minor : minor,
                 currency: currency, occurredOn: formatter.string(from: date), accountID: accountID, type: kind.code,
-                category: kind == .unknown ? "uncategorized" : kind.usesCategory ? category.code : nil,
-                needsReview: needsReview || kind == .unknown || (kind.usesCategory && category == .uncategorized), notes: notes)
+                category: kind.usesCategory && category != .none ? category.code : nil,
+                needsReview: needsReview || kind == .unknown || (kind.usesCategory && category == .none), notes: notes)
+            result.confirmCategory = confirmCategory
+            return result
         }
     }
 }

@@ -2,21 +2,17 @@ import SwiftUI
 
 struct TransactionRow: View {
     let transaction: Transaction
-    private var detail: String {
-        switch transaction.kind {
-        case .purchase: transaction.category.rawValue
-        case .refund: "Refund · \(transaction.category.rawValue)"
-        default: transaction.kind.rawValue
-        }
-    }
-
     var body: some View {
         HStack(spacing: 12) {
             CategoryIcon(category: transaction.category)
             VStack(alignment: .leading, spacing: 4) {
                 Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
-                Text(detail)
-                    .font(.caption).foregroundStyle(AppStyle.muted)
+                HStack(spacing: 5) {
+                    if transaction.kind != .purchase {
+                        Text(transaction.kind.rawValue + " ·").foregroundStyle(AppStyle.muted)
+                    }
+                    CategoryLabel(transaction: transaction)
+                }.font(.caption)
             }
             Spacer(minLength: 12)
             if transaction.needsReview { ReviewBadge() }
