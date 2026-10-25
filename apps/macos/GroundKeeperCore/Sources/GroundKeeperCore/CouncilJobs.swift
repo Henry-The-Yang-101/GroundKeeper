@@ -51,9 +51,10 @@ extension LedgerStore {
                 ORDER BY j.created_at_ms,j.id LIMIT 1
                 """, [.text(configID), .integer(nowMS())]).first else { return nil }
             let context = try receiptContext(transactionID: row.text("transaction_id"))
+            let notes = try classifierNotes(transactionID: row.text("transaction_id"))
             let hint = try walletCategoryHint(transactionID: row.text("transaction_id"))
             let input = CouncilInput(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit",
-                                     currency: row.text("currency"), receiptContext: context, walletCategoryRaw: hint?.value)
+                                     currency: row.text("currency"), receiptContext: context, walletCategoryRaw: hint?.value, transactionNotes: notes)
             var audit = try JSONSerialization.jsonObject(with: Data(try json(input).utf8)) as! [String: Any]
             audit.removeValue(forKey: "wallet_category_raw")
             if let hint { audit["wallet_category_source_event_id"] = hint.eventID }
@@ -70,7 +71,7 @@ extension LedgerStore {
             try db.query("UPDATE classification_jobs SET status='running',attempts=attempts+1,run_id=?,updated_at_ms=?,receipt_context_sha256=? WHERE id=?",
                          [.text(runID), .integer(nowMS()), .optional(context?.evidenceSHA256), .text(row.text("id"))])
             return ClassificationTask(id: row.text("id"), runID: runID, partID: row.text("part_id"), revision: Int(row.number("input_revision")),
-                                      description: input.description, direction: input.direction, currency: input.currency, receiptContext: context, walletCategoryRaw: hint?.value)
+                                      description: input.description, direction: input.direction, currency: input.currency, receiptContext: context, walletCategoryRaw: hint?.value, transactionNotes: notes)
         }
     }
     public func savedCouncilSearch(for task: ClassificationTask) throws -> MerchantSearchEvidence? {

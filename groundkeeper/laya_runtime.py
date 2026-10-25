@@ -168,6 +168,9 @@ class LocalLayaCategorizer:
         if "merchant_context" in inputs:
             from .merchant_context import INSTRUCTIONS
             instructions.append(INSTRUCTIONS)
+        if "transaction_notes" in inputs:
+            from .policy import NOTE_INSTRUCTIONS
+            instructions.append(NOTE_INSTRUCTIONS)
         if "receipt_context" in inputs:
             instructions.append(RECEIPT_INSTRUCTIONS)
         if "wallet_category_raw" in inputs:
@@ -176,7 +179,7 @@ class LocalLayaCategorizer:
             questions = {key: {**value, "instructions": value["instructions"] + " " + " ".join(instructions)} for key, value in QUESTIONS.items()}
         state = laya_receipt_state(inputs)
         max_len, head_max_len = (1024, 768) if instructions else (MAX_LEN, HEAD_MAX_LEN)
-        if "merchant_context" in inputs:
+        if "merchant_context" in inputs or "transaction_notes" in inputs:
             from .merchant_context import shrink_web_evidence
             max_len, head_max_len = 2048, 1024
             internal = {key: self.agent._to_internal(value) for key, value in questions.items()}

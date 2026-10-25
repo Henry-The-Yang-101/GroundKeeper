@@ -19,7 +19,11 @@ public actor LedgerStore {
                 try Self.resolveMerchant(db: db, transactionID: row.text("id"), description: row.text("description"))
             }
         }
-        try db.transaction { try Self.repairDuplicateReviews(db: db) }
+        try db.transaction {
+            try Self.repairDuplicateReviews(db: db)
+            try Self.importCapturedNotes(db: db)
+            try Self.prepareFileCleanups(db: db)
+        }
         self.db = db
     }
     public func integrityCheck() throws -> Bool {
@@ -61,7 +65,7 @@ public actor LedgerStore {
         Int(try db.query("""
             SELECT count(*) AS n FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id
             JOIN category_assignments a ON a.id=p.current_assignment_id
-            WHERE t.state='active' AND (a.origin='system' OR (a.origin IN ('model','council') AND EXISTS(SELECT 1 FROM receipt_captures r WHERE r.transaction_id=t.id))) AND a.confirmed_at_ms IS NULL
+            WHERE t.state='active' AND (a.origin='system' OR a.origin IN ('model','council')) AND a.confirmed_at_ms IS NULL
             AND NOT EXISTS(SELECT 1 FROM classification_jobs j WHERE j.part_id=p.id
               AND j.input_revision=t.revision AND j.status<>'obsolete'
               AND (coalesce(j.model_id,j.council_config_id)=json_extract((SELECT value_json FROM app_settings WHERE key='classifier_model'),'$')
@@ -83,7 +87,7 @@ public actor LedgerStore {
     }
     public func save(_ edit: TransactionEdit) throws {
         guard !edit.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, edit.description.count <= 2048,
-              edit.amountMinor != 0, edit.amountMinor != Int64.min, edit.notes.count <= 10000,
+              edit.amountMinor != 0, edit.amountMinor != Int64.min, edit.notes.utf8.count <= 10000, !edit.notes.contains("\0"),
               ExactMoney.currencies.contains(edit.currency) else { throw LedgerError.invalid("Invalid transaction fields.") }
         guard !(edit.type == "expense" && edit.amountMinor > 0),
               !(["refund", "income"].contains(edit.type) && edit.amountMinor < 0) else {

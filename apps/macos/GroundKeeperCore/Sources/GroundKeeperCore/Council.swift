@@ -29,15 +29,18 @@ public struct CouncilConfiguration: Codable, Sendable, Equatable, Identifiable {
 /// The actual provider input; audit JSON may replace the Wallet value with its immutable source reference.
 public struct CouncilInput: Codable, Sendable, Equatable {
     public let description: String, direction: String, currency: String
+    public var transactionNotes: String?
     public var receiptContext: ReceiptContext?
     public var walletCategoryRaw: String?
     public var merchantContext: MerchantContext?
     enum CodingKeys: String, CodingKey {
         case description, direction, currency
+        case transactionNotes = "transaction_notes"
         case receiptContext = "receipt_context", walletCategoryRaw = "wallet_category_raw", merchantContext = "merchant_context"
     }
     public init(description: String, direction: String, currency: String, receiptContext: ReceiptContext? = nil,
-                walletCategoryRaw: String? = nil, merchantContext: MerchantContext? = nil) {
+                walletCategoryRaw: String? = nil, merchantContext: MerchantContext? = nil, transactionNotes: String? = nil) {
+        self.transactionNotes = transactionNotes
         self.description = description; self.direction = direction; self.currency = currency
         self.receiptContext = receiptContext; self.walletCategoryRaw = walletCategoryRaw; self.merchantContext = merchantContext
     }

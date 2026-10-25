@@ -36,13 +36,13 @@ extension LedgerStore {
                     SELECT 1 FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id
                     JOIN category_assignments a ON a.id=p.current_assignment_id
                     WHERE p.id=classification_jobs.part_id AND t.revision=classification_jobs.input_revision
-                    AND t.state='active' AND (a.origin='system' OR (a.origin IN ('model','council') AND EXISTS(SELECT 1 FROM receipt_captures r WHERE r.transaction_id=t.id))) AND a.confirmed_at_ms IS NULL)
+                    AND t.state='active' AND (a.origin='system' OR a.origin IN ('model','council')) AND a.confirmed_at_ms IS NULL)
                 """, [.text(targetID)])
             try db.query("""
                 INSERT OR IGNORE INTO classification_jobs(id,part_id,input_revision,\(targetColumn),status,next_attempt_at_ms,created_at_ms,updated_at_ms)
                 SELECT lower(hex(randomblob(16))),p.id,t.revision,?,'pending',0,?,?
                 FROM transaction_parts p JOIN transactions t ON t.id=p.transaction_id JOIN category_assignments a ON a.id=p.current_assignment_id
-                WHERE t.state='active' AND (a.origin='system' OR (a.origin IN ('model','council') AND EXISTS(SELECT 1 FROM receipt_captures r WHERE r.transaction_id=t.id))) AND a.confirmed_at_ms IS NULL
+                WHERE t.state='active' AND (a.origin='system' OR a.origin IN ('model','council')) AND a.confirmed_at_ms IS NULL
                 """, [.text(targetID), .integer(nowMS()), .integer(nowMS())])
         }
     }
@@ -59,22 +59,24 @@ extension LedgerStore {
                 """, [.text(modelID), .integer(nowMS())]).first else { return nil }
             let mayUseReceipt = try row.text("provider") != "apple_shortcut" || receiptCloudConsent()
             let context = mayUseReceipt ? try receiptContext(transactionID: row.text("transaction_id")) : nil
+            let notes = try classifierNotes(transactionID: row.text("transaction_id"))
             let walletHint = try walletCategoryHint(transactionID: row.text("transaction_id"))
             let runID = identifier()
             struct Input: Encodable {
                 let description: String, direction: String, currency: String
+                let transaction_notes: String?
                 let receipt_context: ReceiptContext?
                 let wallet_category_raw: String?
                 let wallet_category_source_event_id: String?
             }
-            let input = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receipt_context: context, wallet_category_raw: walletHint?.value, wallet_category_source_event_id: nil))
+            let input = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), transaction_notes: notes, receipt_context: context, wallet_category_raw: walletHint?.value, wallet_category_source_event_id: nil))
             // The category value lives only in its immutable source payload.
             // Audit the source reference and hash the actual inference input.
-            let audit = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receipt_context: context, wallet_category_raw: nil, wallet_category_source_event_id: walletHint?.eventID))
+            let audit = try json(Input(description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), transaction_notes: notes, receipt_context: context, wallet_category_raw: nil, wallet_category_source_event_id: walletHint?.eventID))
             try db.query("INSERT INTO classification_runs(id,part_id,input_revision,kind,model_version_id,policy_version_id,input_json,input_sha256,started_at_ms,status,context_version) VALUES (?,?,?,'model',?,'groundkeeper-18-v1',?,?,?,'running',?)",
                 [.text(runID), .text(row.text("part_id")), .integer(row.number("input_revision")), .text(modelID), .text(audit), .text(contentHash(Data(input.utf8))), .integer(nowMS()), .optional(context?.version)])
             try db.query("UPDATE classification_jobs SET status='running',attempts=attempts+1,run_id=?,updated_at_ms=?,receipt_context_sha256=? WHERE id=?", [.text(runID), .integer(nowMS()), .optional(context?.evidenceSHA256), .text(row.text("id"))])
-            return ClassificationTask(id: row.text("id"), runID: runID, partID: row.text("part_id"), revision: Int(row.number("input_revision")), description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receiptContext: context, walletCategoryRaw: walletHint?.value)
+            return ClassificationTask(id: row.text("id"), runID: runID, partID: row.text("part_id"), revision: Int(row.number("input_revision")), description: row.text("description"), direction: row.number("amount_minor") < 0 ? "debit" : "credit", currency: row.text("currency"), receiptContext: context, walletCategoryRaw: walletHint?.value, transactionNotes: notes)
         }
     }
     /// Missing, malformed or conflicting hints must not prevent classification.

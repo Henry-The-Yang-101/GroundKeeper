@@ -121,17 +121,33 @@ extension LedgerStore {
         try db.query("""
             SELECT r.*,o.text,o.producer FROM receipt_captures r JOIN receipt_ocr_runs o
               ON o.id=(SELECT id FROM receipt_ocr_runs WHERE receipt_id=r.id ORDER BY created_at_ms DESC,rowid DESC LIMIT 1)
-            WHERE r.transaction_id=? ORDER BY r.captured_at_ms,r.id
+            WHERE r.transaction_id=? AND r.removed_at_ms IS NULL ORDER BY r.captured_at_ms,r.id
             """, [.text(transactionID)]).map {
                 ReceiptRecord(id: $0.text("id"), text: $0.text("text"), producer: $0.text("producer"), imageState: $0.text("image_state"), imageError: $0["image_error"]?.string, capturedAtMS: $0.number("captured_at_ms"))
             }
     }
+    public func reuseStoredReceiptImages() throws {
+        // Content-addressed assets can be shared by captures arriving after queue cleanup.
+        try db.transaction {
+            let cached = try db.query("""
+                SELECT r.id,i.image FROM receipt_captures r JOIN receipt_images i
+                  ON r.image_sha256=i.content_sha256 OR r.image_path GLOB ('assets/' || i.content_sha256 || '.*')
+                WHERE r.image_state='pending' GROUP BY r.id
+                """)
+            for row in cached {
+                if let data = row["image"]?.data { try insertReceiptImage(id: row.text("id"), data: data) }
+            }
+        }
+    }
     public func receiptImageRequests() throws -> [ReceiptImageRequest] {
-        try db.query("SELECT id,image_path,image_sha256 FROM receipt_captures WHERE image_state='pending' ORDER BY captured_at_ms LIMIT 20").map {
+        try db.query("SELECT id,image_path,image_sha256 FROM receipt_captures WHERE image_state='pending' ORDER BY captured_at_ms").map {
             ReceiptImageRequest(id: $0.text("id"), path: $0.text("image_path"), sha256: $0["image_sha256"]?.string)
         }
     }
     public func storeReceiptImage(id: String, data: Data) throws {
+        try db.transaction { try insertReceiptImage(id: id, data: data) }
+    }
+    private func insertReceiptImage(id: String, data: Data) throws {
         guard data.count > 0, data.count <= 8_388_608, let source = CGImageSourceCreateWithData(data as CFData, nil),
               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = props[kCGImagePropertyPixelWidth] as? Int, let height = props[kCGImagePropertyPixelHeight] as? Int,
@@ -141,11 +157,37 @@ extension LedgerStore {
         let type = CGImageSourceGetType(source) as String? ?? ""
         guard let contentType = ["public.jpeg": "image/jpeg", "public.png": "image/png", "public.heic": "image/heic"][type] else { throw LedgerError.invalid("unsupported_receipt_image") }
         let hash = contentHash(data)
-        try db.transaction {
+        do {
             guard let row = try db.query("SELECT image_sha256 FROM receipt_captures WHERE id=? AND image_state='pending'", [.text(id)]).first else { return }
             guard row["image_sha256"]?.string == nil || row.text("image_sha256") == hash else { throw LedgerError.invalid("receipt_image_hash_mismatch") }
             try db.query("INSERT OR IGNORE INTO receipt_images(receipt_id,content_sha256,content_type,image) VALUES (?,?,?,?)", [.text(id), .text(hash), .text(contentType), .blob(data)])
             try db.query("UPDATE receipt_captures SET image_state='stored',image_error=NULL WHERE id=?", [.text(id)])
+            try Self.prepareFileCleanups(db: db)
+        }
+    }
+    @discardableResult public func addReceiptImage(transactionID: String, data: Data, ocrText: String = "", producer: String = "apple_vision_documents") throws -> String {
+        guard ocrText.utf8.count <= 32_768, !ocrText.contains("\0") else { throw LedgerError.invalid("Receipt text is too long.") }
+        return try db.transaction {
+            _ = try transactionNote(transactionID: transactionID)
+            let id = identifier()
+            try db.query("INSERT INTO receipt_captures(id,source_event_id,payload_sha256,payload_json,captured_at_ms,parent_source_id,parent_event_id,transaction_id,image_state) VALUES (?,?,?,'{}',?,'manual',?,?,'pending')",
+                [.text(id), .text("manual:" + id), .text(contentHash(data)), .integer(nowMS()), .text(transactionID), .text(transactionID)])
+            try insertReceiptImage(id: id, data: data)
+            try insertReceiptOCR(receiptID: id, producer: producer, text: ocrText)
+            try receiptEvidenceChanged(transactionID: transactionID)
+            return id
+        }
+    }
+    /// Removal is reversible. Retained evidence is excluded from display and model context.
+    public func setReceiptRemoved(id: String, transactionID: String, removed: Bool) throws {
+        try db.transaction {
+            _ = try transactionNote(transactionID: transactionID)
+            guard let row = try db.query("SELECT removed_at_ms FROM receipt_captures WHERE id=? AND transaction_id=?", [.text(id), .text(transactionID)]).first else {
+                throw LedgerError.invalid("This receipt is no longer available.")
+            }
+            guard (row["removed_at_ms"]?.int != nil) != removed else { return }
+            try db.query("UPDATE receipt_captures SET removed_at_ms=? WHERE id=?", [removed ? .integer(nowMS()) : .null, .text(id)])
+            try receiptEvidenceChanged(transactionID: transactionID)
         }
     }
     public func markReceiptImageInvalid(id: String) throws {

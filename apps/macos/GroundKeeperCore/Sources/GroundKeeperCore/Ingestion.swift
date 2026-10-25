@@ -127,6 +127,7 @@ extension LedgerStore {
             let observation = try db.query("SELECT posted_on FROM event_observations WHERE id=?", [.text(observationID)]).first!
             try db.query("UPDATE transactions SET lifecycle='posted',posted_on=?,revision=revision+1,updated_at_ms=? WHERE id=?", [.optional(observation["posted_on"]?.string), .integer(nowMS()), .text(transactionID)])
         }
+        try Self.importCapturedNotes(db: db)
         try resolveReceiptLinks()
     }
     func externalReference(_ observation: Observation, eventID: String, transactionID: String, sourceID: String) throws {

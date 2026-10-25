@@ -295,7 +295,7 @@ class Worker:
                 inputs = shrink_web_evidence(inputs)
                 prompt = self.tokenizer.apply_chat_template(builder(inputs), tokenize=True,
                     add_generation_prompt=True, enable_thinking=False, return_dict=False)
-        if len(prompt) > (3072 if "merchant_context" in inputs else 2048 if "receipt_context" in inputs else 768 if "wallet_category_raw" in inputs else 512):
+        if len(prompt) > (3072 if "merchant_context" in inputs else 3072 if "transaction_notes" in inputs else 2048 if "receipt_context" in inputs else 768 if "wallet_category_raw" in inputs else 512):
             raise WorkerError("input_too_large", "Tokenized input exceeds model context policy")
         chunks = []
         with mx.stream(mx.gpu):
