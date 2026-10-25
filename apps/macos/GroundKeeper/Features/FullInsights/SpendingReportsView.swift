@@ -275,7 +275,9 @@ struct ReportSummary: View {
                 Metric(label: "Net spending", value: ReportFormat.money(report.totals.net, report.filter.currency))
                 Metric(label: "Purchases", value: "\(report.totals.purchases)")
                 Metric(label: "Daily average", value: dailyAverage)
+                    .help("Net spending divided by all calendar days in this view, including days without purchases.")
                 Metric(label: "Average purchase", value: report.totals.averagePurchase.formatted(.currency(code: report.filter.currency)))
+                    .help("Purchase spending before refunds divided by the number of purchases. Multiple purchases on one day are counted separately.")
             }
             ViewThatFits(in: .horizontal) {
                 HStack { grossAndRefunds; Spacer(); if let open { Button("View transactions", action: open).buttonStyle(.borderless) } }

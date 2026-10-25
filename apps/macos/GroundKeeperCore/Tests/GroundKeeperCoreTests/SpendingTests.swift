@@ -161,3 +161,22 @@ extension LedgerStore {
         }
     }
 }
+
+
+@Test func averagePurchaseCountsEveryPurchaseEvenOnTheSameDay() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Average test", currency: "CAD")
+    let account = try await store.snapshot().accounts[0].id
+    let filter = try reportFilter("2026-10-01", "2026-10-05")
+    #expect(try await store.spendingReport(filter).totals.averagePurchase == 0)
+    try await purchase(store, account: account, day: "2026-10-01", amount: -1000)
+    try await purchase(store, account: account, day: "2026-10-01", amount: -3000)
+    try await purchase(store, account: account, day: "2026-10-03", amount: -5000)
+    try await purchase(store, account: account, day: "2026-10-03", amount: 1200, type: "refund")
+    let report = try await store.spendingReport(filter)
+    #expect(report.totals.purchases == 3)
+    #expect(report.totals.averagePurchase == 30) // $90 / 3 purchases, before refunds.
+    #expect(report.buckets.first?.purchases == 2)
+    let days = try ReportCalendar(timezone: filter.timezone).count(filter.range)
+    #expect(Decimal(report.totals.net) / 100 / Decimal(days) == Decimal(string: "19.5"))
+}
