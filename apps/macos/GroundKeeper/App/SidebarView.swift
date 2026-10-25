@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct SidebarView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var selection: AppTab?
     let reviewCount: Int
     let queueCount: Int
@@ -11,26 +10,17 @@ struct SidebarView: View {
         List(selection: $selection) {
             Section {
                 ForEach(AppTab.allCases.filter { $0 != .settings }) { tab in
-                    Label {
-                        Text(tab.title).foregroundStyle(AppStyle.text)
-                    } icon: {
-                        Image(systemName: tab.symbol(isSelected: selection == tab))
-                            .foregroundStyle(selection == tab ? AppStyle.accent : AppStyle.muted)
-                            .symbolEffect(.rotate.clockwise.wholeSymbol,
-                                          isActive: tab == .sync && isProcessingQueue && !reduceMotion)
-                    }
+                    SidebarTabRow(tab: tab, isSelected: selection == tab,
+                                  isProcessingQueue: isProcessingQueue)
                         .badge(badgeCount(for: tab))
                         .tag(tab)
                         .help("\(tab.title) (⌘\(String(tab.shortcut)))")
                 }
             }
             Section {
-                Label {
-                    Text("Settings").foregroundStyle(AppStyle.text)
-                } icon: {
-                    Image(systemName: "gearshape")
-                        .foregroundStyle(selection == .settings ? AppStyle.accent : AppStyle.muted)
-                }.tag(AppTab.settings)
+                SidebarTabRow(tab: .settings, isSelected: selection == .settings,
+                              isProcessingQueue: false)
+                    .tag(AppTab.settings)
             }
         }
         .listStyle(.sidebar)
@@ -70,5 +60,34 @@ struct SidebarView: View {
         case .sync: queueCount
         default: 0
         }
+    }
+}
+
+private struct SidebarTabRow: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isHovered = false
+    let tab: AppTab
+    let isSelected: Bool
+    let isProcessingQueue: Bool
+
+    var body: some View {
+        Label {
+            Text(tab.title).foregroundStyle(AppStyle.text)
+        } icon: {
+            Image(systemName: tab.symbol(isSelected: isSelected))
+                .foregroundStyle(isSelected || isHovered ? AppStyle.accent : AppStyle.muted)
+                .symbolEffect(.rotate.clockwise.wholeSymbol,
+                              isActive: tab == .sync && isProcessingQueue && !reduceMotion)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(.rect)
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(AppStyle.accent.opacity(isHovered ? 0.14 : 0))
+                .animation(reduceMotion ? nil : VaultMotion.feedback, value: isHovered)
+        )
+        .animation(reduceMotion ? nil : VaultMotion.feedback, value: isHovered)
+        .onHover { isHovered = $0 }
+        .onDisappear { isHovered = false }
     }
 }
