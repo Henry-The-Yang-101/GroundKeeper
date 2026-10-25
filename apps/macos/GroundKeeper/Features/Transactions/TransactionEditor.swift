@@ -49,7 +49,7 @@ struct TransactionEditor: View {
                          subtitle: "Save this entry to your local database.")
             Divider()
             Form {
-                VaultFormSection("Transaction") {
+                Section {
                     TextField("Merchant or description", text: $draft.merchant)
                         .focused($merchantFocused)
                     HStack {
@@ -110,8 +110,6 @@ struct TransactionEditor: View {
                             draft.isDebit = requiredDebit
                         }
                     }
-                }
-                Section {
                     if draft.kind.usesCategory {
                         Picker("Category", selection: $draft.category) {
                             ForEach(SpendingCategory.allCases) { Text($0.rawValue).tag($0) }
@@ -130,7 +128,7 @@ struct TransactionEditor: View {
                     TextField("Notes", text: $draft.notes, axis: .vertical)
                         .lineLimit(3...5)
                 } header: {
-                    Text("Details").font(VaultTypography.section)
+                    Text("Transaction").font(VaultTypography.section)
                 } footer: {
                     Text(draft.kind.usesCategory && draft.category == .other
                          ? "Other includes spending whose purpose is uncertain. You can add details in Notes."
