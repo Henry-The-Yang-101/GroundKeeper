@@ -9,7 +9,7 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $selection) {
-            Section("Workspace") {
+            Section {
                 ForEach(AppTab.allCases.filter { $0 != .settings }) { tab in
                     Label {
                         Text(tab.title).foregroundStyle(AppStyle.text)
