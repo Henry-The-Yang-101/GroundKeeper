@@ -19,6 +19,7 @@ public actor LedgerStore {
                 try Self.resolveMerchant(db: db, transactionID: row.text("id"), description: row.text("description"))
             }
         }
+        try db.transaction { try Self.repairDuplicateReviews(db: db) }
         self.db = db
     }
     public func integrityCheck() throws -> Bool {
@@ -124,6 +125,9 @@ public actor LedgerStore {
         }
     }
     func assign(partID: String, type: String, category: String?, review: Bool, origin: String, runID: String?) throws {
+        try Self.assign(db: db, partID: partID, type: type, category: category, review: review, origin: origin, runID: runID)
+    }
+    static func assign(db: Database, partID: String, type: String, category: String?, review: Bool, origin: String, runID: String?) throws {
         let old = try db.query("SELECT current_assignment_id FROM transaction_parts WHERE id=?", [.text(partID)]).first?["current_assignment_id"]?.string
         let id = identifier()
         try db.query("INSERT INTO category_assignments(id,part_id,type_code,category_id,origin,run_id,supersedes_id,needs_review,selected_at_ms,confirmed_at_ms,confirmed_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)",

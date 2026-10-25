@@ -70,21 +70,19 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.snapshot().transactions.count == 2)
     #expect(try await store.integrityCheck())
 }
-@Test func csvImportAtomicityReplayAndReview() async throws {
+@Test func csvImportAtomicityReplayAndSeparateTransactions() async throws {
     let (store, _) = try vault()
     try await store.addAccount(name: "Test card", currency: "CAD")
     try await ingestMapped(store, id: "w1")
     var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
     let document = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-18,FICTIONAL CAFE,-12.50\n2026-10-19,NEW SHOP,-9.25\n".utf8), filename: "test.csv")
     #expect(try await store.importCSV(document, mapping: mapping) == 2)
-    #expect(try await store.snapshot().transactions.count == 2)
-    let review = try await store.snapshot().reviews.first { $0.reason == "possible_duplicate" }!
-    try await store.resolveMatch(eventID: review.eventID, transactionID: review.candidates[0])
-    #expect(try await store.snapshot().transactions.count == 2)
+    #expect(try await store.snapshot().transactions.count == 3)
+    #expect(try await store.snapshot().reviews.isEmpty)
     #expect(try await store.importCSV(document, mapping: mapping) == 0)
     let bad = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-20,GOOD,-1.00\n2026-02-30,BAD,no\n".utf8), filename: "bad.csv")
     do { _ = try await store.importCSV(bad, mapping: mapping); Issue.record("Invalid CSV committed") } catch {}
-    #expect(try await store.snapshot().transactions.count == 2)
+    #expect(try await store.snapshot().transactions.count == 3)
     #expect(try await store.importCSV(bad, mapping: mapping, skipped: [3]) == 1)
     #expect(try await store.integrityCheck())
 }
@@ -111,17 +109,15 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.integrityCheck())
 }
 
-@Test func reverseArrivalAndDateOnlyMatchesRequireConfirmation() async throws {
+@Test func reverseArrivalLinksAutomationsButKeepsCSVSeparate() async throws {
     let (store, _) = try vault()
     try await store.addAccount(name: "Test", currency: "CAD")
     var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
     let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n".utf8), filename: "posted.csv")
     try await store.importCSV(csv, mapping: mapping)
     try await ingestMapped(store, id: "late-wallet")
-    let review = try await store.snapshot().reviews.first { $0.reason == "possible_duplicate" }!
-    #expect(try await store.snapshot().transactions.count == 1)
-    try await store.resolveMatch(eventID: review.eventID, transactionID: review.candidates[0])
-    #expect(try await store.snapshot().transactions.count == 1)
+    #expect(try await store.snapshot().reviews.isEmpty)
+    #expect(try await store.snapshot().transactions.count == 2)
     let (other, _) = try vault()
     try await other.addAccount(name: "Test", currency: "CAD")
     try await ingestMapped(other, id: "bank-first", wallet: false)

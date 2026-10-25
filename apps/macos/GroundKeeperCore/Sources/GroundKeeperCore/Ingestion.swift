@@ -90,21 +90,9 @@ extension LedgerStore {
             try link(eventID: eventID, observationID: observationID, transactionID: existing.text("transaction_id"), kind: kind, actor: "system")
             return
         }
-        let candidates = try db.query("""
-            SELECT t.id,t.description,t.lifecycle,
-              (SELECT min(e.captured_at_ms) FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id WHERE l.transaction_id=t.id AND l.unlinked_at_ms IS NULL) AS capture_time,
-              EXISTS(SELECT 1 FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id JOIN sources s ON s.id=e.source_id
-                WHERE l.transaction_id=t.id AND l.unlinked_at_ms IS NULL AND s.kind=?) AS same_kind,
-              EXISTS(SELECT 1 FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id JOIN sources s ON s.id=e.source_id
-                WHERE l.transaction_id=t.id AND l.unlinked_at_ms IS NULL AND s.kind IN ('apple_wallet','bank_notification')) AS has_capture
-            FROM transactions t WHERE t.state='active' AND t.account_id=? AND t.currency=? AND t.amount_minor=?
-              AND t.occurred_on BETWEEN date(?,'-3 days') AND date(?,'+3 days')
-            """, [.text(kind), .text(observation.accountID!), .text(observation.currency!), .integer(observation.amount!), .text(observation.day), .text(observation.day)])
-        let matches = candidates.filter { normalize($0.text("description")) == normalize(observation.description) }
-        let possible = matches.filter { kind == "csv" || $0.number("same_kind") == 0 }
-        let captures = matches.filter { $0.number("same_kind") == 0 && $0.number("has_capture") == 1 && abs($0.number("capture_time") - observation.captured) <= 300_000 && $0.text("lifecycle") == "pending" }
-        if kind != "csv", captures.count == 1, possible.count == 1 {
-            try link(eventID: eventID, observationID: observationID, transactionID: captures[0].text("id"), kind: kind, actor: "system")
+        let possible = try Self.duplicateCandidates(db: db, observation: observation, kind: kind)
+        if possible.count == 1, possible[0].text("lifecycle") == "pending" {
+            try link(eventID: eventID, observationID: observationID, transactionID: possible[0].text("id"), kind: kind, actor: "system")
         } else if !possible.isEmpty {
             try review(eventID: eventID, reason: "possible_duplicate", candidates: possible.map { $0.text("id") })
         } else {
@@ -114,16 +102,19 @@ extension LedgerStore {
             try externalReference(observation, eventID: eventID, transactionID: transactionID, sourceID: sourceID)
         }
     }
-    func normalize(_ text: String) -> String {
+    static func normalize(_ text: String) -> String {
         text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
             .components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
     }
     func createTransaction(_ observation: Observation) throws -> String {
+        try Self.createTransaction(db: db, observation: observation)
+    }
+    static func createTransaction(db: Database, observation: Observation) throws -> String {
         let id = identifier(), partID = identifier()
         try db.query("INSERT INTO transactions(id,account_id,description,amount_minor,currency,occurred_on,time_precision,posted_on,lifecycle,created_at_ms,updated_at_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             [.text(id), .optional(observation.accountID), .text(observation.description), .integer(observation.amount!), .text(observation.currency!), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), observation.dateOnly ? .text(observation.day) : .null, .text(observation.lifecycle), .integer(nowMS()), .integer(nowMS())])
         try db.query("INSERT INTO transaction_parts(id,transaction_id,position,amount_minor) VALUES (?,?,0,?)", [.text(partID), .text(id), .integer(observation.amount!)])
-        try assign(partID: partID, type: "unknown", category: "uncategorized", review: true, origin: "system", runID: nil)
+        try Self.assign(db: db, partID: partID, type: "unknown", category: "uncategorized", review: true, origin: "system", runID: nil)
         try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(id)])
         try Self.resolveMerchant(db: db, transactionID: id, description: observation.description)
         return id
@@ -145,14 +136,16 @@ extension LedgerStore {
     }
     public func resolveMatch(eventID: String, transactionID: String?) throws {
         try db.transaction {
-            guard let row = try db.query("SELECT o.*,s.kind,e.source_id FROM event_observations o JOIN raw_events e ON e.id=o.event_id JOIN sources s ON s.id=e.source_id WHERE o.event_id=? AND e.is_test=0 ORDER BY o.parsed_at_ms DESC,o.rowid DESC LIMIT 1", [.text(eventID)]).first,
+            guard let row = try db.query("SELECT o.*,s.kind,e.source_id,e.captured_at_ms,e.captured_offset_minutes FROM event_observations o JOIN raw_events e ON e.id=o.event_id JOIN sources s ON s.id=e.source_id WHERE o.event_id=? AND e.is_test=0 ORDER BY o.parsed_at_ms DESC,o.rowid DESC LIMIT 1", [.text(eventID)]).first,
                   row.text("status") == "parsed", try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This event cannot be reconciled yet.") }
-            let observation = Observation(description: row.text("description"), amount: row["amount_minor"]?.int, currency: row["currency"]?.string, day: row.text("occurred_on"), captured: 0, offset: 0, accountID: row["account_id"]?.string, label: row.text("instrument_text"), lifecycle: row.text("lifecycle"), dateOnly: row.text("time_precision") == "date", externalID: row["external_record_id"]?.string)
+            let observation = Observation(description: row.text("description"), amount: row["amount_minor"]?.int, currency: row["currency"]?.string, day: row.text("occurred_on"), captured: row.number("captured_at_ms"), offset: Int(row.number("captured_offset_minutes")), accountID: row["account_id"]?.string, label: row.text("instrument_text"), lifecycle: row.text("lifecycle"), dateOnly: row.text("time_precision") == "date", externalID: row["external_record_id"]?.string)
             guard observation.amount != nil, observation.currency != nil, observation.accountID != nil else { throw LedgerError.invalid("Complete the account and amount first.") }
             let target: String
             if let transactionID {
-                guard let existing = try db.query("SELECT * FROM transactions WHERE id=? AND state='active'", [.text(transactionID)]).first,
-                      existing.number("amount_minor") == observation.amount, existing.text("currency") == observation.currency, existing["account_id"]?.string == observation.accountID else { throw LedgerError.invalid("Only matching account, currency and amount can be linked.") }
+                guard try Self.duplicateCandidates(db: db, observation: observation, kind: row.text("kind"))
+                    .contains(where: { $0.text("id") == transactionID }) else {
+                    throw LedgerError.invalid("Only matching Bank App and Wallet automation captures within five minutes can be linked.")
+                }
                 target = transactionID
             } else { target = try createTransaction(observation) }
             try link(eventID: eventID, observationID: row.text("id"), transactionID: target, kind: row.text("kind"), actor: "user")
