@@ -1,30 +1,27 @@
 import SwiftUI
 
 struct SidebarView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hoveredTab: AppTab?
+    @FocusState private var focusedTab: AppTab?
     @Binding var selection: AppTab?
     let reviewCount: Int
     let queueCount: Int
     let isProcessingQueue: Bool
 
     var body: some View {
-        List(selection: $selection) {
-            Section {
+        ScrollView {
+            VStack(spacing: 0) {
                 ForEach(AppTab.allCases.filter { $0 != .settings }) { tab in
-                    SidebarTabRow(tab: tab, isSelected: selection == tab,
-                                  isProcessingQueue: isProcessingQueue)
-                        .badge(badgeCount(for: tab))
-                        .tag(tab)
-                        .help("\(tab.title) (⌘\(String(tab.shortcut)))")
+                    sidebarRow(for: tab)
                 }
+                sidebarRow(for: .settings)
+                    .padding(.top, 12)
             }
-            Section {
-                SidebarTabRow(tab: .settings, isSelected: selection == .settings,
-                              isProcessingQueue: false)
-                    .tag(AppTab.settings)
-            }
+            .padding(.horizontal, 10)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Sidebar")
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
         .background(AppStyle.sidebar)
         .navigationTitle("GroundKeeper")
         .safeAreaInset(edge: .top, spacing: 12) {
@@ -54,40 +51,66 @@ struct SidebarView: View {
         }
     }
 
+    private func sidebarRow(for tab: AppTab) -> some View {
+        Button {
+            selection = tab
+        } label: {
+            HStack {
+                Label {
+                    Text(tab.title)
+                        .fontWeight(selection == tab ? .semibold : .regular)
+                        .foregroundStyle(AppStyle.text)
+                } icon: {
+                    Image(systemName: tab.symbol(isSelected: selection == tab))
+                        .font(.system(size: 17))
+                        .frame(width: 20)
+                        .foregroundStyle(selection == tab ? AppStyle.accent : AppStyle.muted)
+                        .symbolEffect(.rotate.clockwise.wholeSymbol,
+                                      isActive: tab == .sync && isProcessingQueue && !reduceMotion)
+                }
+                Spacer(minLength: 8)
+                if badgeCount(for: tab) > 0 {
+                    Text(badgeCount(for: tab).formatted())
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AppStyle.muted)
+                }
+            }
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+            .contentShape(.rect)
+            .background {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(selection == tab ? AppStyle.selection : AppStyle.accent.opacity(hoveredTab == tab ? 0.14 : 0))
+                    .animation(reduceMotion ? nil : VaultMotion.feedback, value: hoveredTab == tab)
+            }
+        }
+        .buttonStyle(.plain)
+        .focused($focusedTab, equals: tab)
+        .accessibilityAddTraits(selection == tab ? .isSelected : [])
+        .help("\(tab.title) (⌘\(String(tab.shortcut)))")
+        .onHover { hovering in
+            if hovering { hoveredTab = tab }
+            else if hoveredTab == tab { hoveredTab = nil }
+        }
+        .onDisappear {
+            if hoveredTab == tab { hoveredTab = nil }
+        }
+        .onMoveCommand { direction in
+            guard let index = AppTab.allCases.firstIndex(of: tab) else { return }
+            let offset = direction == .up ? -1 : direction == .down ? 1 : 0
+            let nextIndex = index + offset
+            guard offset != 0, AppTab.allCases.indices.contains(nextIndex) else { return }
+            let nextTab = AppTab.allCases[nextIndex]
+            focusedTab = nextTab
+            selection = nextTab
+        }
+    }
+
     private func badgeCount(for tab: AppTab) -> Int {
         switch tab {
         case .home: reviewCount
         case .sync: queueCount
         default: 0
         }
-    }
-}
-
-private struct SidebarTabRow: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isHovered = false
-    let tab: AppTab
-    let isSelected: Bool
-    let isProcessingQueue: Bool
-
-    var body: some View {
-        Label {
-            Text(tab.title).foregroundStyle(AppStyle.text)
-        } icon: {
-            Image(systemName: tab.symbol(isSelected: isSelected))
-                .foregroundStyle(isSelected || isHovered ? AppStyle.accent : AppStyle.muted)
-                .symbolEffect(.rotate.clockwise.wholeSymbol,
-                              isActive: tab == .sync && isProcessingQueue && !reduceMotion)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(.rect)
-        .listRowBackground(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(AppStyle.accent.opacity(isHovered ? 0.14 : 0))
-                .animation(reduceMotion ? nil : VaultMotion.feedback, value: isHovered)
-        )
-        .animation(reduceMotion ? nil : VaultMotion.feedback, value: isHovered)
-        .onHover { isHovered = $0 }
-        .onDisappear { isHovered = false }
     }
 }
