@@ -43,6 +43,9 @@ extension LedgerStore {
           WHERE r.transaction_id=t.id AND r.removed_at_ms IS NULL AND r.image_state='stored') AS has_receipt_image,
         EXISTS(SELECT 1 FROM review_items r WHERE r.status='open' AND (r.transaction_id=t.id OR r.part_id=p.id OR r.event_id IN
           (SELECT event_id FROM transaction_event_links WHERE transaction_id=t.id AND unlinked_at_ms IS NULL))) AS open_review,
+        (SELECT json_group_array(json_object('id',r.id,'reason',r.reason_code)) FROM review_items r
+          WHERE r.status='open' AND (r.transaction_id=t.id OR r.part_id=p.id OR r.event_id IN
+            (SELECT event_id FROM transaction_event_links WHERE transaction_id=t.id AND unlinked_at_ms IS NULL))) AS review_issues,
         (SELECT group_concat(DISTINCT s.kind) FROM transaction_event_links l JOIN raw_events e ON e.id=l.event_id
           JOIN sources s ON s.id=e.source_id WHERE l.transaction_id=t.id AND l.unlinked_at_ms IS NULL) AS sources
         FROM transactions t JOIN transaction_parts p ON p.transaction_id=t.id
@@ -61,7 +64,11 @@ extension LedgerStore {
             accountID: row["account_id"]?.string, accountName: row["account_name"]?.string ?? "Unassigned", type: row.text("type_code"), category: row["category_id"]?.string,
             needsReview: row.number("needs_review") == 1 || row.number("open_review") == 1, notes: row.text("notes"), sources: row["sources"]?.string ?? "manual", origin: row.text("origin"),
             categoryModelName: row["category_model_name"]?.string, categoryModelProvider: row["category_model_provider"]?.string,
-            location: location(row), hasReceiptImage: row.number("has_receipt_image") == 1)
+            location: location(row), hasReceiptImage: row.number("has_receipt_image") == 1,
+            categoryNeedsReview: row.number("needs_review") == 1,
+            reviewIssues: (try? JSONDecoder().decode([TransactionReviewIssue].self, from: Data(row.text("review_issues").utf8))) ?? [],
+            lifecycle: row.text("lifecycle"), postedOn: row["posted_on"]?.string,
+            occurredAtMS: row["occurred_at_ms"]?.int, utcOffsetMinutes: row["utc_offset_minutes"]?.int.map(Int.init), timePrecision: row.text("time_precision"))
     }
 
     private static func location(_ row: Row) -> TransactionLocation? {

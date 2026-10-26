@@ -7,6 +7,36 @@ convenience unlock. See [setup and protection](../../docs/onboarding.md).
 
 ## Schema audit
 
+Migration 011 preserves earlier category assignments while releasing unassigned
+manual purchases/refunds/unknown entries for classification. A named user category
+and non-spending type remain protected. Category review is exposed separately
+from linked source issues, which carry their reason and a Sync resolution action.
+
+CSV batches are resumable per row. Reopening an identical file imports only rows
+that were skipped earlier; accepted event identities remain stable. Changing its
+mapping requires an explicit correction option and appends new observations.
+Linked entries keep their saved facts until each `csv_mapping_changed` review is
+resolved. `external_id_conflict` reviews compare statement and saved facts directly,
+without decoding CSV arrays as phone capture envelopes. Raw rows, earlier
+observations, mapping changes, and user decisions remain available as evidence.
+
+Statement/capture suggestions require the same account, currency, and signed
+amount within seven civil days. They always require explicit linking; held source
+records are excluded from spending. Wallet/bank automation matching retains its
+separate five-minute rule. Details also offer explicit combination of older saved
+statement/capture pairs. Combining preserves the selected entry's date,
+description, and categorization, moves notes/receipts/tags/source links, promotes
+payment status when statement evidence exists, and retains the other transaction
+as merged history. Stale or ineligible choices are rejected.
+
+Transaction details expose payment status, posted date, original source facts,
+source capture/import times with their recorded offsets, and saved change history.
+Ordinary edits preserve precise timestamps when the purchase date is unchanged.
+Draft category suggestions use the queue's bounded/sanitized receipt text builder,
+exclude staged receipt removals, and include locally recognized staged images.
+Apple receipt-sharing consent applies to both single-provider and Council drafts.
+
+
 Migration 010 removes the missing-category row and converts its references to SQL
 NULL, displayed as None. The 18 named categories and Other remain selectable.
 New AI spending/unknown decisions require a real category and use Other for
@@ -177,12 +207,15 @@ account, currency, amount and normalized merchant within five minutes, and no
 existing capture of the incoming source kind. Separate Wallet events remain
 separate purchases. Only Bank App Automation ↔ Wallet Automation pairs qualify,
 with an inclusive 300,000 ms capture-time window. The same restriction applies
-to potential-duplicate reviews and user linking; CSV import times, manual entries,
-and same-kind captures never qualify. Matching does not use a civil-date window,
+to automation duplicate reviews; CSV import times, manual entries,
+and same-kind captures never qualify for automatic linking. Statement/capture
+review uses the separate explicit date-window flow described above. Automation
+matching does not use a civil-date window,
 so captures straddling midnight can qualify. Ties require confirmation. Both
 arrival orders are supported. On vault opening, unresolved old duplicate flags
-are rechecked: ineligible events become separate transactions with their original
-evidence, while eligible candidate lists are refreshed. Resolved/dismissed reviews
+are rechecked: eligible statement/capture pairs become explicit statement reviews;
+other ineligible events become separate transactions with their original evidence,
+while eligible automation candidate lists are refreshed. Resolved/dismissed reviews
 and existing links are preserved. Replay and reliable CSV record-ID handling remain
 identity checks independent of heuristic duplicate detection.
 
@@ -255,8 +288,8 @@ evidence; changed bytes under an existing event ID remain collisions.
 Captured notes are separate from editable `transactions.notes` and appear in the
 Mac's **Notes & receipts…** sheet. They follow active event-to-transaction links,
 including delayed account mapping and bank/Wallet reconciliation. Test captures
-cannot supply notes or receipts to live purchases. Notes remain local evidence
-and are not added to classifier requests. Inline receipts use the same OCR, image
+cannot supply notes or receipts to live purchases. Notes are included in classifier requests as bounded transaction context; the full
+editable note and immutable capture note remain in the vault. Inline receipts use the same OCR, image
 retry, revision and explicit cloud-consent rules as schema 3 attachments.
 
 Earlier migrations and capture formats remain supported. Filename text has no

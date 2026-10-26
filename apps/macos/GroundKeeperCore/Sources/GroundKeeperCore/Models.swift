@@ -35,6 +35,13 @@ public struct LedgerTransaction: Identifiable, Sendable {
     public let categoryModelProvider: String?
     public var location: TransactionLocation? = nil
     public var hasReceiptImage: Bool = false
+    public var categoryNeedsReview: Bool = true
+    public var reviewIssues: [TransactionReviewIssue] = []
+    public var lifecycle: String = "posted"
+    public var postedOn: String? = nil
+    public var occurredAtMS: Int64? = nil
+    public var utcOffsetMinutes: Int? = nil
+    public var timePrecision: String = "date"
 
     public var categoryAttribution: CategoryAttribution {
         .init(origin: origin, modelName: categoryModelName, provider: categoryModelProvider)

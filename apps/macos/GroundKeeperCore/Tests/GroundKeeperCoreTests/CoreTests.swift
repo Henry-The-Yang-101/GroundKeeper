@@ -46,7 +46,7 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
 @Test func migrationsAndPlainSQLite() async throws {
     let (store, url) = try vault()
     #expect(try await store.integrityCheck())
-    #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 10)
+    #expect(try await store.testRows("SELECT * FROM schema_migrations").count == 11)
     let bytes = try Data(contentsOf: url)
     #expect(bytes.starts(with: Data("SQLite format 3".utf8)))
     #expect(throws: (any Error).self) { try LedgerStore(url: url) }
@@ -77,6 +77,9 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
     let document = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-18,FICTIONAL CAFE,-12.50\n2026-10-19,NEW SHOP,-9.25\n".utf8), filename: "test.csv")
     #expect(try await store.importCSV(document, mapping: mapping) == 2)
+    #expect(try await store.snapshot().transactions.count == 2)
+    let statementReview = try #require(try await store.snapshot().reviews.first { $0.reason == "statement_match" })
+    try await store.resolveMatch(eventID: statementReview.eventID, transactionID: nil)
     #expect(try await store.snapshot().transactions.count == 3)
     #expect(try await store.snapshot().reviews.isEmpty)
     #expect(try await store.importCSV(document, mapping: mapping) == 0)
@@ -109,15 +112,18 @@ func ingestMapped(_ store: LedgerStore, id: String, wallet: Bool = true) async t
     #expect(try await store.integrityCheck())
 }
 
-@Test func reverseArrivalLinksAutomationsButKeepsCSVSeparate() async throws {
+@Test func reverseArrivalLinksAutomationsAndOffersStatementReview() async throws {
     let (store, _) = try vault()
     try await store.addAccount(name: "Test", currency: "CAD")
     var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
     let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n".utf8), filename: "posted.csv")
     try await store.importCSV(csv, mapping: mapping)
     try await ingestMapped(store, id: "late-wallet")
+    let review = try #require(try await store.snapshot().reviews.first { $0.reason == "statement_match" })
+    #expect(try await store.snapshot().transactions.count == 1)
+    try await store.resolveMatch(eventID: review.eventID, transactionID: review.candidates[0])
     #expect(try await store.snapshot().reviews.isEmpty)
-    #expect(try await store.snapshot().transactions.count == 2)
+    #expect(try await store.snapshot().transactions.count == 1)
     let (other, _) = try vault()
     try await other.addAccount(name: "Test", currency: "CAD")
     try await ingestMapped(other, id: "bank-first", wallet: false)

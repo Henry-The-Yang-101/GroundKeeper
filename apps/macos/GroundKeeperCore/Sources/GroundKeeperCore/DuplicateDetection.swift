@@ -54,6 +54,12 @@ extension LedgerStore {
                 continue
             }
             if row.number("linked") == 0 {
+                let statements = try statementCandidates(db: db, observation: observation, kind: row.text("kind"))
+                if !statements.isEmpty {
+                    try db.query("UPDATE review_items SET reason_code='statement_match',details_json=? WHERE id=?",
+                        [.text(try json(statements.map { $0.text("id") })), .text(row.text("review_id"))])
+                    continue
+                }
                 let transactionID = try createTransaction(db: db, observation: observation), decisionID = identifier()
                 try db.query("INSERT INTO reconciliation_decisions(id,event_id,left_transaction_id,action,actor,algorithm_version,evidence_json,created_at_ms) VALUES (?,?,?,'link','system','automation-window-v2','{}',?)",
                     [.text(decisionID), .text(row.text("event_id")), .text(transactionID), .integer(nowMS())])

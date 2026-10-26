@@ -226,8 +226,17 @@ extension LedgerStore {
         }
     }
     func receiptContext(transactionID: String) throws -> ReceiptContext? {
-        let records = try receipts(transactionID: transactionID)
-        let full = records.map { $0.text }.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.joined(separator: "\n\n")
+        try draftReceiptContext(transactionID: transactionID)
+    }
+    public func draftReceiptContext(transactionID: String?, excluding receiptIDs: Set<String> = [], additionalTexts: [String] = []) throws -> ReceiptContext? {
+        let saved = try transactionID.map { try receipts(transactionID: $0).filter { !receiptIDs.contains($0.id) }.map(\.text) } ?? []
+        return ReceiptContext.select(from: saved + additionalTexts)
+    }
+}
+
+extension ReceiptContext {
+    public static func select(from texts: [String]) -> ReceiptContext? {
+        let full = texts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.joined(separator: "\n\n")
         guard !full.isEmpty else { return nil }
         // Stable, traceable lines; original text remains in the vault. Strip common payment/loyalty identifiers.
         let lines = full.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }.filter {

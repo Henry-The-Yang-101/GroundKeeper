@@ -51,7 +51,7 @@ public actor LedgerStore {
             WHERE r.status='open' ORDER BY r.created_at_ms LIMIT 200
             """).map { row in
                 ReviewRecord(id: row.text("id"), eventID: row.text("event_id"), reason: row.text("reason_code"), sourceID: row.text("source_id"),
-                    label: String(row.text("external_account_key").dropFirst("label:".count)), description: row.text("description"),
+                    label: row.text("external_account_key").hasPrefix("label:") ? String(row.text("external_account_key").dropFirst("label:".count)) : "", description: row.text("description"),
                     candidates: (try? JSONDecoder().decode([String].self, from: Data(row.text("details_json").utf8))) ?? [])
             }
         let queue = try db.query("SELECT * FROM queue_items ORDER BY first_seen_at_ms DESC LIMIT 100").map { QueueRecord(id: $0.text("id"), path: $0.text("relative_path"), state: $0.text("state"), error: $0.text("error_code"), attempts: Int($0.number("attempt_count"))) }
@@ -101,8 +101,8 @@ public actor LedgerStore {
                 guard old.number("revision") == edit.revision, old.text("state") == "active" else { throw LedgerError.conflict }
                 guard try db.query("SELECT id FROM transaction_parts WHERE transaction_id=?", [.text(edit.id)]).count == 1 else { throw LedgerError.invalid("Split editing is not available yet.") }
                 try db.query("UPDATE transactions SET state='draft' WHERE id=?", [.text(edit.id)])
-                try db.query("UPDATE transactions SET description=?,amount_minor=?,currency=?,account_id=?,occurred_on=?,occurred_at_ms=NULL,time_precision='date',utc_offset_minutes=NULL,notes=?,revision=revision+1,updated_at_ms=? WHERE id=?",
-                    [.text(edit.description), .integer(edit.amountMinor), .text(edit.currency), .text(accountID), .text(edit.occurredOn), .text(edit.notes), .integer(nowMS()), .text(edit.id)])
+                try db.query("UPDATE transactions SET description=?,amount_minor=?,currency=?,account_id=?,occurred_at_ms=CASE WHEN occurred_on=? THEN occurred_at_ms ELSE NULL END,time_precision=CASE WHEN occurred_on=? THEN time_precision ELSE 'date' END,utc_offset_minutes=CASE WHEN occurred_on=? THEN utc_offset_minutes ELSE NULL END,occurred_on=?,notes=?,revision=revision+1,updated_at_ms=? WHERE id=?",
+                    [.text(edit.description), .integer(edit.amountMinor), .text(edit.currency), .text(accountID), .text(edit.occurredOn), .text(edit.occurredOn), .text(edit.occurredOn), .text(edit.occurredOn), .text(edit.notes), .integer(nowMS()), .text(edit.id)])
                 try db.query("UPDATE transaction_parts SET amount_minor=? WHERE transaction_id=?", [.integer(edit.amountMinor), .text(edit.id)])
             } else {
                 guard edit.revision == 0 else { throw LedgerError.conflict }
@@ -127,6 +127,7 @@ public actor LedgerStore {
                     """, [.text(id), .integer(edit.needsReview ? 1 : 0), .integer(nowMS()), .text(current.text("id"))])
                 try db.query("UPDATE transaction_parts SET current_assignment_id=? WHERE id=?", [.text(id), .text(part.text("id"))])
             }
+            try releaseUncategorizedAssignment(partID: part.text("id"))
             try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(edit.id)])
             for id in Set(edit.removedReceiptIDs) {
                 try updateReceiptRemoved(id: id, transactionID: edit.id, removed: true)
@@ -147,6 +148,14 @@ public actor LedgerStore {
             try db.query("UPDATE classification_jobs SET status='obsolete' WHERE part_id IN (SELECT id FROM transaction_parts WHERE transaction_id=?) AND status IN ('pending','running')", [.text(id)])
             try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms) VALUES (?,?,'transaction',?,'user','delete',?)", [.text(identifier()), .text(identifier()), .text(id), .integer(nowMS())])
         }
+    }
+    /// A blank category remains eligible for the selected classifier. Preserve
+    /// the user's preceding assignment as history when they clear a category.
+    func releaseUncategorizedAssignment(partID: String) throws {
+        guard let row = try db.query("SELECT a.* FROM transaction_parts p JOIN category_assignments a ON a.id=p.current_assignment_id WHERE p.id=?", [.text(partID)]).first,
+              row.text("origin") == "user", row["category_id"]?.string == nil,
+              row.number("needs_review") == 1, ["expense", "refund", "unknown"].contains(row.text("type_code")) else { return }
+        try assign(partID: partID, type: row.text("type_code"), category: nil, review: true, origin: "system", runID: nil)
     }
     func assign(partID: String, type: String, category: String?, review: Bool, origin: String, runID: String?) throws {
         try Self.assign(db: db, partID: partID, type: type, category: category, review: review, origin: origin, runID: runID)

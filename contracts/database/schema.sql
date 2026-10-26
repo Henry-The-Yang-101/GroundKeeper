@@ -545,7 +545,9 @@ WHEN NEW.current_assignment_id IS NULL AND (SELECT state FROM transactions WHERE
 END;
 CREATE TRIGGER protect_user_assignment BEFORE UPDATE OF current_assignment_id ON transaction_parts
 WHEN NEW.current_assignment_id IS NOT OLD.current_assignment_id
-  AND (SELECT confirmed_at_ms FROM category_assignments WHERE id=OLD.current_assignment_id) IS NOT NULL
+  AND EXISTS(SELECT 1 FROM category_assignments a WHERE a.id=OLD.current_assignment_id
+    AND a.confirmed_at_ms IS NOT NULL
+    AND NOT (a.needs_review=1 AND a.category_id IS NULL AND a.type_code IN ('expense','refund','unknown')))
   AND NOT EXISTS(SELECT 1 FROM category_assignments WHERE id=NEW.current_assignment_id AND origin='user') BEGIN
   SELECT RAISE(ABORT,'user-confirmed choice requires explicit user replacement');
 END;

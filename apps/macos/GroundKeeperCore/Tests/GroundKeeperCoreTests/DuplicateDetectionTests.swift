@@ -50,7 +50,7 @@ func duplicateWindowIsInclusiveAndMandatory(seconds: Int) async throws {
     #expect(try await store.snapshot().reviews.isEmpty)
 }
 
-@Test func csvRepeatedRowsAndManualEntriesStaySeparateFromCaptures() async throws {
+@Test func csvRepeatedRowsStayDistinctAfterExplicitSeparateChoices() async throws {
     let (store, _) = try await mappedStore()
     let accountID = try await store.snapshot().accounts[0].id
     try await store.save(.init(description: "FICTIONAL CAFE", amountMinor: -1250, currency: "CAD", occurredOn: "2026-10-17",
@@ -58,6 +58,9 @@ func duplicateWindowIsInclusiveAndMandatory(seconds: Int) async throws {
     var mapping = CSVMapping(); mapping.accountID = accountID
     let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n2026-10-17,FICTIONAL CAFE,-12.50\n2026-10-18,FICTIONAL CAFE,-12.50\n".utf8), filename: "repeats.csv")
     #expect(try await store.importCSV(csv, mapping: mapping) == 3)
+    let held = try await store.snapshot()
+    #expect(held.transactions.count == 2 && held.reviews.count == 3)
+    for review in held.reviews { try await store.resolveMatch(eventID: review.eventID, transactionID: nil) }
     let state = try await store.snapshot()
     #expect(state.transactions.count == 5)
     #expect(state.reviews.isEmpty)
@@ -96,26 +99,30 @@ extension LedgerStore {
     }
 }
 
-@Test func reopeningRepairsLegacyCSVDuplicatesOnceAndPreservesEvidence() async throws {
+@Test func reopeningConvertsLegacyCSVFlagsToStatementReviewAndPreservesEvidence() async throws {
     var (store, url) = try await mappedStore()
     let wallet = try await store.snapshot().transactions[0]
     var mapping = CSVMapping(); mapping.accountID = wallet.accountID!
     let csv = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-19,FICTIONAL CAFE,-12.50\n".utf8), filename: "legacy.csv")
     try await store.importCSV(csv, mapping: mapping)
+    let held = try #require(try await store.snapshot().reviews.first)
+    try await store.resolveMatch(eventID: held.eventID, transactionID: nil)
     let imported = try #require(try await store.snapshot().transactions.first { $0.sources == "csv" })
     let eventID = try await store.stageLegacyDuplicate(transactionID: imported.id, candidates: [wallet.id])
     let payload = try await store.testRows("SELECT payload_json FROM raw_event_payloads WHERE event_id='\(eventID)'")[0].text("payload_json")
     await store.close()
     store = try LedgerStore(url: url)
-    #expect(try await store.snapshot().transactions.count == 2)
+    #expect(try await store.snapshot().transactions.count == 1)
+    #expect(try await store.snapshot().reviews.first?.reason == "statement_match")
+    try await store.resolveMatch(eventID: eventID, transactionID: wallet.id)
     #expect(try await store.snapshot().reviews.isEmpty)
-    #expect(try await store.snapshot().transactions.contains { $0.sources == "csv" && $0.occurredOn == "2026-10-19" })
+    #expect(try await store.snapshot().transactions[0].sources.contains("csv"))
     #expect(try await store.testRows("SELECT payload_json FROM raw_event_payloads WHERE event_id='\(eventID)'")[0].text("payload_json") == payload)
     #expect(try await store.importCSV(csv, mapping: mapping) == 0)
     #expect(try await store.integrityCheck())
     await store.close()
     store = try LedgerStore(url: url)
-    #expect(try await store.snapshot().transactions.count == 2)
+    #expect(try await store.snapshot().transactions.count == 1)
 }
 
 @Test func reopeningKeepsEligibleAmbiguityAndPrunesStaleCandidates() async throws {

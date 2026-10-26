@@ -78,15 +78,19 @@ extension LedgerStore {
             }
         }
     }
-    func process(_ observation: Observation, eventID: String, sourceID: String, kind: String) throws {
+    func recordObservation(_ observation: Observation, eventID: String) throws -> String {
         let observationID = identifier()
         try db.query("INSERT INTO event_observations(id,event_id,parser_version,parsed_at_ms,status,amount_minor,currency,occurred_on,time_precision,posted_on,description,merchant_text,account_id,instrument_text,lifecycle,external_record_id,error_code) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             [.text(observationID), .text(eventID), .text("swift-v1:" + observationID), .integer(nowMS()), .text(observation.error == nil ? "parsed" : "partial"), .optional(observation.amount), .optional(observation.currency), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), observation.dateOnly ? .text(observation.day) : .null, .text(observation.description), .text(observation.description), .optional(observation.accountID), .text(observation.label), .text(observation.lifecycle), .optional(observation.externalID), .optional(observation.error)])
+        return observationID
+    }
+    func process(_ observation: Observation, eventID: String, sourceID: String, kind: String) throws {
+        let observationID = try recordObservation(observation, eventID: eventID)
         if let error = observation.error { try review(eventID: eventID, reason: error); return }
         guard observation.amount != nil, observation.currency != nil, observation.accountID != nil else { try review(eventID: eventID, reason: "incomplete_observation"); return }
         if let external = observation.externalID, let existing = try db.query("SELECT r.transaction_id,t.amount_minor,t.currency,t.state FROM external_transaction_refs r JOIN transactions t ON t.id=r.transaction_id WHERE r.source_id=? AND r.external_account_key=? AND r.namespace='csv-posted' AND r.external_record_id=?",
             [.text(sourceID), .text(observation.accountID!), .text(external)]).first {
-            guard existing.number("amount_minor") == observation.amount, existing.text("currency") == observation.currency, existing.text("state") == "active" else { try review(eventID: eventID, reason: "external_id_conflict"); return }
+            guard existing.number("amount_minor") == observation.amount, existing.text("currency") == observation.currency, existing.text("state") == "active" else { try review(eventID: eventID, reason: "external_id_conflict", candidates: [existing.text("transaction_id")]); return }
             try link(eventID: eventID, observationID: observationID, transactionID: existing.text("transaction_id"), kind: kind, actor: "system")
             return
         }
@@ -95,6 +99,8 @@ extension LedgerStore {
             try link(eventID: eventID, observationID: observationID, transactionID: possible[0].text("id"), kind: kind, actor: "system")
         } else if !possible.isEmpty {
             try review(eventID: eventID, reason: "possible_duplicate", candidates: possible.map { $0.text("id") })
+        } else if case let statement = try statementCandidates(observation, kind: kind), !statement.isEmpty {
+            try review(eventID: eventID, reason: "statement_match", candidates: statement.map { $0.text("id") })
         } else {
             // Distinct same-source captures are distinct purchases. No merchant/amount hash dedup.
             let transactionID = try createTransaction(observation)
@@ -135,7 +141,7 @@ extension LedgerStore {
             try db.query("INSERT OR IGNORE INTO external_transaction_refs(id,source_id,external_account_key,namespace,external_record_id,transaction_id,first_event_id) VALUES (?,?,?,'csv-posted',?,?,?)", [.text(identifier()), .text(sourceID), .text(observation.accountID!), .text(external), .text(transactionID), .text(eventID)])
         }
     }
-    public func resolveMatch(eventID: String, transactionID: String?) throws {
+    public func resolveMatch(eventID: String, transactionID: String?, expectedRevision: Int? = nil) throws {
         try db.transaction {
             guard let row = try db.query("SELECT o.*,s.kind,e.source_id,e.captured_at_ms,e.captured_offset_minutes FROM event_observations o JOIN raw_events e ON e.id=o.event_id JOIN sources s ON s.id=e.source_id WHERE o.event_id=? AND e.is_test=0 ORDER BY o.parsed_at_ms DESC,o.rowid DESC LIMIT 1", [.text(eventID)]).first,
                   row.text("status") == "parsed", try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This event cannot be reconciled yet.") }
@@ -143,10 +149,12 @@ extension LedgerStore {
             guard observation.amount != nil, observation.currency != nil, observation.accountID != nil else { throw LedgerError.invalid("Complete the account and amount first.") }
             let target: String
             if let transactionID {
-                guard try Self.duplicateCandidates(db: db, observation: observation, kind: row.text("kind"))
-                    .contains(where: { $0.text("id") == transactionID }) else {
-                    throw LedgerError.invalid("Only matching Bank App and Wallet automation captures within five minutes can be linked.")
+                let eligible = try Self.duplicateCandidates(db: db, observation: observation, kind: row.text("kind"))
+                    + statementCandidates(observation, kind: row.text("kind"))
+                guard eligible.contains(where: { $0.text("id") == transactionID }) else {
+                    throw LedgerError.invalid("This transaction no longer matches the source. Refresh Sync before deciding.")
                 }
+                if let expectedRevision, try transaction(id: transactionID)?.revision != expectedRevision { throw LedgerError.conflict }
                 target = transactionID
             } else { target = try createTransaction(observation) }
             try link(eventID: eventID, observationID: row.text("id"), transactionID: target, kind: row.text("kind"), actor: "user")
@@ -175,31 +183,5 @@ extension LedgerStore {
     public func retryQueue() throws {
         try db.query("UPDATE queue_items SET state='waiting',attempt_count=0,next_attempt_at_ms=0 WHERE state IN ('waiting','quarantined') AND error_code IS NOT 'event_identity_collision'")
         try db.query("UPDATE receipt_captures SET image_state='pending',image_error=NULL WHERE image_state='invalid'")
-    }
-    @discardableResult public func importCSV(_ document: CSVDocument, mapping: CSVMapping, skipped: Set<Int> = []) throws -> Int {
-        guard let selected = try account(mapping.accountID), selected.currency == mapping.currency else { throw LedgerError.invalid("Select an account with the import currency.") }
-        let sourceID = "csv:" + mapping.accountID
-        return try db.transaction {
-            try db.query("INSERT OR IGNORE INTO sources(id,kind,name,created_at_ms) VALUES (?,'csv','CSV import',?)", [.text(sourceID), .integer(nowMS())])
-            if !(try db.query("SELECT id FROM import_batches WHERE source_id=? AND account_scope_id=? AND file_sha256=? AND status='committed'", [.text(sourceID), .text(mapping.accountID), .text(document.hash)])).isEmpty { return 0 }
-            let batch = identifier()
-            try db.query("INSERT INTO import_batches(id,source_id,account_scope_id,file_sha256,original_filename,mapping_snapshot_json,status,created_at_ms) VALUES (?,?,?,?,?,?,'preview',?)", [.text(batch), .text(sourceID), .text(mapping.accountID), .text(document.hash), .text(document.filename), .text(try json(mapping)), .integer(nowMS())])
-            var count = 0
-            for (index, cells) in document.rows.enumerated() {
-                let rowNumber = index + 2, rowID = identifier()
-                if skipped.contains(rowNumber) {
-                    try db.query("INSERT INTO import_rows(id,batch_id,row_number,status,row_json) VALUES (?,?,?,'skipped',?)", [.text(rowID), .text(batch), .integer(Int64(rowNumber)), .text(try json(cells))]); continue
-                }
-                let observation = try CSVParser.observation(cells, mapping: mapping, width: document.headers.count)
-                let eventID = identifier(), payload = try json(cells), hash = contentHash(Data(payload.utf8))
-                try db.query("INSERT INTO raw_events(id,source_id,source_event_id,schema_version,event_kind,captured_at_ms,captured_offset_minutes,received_at_ms,payload_sha256,external_account_key) VALUES (?,?,?,1,'transaction',?,0,?,?,?)", [.text(eventID), .text(sourceID), .text(document.hash + ":" + String(rowNumber)), .integer(nowMS()), .integer(nowMS()), .text(hash), .text(mapping.accountID)])
-                try db.query("INSERT INTO raw_event_payloads(event_id,payload_json) VALUES (?,?)", [.text(eventID), .text(payload)])
-                try db.query("INSERT INTO import_rows(id,batch_id,row_number,event_id,status,row_json) VALUES (?,?,?,?,'accepted',?)", [.text(rowID), .text(batch), .integer(Int64(rowNumber)), .text(eventID), .text(payload)])
-                try process(observation, eventID: eventID, sourceID: sourceID, kind: "csv")
-                count += 1
-            }
-            try db.query("UPDATE import_batches SET status='committed',committed_at_ms=? WHERE id=?", [.integer(nowMS()), .text(batch)])
-            return count
-        }
     }
 }
