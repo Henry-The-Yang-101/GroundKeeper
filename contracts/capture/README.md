@@ -1,5 +1,11 @@
 # Transaction details and receipt capture events
 
+Valid mapped Wallet and bank payment captures create actual ledger transactions
+immediately. The app does not wait for a statement import or claim to track bank
+settlement. Category suggestions still require review. Incomplete captures and
+ambiguous duplicate matches stay in Sync for correction or reconciliation; CSV
+imports remain an optional source of history and matching evidence.
+
 Schema 3 receipt attachments are independent immutable JSON files in the same
 inbox as schema 1/2 payments. They do not amend a payment file or create a monetary
 transaction. See `receipt-example.json` for fictional data.

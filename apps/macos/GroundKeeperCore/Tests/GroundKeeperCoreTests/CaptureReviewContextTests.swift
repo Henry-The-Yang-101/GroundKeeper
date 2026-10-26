@@ -33,7 +33,8 @@ import Testing
     #expect(context.payload == String(decoding: data, as: UTF8.self))
     try await store.correctCapture(eventID: review.eventID, description: context.description, amountMinor: -675,
                                   accountID: try #require(context.accountID), day: context.day)
-    #expect(try await store.snapshot().transactions.contains { $0.occurredOn == "2026-10-03" && $0.amountMinor == -675 })
+    let corrected = try #require(try await store.snapshot().transactions.first { $0.occurredOn == "2026-10-03" && $0.amountMinor == -675 })
+    #expect(corrected.lifecycle == "posted" && corrected.postedOn == nil)
     #expect(try await store.captureReviewContext(eventID: review.eventID).payload == context.payload)
 }
 

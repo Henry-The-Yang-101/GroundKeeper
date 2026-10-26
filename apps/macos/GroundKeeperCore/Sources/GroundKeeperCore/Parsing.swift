@@ -110,7 +110,7 @@ enum CaptureParser {
         let shapes = wallet ? ["wallet_transaction_fields"] : ["notification_fields", "separate_fields"]
         if !shapes.contains(value.inputShape ?? "") { error = "unsupported_input_shape" }
         return Observation(description: description, amount: amount, currency: currency, day: day, captured: timestamp,
-                           offset: offset, accountID: account?.id, label: value.label, lifecycle: "pending", error: error)
+                           offset: offset, accountID: account?.id, label: value.label, lifecycle: "posted", error: error)
     }
 }
 public enum CSVParser {
@@ -167,6 +167,6 @@ public enum CSVParser {
         let external = m.externalIDColumn.map { row[$0].trimmingCharacters(in: .whitespacesAndNewlines) }
         guard (external?.count ?? 0) <= 128 else { throw LedgerError.invalid("External ID is too long.") }
         return Observation(description: description, amount: amount, currency: m.currency, day: day, captured: nowMS(), offset: 0,
-            accountID: m.accountID, label: "", lifecycle: "posted", error: nil, dateOnly: true, externalID: external?.isEmpty == false ? external : nil)
+            accountID: m.accountID, label: "", lifecycle: "posted", error: nil, dateOnly: true, externalID: external?.isEmpty == false ? external : nil, postedOn: day)
     }
 }

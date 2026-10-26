@@ -50,21 +50,15 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     #expect(try calendar.yearEarlier(ReportRange(start: "2024-02-29", end: "2024-03-01")) == ReportRange(start: "2023-02-28", end: "2023-03-01"))
 }
 
-@Test func pendingUncertaintyAndKnownInstantsStayVisible() async throws {
+@Test func unknownTypesAndKnownInstantsStayVisible() async throws {
     let (store, _) = try vault()
     try await store.addAccount(name: "Reports", currency: "CAD")
     let account = try await store.snapshot().accounts[0].id
     try await purchase(store, account: account, day: "2026-10-01", amount: -1000)
     let id = try await store.snapshot().transactions[0].id
-    _ = try await store.testRows("UPDATE transactions SET lifecycle='pending' WHERE id='\(id)'")
-    let pending = try await store.spendingReport(reportFilter())
-    #expect(pending.totals.pendingCount == 1 && pending.totals.net == 1000)
-    var postedOnly = try reportFilter(); postedOnly.includePending = false
-    #expect(try await store.spendingReport(postedOnly).totals.net == 0)
-    #expect(try await store.spendingReport(postedOnly).totals.pendingCount == 1)
     // 01:00 UTC Oct 1 is September 30 in Toronto. Unknown/date-only dates never shift.
     let ms = Int64(ISO8601DateFormatter().date(from: "2026-10-01T01:00:00Z")!.timeIntervalSince1970 * 1000)
-    _ = try await store.testRows("UPDATE transactions SET lifecycle='posted',time_precision='instant',occurred_at_ms=\(ms),utc_offset_minutes=0 WHERE id='\(id)'")
+    _ = try await store.testRows("UPDATE transactions SET time_precision='instant',occurred_at_ms=\(ms),utc_offset_minutes=0 WHERE id='\(id)'")
     #expect(try await store.spendingReport(reportFilter()).totals.net == 0)
     #expect(try await store.spendingReport(reportFilter("2026-09-01", "2026-10-01")).totals.net == 1000)
     try await purchase(store, account: account, day: "2026-10-02", amount: -5000, category: nil, type: "unknown", review: true)
@@ -96,6 +90,14 @@ private func purchase(_ store: LedgerStore, account: String, day: String, amount
     let filter = try reportFilter("2026-10-01", "2026-10-05", baseline: ReportRange(start: "2026-09-01", end: "2026-09-05"))
     let report = try await store.spendingReport(filter)
     #expect(report.findings.count == 3)
+    // Retiring capture status must not reset existing default-scope dismissals.
+    var identity = filter
+    identity.range = try ReportRange(start: "2026-10-01", end: "2026-10-02")
+    identity.baseline = try ReportRange(start: "2026-09-01", end: "2026-09-02")
+    var legacy = try #require(JSONSerialization.jsonObject(with: Data(try json(identity).utf8)) as? [String: Any])
+    legacy["includePending"] = true
+    let legacyScope = contentHash(try JSONSerialization.data(withJSONObject: legacy, options: [.sortedKeys]))
+    #expect(report.findings.allSatisfy { $0.id.hasPrefix(legacyScope + ":") })
     #expect(try await store.testRows("SELECT * FROM insight_evidence").count == 21)
     let finding = try #require(report.findings.first)
     try await store.setFindingPreference(id: finding.id, dismissed: true)

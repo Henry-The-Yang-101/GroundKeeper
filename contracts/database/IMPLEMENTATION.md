@@ -7,6 +7,16 @@ convenience unlock. See [setup and protection](../../docs/onboarding.md).
 
 ## Schema audit
 
+Migration 012 retires pending payment status for canonical transactions. Valid
+mapped Wallet and bank captures are recorded immediately, including corrected
+captures. Existing pending transactions become `posted` on vault open, with
+revision/invalidation updates and their notes, assignments, links, and source
+evidence preserved. The internal `posted` value means recorded in the ledger;
+it does not attest bank settlement. A bank posting date is never inferred from a
+capture date. Triggers reject new pending canonical transactions. Legacy pending
+observations remain historical evidence, and creating a transaction from an old
+unresolved review normalizes that retired value. Category review remains separate.
+
 Migration 011 preserves earlier category assignments while releasing unassigned
 manual purchases/refunds/unknown entries for classification. A named user category
 and non-spending type remain protected. Category review is exposed separately
@@ -25,11 +35,11 @@ amount within seven civil days. They always require explicit linking; held sourc
 records are excluded from spending. Wallet/bank automation matching retains its
 separate five-minute rule. Details also offer explicit combination of older saved
 statement/capture pairs. Combining preserves the selected entry's date,
-description, and categorization, moves notes/receipts/tags/source links, promotes
-payment status when statement evidence exists, and retains the other transaction
+description, and categorization, moves notes/receipts/tags/source links, retains
+an available statement date, and retains the other transaction
 as merged history. Stale or ineligible choices are rejected.
 
-Transaction details expose payment status, posted date, original source facts,
+Transaction details expose an available statement date, original source facts,
 source capture/import times with their recorded offsets, and saved change history.
 Ordinary edits preserve precise timestamps when the purchase date is unchanged.
 Draft category suggestions use the queue's bounded/sanitized receipt text builder,
@@ -225,7 +235,7 @@ automation pair displays both labels; later category/manual edits do not relabel
 the original source. Review actions link to an existing transaction,
 keep a separate transaction, confirm a source-account mapping, correct missing
 details, or dismiss an issue. Original evidence and previous observations stay
-intact. A posted CSV link updates settlement status without replacing a known
+intact. A CSV link records its statement date without replacing a known
 purchase date or a confirmed category. Different amounts/currencies are not
 silently merged; advanced FX/tip/hold reconciliation remains manual.
 
@@ -304,7 +314,7 @@ increment a transaction revision. Existing migrations remain unchanged.
 
 `LedgerStore.spendingReport` queries the complete ledger, independently of the
 paged transaction list. Currency, account, merchant, category, tag, reporting date and
-pending-state predicates are shared with paginated report evidence. Amounts stay
+recorded-state predicates are shared with paginated report evidence. Amounts stay
 integer minor units in SQL; averages use Decimal. SQLite integer overflow fails
 the report rather than wrapping. Splits contribute their own amounts and distinct
 canonical purchases determine counts. `EXISTS` tag filters avoid join multiplication.
@@ -312,14 +322,14 @@ canonical purchases determine counts. `EXISTS` tag filters avoid join multiplica
 Known instants use the selected reporting timezone via a local SQLite scalar
 function. Civil and unknown-time dates stay on their recorded date. Refunds use
 their recorded date/category; unclassified transaction types are excluded and
-counted separately. Posted and optionally pending expenses/refunds are included;
+counted separately. Recorded expenses/refunds are included immediately;
 transfers, card payments, voided/deleted/merged records are excluded. Unreviewed
 included assignments are disclosed. Queries do not establish account completeness.
 
 Findings store rule version, metrics, scope, baseline, data revision, and supporting
 transaction IDs/revisions. Current rules compare overall/category net spending
 and purchase count/average size. They require at least three reviewed purchases
-per equal-length period, observed history reaching the baseline, no known pending
+per equal-length period, observed history reaching the baseline, no unreviewed
 or unclassified entries in scope, and configured absolute/relative thresholds.
 Reports regenerate findings when viewed/refreshed after a ledger change. Dismissal
 and seven-day snooze preferences survive recomputation and reopening. Restoring

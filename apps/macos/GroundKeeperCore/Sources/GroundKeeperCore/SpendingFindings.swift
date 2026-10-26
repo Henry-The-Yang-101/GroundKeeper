@@ -12,9 +12,9 @@ extension LedgerStore {
         identity.range = try ReportRange(start: filter.range.start, end: calendar.adding(1, to: filter.range.start))
         identity.baseline = try filter.baseline.map { try ReportRange(start: $0.start, end: calendar.adding(1, to: $0.start)) }
         identity.sensitivity = .balanced
-        let scope = contentHash(Data(try json(identity).utf8))
+        let scope = contentHash(Data(try json(FindingScope(filter: identity)).utf8))
         identity.range = try ReportRange(start: "2000-01-01", end: "2000-01-02"); identity.baseline = nil
-        let snoozeScope = "spending-snooze:" + contentHash(Data(try json(identity).utf8))
+        let snoozeScope = "spending-snooze:" + contentHash(Data(try json(FindingScope(filter: identity)).utf8))
         var candidates: [SpendingFinding] = []
         // History is observed coverage only. Suppress comparisons when known uncertainty
         // or unequal duration could produce an apparent change.
@@ -116,3 +116,15 @@ extension LedgerStore {
 }
 
 private struct FindingPreference: Codable { let dismissed: Bool; let until: Int64? }
+
+/// Preserve default-scope dismissal/snooze identities from before capture status
+/// was retired. This compatibility key has no effect on report membership.
+private struct FindingScope: Encodable {
+    let filter: SpendingFilter
+    private enum CodingKeys: String, CodingKey { case includePending }
+    func encode(to encoder: Encoder) throws {
+        try filter.encode(to: encoder)
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(true, forKey: .includePending)
+    }
+}

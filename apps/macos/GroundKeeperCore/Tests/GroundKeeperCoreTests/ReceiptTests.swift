@@ -17,7 +17,7 @@ extension LedgerStore {
     let upgraded = try LedgerStore(url: url)
     let after = try await upgraded.snapshot().transactions[0]
     #expect(after.id == before.id && after.revision == before.revision && after.amountMinor == before.amountMinor)
-    #expect(try await upgraded.testRows("SELECT * FROM schema_migrations").count == 11)
+    #expect(try await upgraded.testRows("SELECT * FROM schema_migrations").count == 12)
     #expect(try await upgraded.integrityCheck())
 }
 

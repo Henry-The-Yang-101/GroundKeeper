@@ -44,7 +44,7 @@ extension LedgerStore {
                 currency: row["currency"]?.string, day: row.text("occurred_on"), captured: row.number("captured_at_ms"),
                 offset: Int(row.number("captured_offset_minutes")), accountID: row["account_id"]?.string,
                 label: row.text("instrument_text"), lifecycle: row.text("lifecycle"),
-                dateOnly: row.text("time_precision") == "date", externalID: row["external_record_id"]?.string)
+                dateOnly: row.text("time_precision") == "date", externalID: row["external_record_id"]?.string, postedOn: row["posted_on"]?.string)
             guard row.text("status") == "parsed", observation.amount != nil,
                   observation.currency != nil, observation.accountID != nil else { continue }
             let candidates = try duplicateCandidates(db: db, observation: observation, kind: row.text("kind"))

@@ -26,7 +26,6 @@ extension LedgerStore {
             predicates.append("(EXISTS(SELECT 1 FROM transaction_tags tt WHERE tt.transaction_id=dated.transaction_id AND tt.tag_id=?) OR EXISTS(SELECT 1 FROM part_tags pt WHERE pt.part_id=dated.part_id AND pt.tag_id=?))")
             bindings += [.text(tag), .text(tag)]
         }
-        let lifecycle = filter.includePending ? "lifecycle IN ('posted','pending')" : "lifecycle='posted'"
         return ("""
             WITH dated AS (
               SELECT *,CASE WHEN time_precision='instant' THEN gk_report_day(occurred_at_ms,?) ELSE occurred_on END AS day,
@@ -34,7 +33,7 @@ extension LedgerStore {
                 (needs_review=1 OR has_open_review=1 OR confirmed_at_ms IS NULL) AS unreviewed
               FROM current_transaction_parts
             ), scoped AS (SELECT * FROM dated WHERE \(predicates.joined(separator: " AND "))),
-            included AS (SELECT * FROM scoped WHERE \(filter.purchasesOnly ? "type_code='expense'" : "type_code IN ('expense','refund')") AND \(lifecycle))
+            included AS (SELECT * FROM scoped WHERE \(filter.purchasesOnly ? "type_code='expense'" : "type_code IN ('expense','refund')") AND lifecycle='posted')
             """, bindings)
     }
 
@@ -45,13 +44,11 @@ extension LedgerStore {
               coalesce(sum(CASE WHEN type_code='refund' THEN abs(amount_minor) ELSE 0 END),0) AS refunds,
               coalesce(sum(net),0) AS net, count(DISTINCT CASE WHEN type_code='expense' THEN transaction_id END) AS purchases,
               count(DISTINCT CASE WHEN unreviewed THEN transaction_id END) AS review_count,
-              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE lifecycle='pending' AND type_code IN ('expense','refund')) AS pending_count,
-              (SELECT coalesce(sum(net),0) FROM scoped WHERE lifecycle='pending') AS pending_net,
-              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE (type_code='unknown' AND lifecycle IN ('pending','posted','unknown')) OR (lifecycle='unknown' AND type_code IN ('expense','refund'))) AS unknown_count
+              (SELECT count(DISTINCT transaction_id) FROM scoped WHERE (type_code='unknown' AND lifecycle IN ('posted','unknown')) OR (lifecycle='unknown' AND type_code IN ('expense','refund'))) AS unknown_count
             FROM included
             """, bindings).first!
         return SpendingTotals(gross: r.number("gross"), refunds: r.number("refunds"), net: r.number("net"), purchases: Int(r.number("purchases")),
-                              pendingCount: Int(r.number("pending_count")), reviewCount: Int(r.number("review_count")), unknownCount: Int(r.number("unknown_count")), pendingNet: r.number("pending_net"))
+                              reviewCount: Int(r.number("review_count")), unknownCount: Int(r.number("unknown_count")))
     }
 
     private func reportCategories(_ filter: SpendingFilter, range: ReportRange) throws -> [SpendingCategoryTotal] {
@@ -99,13 +96,13 @@ extension LedgerStore {
         let (source, bindings) = try reportSource(filter, range: filter.range)
         return try db.query(source + """
             SELECT i.transaction_id,i.day,t.description,t.account_id,coalesce(ac.name,'Unassigned') AS account_name,sum(i.net) AS net,
-              max(i.lifecycle='pending') AS pending,max(i.unreviewed) AS review
+              max(i.unreviewed) AS review
             FROM included i JOIN transactions t ON t.id=i.transaction_id LEFT JOIN accounts ac ON ac.id=t.account_id
             \(largest ? "WHERE i.type_code='expense'" : "")
             GROUP BY i.transaction_id,i.day,t.description,t.account_id,ac.name
             ORDER BY \(largest ? "net DESC" : "i.day DESC"),i.transaction_id LIMIT ? OFFSET ?
             """, bindings + [.integer(Int64(max(1, min(limit, 200)))), .integer(Int64(max(0, offset)))]).map {
-                SpendingEntry(id: $0.text("transaction_id"), day: $0.text("day"), description: $0.text("description"), accountID: $0["account_id"]?.string, accountName: $0.text("account_name"), net: $0.number("net"), pending: $0.number("pending") == 1, needsReview: $0.number("review") == 1)
+                SpendingEntry(id: $0.text("transaction_id"), day: $0.text("day"), description: $0.text("description"), accountID: $0["account_id"]?.string, accountName: $0.text("account_name"), net: $0.number("net"), needsReview: $0.number("review") == 1)
             }
     }
 

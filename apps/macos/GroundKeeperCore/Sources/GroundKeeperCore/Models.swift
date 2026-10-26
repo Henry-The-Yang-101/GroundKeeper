@@ -171,6 +171,7 @@ struct Observation: Codable, Sendable {
     var error: String?
     var dateOnly = false
     var externalID: String?
+    var postedOn: String? = nil // Statement evidence only; a purchase date is not a bank posting date.
 }
 public struct CSVMapping: Codable, Sendable, Equatable {
     public var dateColumn = 0, descriptionColumn = 1, amountColumn = 2

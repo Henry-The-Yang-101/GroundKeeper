@@ -81,7 +81,7 @@ extension LedgerStore {
     func recordObservation(_ observation: Observation, eventID: String) throws -> String {
         let observationID = identifier()
         try db.query("INSERT INTO event_observations(id,event_id,parser_version,parsed_at_ms,status,amount_minor,currency,occurred_on,time_precision,posted_on,description,merchant_text,account_id,instrument_text,lifecycle,external_record_id,error_code) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            [.text(observationID), .text(eventID), .text("swift-v1:" + observationID), .integer(nowMS()), .text(observation.error == nil ? "parsed" : "partial"), .optional(observation.amount), .optional(observation.currency), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), observation.dateOnly ? .text(observation.day) : .null, .text(observation.description), .text(observation.description), .optional(observation.accountID), .text(observation.label), .text(observation.lifecycle), .optional(observation.externalID), .optional(observation.error)])
+            [.text(observationID), .text(eventID), .text("swift-v1:" + observationID), .integer(nowMS()), .text(observation.error == nil ? "parsed" : "partial"), .optional(observation.amount), .optional(observation.currency), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), .optional(observation.postedOn), .text(observation.description), .text(observation.description), .optional(observation.accountID), .text(observation.label), .text(observation.lifecycle), .optional(observation.externalID), .optional(observation.error)])
         return observationID
     }
     func process(_ observation: Observation, eventID: String, sourceID: String, kind: String) throws {
@@ -95,7 +95,7 @@ extension LedgerStore {
             return
         }
         let possible = try Self.duplicateCandidates(db: db, observation: observation, kind: kind)
-        if possible.count == 1, possible[0].text("lifecycle") == "pending" {
+        if possible.count == 1, possible[0].text("lifecycle") == "posted" {
             try link(eventID: eventID, observationID: observationID, transactionID: possible[0].text("id"), kind: kind, actor: "system")
         } else if !possible.isEmpty {
             try review(eventID: eventID, reason: "possible_duplicate", candidates: possible.map { $0.text("id") })
@@ -117,8 +117,10 @@ extension LedgerStore {
     }
     static func createTransaction(db: Database, observation: Observation) throws -> String {
         let id = identifier(), partID = identifier()
+        // Legacy unresolved observations can still carry the retired capture status.
+        let lifecycle = observation.lifecycle == "pending" ? "posted" : observation.lifecycle
         try db.query("INSERT INTO transactions(id,account_id,description,amount_minor,currency,occurred_on,time_precision,posted_on,lifecycle,created_at_ms,updated_at_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            [.text(id), .optional(observation.accountID), .text(observation.description), .integer(observation.amount!), .text(observation.currency!), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), observation.dateOnly ? .text(observation.day) : .null, .text(observation.lifecycle), .integer(nowMS()), .integer(nowMS())])
+            [.text(id), .optional(observation.accountID), .text(observation.description), .integer(observation.amount!), .text(observation.currency!), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), .optional(observation.postedOn), .text(lifecycle), .integer(nowMS()), .integer(nowMS())])
         try db.query("INSERT INTO transaction_parts(id,transaction_id,position,amount_minor) VALUES (?,?,0,?)", [.text(partID), .text(id), .integer(observation.amount!)])
         try Self.assign(db: db, partID: partID, type: "unknown", category: nil, review: true, origin: "system", runID: nil)
         try db.query("UPDATE transactions SET state='active' WHERE id=?", [.text(id)])
@@ -145,7 +147,7 @@ extension LedgerStore {
         try db.transaction {
             guard let row = try db.query("SELECT o.*,s.kind,e.source_id,e.captured_at_ms,e.captured_offset_minutes FROM event_observations o JOIN raw_events e ON e.id=o.event_id JOIN sources s ON s.id=e.source_id WHERE o.event_id=? AND e.is_test=0 ORDER BY o.parsed_at_ms DESC,o.rowid DESC LIMIT 1", [.text(eventID)]).first,
                   row.text("status") == "parsed", try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This event cannot be reconciled yet.") }
-            let observation = Observation(description: row.text("description"), amount: row["amount_minor"]?.int, currency: row["currency"]?.string, day: row.text("occurred_on"), captured: row.number("captured_at_ms"), offset: Int(row.number("captured_offset_minutes")), accountID: row["account_id"]?.string, label: row.text("instrument_text"), lifecycle: row.text("lifecycle"), dateOnly: row.text("time_precision") == "date", externalID: row["external_record_id"]?.string)
+            let observation = Observation(description: row.text("description"), amount: row["amount_minor"]?.int, currency: row["currency"]?.string, day: row.text("occurred_on"), captured: row.number("captured_at_ms"), offset: Int(row.number("captured_offset_minutes")), accountID: row["account_id"]?.string, label: row.text("instrument_text"), lifecycle: row.text("lifecycle"), dateOnly: row.text("time_precision") == "date", externalID: row["external_record_id"]?.string, postedOn: row["posted_on"]?.string)
             guard observation.amount != nil, observation.currency != nil, observation.accountID != nil else { throw LedgerError.invalid("Complete the account and amount first.") }
             let target: String
             if let transactionID {
@@ -174,7 +176,7 @@ extension LedgerStore {
             guard let event = try db.query("SELECT e.*,s.kind FROM raw_events e JOIN sources s ON s.id=e.source_id WHERE e.id=? AND e.is_test=0", [.text(eventID)]).first,
                   try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This capture already has a transaction or is test evidence.") }
             if remember { try rememberCard(sourceID: envelope.sourceID, label: envelope.label, accountID: accountID) }
-            let observation = Observation(description: description, amount: amountMinor, currency: account.currency, day: day, captured: event.number("captured_at_ms"), offset: Int(event.number("captured_offset_minutes")), accountID: accountID, label: envelope.label, lifecycle: "pending", dateOnly: true)
+            let observation = Observation(description: description, amount: amountMinor, currency: account.currency, day: day, captured: event.number("captured_at_ms"), offset: Int(event.number("captured_offset_minutes")), accountID: accountID, label: envelope.label, lifecycle: "posted", dateOnly: true)
             try resolveReviews(eventID)
             try process(observation, eventID: eventID, sourceID: event.text("source_id"), kind: event.text("kind"))
             try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms,after_json) VALUES (?,?,'raw_event',?,'user','correct_observation',?,?)", [.text(identifier()), .text(identifier()), .text(eventID), .integer(nowMS()), .text(try json(observation))])

@@ -91,17 +91,16 @@ public struct SpendingFilter: Codable, Equatable, Sendable {
     public var accountID: String?
     public var category: String?
     public var tagID: String?
-    public var includePending: Bool
     public var timezone: String
     public var weekStart: Int
     public var sensitivity: InsightSensitivity = .balanced
     public var purchasesOnly = false
     public var merchantID: String? = nil // Empty string selects unassigned merchants.
     public init(range: ReportRange, baseline: ReportRange? = nil, currency: String = "CAD", accountID: String? = nil,
-                category: String? = nil, tagID: String? = nil, includePending: Bool = true,
+                category: String? = nil, tagID: String? = nil,
                 timezone: String = TimeZone.current.identifier, weekStart: Int = 2) {
         self.range = range; self.baseline = baseline; self.currency = currency; self.accountID = accountID
-        self.category = category; self.tagID = tagID; self.includePending = includePending; self.timezone = timezone; self.weekStart = weekStart
+        self.category = category; self.tagID = tagID; self.timezone = timezone; self.weekStart = weekStart
     }
 }
 
@@ -117,12 +116,10 @@ public struct SpendingTotals: Codable, Equatable, Sendable {
     public let refunds: Int64
     public let net: Int64
     public let purchases: Int
-    public let pendingCount: Int
     public let reviewCount: Int
     public let unknownCount: Int
-    public let pendingNet: Int64
     public var averagePurchase: Decimal { purchases == 0 ? 0 : Decimal(gross) / Decimal(purchases) / 100 }
-    public var uncertain: Bool { pendingCount > 0 || reviewCount > 0 || unknownCount > 0 }
+    public var uncertain: Bool { reviewCount > 0 || unknownCount > 0 }
 }
 
 public struct SpendingBucket: Identifiable, Equatable, Sendable {
@@ -159,7 +156,6 @@ public struct SpendingEntry: Identifiable, Equatable, Sendable {
     public let accountID: String?
     public let accountName: String
     public let net: Int64
-    public let pending: Bool
     public let needsReview: Bool
 }
 
@@ -205,9 +201,8 @@ extension SpendingReport {
         if totals.uncertain {
             var reasons: [String] = []
             if totals.reviewCount > 0 { reasons.append("\(totals.reviewCount) included entries need review") }
-            if totals.unknownCount > 0 { reasons.append("\(totals.unknownCount) entries have an unknown type or payment status") }
-            if totals.pendingCount > 0 { reasons.append("\(totals.pendingCount) entries are still pending") }
-            return "Findings are paused for this view: " + reasons.joined(separator: "; ") + ". Review these entries or narrow the filters to reviewed, posted history. Having more saved transactions does not bypass these checks."
+            if totals.unknownCount > 0 { reasons.append("\(totals.unknownCount) entries have an unknown type or are excluded from spending") }
+            return "Findings are paused for this view: " + reasons.joined(separator: "; ") + ". Review these entries or narrow the filters to reviewed history. Having more saved transactions does not bypass these checks."
         }
         if totals.purchases == 0 {
             return "No purchases match this date range and these filters. Try a wider date range or check the selected currency, account, and category."
