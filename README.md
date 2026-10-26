@@ -1,6 +1,6 @@
 # GroundKeeper
 
-[View the full-quality MP4](docs/media/groundkeeper-demo.mp4)
+https://github.com/user-attachments/assets/1c05f8a8-2805-4429-a71a-42f95de743aa
 
 GroundKeeper is a native macOS app for tracking and understanding personal
 spending. Bring together iPhone captures, bank CSVs, and manual entries; review
