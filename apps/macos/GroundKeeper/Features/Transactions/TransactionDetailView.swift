@@ -147,7 +147,7 @@ struct TransactionDetailView: View {
 
     @ViewBuilder private var location: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Purchase location", systemImage: "mappin.and.ellipse").font(.headline)
+            Label("Location", systemImage: "mappin.and.ellipse").font(.headline)
             if let location = transaction.location {
                 TransactionLocationMap(location: location, merchant: transaction.merchant)
             } else {

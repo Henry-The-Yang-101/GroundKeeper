@@ -51,8 +51,8 @@ class Workflow:
     def get(self, dictionary, key):
         return self.add("getvalueforkey", WFInput=token(dictionary), WFDictionaryKey=key)
 
-    def dictionary(self, values):
-        fields = [{"WFItemType": 0, "WFKey": text(k), "WFValue": text(v)} for k, v in values.items()]
+    def dictionary(self, values, *, numbers=()):
+        fields = [{"WFItemType": 3 if k in numbers else 0, "WFKey": text(k), "WFValue": text(v)} for k, v in values.items()]
         return self.add("dictionary", WFItems={"Value": {"WFDictionaryFieldValueItems": fields}, "WFSerializationType": "WFDictionaryFieldValue"})
 
     def put(self, dictionary, key, value):
@@ -232,6 +232,40 @@ def transaction_context(workflow):
                 params[key] = formatted(variable("Transaction Context"), "\n\n", prompt)
 
 
+def location_capture(workflow):
+    """Sample once before interactive details, preserving existing action IDs.
+
+    The native action can stop Shortcuts on permission/GPS errors; Shortcuts has
+    no catch action. The adapter's capture_location=off setting bypasses it.
+    A returned empty sample falls through with an explicit unavailable status.
+    """
+    w = Workflow("GroundKeeper Location Capture", workflow)
+    saved = variable("Saved Event")
+    setting = w.get(saved, "capture_location")
+    w.setvar("Saved Event", w.put(saved, "location_status", "not_requested"))
+    disabled = condition(w, setting, 4, "off")
+    w.add("nothing")
+    w.add("conditional", GroupingIdentifier=disabled, WFControlFlowMode=1)
+    w.setvar("Saved Event", w.put(saved, "location_status", "unavailable"))
+    sample = w.add("getcurrentlocation")
+    available = condition(w, sample)
+    acquired = w.add("date")
+    measured = w.add("format.date", WFDate=text(acquired), WFDateFormatStyle="ISO 8601", WFISO8601IncludeTime=True)
+    latitude = w.add("properties.locations", WFInput=token(sample), WFContentItemPropertyName="Latitude")
+    longitude = w.add("properties.locations", WFInput=token(sample), WFContentItemPropertyName="Longitude")
+    location = w.dictionary({"latitude": latitude, "longitude": longitude, "measured_at": measured},
+                            numbers=("latitude", "longitude"))
+    w.setvar("Saved Event", w.put(saved, "location", location))
+    w.setvar("Saved Event", w.put(saved, "location_status", "available"))
+    endif(w, available)
+    endif(w, disabled)
+
+    actions = workflow["WFWorkflowActions"]
+    first_menu = next(i for i, action in enumerate(actions)
+                      if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    actions[first_menu:first_menu] = w.actions
+
+
 def save_image(w):
     group = condition(w, variable("Receipt JPEG"))
     image = w.add("setitemname", WFInput=token(variable("Receipt JPEG")), WFName=text(variable("Receipt Filename")))
@@ -307,6 +341,7 @@ def main():
     w.add("exit")
     endif(w, missing_file)
     w.add("output", WFOutput=text(saved))
+    location_capture(w.data)
     transaction_context(w.data)
     w.save()
 
@@ -315,6 +350,9 @@ def main():
         path = ROOT / (name + ".plist")
         adapter = plistlib.loads(path.read_bytes())
         adapter["WFWorkflowActions"] = adapter["WFWorkflowActions"][:2]
+        fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
+        if not any(field["WFKey"]["Value"]["string"] == "capture_location" for field in fields):
+            fields.append({"WFItemType": 0, "WFKey": text("capture_location"), "WFValue": text("on")})
         if name == "GroundKeeper Wallet Automation":
             fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
             if not any(field["WFKey"]["Value"]["string"] == "wallet_category_raw" for field in fields):

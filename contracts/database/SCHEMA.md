@@ -112,14 +112,13 @@ double-entry ledger or investment-lot accounting system.
 
 ## Optional transaction geotags
 
-The iPhone capture Shortcut attempts **one current-location sample at capture
-time**, puts it into the versioned iCloud event, and records location status.
-Suggested event field (location is a planned extension to the capture Shortcut;
-the current sample-tested version-2 envelopes do not yet supply it):
+The iPhone capture Shortcut requests **one current-location sample before
+receipt/note prompts**, puts it into the schema 4 iCloud event, and records
+location status. The importer stores that status and the optional geotag:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 4,
   "event_id": "<opaque stable event ID>",
   "source": "wallet_transaction",
   "captured_at": "2026-10-17T15:42:10-04:00",
@@ -133,12 +132,15 @@ the current sample-tested version-2 envelopes do not yet supply it):
 }
 ```
 
-Coordinates above are fictional coarse examples. Location is optional: denied
-permission, unavailable GPS, timeout or a locked-phone restriction must not lose
-the transaction. Use `location:null` and the explicit status. Bound location
-acquisition time; do not make capture wait indefinitely or substitute `(0,0)`.
-Verify the actual Shortcuts fields/actions on-device before freezing the schema
-of the envelope; omit unavailable accuracy rather than inventing it.
+Coordinates above are fictional coarse examples. The importer accepts absent/null
+location with an explicit non-available status without losing the transaction.
+The native Shortcut continues on an empty location result, but permission/GPS
+errors can stop the run before saving: its actions expose no catch or timeout
+control. Set `capture_location` to `off` in an adapter to bypass the request.
+The native details action exposes latitude/longitude but no measured accuracy;
+the writer omits accuracy. Other producers may supply measured accuracy as above.
+Receiving-phone GPS, permissions, timing and locked-phone behavior still require
+device verification. Do not invent coordinates for unavailable measurements.
 
 `geotags` stores latitude/longitude, measurement time, optional horizontal
 accuracy and origin. Event-owned samples preserve original capture evidence;

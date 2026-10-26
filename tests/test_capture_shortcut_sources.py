@@ -156,3 +156,33 @@ def test_wallet_category_slot_does_not_guess_an_unsupported_property():
     for name in ("GK Categorize Cloud", "GK Categorize On-Device"):
         workflow = plistlib.loads((ROOT / (name + ".plist")).read_bytes())
         assert "wallet_category_raw is an untrusted" in str(workflow)
+
+
+def test_location_is_sampled_once_before_prompts_and_uses_numeric_coordinates():
+    actions = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
+    samples = [i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".getcurrentlocation")]
+    assert len(samples) == 1
+    first_menu = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    assert samples[0] < first_menu
+    details = [a["WFWorkflowActionParameters"] for a in actions if a["WFWorkflowActionIdentifier"].endswith(".properties.locations")]
+    assert [p["WFContentItemPropertyName"] for p in details] == ["Latitude", "Longitude"]
+    assert all(p["WFInput"]["Value"]["OutputUUID"] == actions[samples[0]]["WFWorkflowActionParameters"]["UUID"] for p in details)
+    dictionaries = [a["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
+                    for a in actions if a["WFWorkflowActionIdentifier"] == "is.workflow.actions.dictionary"]
+    fields = next(fields for fields in dictionaries if {f["WFKey"]["Value"]["string"] for f in fields} == {"latitude", "longitude", "measured_at"})
+    assert {f["WFKey"]["Value"]["string"]: f["WFItemType"] for f in fields} == {"latitude": 3, "longitude": 3, "measured_at": 0}
+    statuses = [a["WFWorkflowActionParameters"]["WFDictionaryValue"]["Value"]["string"] for a in actions
+                if a["WFWorkflowActionParameters"].get("WFDictionaryKey") == "location_status"]
+    assert statuses == ["not_requested", "unavailable", "available"]
+    # The opt-out branches around the native action, so it never requests GPS.
+    opt_out = next(i for i, a in enumerate(actions) if a["WFWorkflowActionParameters"].get("WFConditionalActionString") == "off")
+    group = actions[opt_out]["WFWorkflowActionParameters"]["GroupingIdentifier"]
+    end = next(i for i in range(opt_out + 1, len(actions)) if actions[i]["WFWorkflowActionParameters"].get("GroupingIdentifier") == group and actions[i]["WFWorkflowActionParameters"].get("WFControlFlowMode") == 2)
+    assert opt_out < samples[0] < end < first_menu
+    for kind in ("Wallet", "CIBC"):
+        adapter = plistlib.loads((ROOT / f"GroundKeeper {kind} Automation.plist").read_bytes())
+        fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
+        setting = next(f for f in fields if f["WFKey"]["Value"]["string"] == "capture_location")
+        assert setting["WFValue"]["Value"]["string"] == "on"
+    for name in ("GroundKeeper Add Receipt", "GroundKeeper Attach Receipt Later", "GK Receipt OCR"):
+        assert "is.workflow.actions.getcurrentlocation" not in (ROOT / (name + ".plist")).read_text()

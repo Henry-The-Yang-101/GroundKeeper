@@ -73,7 +73,8 @@ Transaction; Attach Receipt Later → Add Receipt. Select the installed helper e
    JSON to the inbox; the earlier image Save File action belongs in `inbox/assets`.
    The installer initially asks where to save; configure both destinations and
    turn off **Ask Where to Save**. The writer adds the schema version, event ID
-   and capture time, collects optional details, then saves the completed envelope.
+   and capture time, samples location, collects optional details, then saves the
+   completed envelope. Run it once while unlocked to grant location access.
 3. Open **GroundKeeper Wallet Automation**. Check that its **Run Shortcut**
    action targets the shared capture writer. Its dictionary uses
    `source: wallet_transaction`, `app: Wallet`, and the trigger's card/pass,
@@ -115,6 +116,46 @@ the actual input. Models use the label as uncertain supporting evidence, with
 explicit purchase/receipt evidence taking priority. It never directly assigns
 a GroundKeeper category or bypasses review. Update the selected GK Categorize
 Shortcut too when using the Apple Shortcut provider so it includes these rules.
+
+## Location at capture
+
+The shared writer uses **Get Current Location** once before the receipt/note
+menus, for both Wallet and CIBC payments. It writes latitude, longitude, a sample
+time and `location_status: available` into the same schema 4 JSON saved to the
+inbox. It does not use receipt-photo GPS or the Mac's location. The sample time
+records when the location action returns; it is separate from the event's
+`captured_at`. Accuracy is omitted because the inspected action exposes no
+measured horizontal accuracy.
+
+In either adapter's Dictionary, change **capture_location** from `on` to `off`
+to opt out. The writer then records `not_requested` without asking for location.
+No-output location results record `unavailable` and continue. Shortcuts can stop
+the run on a location permission or GPS error before the file is saved; its native
+actions do not provide a catch mechanism. Grant Shortcuts location access on the
+iPhone before using location capture, or set the adapter's flag to `off` and rerun.
+If you copied the adapter actions directly into a personal automation, add this
+field to that dictionary to control the setting; an absent field defaults to on.
+
+The Mac's transaction map shows **Phone location at capture** and the sample time.
+Bank notifications may arrive after you leave the shop. Location stays outside
+classifier requests, but is included in your iCloud queue file and then the
+encrypted vault. When Wallet and bank captures are linked to one purchase, the
+map prefers Wallet's sample and retains both samples as evidence. Receipt-only
+attachments do not request another location.
+Reimport the writer and both adapters to upgrade; check Run Shortcut targets and
+the writer's two Save File destinations again. Existing captures remain readable.
+Real iPhone GPS, denied permissions, locked-phone execution and iCloud delivery
+still need verification on the receiving phone.
+
+Verification on 2026-10-26: native Mac Shortcuts confirmed the location action,
+latitude/longitude properties and numeric Dictionary fields. A disposable copy
+with fictional GPS results and no interactive menus or Save File actions produced
+valid JSON for location on, off and an absent setting. The on output imported into
+an isolated encrypted vault with its coordinates, sample time and origin intact;
+replay created no second transaction. The installed writer was inspected after
+insertion: one location request before the first details menu, with both existing
+Save File actions still configured. Both installed adapters gained the setting.
+Actual GPS permission/location acquisition and iPhone/iCloud sync were not tested.
 
 ## Success notifications
 

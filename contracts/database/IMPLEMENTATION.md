@@ -413,11 +413,17 @@ receipt-sharing setting governs OCR only. Full notes remain editable locally.
 ## Transaction viewer evidence and receipt edit sessions
 
 Transaction queries project the selected geotag, falling back to the latest direct
-transaction geotag and then the latest geotag on an actively linked capture. The
+transaction geotag and then an actively linked capture. Wallet samples take
+priority over later bank-alert samples; within that priority the latest sample
+wins. Both samples remain stored as evidence. The
 image indicator uses an active receipt with stored image bytes, excluding removed,
 pending and text-only evidence. Notes use the editable transaction note.
 Schema 4 optional location ingestion is documented in
 [capture contracts](../capture/README.md#optional-captured-location).
+The importer validates and persists `location_status`, inferring it for older
+schema 4 producers that omit it. Transaction queries include the selected
+sample's origin and measurement time; the Mac labels phone-capture samples as
+**Phone location at capture**. No new database columns or migration are needed.
 
 `TransactionEdit` can include receipt additions and removal IDs. They are applied
 inside the same database transaction as the optimistic-revision-checked field

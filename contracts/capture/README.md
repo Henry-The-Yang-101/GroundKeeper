@@ -119,11 +119,31 @@ atomically in `geotags` against the immutable event and follows active transacti
 links. Replayed deliveries do not duplicate it. No database migration is needed;
 these tables have existed since migration 001.
 
-The current bundled Shortcuts do **not** request or emit location. Existing
-transactions therefore have no map unless coordinates were supplied by a capture
-producer or already exist in the vault. The Mac does not infer purchase locations
-from merchants, receipt metadata, or the Mac's current position. A captured phone
-location is evidence of where the phone was, not a verified merchant address.
+The optional `location_status` is `not_requested`, `available`, `denied`,
+`unavailable`, or `timeout`. `available` requires coordinates; the other statuses
+require absent/null `location`. With no status, the importer infers `available`
+when coordinates exist, otherwise `not_requested`, preserving older producers.
+The resolved status is stored in `raw_events.location_status`. Schema 1/2 do not
+accept location details or status.
+
+The bundled writer requests one current location before any receipt/note menus,
+then emits numeric coordinates and an ISO 8601 `measured_at` recording when the
+action returned. It omits accuracy because the inspected native location details
+action does not expose measured horizontal accuracy. The Wallet and CIBC adapters
+default `capture_location` to `on`; set it to `off` to skip the request. Receipt
+attachments do not sample a new location for an earlier payment. Empty location
+output records `unavailable` and continues. Native Shortcuts permission/GPS errors
+can stop the workflow before saving; they cannot be caught by these actions.
+Grant Shortcuts location access on the phone before enabling capture, or opt out.
+
+The Mac does not infer locations from merchants, receipt metadata, or its own
+current position. The map says **Phone location at capture** and shows the sample
+time. A delayed bank alert can locate the phone after the purchase. Coordinates
+remain outside classifier requests. They are present in the iCloud queue JSON
+until normal verified ingestion/cleanup, then in the encrypted vault. Existing
+transactions without coordinates cannot acquire a historical location from this
+update. Real iPhone GPS, permissions and Wallet-trigger delivery require a device
+check; native Mac action/serialization checks do not establish those behaviors.
 
 ## Viewing transactions and adding images on Mac
 

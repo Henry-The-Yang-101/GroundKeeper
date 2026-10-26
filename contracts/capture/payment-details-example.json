@@ -17,9 +17,11 @@
       "text": "COFFEE BEANS 12.50"
     }
   },
+  "location_status": "available",
   "location": {
     "latitude": 43.4723,
     "longitude": -80.5449,
+    "measured_at": "2026-10-20T14:30:46-04:00",
     "horizontal_accuracy_m": 15,
     "label": "Fictional campus shop"
   }

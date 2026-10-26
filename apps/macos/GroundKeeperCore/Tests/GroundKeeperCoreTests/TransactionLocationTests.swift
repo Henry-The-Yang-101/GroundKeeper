@@ -21,6 +21,13 @@ import Testing
     #expect(try await store.testRows("SELECT location_status FROM raw_events").first?.text("location_status") == "available")
     try await store.ingestCapture(data: data, deliveryPath: "replay.json")
     #expect(try await store.testRows("SELECT id FROM geotags").count == 1)
+    let model = try await receiptModel(store)
+    try await store.enqueueClassifications(modelID: model)
+    #expect(try await store.claimClassification(modelID: model) != nil)
+    let run = try #require(try await store.testRows("SELECT input_json FROM classification_runs").first)
+    let input = try #require(JSONSerialization.jsonObject(with: Data(run.text("input_json").utf8)) as? [String: Any])
+    #expect(input["location"] == nil && input["location_status"] == nil)
+    #expect(!run.text("input_json").contains("43.4723"))
     #expect(try await store.integrityCheck())
 }
 
@@ -81,4 +88,25 @@ func capturesWithoutLocationStillCreatePayments(status: String) async throws {
     #expect(try CaptureParser.decode(JSONSerialization.data(withJSONObject: payload)).location?.latitude == 0)
     payload["schema_version"] = 2
     #expect(throws: LedgerError.self) { try CaptureParser.decode(JSONSerialization.data(withJSONObject: payload)) }
+}
+
+@Test(arguments: [true, false])
+func linkedCaptureLocationsPreferWalletToLaterBankAlert(walletFirst: Bool) async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    for wallet in (walletFirst ? [true, false] : [false, true]) {
+        var payload = try #require(JSONSerialization.jsonObject(with: detailedCapture(wallet ? "wallet-geo" : "bank-geo", wallet: wallet)) as? [String: Any])
+        payload["location"] = ["latitude": wallet ? 43.4723 : 44, "longitude": wallet ? -80.5449 : -81,
+                               "measured_at": wallet ? "2026-10-17T10:00:01-04:00" : "2026-10-17T10:01:01-04:00"]
+        if !wallet { payload["captured_at"] = "2026-10-17T10:01:00-04:00" }
+        try await store.ingestCapture(data: JSONSerialization.data(withJSONObject: payload), deliveryPath: wallet ? "wallet.json" : "bank.json")
+        let snapshot = try await store.snapshot()
+        let review = try #require(snapshot.reviews.first { $0.reason == "account_mapping_required" })
+        let account = try #require(snapshot.accounts.first)
+        try await store.confirmMapping(sourceID: review.sourceID, label: review.label, accountID: account.id)
+    }
+    let page = try await store.transactionPage(.init())
+    #expect(page.transactions.count == 1)
+    #expect(page.transactions.first?.location?.latitude == 43.4723)
+    #expect(try await store.testRows("SELECT id FROM geotags").count == 2)
 }

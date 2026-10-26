@@ -56,7 +56,9 @@ extension LedgerStore {
         LEFT JOIN geotags g ON g.id=coalesce(t.selected_geotag_id,
           (SELECT id FROM geotags WHERE transaction_id=t.id ORDER BY measured_at_ms DESC,id LIMIT 1),
           (SELECT geo.id FROM geotags geo JOIN transaction_event_links link ON link.event_id=geo.event_id
-            WHERE link.transaction_id=t.id AND link.unlinked_at_ms IS NULL ORDER BY geo.measured_at_ms DESC,geo.id LIMIT 1))
+            JOIN raw_events event ON event.id=geo.event_id JOIN sources source ON source.id=event.source_id
+            WHERE link.transaction_id=t.id AND link.unlinked_at_ms IS NULL
+            ORDER BY CASE WHEN source.kind='apple_wallet' THEN 0 ELSE 1 END,geo.measured_at_ms DESC,geo.id LIMIT 1))
         """
 
     static func ledgerTransaction(_ row: Row) -> LedgerTransaction {
