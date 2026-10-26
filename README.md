@@ -1,5 +1,7 @@
 # GroundKeeper
 
+[View the full-quality MP4](docs/media/groundkeeper-demo.mp4)
+
 GroundKeeper is a native macOS app for tracking and understanding personal
 spending. Bring together iPhone captures, bank CSVs, and manual entries; review
 category suggestions; and explore spending, repeated purchases, and changes
@@ -20,15 +22,6 @@ iCloud queue after durable vault storage and a content-hash check; quarantined
 files stay for review. Saved delivery identities prevent repeated imports.
 In the app, you can reconcile possible duplicates, correct details,
 and confirm category suggestions while preserving the original capture evidence.
-
-## Demo
-
-A 74-second walkthrough of iPhone capture, receipt review, category suggestions,
-and local spending insights.
-
-https://github.com/user-attachments/assets/1c05f8a8-2805-4429-a71a-42f95de743aa
-
-[View the full-quality MP4](docs/media/groundkeeper-demo.mp4).
 
 ## What you can do
 
