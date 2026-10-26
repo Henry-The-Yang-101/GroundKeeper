@@ -47,11 +47,14 @@ was inspected through the native accessibility tree; VoiceOver was not tested.
   can produce unequal periods; both date ranges and day counts are disclosed,
   and automatic change findings are suppressed for those comparisons.
 - Filter accounts, merchants, categories and existing tags. Currencies remain separate.
-  Reporting timezone, Monday/Sunday week start, pending inclusion and finding
+  Reporting timezone, Monday/Sunday week start and finding
   sensitivity persist in local preferences. One currency is shown at a time.
 
-Pending purchases are included by default and explicitly counted. Unclassified
-types are excluded from spending and reported separately. Unconfirmed categories
+Valid mapped Wallet and bank captures become actual transactions immediately;
+no CSV import or bank-settlement confirmation is required. Existing pending
+transactions are converted automatically when the updated app opens the vault.
+CSV matching still helps reconcile duplicates and retain statement evidence.
+Unclassified types are excluded from spending and reported separately. Unconfirmed categories
 remain provisional. Refunds reduce spending on their recorded date using their
 current category assignment; the report does not infer new refund links. Empty
 dates mean no recorded spending, not verified zero spending.
@@ -65,7 +68,7 @@ shows only the matching portions. Overall counts count the purchase once.
 Findings describe overall or category spending changes and changes in purchase
 count and average size. They use local SQL results and deterministic text.
 At least three reviewed purchases in each equal-length period are required.
-Known pending, unclassified or review-required data suppresses findings; the
+Unclassified or review-required data suppresses findings; the
 recorded history must reach the baseline. Account completeness is never assumed.
 
 Sensitivity requires both an absolute and percentage change:
@@ -158,7 +161,7 @@ priorities, **not probabilities**. Hidden items are not backfilled from lower ra
 **How this was found** explains the rule. Supporting transactions use the actual
 analysis window and baseline, which may differ from the report comparison period.
 Money aggregation stays in integer minor units; only statistical detection uses
-floating point. Pending, unreviewed or unclassified records suppress findings in
+floating point. Unreviewed or unclassified records suppress findings in
 scope. Missing imports, seasonality, and serial dependence can still influence
 patterns: none establishes account completeness, causation, a subscription, or a
 forecast. These conservative gates can legitimately produce no findings.
@@ -170,8 +173,15 @@ remain future work.
 
 Core tests use temporary fictional vaults and cover complete-ledger totals beyond
 500 rows, refunds and excluded transaction types/currencies, category splits and
-overlapping tags, pending visibility, UTC/local boundaries, DST, short months,
-leap years, evidence, invalidation, dismissal/snooze and persistence on reopening.
+overlapping tags, immediate capture recording and legacy upgrades, UTC/local
+boundaries, DST, short months, leap years, evidence, invalidation, dismissal/snooze
+and persistence on reopening.
+
+Verification on 2026-10-26: all 133 core tests passed. An ad-hoc Debug app built
+successfully and its disposable recording demo showed findings, reporting filters
+without pending controls, and transaction details without a payment-status row.
+The normal provisioned build could not be updated because its development profile
+was unavailable locally; no profile was downloaded and the live vault was not opened.
 
 ```sh
 swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild

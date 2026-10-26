@@ -53,13 +53,11 @@ struct Transaction: Identifiable, Equatable {
     var location: TransactionLocation?
     var hasReceiptImage = false
     var reviewIssues: [TransactionReviewIssue] = []
-    var lifecycle = "posted"
     var postedOn: String?
     var occurredAtMS: Int64?
     var utcOffsetMinutes: Int?
     var timePrecision = "date"
     var requiresReview: Bool { needsReview || !reviewIssues.isEmpty }
-    var paymentStatus: String { lifecycle.capitalized }
     var newReceiptImages: [DraftReceiptImage] = []
     var removedReceiptIDs: [String] = []
     var hasNote: Bool { !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -192,7 +190,7 @@ extension Transaction {
         location = stored.location
         hasReceiptImage = stored.hasReceiptImage
         reviewIssues = stored.reviewIssues
-        lifecycle = stored.lifecycle; postedOn = stored.postedOn
+        postedOn = stored.postedOn
         occurredAtMS = stored.occurredAtMS; utcOffsetMinutes = stored.utcOffsetMinutes; timePrecision = stored.timePrecision
     }
     var edit: TransactionEdit {

@@ -130,9 +130,10 @@ struct TransactionDetailView: View {
                 }
                 detail("Category review", transaction.needsReview ? "Needs review" : "Reviewed")
             }
-            GridRow {
-                detail("Payment status", transaction.paymentStatus)
-                detail("Posted date", transaction.postedOn ?? "Not recorded")
+            if let postedOn = transaction.postedOn {
+                GridRow {
+                    detail("Statement date", postedOn)
+                }
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
     }

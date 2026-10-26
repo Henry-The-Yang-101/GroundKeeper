@@ -35,7 +35,7 @@ and confirm category suggestions while preserving the original capture evidence.
   bank descriptions are mapped separately.
 - Search, filter, edit, and soft-delete saved transactions. The transaction
   list loads 500 rows per page; search and filters apply to the current page.
-- Click a transaction to view payment status, category review, notes, receipts,
+- Click a transaction to view category review, notes, receipts,
   recorded location, and **Source & history**. Inspect original capture/statement
   facts and saved changes, or combine confirmed statement duplicates while
   preserving their evidence and counting the purchase once.
@@ -44,7 +44,7 @@ and confirm category suggestions while preserving the original capture evidence.
   purchases, category breakdowns, and charts with exact-value tables.
 - Compare periods and filter reports by account, merchant, category, or existing
   tag. Use calendar, rolling, all-time, or custom ranges, with separate currencies
-  and configurable reporting timezone, week start, and pending inclusion.
+  and configurable reporting timezone and week start.
 - See merchant spending and purchase frequency. Explicitly group statement names,
   undo grouping, or correct a single purchase's merchant without merging purchases.
 - Inspect locally calculated spending changes, merchant concentration, weekly
@@ -105,9 +105,9 @@ hidden findings. Ledger changes invalidate old results and trigger recalculation
 when reports refresh.
 
 Refunds reduce spending on their recorded date; transfers and card payments are
-excluded. Pending purchases are included by default and disclosed, while
-unconfirmed categories remain provisional. Findings require sufficient reviewed
-history and are suppressed by uncertain data in scope. Missing imports can affect
+excluded. Valid mapped captures become actual transactions immediately, without
+waiting for a CSV import. Unconfirmed categories remain provisional. Findings
+require sufficient reviewed history and are suppressed by uncertain data in scope. Missing imports can affect
 patterns, and an empty date does not establish zero spending. These reports do
 not establish account completeness, causation, fraud, or future spending.
 Budgets, subscription detection, forecasts, receipt analytics, and insight

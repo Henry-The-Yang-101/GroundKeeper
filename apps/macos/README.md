@@ -266,7 +266,7 @@ after a replacement-build launch failure.
   implicitly run the classifier in this mode.
 
 The **Process queue (N)** button appears in both Settings and Sync. Its count is
-pending capture files plus pending/unclassified transactions, including work
+waiting capture files plus transactions awaiting classification, including work
 awaiting model selection or retry deadlines. Failures and review items are
 separate. Counts refresh every 15 seconds and on demand, without importing files,
 starting downloads or loading a model. Unavailable counts are labeled explicitly.
@@ -333,7 +333,10 @@ seven-day date window; it never automatically combines statement records. Older
 saved duplicates can be combined from transaction Details, preserving notes,
 receipts, and source history while counting the purchase once.
 
-Details show payment status and posting date separately from category review.
+Valid mapped Wallet and bank captures become actual transactions immediately;
+category review does not depend on importing a statement. Migration 012 converts
+existing pending transactions on vault open. CSV matching still reconciles source
+evidence and duplicates, and an available statement date appears in Details.
 **Source & history** exposes original capture/statement facts, recorded times,
 card descriptions, and saved changes. Source issues include a reason and a Sync
 action. Uncategorized manual spending remains eligible for the selected provider;

@@ -12,7 +12,7 @@ struct ReportEntryRow: View {
         HStack(alignment: .firstTextBaseline, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.description).fontWeight(.medium).lineLimit(2).help(entry.description)
-                Text(entry.day + (entry.pending ? " · Pending" : "") + (entry.needsReview ? " · Needs review" : ""))
+                Text(entry.day + (entry.needsReview ? " · Needs review" : ""))
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Text(accountName).font(.caption).foregroundStyle(AppStyle.muted)
             }
@@ -49,7 +49,7 @@ struct ReportTransactionsSheet: View {
                     Picker("Period", selection: $previous) { Text("Selected").tag(false); Text("Previous").tag(true) }
                         .pickerStyle(.segmented).tint(AppStyle.controlAccent).onChange(of: previous) { page = 0 }
                 }
-                Text("\(filter.currency) · \(filter.includePending ? "Includes pending" : "Posted only") · \(filter.purchasesOnly ? "Purchase amounts before refunds." : "Refunds reduce spending.") Category and tag filters show only the matching portions of split purchases.")
+                Text("\(filter.currency) · \(filter.purchasesOnly ? "Purchase amounts before refunds." : "Refunds reduce spending.") Category and tag filters show only the matching portions of split purchases.")
                     .font(.caption).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
                 if let entryError { Text(entryError).font(.callout).foregroundStyle(.red) }
                 Divider()

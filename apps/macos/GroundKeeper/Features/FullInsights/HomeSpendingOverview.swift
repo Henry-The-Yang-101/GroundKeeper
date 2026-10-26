@@ -7,7 +7,6 @@ struct HomeSpendingOverview: View {
     @AppStorage("reportCurrency", store: AppPreferences.defaults) private var currency = "CAD"
     @AppStorage("reportTimezone", store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
     @AppStorage("reportWeekStart", store: AppPreferences.defaults) private var weekStart = 2
-    @AppStorage("reportPending", store: AppPreferences.defaults) private var pending = true
     @AppStorage("insightSensitivity", store: AppPreferences.defaults) private var sensitivity = InsightSensitivity.balanced
     @State private var report: SpendingReport?
     @State private var error: String?
@@ -38,12 +37,12 @@ struct HomeSpendingOverview: View {
                 Button("Try again") { refresh += 1 }
             } else { ProgressView("Loading spending…") }
         }
-        .task(id: "\(workspace.reportingRevision)|\(workspace.ready)|\(currency)|\(timezone)|\(weekStart)|\(pending)|\(sensitivity)|\(refresh)") {
+        .task(id: "\(workspace.reportingRevision)|\(workspace.ready)|\(currency)|\(timezone)|\(weekStart)|\(sensitivity)|\(refresh)") {
             report = nil; error = nil
             do {
                 let calendar = try ReportCalendar(timezone: timezone, weekStart: weekStart)
                 let ranges = try calendar.ranges(.month)
-                var filter = SpendingFilter(range: ranges.0, baseline: ranges.1, currency: currency, includePending: pending, timezone: timezone, weekStart: weekStart)
+                var filter = SpendingFilter(range: ranges.0, baseline: ranges.1, currency: currency, timezone: timezone, weekStart: weekStart)
                 filter.sensitivity = sensitivity
                 let result = try await workspace.spendingReport(filter)
                 try Task.checkCancellation(); report = result

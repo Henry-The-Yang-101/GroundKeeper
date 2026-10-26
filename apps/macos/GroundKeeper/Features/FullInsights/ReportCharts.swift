@@ -208,7 +208,7 @@ struct ReportComparison: View {
                     Text("Recorded history starts after the comparison period begins. Earlier spending may be missing.")
                         .font(.caption).foregroundStyle(AppStyle.muted)
                 }
-                if previous.uncertain { Text("The previous period also contains pending, unreviewed, or unclassified entries.").font(.caption).foregroundStyle(AppStyle.muted) }
+                if previous.uncertain { Text("The previous period also contains unreviewed or unclassified entries.").font(.caption).foregroundStyle(AppStyle.muted) }
                 ForEach(drivers.prefix(3), id: \.0) { code, change in
                     Button {
                         var filter = report.filter; filter.category = code; open(filter, ReportFormat.category(code))

@@ -33,7 +33,6 @@ struct SpendingReportsView: View {
     @AppStorage("reportCurrency", store: AppPreferences.defaults) private var currency = "CAD"
     @AppStorage("reportTimezone", store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
     @AppStorage("reportWeekStart", store: AppPreferences.defaults) private var weekStart = 2
-    @AppStorage("reportPending", store: AppPreferences.defaults) private var includePending = true
     @AppStorage("insightSensitivity", store: AppPreferences.defaults) private var sensitivity = InsightSensitivity.balanced
     @State private var period = ReportPeriod.month
     @State private var comparison = "Previous period"
@@ -55,7 +54,7 @@ struct SpendingReportsView: View {
     @State private var showAllFindings = false
 
     private var selectionKey: String {
-        [period.rawValue, comparison, currency, timezone, String(weekStart), String(includePending), sensitivity.rawValue,
+        [period.rawValue, comparison, currency, timezone, String(weekStart), sensitivity.rawValue,
          accountID, category, tagID, merchantID ?? "all", String(customStart.timeIntervalSince1970), String(customEnd.timeIntervalSince1970)].joined(separator: "|")
     }
     private var loadKey: String { selectionKey + "|\(workspace.reportingRevision)|\(workspace.ready)|\(refresh)" }
@@ -174,7 +173,6 @@ struct SpendingReportsView: View {
                             Picker("Findings", selection: $sensitivity) { ForEach(InsightSensitivity.allCases) { Text($0.rawValue).tag($0) } }
                         }
                     }
-                    Toggle("Include pending purchases", isOn: $includePending)
                     HStack {
                         Button("Clear filters", action: clearFilters)
                             .disabled(accountID.isEmpty && category.isEmpty && tagID.isEmpty && merchantID == nil)
@@ -214,7 +212,7 @@ struct SpendingReportsView: View {
             let baseline = comparison == "None" || period == .all ? nil : comparison == "Year earlier" ? try calendar.yearEarlier(ranges.0) : ranges.1
             var filter = SpendingFilter(range: ranges.0, baseline: baseline, currency: currency,
                                         accountID: accountID.isEmpty ? nil : accountID, category: category.isEmpty ? nil : category,
-                                        tagID: tagID.isEmpty ? nil : tagID, includePending: includePending, timezone: timezone, weekStart: weekStart)
+                                        tagID: tagID.isEmpty ? nil : tagID, timezone: timezone, weekStart: weekStart)
             filter.sensitivity = sensitivity; filter.merchantID = merchantID
             let directory = try await workspace.merchantDirectory()
             let result = try await workspace.spendingReport(filter)
@@ -298,9 +296,8 @@ struct ReportSummary: View {
     }
     private var coverage: String {
         var parts: [String] = []
-        if report.totals.pendingCount > 0 { parts.append("\(report.totals.pendingCount) pending, net \(ReportFormat.money(report.totals.pendingNet, report.filter.currency)) (\(report.filter.includePending ? "included" : "excluded"))") }
         if report.totals.reviewCount > 0 { parts.append("\(report.totals.reviewCount) included \(report.totals.reviewCount == 1 ? "entry needs" : "entries need") review") }
-        if report.totals.unknownCount > 0 { parts.append("\(report.totals.unknownCount) \(report.totals.unknownCount == 1 ? "entry" : "entries") with unknown type or payment status excluded") }
+        if report.totals.unknownCount > 0 { parts.append("\(report.totals.unknownCount) \(report.totals.unknownCount == 1 ? "entry" : "entries") with unknown type or excluded from spending") }
         return parts.joined(separator: "; ") + ". Totals may change after review."
     }
 }
