@@ -84,28 +84,39 @@ extension LedgerStore {
             [.text(observationID), .text(eventID), .text("swift-v1:" + observationID), .integer(nowMS()), .text(observation.error == nil ? "parsed" : "partial"), .optional(observation.amount), .optional(observation.currency), .text(observation.day), .text(observation.dateOnly ? "date" : "unknown"), .optional(observation.postedOn), .text(observation.description), .text(observation.description), .optional(observation.accountID), .text(observation.label), .text(observation.lifecycle), .optional(observation.externalID), .optional(observation.error)])
         return observationID
     }
-    func process(_ observation: Observation, eventID: String, sourceID: String, kind: String) throws {
+    @discardableResult
+    func process(_ observation: Observation, eventID: String, sourceID: String, kind: String) throws -> CaptureResolution {
         let observationID = try recordObservation(observation, eventID: eventID)
-        if let error = observation.error { try review(eventID: eventID, reason: error); return }
-        guard observation.amount != nil, observation.currency != nil, observation.accountID != nil else { try review(eventID: eventID, reason: "incomplete_observation"); return }
+        if let error = observation.error { try review(eventID: eventID, reason: error); return .needsReview(reason: error) }
+        guard observation.amount != nil, observation.currency != nil, observation.accountID != nil else {
+            try review(eventID: eventID, reason: "incomplete_observation")
+            return .needsReview(reason: "incomplete_observation")
+        }
         if let external = observation.externalID, let existing = try db.query("SELECT r.transaction_id,t.amount_minor,t.currency,t.state FROM external_transaction_refs r JOIN transactions t ON t.id=r.transaction_id WHERE r.source_id=? AND r.external_account_key=? AND r.namespace='csv-posted' AND r.external_record_id=?",
             [.text(sourceID), .text(observation.accountID!), .text(external)]).first {
-            guard existing.number("amount_minor") == observation.amount, existing.text("currency") == observation.currency, existing.text("state") == "active" else { try review(eventID: eventID, reason: "external_id_conflict", candidates: [existing.text("transaction_id")]); return }
+            guard existing.number("amount_minor") == observation.amount, existing.text("currency") == observation.currency, existing.text("state") == "active" else {
+                try review(eventID: eventID, reason: "external_id_conflict", candidates: [existing.text("transaction_id")])
+                return .needsReview(reason: "external_id_conflict")
+            }
             try link(eventID: eventID, observationID: observationID, transactionID: existing.text("transaction_id"), kind: kind, actor: "system")
-            return
+            return .linked(transactionID: existing.text("transaction_id"))
         }
         let possible = try Self.duplicateCandidates(db: db, observation: observation, kind: kind)
         if possible.count == 1, possible[0].text("lifecycle") == "posted" {
             try link(eventID: eventID, observationID: observationID, transactionID: possible[0].text("id"), kind: kind, actor: "system")
+            return .linked(transactionID: possible[0].text("id"))
         } else if !possible.isEmpty {
             try review(eventID: eventID, reason: "possible_duplicate", candidates: possible.map { $0.text("id") })
+            return .needsReview(reason: "possible_duplicate")
         } else if case let statement = try statementCandidates(observation, kind: kind), !statement.isEmpty {
             try review(eventID: eventID, reason: "statement_match", candidates: statement.map { $0.text("id") })
+            return .needsReview(reason: "statement_match")
         } else {
             // Distinct same-source captures are distinct purchases. No merchant/amount hash dedup.
             let transactionID = try createTransaction(observation)
             try link(eventID: eventID, observationID: observationID, transactionID: transactionID, kind: kind, actor: "system")
             try externalReference(observation, eventID: eventID, transactionID: transactionID, sourceID: sourceID)
+            return .created(transactionID: transactionID)
         }
     }
     static func normalize(_ text: String) -> String {
@@ -143,7 +154,8 @@ extension LedgerStore {
             try db.query("INSERT OR IGNORE INTO external_transaction_refs(id,source_id,external_account_key,namespace,external_record_id,transaction_id,first_event_id) VALUES (?,?,?,'csv-posted',?,?,?)", [.text(identifier()), .text(sourceID), .text(observation.accountID!), .text(external), .text(transactionID), .text(eventID)])
         }
     }
-    public func resolveMatch(eventID: String, transactionID: String?, expectedRevision: Int? = nil) throws {
+    @discardableResult
+    public func resolveMatch(eventID: String, transactionID: String?, expectedRevision: Int? = nil) throws -> CaptureResolution {
         try db.transaction {
             guard let row = try db.query("SELECT o.*,s.kind,e.source_id,e.captured_at_ms,e.captured_offset_minutes FROM event_observations o JOIN raw_events e ON e.id=o.event_id JOIN sources s ON s.id=e.source_id WHERE o.event_id=? AND e.is_test=0 ORDER BY o.parsed_at_ms DESC,o.rowid DESC LIMIT 1", [.text(eventID)]).first,
                   row.text("status") == "parsed", try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This event cannot be reconciled yet.") }
@@ -162,24 +174,27 @@ extension LedgerStore {
             try link(eventID: eventID, observationID: row.text("id"), transactionID: target, kind: row.text("kind"), actor: "user")
             try externalReference(observation, eventID: eventID, transactionID: target, sourceID: row.text("source_id"))
             try resolveReviews(eventID)
+            return transactionID == nil ? .created(transactionID: target) : .linked(transactionID: target)
         }
     }
     public func dismissReview(_ id: String) throws {
         try db.query("UPDATE review_items SET status='dismissed',resolved_at_ms=?,resolution='user_dismissed' WHERE id=?", [.integer(nowMS()), .text(id)])
     }
-    public func correctCapture(eventID: String, description: String, amountMinor: Int64, accountID: String, day: String, remember: Bool = false) throws {
+    @discardableResult
+    public func correctCapture(eventID: String, description: String, amountMinor: Int64, accountID: String, day: String, remember: Bool = false) throws -> CaptureResolution {
         guard !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, description.count <= 2048,
               amountMinor != 0, amountMinor != Int64.min, let account = try account(accountID) else { throw LedgerError.invalid("Enter a description, nonzero amount and account.") }
         _ = try CivilDate.parse(day)
-        try db.transaction {
+        return try db.transaction {
             let envelope = try unmappedCapture(eventID: eventID)
             guard let event = try db.query("SELECT e.*,s.kind FROM raw_events e JOIN sources s ON s.id=e.source_id WHERE e.id=? AND e.is_test=0", [.text(eventID)]).first,
                   try db.query("SELECT id FROM transaction_event_links WHERE event_id=? AND unlinked_at_ms IS NULL", [.text(eventID)]).isEmpty else { throw LedgerError.invalid("This capture already has a transaction or is test evidence.") }
             if remember { try rememberCard(sourceID: envelope.sourceID, label: envelope.label, accountID: accountID) }
             let observation = Observation(description: description, amount: amountMinor, currency: account.currency, day: day, captured: event.number("captured_at_ms"), offset: Int(event.number("captured_offset_minutes")), accountID: accountID, label: envelope.label, lifecycle: "posted", dateOnly: true)
             try resolveReviews(eventID)
-            try process(observation, eventID: eventID, sourceID: event.text("source_id"), kind: event.text("kind"))
+            let result = try process(observation, eventID: eventID, sourceID: event.text("source_id"), kind: event.text("kind"))
             try db.query("INSERT INTO change_log(id,operation_id,entity_type,entity_id,actor,reason,changed_at_ms,after_json) VALUES (?,?,'raw_event',?,'user','correct_observation',?,?)", [.text(identifier()), .text(identifier()), .text(eventID), .integer(nowMS()), .text(try json(observation))])
+            return result
         }
     }
     public func retryQueue() throws {

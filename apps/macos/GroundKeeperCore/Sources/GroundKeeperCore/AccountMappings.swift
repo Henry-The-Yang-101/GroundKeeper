@@ -12,9 +12,10 @@ extension LedgerStore {
     }
 
     /// Assign this capture only. Remembering is explicit and never replays other reviews.
-    public func assignCaptureAccount(eventID: String, accountID: String, remember: Bool = false) throws {
+    @discardableResult
+    public func assignCaptureAccount(eventID: String, accountID: String, remember: Bool = false) throws -> CaptureResolution {
         guard let selected = try account(accountID) else { throw LedgerError.invalid("Choose an existing account.") }
-        try db.transaction {
+        return try db.transaction {
             let envelope = try unmappedCapture(eventID: eventID)
             let observation = try CaptureParser.parse(envelope, account: selected)
             if remember {
@@ -22,7 +23,7 @@ extension LedgerStore {
                 try rememberCard(sourceID: envelope.sourceID, label: envelope.label, accountID: accountID)
             }
             try resolveReviews(eventID)
-            try process(observation, eventID: eventID, sourceID: envelope.sourceID, kind: envelope.sourceKind)
+            return try process(observation, eventID: eventID, sourceID: envelope.sourceID, kind: envelope.sourceKind)
         }
     }
 
