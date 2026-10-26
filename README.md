@@ -21,6 +21,15 @@ files stay for review. Saved delivery identities prevent repeated imports.
 In the app, you can reconcile possible duplicates, correct details,
 and confirm category suggestions while preserving the original capture evidence.
 
+## Demo
+
+A 74-second walkthrough of iPhone capture, receipt review, category suggestions,
+and local spending insights.
+
+https://github.com/user-attachments/assets/1c05f8a8-2805-4429-a71a-42f95de743aa
+
+[View the full-quality MP4](docs/media/groundkeeper-demo.mp4).
+
 ## What you can do
 
 - Add accounts in CAD, USD, EUR, or GBP and record transactions manually.
