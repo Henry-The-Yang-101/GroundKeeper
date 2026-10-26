@@ -35,8 +35,8 @@ extension LedgerStore {
                     return
                 }
                 let eventID = identifier()
-                try db.query("INSERT INTO raw_events(id,source_id,source_event_id,schema_version,event_kind,captured_at_ms,captured_offset_minutes,received_at_ms,payload_sha256,is_test,external_account_key) VALUES (?,?,?,?,'transaction',?,?,?,?,?,?)",
-                    [.text(eventID), .text(envelope.sourceID), .text(envelope.eventID), .integer(Int64(envelope.schemaVersion)), .integer(captured), .integer(Int64(offset)), .integer(nowMS()), .text(hash), .integer(envelope.isTest == true ? 1 : 0), .text("label:" + envelope.label)])
+                try db.query("INSERT INTO raw_events(id,source_id,source_event_id,schema_version,event_kind,captured_at_ms,captured_offset_minutes,received_at_ms,payload_sha256,is_test,external_account_key,location_status) VALUES (?,?,?,?,'transaction',?,?,?,?,?,?,?)",
+                    [.text(eventID), .text(envelope.sourceID), .text(envelope.eventID), .integer(Int64(envelope.schemaVersion)), .integer(captured), .integer(Int64(offset)), .integer(nowMS()), .text(hash), .integer(envelope.isTest == true ? 1 : 0), .text("label:" + envelope.label), .text(envelope.resolvedLocationStatus)])
                 try db.query("INSERT INTO raw_event_payloads(event_id,payload_json) VALUES (?,?)", [.text(eventID), .text(String(decoding: data, as: UTF8.self))])
                 try storeCaptureDetails(envelope, eventID: eventID, data: data, hash: hash)
                 try receipt(eventID: eventID, delivery: queueID, hash: hash)

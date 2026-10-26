@@ -216,28 +216,34 @@ private struct TransactionLocationMap: View {
     let location: TransactionLocation
     let merchant: String
     private var coordinate: CLLocationCoordinate2D { .init(latitude: location.latitude, longitude: location.longitude) }
+    private var locationTitle: String { location.origin == "phone_capture" ? "Phone location at capture" : "Recorded location" }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Map(initialPosition: .region(MKCoordinateRegion(center: coordinate,
                 latitudinalMeters: min(50_000, max(600, (location.accuracyMeters ?? 0) * 4)), longitudinalMeters: min(50_000, max(600, (location.accuracyMeters ?? 0) * 4))))) {
-                Marker(location.label ?? merchant, coordinate: coordinate).tint(AppStyle.accent)
+                Marker(location.label ?? locationTitle, coordinate: coordinate).tint(AppStyle.accent)
             }
             .mapControls { MapZoomStepper(); MapCompass() }
             .frame(height: 220).clipShape(.rect(cornerRadius: 8))
-            .accessibilityLabel("Recorded purchase location for \(merchant)")
+            .accessibilityLabel("\(locationTitle) for \(merchant)")
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
+                    Text(locationTitle).font(.caption)
                     if let label = location.label { Text(label) }
                     Text(String(format: "%.5f, %.5f", location.latitude, location.longitude))
                         .font(.caption.monospaced()).textSelection(.enabled)
                     if let accuracy = location.accuracyMeters {
                         Text("Recorded accuracy: about \(accuracy.formatted(.number.precision(.fractionLength(0)))) m").font(.caption)
                     }
+                    if let measuredAtMS = location.measuredAtMS {
+                        Text(Date(timeIntervalSince1970: Double(measuredAtMS) / 1000), format: .dateTime.month().day().year().hour().minute().second())
+                            .font(.caption)
+                    }
                 }.foregroundStyle(AppStyle.muted)
                 Spacer()
                 Button("Open in Maps", systemImage: "arrow.up.right.square") {
                     let item = MKMapItem(location: CLLocation(latitude: location.latitude, longitude: location.longitude), address: nil)
-                    item.name = location.label ?? merchant
+                    item.name = location.label ?? locationTitle
                     item.openInMaps()
                 }
             }

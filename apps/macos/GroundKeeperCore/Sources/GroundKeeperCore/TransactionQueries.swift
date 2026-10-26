@@ -39,6 +39,7 @@ extension LedgerStore {
         m.model_name AS category_model_name,m.provider AS category_model_provider,
         g.latitude AS location_latitude,g.longitude AS location_longitude,
         g.horizontal_accuracy_m AS location_accuracy,g.label AS location_label,
+        g.measured_at_ms AS location_measured_at_ms,g.origin AS location_origin,
         EXISTS(SELECT 1 FROM receipt_captures r JOIN receipt_images i ON i.receipt_id=r.id
           WHERE r.transaction_id=t.id AND r.removed_at_ms IS NULL AND r.image_state='stored') AS has_receipt_image,
         EXISTS(SELECT 1 FROM review_items r WHERE r.status='open' AND (r.transaction_id=t.id OR r.part_id=p.id OR r.event_id IN
@@ -76,7 +77,8 @@ extension LedgerStore {
               let longitude = row["location_longitude"]?.string.flatMap(Double.init),
               latitude.isFinite, longitude.isFinite, (-90...90).contains(latitude), (-180...180).contains(longitude) else { return nil }
         return TransactionLocation(latitude: latitude, longitude: longitude,
-            accuracyMeters: row["location_accuracy"]?.string.flatMap(Double.init), label: row["location_label"]?.string)
+            accuracyMeters: row["location_accuracy"]?.string.flatMap(Double.init), label: row["location_label"]?.string,
+            measuredAtMS: row["location_measured_at_ms"]?.int, origin: row["location_origin"]?.string)
     }
 
     public func transactionPage(_ query: LedgerTransactionQuery, limit: Int = 500, offset: Int = 0) throws -> LedgerTransactionPage {

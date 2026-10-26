@@ -6,7 +6,8 @@ import Testing
     let (store, _) = try vault()
     try await store.addAccount(name: "Fixture", currency: "CAD")
     var payload = try #require(JSONSerialization.jsonObject(with: detailedCapture("location")) as? [String: Any])
-    payload["location"] = ["latitude": 43.4723, "longitude": -80.5449, "horizontal_accuracy_m": 12, "label": "Fictional shop"]
+    payload["location"] = ["latitude": 43.4723, "longitude": -80.5449, "horizontal_accuracy_m": 12, "label": "Fictional shop", "measured_at": "2026-10-26T09:30:01-04:00"]
+    payload["location_status"] = "available"
     let data = try JSONSerialization.data(withJSONObject: payload)
     try await store.ingestCapture(data: data, deliveryPath: "location.json")
     let review = try #require(try await store.snapshot().reviews.first)
@@ -15,9 +16,59 @@ import Testing
     let transaction = try #require(try await store.transactionPage(.init()).transactions.first)
     #expect(transaction.location?.latitude == 43.4723)
     #expect(transaction.location?.accuracyMeters == 12)
+    #expect(transaction.location?.measuredAtMS == (try CaptureParser.timestamp("2026-10-26T09:30:01-04:00")).0)
+    #expect(transaction.location?.origin == "phone_capture")
+    #expect(try await store.testRows("SELECT location_status FROM raw_events").first?.text("location_status") == "available")
     try await store.ingestCapture(data: data, deliveryPath: "replay.json")
     #expect(try await store.testRows("SELECT id FROM geotags").count == 1)
     #expect(try await store.integrityCheck())
+}
+
+@Test(arguments: ["not_requested", "denied", "unavailable", "timeout"])
+func capturesWithoutLocationStillCreatePayments(status: String) async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    var payload = try #require(JSONSerialization.jsonObject(with: detailedCapture("no-location-" + status)) as? [String: Any])
+    payload["location_status"] = status
+    payload["location"] = NSNull()
+    try await store.ingestCapture(data: JSONSerialization.data(withJSONObject: payload), deliveryPath: status + ".json")
+    let review = try #require(try await store.snapshot().reviews.first)
+    let account = try #require(try await store.snapshot().accounts.first)
+    try await store.confirmMapping(sourceID: review.sourceID, label: review.label, accountID: account.id)
+    #expect(try await store.transactionPage(.init()).transactions.count == 1)
+    #expect(try await store.testRows("SELECT location_status FROM raw_events").first?.text("location_status") == status)
+    #expect(try await store.testRows("SELECT id FROM geotags").isEmpty)
+    #expect(try await store.testRows("SELECT state FROM queue_items").first?.text("state") == "imported")
+}
+
+@Test func locationStatusDefaultsRemainCompatibleAndContradictionsAreRejected() throws {
+    var payload = try #require(JSONSerialization.jsonObject(with: detailedCapture("status")) as? [String: Any])
+    #expect(try CaptureParser.decode(JSONSerialization.data(withJSONObject: payload)).resolvedLocationStatus == "not_requested")
+    payload["location_status"] = "available"
+    #expect(throws: LedgerError.self) { try CaptureParser.decode(JSONSerialization.data(withJSONObject: payload)) }
+    payload["location"] = ["latitude": 0, "longitude": 0]
+    for status in ["not_requested", "denied", "unavailable", "timeout", "unknown"] {
+        payload["location_status"] = status
+        #expect(throws: LedgerError.self) { try CaptureParser.decode(JSONSerialization.data(withJSONObject: payload)) }
+    }
+    payload.removeValue(forKey: "location_status")
+    #expect(try CaptureParser.decode(JSONSerialization.data(withJSONObject: payload)).resolvedLocationStatus == "available")
+}
+
+@Test func legacyLocationStatusIsInferredAndMeasurementFallsBackToCaptureTime() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fixture", currency: "CAD")
+    var payload = try #require(JSONSerialization.jsonObject(with: detailedCapture("legacy-location")) as? [String: Any])
+    payload["location"] = ["latitude": 0, "longitude": 0]
+    try await store.ingestCapture(data: JSONSerialization.data(withJSONObject: payload), deliveryPath: "legacy.json")
+    let review = try #require(try await store.snapshot().reviews.first)
+    let account = try #require(try await store.snapshot().accounts.first)
+    try await store.confirmMapping(sourceID: review.sourceID, label: review.label, accountID: account.id)
+    let location = try #require(try await store.transactionPage(.init()).transactions.first?.location)
+    #expect(location.latitude == 0 && location.longitude == 0)
+    let capturedAt = try #require(payload["captured_at"] as? String)
+    #expect(location.measuredAtMS == (try CaptureParser.timestamp(capturedAt)).0)
+    #expect(try await store.testRows("SELECT location_status FROM raw_events").first?.text("location_status") == "available")
 }
 
 @Test func invalidAndLegacyCaptureLocationsAreRejected() throws {

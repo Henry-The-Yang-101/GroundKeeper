@@ -13,6 +13,8 @@ public struct TransactionLocation: Sendable, Equatable {
     public let longitude: Double
     public let accuracyMeters: Double?
     public let label: String?
+    public let measuredAtMS: Int64?
+    public let origin: String?
 }
 
 public struct LedgerTransaction: Identifiable, Sendable {
@@ -142,6 +144,7 @@ public struct CaptureEnvelope: Codable, Sendable {
     public let app: String?
     public let note: String?
     public let location: CaptureLocation?
+    public let locationStatus: String?
     let receipt: ReceiptEnvelope.Payload?
     public let inputShape: String?
     public let isTest: Bool?
@@ -151,8 +154,10 @@ public struct CaptureEnvelope: Codable, Sendable {
         case schemaVersion = "schema_version", eventID = "event_id", source, capturedAt = "captured_at", app
         case inputShape = "input_shape", isTest = "is_test", title, subtitle, body, merchant, amount
         case cardOrPass = "card_or_pass", name, transaction, note, receipt, location
+        case locationStatus = "location_status"
     }
     var sourceKind: String { source == "wallet_transaction" ? "apple_wallet" : "bank_notification" }
+    var resolvedLocationStatus: String { locationStatus ?? (location == nil ? "not_requested" : "available") }
     var sourceID: String { "capture:" + contentHash(Data("\(sourceKind)|\(app ?? "")".utf8)) }
     // CIBC's card line below the app heading is the notification Title;
     // Subtitle carries the merchant. Do not use the merchant as a card key.

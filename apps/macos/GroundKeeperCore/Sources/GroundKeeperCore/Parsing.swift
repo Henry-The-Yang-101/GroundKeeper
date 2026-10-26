@@ -51,8 +51,12 @@ enum CaptureParser {
         guard [1, 2, 4].contains(value.schemaVersion), !value.eventID.isEmpty, value.eventID.count <= 128,
               ["wallet_transaction", "bank_notification", "test_notification"].contains(value.source),
               value.source != "test_notification" || value.isTest == true else { throw LedgerError.invalid("unsupported_capture") }
-        guard value.schemaVersion == 4 || (value.note == nil && value.receipt == nil && value.location == nil) else {
+        guard value.schemaVersion == 4 || (value.note == nil && value.receipt == nil && value.location == nil && value.locationStatus == nil) else {
             throw LedgerError.invalid("unsupported_capture_details")
+        }
+        guard ["not_requested", "available", "denied", "unavailable", "timeout"].contains(value.resolvedLocationStatus),
+              (value.resolvedLocationStatus == "available") == (value.location != nil) else {
+            throw LedgerError.invalid("invalid_capture_location_status")
         }
         if let note = value.note {
             guard note.utf8.count <= 10_000, !note.contains("\0"),
