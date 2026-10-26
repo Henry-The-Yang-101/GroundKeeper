@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct QueueControls: View {
-    static let reviewGuidance = "Failed work and captures needing your review are listed separately in Sync. In manual mode, retrying marks failures as pending; click Process queue to run them."
+    static let reviewGuidance = "Capture reviews are resolved in Sync. A complete capture is saved immediately after your decision; category suggestions happen separately. In manual mode, Retry failed work requeues failures, then Import captures or Suggest categories runs the relevant work."
     var showsReviewGuidance = true
     @Environment(AppWorkspace.self) private var workspace
     @State private var showingProviders = false
@@ -9,17 +9,24 @@ struct QueueControls: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Button(workspace.processButtonTitle) { Task { await workspace.sync() } }
-                    .disabled(!workspace.ready || workspace.processing || workspace.changingProcessingMode || workspace.saving)
+                Button(workspace.importButtonTitle) { Task { await workspace.sync(scope: .captures) } }
+                    .disabled(!workspace.hasCaptureFolder || controlsDisabled)
+                if workspace.classifierProvider != "manual" {
+                    Button(workspace.suggestionButtonTitle) { Task { await workspace.sync(scope: .suggestions) } }
+                        .disabled(controlsDisabled || workspace.suggestionCount == 0)
+                }
                 Button("Refresh count") { Task { await workspace.updateQueueCount() } }.disabled(!workspace.ready || workspace.processing)
             }
             if let error = workspace.countError {
                 Text("Queue count unavailable: \(error)").font(.caption).foregroundStyle(AppStyle.muted)
             } else {
-                Text("\(workspace.pendingCaptures) capture files · \(workspace.pendingJobs) queued classification jobs · \(workspace.unqueuedJobs) entries without suggestions")
+                Text("\(workspace.pendingCaptures) capture files to import · \(workspace.suggestionCount) saved transactions awaiting category suggestions")
                     .font(.caption).foregroundStyle(AppStyle.muted)
+                if workspace.pendingFileWork > 0 {
+                    Text("\(workspace.pendingFileWork) receipt or file cleanup tasks run with Import captures.").font(.caption).foregroundStyle(AppStyle.muted)
+                }
                 if workspace.classifierProvider == "manual" {
-                    Text("Manual categorization is selected. Process queue imports capture files; automatic category suggestions stay off. Review entries yourself or choose a provider.")
+                    Text("Manual categorization is selected. Review saved transactions yourself or choose a provider for suggestions.")
                         .font(.caption).foregroundStyle(AppStyle.muted)
                     HStack {
                         Button("Review transactions") { workspace.showTransactions(needingReview: true) }
@@ -47,5 +54,8 @@ struct QueueControls: View {
             }.frame(width: 720, height: 730).vaultSheet()
                 .interactiveDismissDisabled(installer.busy || workspace.saving)
         }
+    }
+    private var controlsDisabled: Bool {
+        !workspace.ready || workspace.processing || workspace.changingProcessingMode || workspace.saving
     }
 }

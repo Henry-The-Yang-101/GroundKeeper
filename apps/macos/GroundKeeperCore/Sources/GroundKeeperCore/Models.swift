@@ -230,7 +230,7 @@ public enum QueueProcessingMode: String, CaseIterable, Identifiable, Codable, Se
         switch self {
         case .background: "Automatically in the background"
         case .whileOpen: "Only while GroundKeeper is open"
-        case .manual: "Only when I click Process queue"
+        case .manual: "Manually"
         }
     }
     public var automaticallyProcesses: Bool { self != .manual }

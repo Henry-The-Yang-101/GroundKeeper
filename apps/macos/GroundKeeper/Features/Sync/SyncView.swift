@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct SyncView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @State private var viewedTransaction: Transaction?
     var body: some View {
         PageContent {
             PageHeading(title: "Sync")
@@ -28,6 +29,29 @@ struct SyncView: View {
             }
             Surface {
                 SectionHeading(title: "Review captures", detail: "\(workspace.reviews.count) open items shown")
+                if let result = workspace.captureFeedback {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(result.message, systemImage: result.needsAttention ? "exclamationmark.circle" : "checkmark.circle")
+                            .font(.callout)
+                            .accessibilityAddTraits(.updatesFrequently)
+                        HStack {
+                            if let id = result.transactionID {
+                                Button("View transaction") {
+                                    Task {
+                                        do {
+                                            guard let transaction = try await workspace.transaction(id: id) else {
+                                                workspace.errorMessage = "This transaction is no longer available."
+                                                return
+                                            }
+                                            viewedTransaction = transaction
+                                        } catch { workspace.errorMessage = error.localizedDescription }
+                                    }
+                                }
+                            }
+                            Button("Dismiss message") { workspace.captureFeedback = nil }.buttonStyle(.borderless)
+                        }
+                    }.padding(.vertical, 6)
+                }
                 if workspace.reviews.isEmpty { Text("No capture issues to review.").foregroundStyle(AppStyle.muted) }
                 ForEach(workspace.reviews) { review in
                     CaptureReviewRow(review: review)
@@ -51,6 +75,9 @@ struct SyncView: View {
                     }
                 }
             }
+        }
+        .sheet(item: $viewedTransaction) { transaction in
+            TransactionDetailView(transaction: transaction).vaultSheet()
         }
     }
 }
@@ -115,7 +142,7 @@ private struct CaptureReviewRow: View {
                     }
                 }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
-                Button(rememberCard ? "Use account and remember card" : "Use for this transaction") {
+                Button("Continue import") {
                     workspace.assignAccount(review, accountID: accountID, remember: rememberCard)
                 }.disabled(accountID.isEmpty)
                 if workspace.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }

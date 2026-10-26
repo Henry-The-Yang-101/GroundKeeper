@@ -109,7 +109,7 @@ been established. See [architecture and evaluation](../contracts/classifier/READ
    an iCloud capture folder, phone setup, and an account. You can skip model
    downloads and phone setup. Return through **Settings > Review setup assistant**.
 2. Leave queue processing at **Only while GroundKeeper is open**, or select
-   **Only when I click Process queue** for manual control.
+   **Manually** for manual control.
 3. Add a transaction with Command-N, or import a CSV from Sync. The
    [fictional CSV walkthrough](../examples/README.md) works without a classifier.
 4. Select a classifier when you are ready to try category suggestions.
@@ -161,7 +161,7 @@ Qwen or Laya packages:
    provider**, find **Ollama** and click **Refresh Ollama models**.
 3. Select an installed model and click **Use Ollama model**. This saves the choice
    for future launches and queue processing. In manual processing mode, click
-   **Process queue** to request suggestions.
+   **Suggest categories** to request suggestions.
 
 GroundKeeper connects to `127.0.0.1:11434`; custom ports and remote servers are
 not supported. It does not download models, start Ollama, change its settings,
@@ -205,7 +205,7 @@ retries. Receipt text stays local unless the Apple receipt-sharing option is on.
 
 Open a transaction with **Edit** and expand **Member decisions and sources** to
 inspect the saved votes and failures. **Retry failed** in Sync requeues failed
-attempts; in manual mode, click **Process queue** to run them. Package and Shortcut
+attempts; in manual mode, click **Suggest categories** to run them. Package and Shortcut
 edits in Council setup are drafts until **Apply council setup** is clicked.
 
 ### Apple Intelligence through Shortcuts

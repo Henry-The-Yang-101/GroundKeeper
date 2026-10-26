@@ -24,7 +24,7 @@ GroundKeeper is a local-first system designed to automatically help you keep tra
   Mac. Each finding explains its calculation and links to the transactions behind
   it. You can dismiss findings or snooze them for seven days.
 - Protect your database with a passphrase and choose automatic processing while
-  the app is open or start it yourself with **Process queue**.
+  the app is open, or use **Import captures** and **Suggest categories** manually.
 
 Reports cover all saved transactions and keep currencies separate. Refunds reduce
 spending on their recorded date; transfers and card payments are excluded.

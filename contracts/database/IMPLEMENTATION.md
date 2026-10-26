@@ -208,7 +208,11 @@ Settings lists active mappings and lets users change their account or remove
 them. Only active mappings apply when importing a new capture, including delayed
 iCloud deliveries; retired rows remain as history. Mapping changes do not rewrite
 saved transactions or replay pending/dismissed reviews. Assigning a capture and
-optionally remembering its card commit atomically. The legacy `confirmMapping`
+optionally remembering its card commit atomically. Account assignment, capture
+correction, and match resolution return a `CaptureResolution`: the created or
+linked transaction ID, or the next review reason. The result is returned after
+the database transaction commits; classification is not required for recording
+or displaying the transaction. The legacy `confirmMapping`
 bulk API additionally retries open account/currency reviews for that source and
 label, excluding linked captures, dismissed reviews, and identity conflicts.
 
@@ -240,6 +244,16 @@ purchase date or a confirmed category. Different amounts/currencies are not
 silently merged; advanced FX/tip/hold reconciliation remains manual.
 
 ## Classifier scheduling
+
+The app exposes **Import captures** and **Suggest categories** as separate
+commands. Manual import processes source files, receipts and cleanup only;
+manual suggestions operate on existing transactions only. Automatic passes run
+both stages independently. A capture review always resumes that capture's
+reconciliation immediately. Its result is refreshed in the ledger and shown in
+Sync before optional classification. Automatic wakeups received while saving,
+processing, or changing modes are coalesced and resumed after the operation,
+with the current processing mode and open vault checked again. Manual mode never
+runs inference as a side effect of confirming an account or correcting a capture.
 
 Choose a verified model package or explicitly enable an Apple Intelligence
 Shortcut in Settings. The selected provider is retained across launches.

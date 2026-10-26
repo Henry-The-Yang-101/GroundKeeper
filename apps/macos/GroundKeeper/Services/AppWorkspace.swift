@@ -34,12 +34,19 @@ import GroundKeeperCore
     var cleanupMessage: String?
     var captureFolderNeedsReconnect: Bool { hasCaptureFolder && !AppPreferences.defaults.bool(forKey: "captureFolderWritable") }
     var queueCount: Int { pendingCaptures + pendingFileWork + (classifierProvider == "manual" ? 0 : pendingJobs + unqueuedJobs) }
-    var processButtonTitle: String { if countError != nil { return "Process queue (count unavailable)" }; return processing ? "Processing… (\(queueCount))" : "Process queue (\(queueCount))" }
+    var suggestionCount: Int { pendingJobs + unqueuedJobs }
+    var importButtonTitle: String {
+        if processingScope?.importsCaptures == true { return "Importing captures…" }
+        return countError == nil ? "Import captures (\(pendingCaptures))" : "Import captures"
+    }
+    var suggestionButtonTitle: String {
+        processingScope?.suggestsCategories == true ? "Suggesting categories…" : "Suggest categories (\(suggestionCount))"
+    }
     var processingDescription: String {
         switch processingMode {
         case .background: "Checks every 15 seconds, including after you quit GroundKeeper. Your Mac must be awake and you must be signed in."
         case .whileOpen: "Checks every 15 seconds while GroundKeeper is running. Quitting the app stops processing."
-        case .manual: "Counts update automatically. Capture processing and classification run only when you click Process queue."
+        case .manual: "Counts update automatically. Use Import captures for new files and Suggest categories for saved transactions. Resolving a capture review saves it immediately when its details are complete."
         }
     }
     var pendingJobs = 0
@@ -55,6 +62,7 @@ import GroundKeeperCore
     var showingImportPreview = false
     var errorMessage: String?
     var feedback: WorkspaceFeedback?
+    var captureFeedback: WorkspaceFeedback?
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
@@ -63,6 +71,7 @@ import GroundKeeperCore
     var classifierStatus = "Manual categorization until you choose a provider"
     var ollamaModelName = AppPreferences.defaults.string(forKey: "ollamaModelName") ?? ""
     var processing = false
+    var processingScope: QueueProcessingScope?
     var saving = false
     var councilConfiguration: CouncilConfiguration?
     var councilQwenURL: URL?
@@ -81,6 +90,9 @@ import GroundKeeperCore
     @ObservationIgnored private var modelURL: URL?
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var processingTask: Task<Void, Never>?
+    @ObservationIgnored private var automaticProcessingRequested = false
+    @ObservationIgnored private var automaticResumeTask: Task<Void, Never>?
+    @ObservationIgnored private var stopping = false
     @ObservationIgnored private let isBackgroundAgent: Bool
     init(isBackgroundAgent: Bool = false) {
         self.isBackgroundAgent = isBackgroundAgent
@@ -124,6 +136,9 @@ import GroundKeeperCore
                 }
                 if CommandLine.arguments.contains("--spending-preview") {
                     showingSetup = false; selectedTab = .spending
+                }
+                if CommandLine.arguments.contains("--capture-review-preview") {
+                    showingSetup = false; selectedTab = .sync
                 }
             }
             #if DEBUG
@@ -176,7 +191,7 @@ import GroundKeeperCore
     }
     func setEncryption(passphrase: String?, remember: Bool, currentPassphrase: String = "") async throws {
         guard !saving, !processing, !changingProcessingMode, let store else { throw LedgerError.unavailable("Wait for the current operation to finish and unlock the vault first.") }
-        saving = true; defer { saving = false }
+        saving = true; defer { finishSaving() }
         if encrypted { try await store.verifyPassphrase(currentPassphrase) }
         // Prevent a background launch from opening a newly encrypted vault without interaction.
         if passphrase != nil && processingMode == .background {
@@ -196,7 +211,7 @@ import GroundKeeperCore
     func lockVault() async {
         guard encrypted, !saving, !changingProcessingMode else { return }
         await stop()
-        transactions = []; accounts = []; cardMappings = []; reviews = []; queue = []; editor = nil; showingImportPreview = false
+        transactions = []; accounts = []; cardMappings = []; reviews = []; queue = []; editor = nil; showingImportPreview = false; captureFeedback = nil
         totalTransactions = 0; matchingTransactions = 0; transactionReviewCount = 0; recentTransactions = []; model = nil; status = "Unlock your local vault"
     }
     func finishSetup() {
@@ -292,7 +307,7 @@ import GroundKeeperCore
         guard let store else { throw LedgerError.unavailable("Unlock your vault to save this transaction.") }
         guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then save again.") }
         saving = true
-        defer { saving = false }
+        defer { finishSaving() }
         let edit = try await self.prepareTransactionEdit(transaction)
         guard self.store === store else { throw CancellationError() }
         try await store.save(edit)
@@ -337,7 +352,7 @@ import GroundKeeperCore
         guard let store else { throw LedgerError.unavailable("Unlock your vault to rename an account.") }
         guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then try again.") }
         saving = true
-        defer { saving = false }
+        defer { finishSaving() }
         try await store.renameAccount(id: id, name: name)
         guard self.store === store else { throw CancellationError() }
         try await refresh()
@@ -352,9 +367,10 @@ import GroundKeeperCore
     }
     func assignAccount(_ review: ReviewRecord, accountID: String, remember: Bool) {
         perform {
-            try await self.store?.assignCaptureAccount(eventID: review.eventID, accountID: accountID, remember: remember)
-            try await self.refresh(); await self.processIfAutomatic()
-            self.feedback = WorkspaceFeedback(message: remember ? "Account chosen and card mapping remembered" : "Account chosen for this capture")
+            guard let store = self.store else { throw LedgerError.unavailable("Unlock your vault first.") }
+            let result = try await store.assignCaptureAccount(eventID: review.eventID, accountID: accountID, remember: remember)
+            try await self.presentCaptureResult(result, remembered: remember)
+            await self.processIfAutomatic()
         }
     }
     func updateCardMapping(_ mapping: CardAccountMapping, accountID: String) {
@@ -372,7 +388,12 @@ import GroundKeeperCore
         }
     }
     func resolve(_ review: ReviewRecord, transactionID: String?, expectedRevision: Int? = nil) {
-        perform { try await self.store?.resolveMatch(eventID: review.eventID, transactionID: transactionID, expectedRevision: expectedRevision); try await self.refresh(); await self.processIfAutomatic() }
+        perform {
+            guard let store = self.store else { throw LedgerError.unavailable("Unlock your vault first.") }
+            let result = try await store.resolveMatch(eventID: review.eventID, transactionID: transactionID, expectedRevision: expectedRevision)
+            try await self.presentCaptureResult(result)
+            await self.processIfAutomatic()
+        }
     }
     func resolveCSV(_ review: ReviewRecord, useStatement: Bool, expectedRevision: Int?) {
         perform {
@@ -383,7 +404,7 @@ import GroundKeeperCore
     func mergeStatement(_ transaction: Transaction, other: Transaction) async throws {
         guard let store else { throw LedgerError.unavailable("Unlock your vault first.") }
         guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish.") }
-        saving = true; defer { saving = false }
+        saving = true; defer { finishSaving() }
         try await store.mergeStatementMatch(transactionID: transaction.id.uuidString, otherID: other.id.uuidString,
             revision: transaction.revision, otherRevision: other.revision)
         try await refresh()
@@ -396,9 +417,27 @@ import GroundKeeperCore
         guard let account = accounts.first(where: { $0.id == accountID }) else { throw LedgerError.invalid("Choose an account.") }
         let minor = try ExactMoney.parse(amount, currency: account.currency)
         saving = true
-        defer { saving = false }
-        try await store.correctCapture(eventID: review.eventID, description: description, amountMinor: minor, accountID: accountID, day: day, remember: remember)
+        defer { finishSaving() }
+        let result = try await store.correctCapture(eventID: review.eventID, description: description, amountMinor: minor, accountID: accountID, day: day, remember: remember)
+        try await presentCaptureResult(result, remembered: remember)
+        await processIfAutomatic()
+    }
+    private func presentCaptureResult(_ result: CaptureResolution, remembered: Bool = false) async throws {
         try await refresh()
+        let suffix = remembered ? " Card remembered for future captures." : ""
+        switch result {
+        case let .created(id), let .linked(id):
+            guard let transaction = try await transaction(id: id) else { throw LedgerError.invalid("The saved transaction is no longer available.") }
+            let account = accountLabel(id: transaction.accountID, fallback: transaction.account)
+            let action: String
+            if case .created = result { action = "Added to \(account)" }
+            else { action = "Linked to an existing transaction in \(account)" }
+            // This is a durable import confirmation. Category state can change
+            // independently while the message remains visible.
+            captureFeedback = WorkspaceFeedback(message: action + "." + suffix, transactionID: id)
+        case let .needsReview(reason):
+            captureFeedback = WorkspaceFeedback(message: "Capture needs attention: \(TransactionReviewIssue.title(for: reason))." + suffix, needsAttention: true)
+        }
     }
     var hasCaptureFolder: Bool { AppPreferences.defaults.data(forKey: "captureFolderBookmark") != nil }
     var captureFolderPath: String { AppPreferences.defaults.string(forKey: "captureFolderPath") ?? folderName }
@@ -451,65 +490,95 @@ import GroundKeeperCore
         if !showingSetup && processingMode.automaticallyProcesses { await sync(automatic: true) }
         else { await updateQueueCount() }
     }
-    func sync(automatic: Bool = false) async {
-        // Inventory is read-only. An idle timer tick must not take the UI's
-        // processing lock or briefly disable settings and model selection.
+    func sync(automatic: Bool = false, scope: QueueProcessingScope = .all) async {
+        guard !stopping, !Task.isCancelled, let activeStore = store else { return }
         if automatic {
-            guard !showingSetup, processingMode.automaticallyProcesses else { return }
+            guard !showingSetup, processingMode.automaticallyProcesses, !Task.isCancelled else { return }
+            // A review can become ready while a save or an earlier batch is running.
+            // Remember that wakeup and resume once both operations have finished.
+            if saving || processing || changingProcessingMode {
+                automaticProcessingRequested = true
+                return
+            }
             await updateQueueCount()
-            if queueCount == 0 {
-                // A committed capture may still be waiting for its receipt asset.
-                guard let store, folderBookmark != nil,
-                      (try? await store.receiptImageRequests().isEmpty) == false else { return }
+            guard queueCount > 0 else { return }
+            if saving || processing || changingProcessingMode {
+                automaticProcessingRequested = true
+                return
             }
         }
-        guard !processing, !saving, store != nil, !changingProcessingMode, !Task.isCancelled,
+        guard !stopping, self.store === activeStore, !processing, !saving, !changingProcessingMode, !Task.isCancelled,
               !automatic || processingMode.automaticallyProcesses else { return }
-        processing = true
-        let task = Task { await self.processQueuePass() }
+        processing = true; processingScope = scope.importsCaptures ? .captures : .suggestions
+        let task = Task { await self.processQueuePass(scope: scope) }
         processingTask = task
         await withTaskCancellationHandler { await task.value } onCancel: { task.cancel() }
-        processingTask = nil; processing = false
+        processingTask = nil; processing = false; processingScope = nil
+        if !stopping && scope == .captures && processingMode.automaticallyProcesses { automaticProcessingRequested = true }
+        resumeAutomaticProcessingIfNeeded()
     }
-    private func processQueuePass() async {
+    private func finishSaving() {
+        saving = false
+        resumeAutomaticProcessingIfNeeded()
+    }
+    private func resumeAutomaticProcessingIfNeeded() {
+        guard automaticProcessingRequested, !saving, !processing, !changingProcessingMode else { return }
+        automaticProcessingRequested = false
+        guard !stopping, !Task.isCancelled, !showingSetup, processingMode.automaticallyProcesses, let store else { return }
+        automaticResumeTask = Task { [weak self] in
+            guard let self, self.store === store, !Task.isCancelled else { return }
+            await self.processIfAutomatic()
+        }
+    }
+    private func processQueuePass(scope: QueueProcessingScope) async {
         guard let store else { return }
-        do {
-            if let folderBookmark {
-                // Drain the files present at the start; retries respect their persisted deadlines.
-                var remaining = Int.max
-                repeat {
-                    try Task.checkCancellation()
-                    let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
-                    if remaining == Int.max { remaining = scan.pending }
-                    for entry in scan.files.prefix(remaining) {
-                        try Task.checkCancellation()
-                        try await store.ingestCapture(data: entry.data, deliveryPath: entry.path)
-                        remaining -= 1
-                    }
-                    lastSync = Date(); status = scan.waiting == 0 ? "Capture folder checked" : "Waiting for \(scan.waiting) iCloud files"
-                    if scan.files.count < 200 { break }
-                } while remaining > 0
-                try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
-                let failed = try await folder.cleanStoredFiles(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
-                cleanupMessage = failed == 0 ? nil : "Saved safely in the vault. Reconnect the capture folder to remove \(failed) queued files."
-            }
-            try Task.checkCancellation()
-            try await refresh()
-            if classifierProvider == "manual", pendingJobs + unqueuedJobs > 0 {
-                status = "Captures checked. Review transactions with no category or choose a provider for suggestions."
-            } else if pendingJobs + unqueuedJobs > 0 {
-                if classifierProvider == "council" { try await classifyCouncilPending() }
-                else {
-                    if try await store.prepareSelectedClassifications() {
-                        if model == nil { try await restoreModel() }
-                        try Task.checkCancellation()
-                        await classifyPending()
-                    }
-                }
-            }
-            await updateQueueCount()
-        } catch is CancellationError {} catch { status = "Queue needs attention"; errorMessage = error.localizedDescription }
+        if scope.importsCaptures {
+            do { try await importCaptureFiles(store: store) }
+            catch is CancellationError {}
+            catch { status = "Capture import needs attention"; errorMessage = error.localizedDescription }
+        }
+        // A folder problem must not prevent suggestions for transactions already saved.
+        if scope.suggestsCategories && !Task.isCancelled {
+            processingScope = .suggestions
+            do { try await suggestPendingCategories(store: store) }
+            catch is CancellationError {}
+            catch { classifierStatus = "Category suggestions need attention"; errorMessage = error.localizedDescription }
+        }
+        await updateQueueCount()
         await releaseClassifierResources()
+    }
+    private func importCaptureFiles(store: LedgerStore) async throws {
+        if let folderBookmark {
+            // Drain the files present at the start; retries respect their persisted deadlines.
+            var remaining = Int.max
+            repeat {
+                try Task.checkCancellation()
+                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+                if remaining == Int.max { remaining = scan.pending }
+                for entry in scan.files.prefix(remaining) {
+                    try Task.checkCancellation()
+                    try await store.ingestCapture(data: entry.data, deliveryPath: entry.path)
+                    remaining -= 1
+                }
+                lastSync = Date(); status = scan.waiting == 0 ? "Capture folder checked" : "Waiting for \(scan.waiting) iCloud files"
+                if scan.files.count < 200 { break }
+            } while remaining > 0
+            try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+            let failed = try await folder.cleanStoredFiles(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+            cleanupMessage = failed == 0 ? nil : "Saved safely in the vault. Reconnect the capture folder to remove \(failed) queued files."
+        }
+    }
+    private func suggestPendingCategories(store: LedgerStore) async throws {
+        try Task.checkCancellation()
+        try await refresh()
+        guard classifierProvider != "manual", suggestionCount > 0 else { return }
+        if classifierProvider == "council" { try await classifyCouncilPending() }
+        else if try await store.prepareSelectedClassifications() {
+            if model == nil { try await restoreModel() }
+            guard model != nil else { throw LedgerError.unavailable("Choose a category provider in Settings before requesting suggestions.") }
+            try Task.checkCancellation()
+            await classifyPending()
+        }
     }
     func setReceiptSharing(_ enabled: Bool) {
         perform {
@@ -648,7 +717,7 @@ import GroundKeeperCore
         let previousMode = processingMode
         changingProcessingMode = true
         Task {
-            defer { changingProcessingMode = false }
+            defer { changingProcessingMode = false; resumeAutomaticProcessingIfNeeded() }
             processingTask?.cancel(); await processingTask?.value
             do {
                 // Persist before registering; launchd may start the helper immediately.
@@ -668,8 +737,13 @@ import GroundKeeperCore
         }
     }
     func stop() async {
-        loop?.cancel(); processingTask?.cancel()
-        await loop?.value; await processingTask?.value
+        guard !stopping else { return }
+        stopping = true
+        defer { stopping = false }
+        automaticProcessingRequested = false
+        loop?.cancel(); automaticResumeTask?.cancel(); processingTask?.cancel()
+        await loop?.value; await automaticResumeTask?.value; await processingTask?.value
+        automaticResumeTask = nil
         await client.shutdown()
         await store?.close(); store = nil; started = false
     }
@@ -830,7 +904,7 @@ import GroundKeeperCore
     func perform(_ operation: @escaping @MainActor () async throws -> Void) {
         guard !saving else { return }; saving = true
         Task {
-            defer { saving = false }
+            defer { finishSaving() }
             do { try await operation() } catch { errorMessage = error.localizedDescription }
             if !processing && !classifying { await releaseClassifierResources() }
         }

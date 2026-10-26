@@ -22,7 +22,7 @@ struct SettingsView: View {
                 }.pickerStyle(.segmented).tint(AppStyle.controlAccent)
             }
             VaultFormSection("Queue processing") {
-                Picker("Process queue", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
+                Picker("Import and suggest categories", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
                     ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !workspace.encrypted) }) { Text($0.title).tag($0) }
                 }.disabled(workspace.changingProcessingMode || workspace.saving)
                 Text(workspace.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)

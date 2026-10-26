@@ -71,7 +71,7 @@ The disk image's **Shortcuts** folder and each release include the available
 Apple Intelligence classification have separate setup steps.
 
 The free release supports automatic processing while GroundKeeper stays open,
-or manual **Process queue** runs. Closing its window does not quit the app.
+or manual **Import captures** and **Suggest categories** runs. Closing its window does not quit the app.
 Closed-app background processing is disabled: a replacement ad hoc build was
 rejected by macOS launch constraints during testing. No Apple account is needed
 for the supported modes.

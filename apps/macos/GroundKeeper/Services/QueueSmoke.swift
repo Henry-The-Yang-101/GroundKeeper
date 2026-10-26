@@ -90,15 +90,94 @@ import Synchronization
             try check(!manualProcessingChanged.withLock { $0 }, "Manual categorization backlog briefly locked settings")
             try check(try await store.integrityCheck(), "Integrity check failed")
             await workspace.stop()
+            try await captureReviewFlow(in: directory)
             if CommandLine.arguments.contains("--background-smoke-agent") {
                 guard Bundle.main.bundleIdentifier == "com.groundkeeper.macos.queue-smoke" else {
                     throw LedgerError.unavailable("Background diagnostics require an isolated test copy")
                 }
                 try Data("passed".utf8).write(to: backgroundResult, options: .atomic)
             }
-            print("queue_smoke_passed: manual inventory, 205-file JSON drain, receipt-image drain, restart count, automatic mode, retry backoff, CSV gating")
+            print("queue_smoke_passed: manual inventory, 205-file JSON drain, receipt-image drain, restart count, automatic mode, retry backoff, CSV gating, separate import and suggestion actions, immediate account confirmation, deferred automatic resumption")
             exit(0)
         } catch { print("queue_smoke_failed: \(error.localizedDescription)"); exit(1) }
+    }
+    private static func captureReviewFlow(in directory: URL) async throws {
+        let inbox = directory.appendingPathComponent("review-flow/inbox")
+        try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
+        let store = try LedgerStore(url: directory.appendingPathComponent("review-flow.sqlite"))
+        try await store.addAccount(name: "Fictional review account", currency: "CAD")
+        let accountID = try await store.snapshot().accounts[0].id
+        let bookmark = try inbox.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
+        let workspace = AppWorkspace()
+        workspace.configureQueueSmoke(store: store, bookmark: bookmark, mode: .manual)
+        // An unconfigured Council fails before loading any model or using a network.
+        // That failure makes an attempted suggestion pass observable in this fixture.
+        workspace.classifierProvider = "council"
+        try writeCapture("first", to: inbox)
+        await workspace.sync(scope: .captures)
+        try check(workspace.reviews.count == 1 && workspace.totalTransactions == 0, "Import did not request an account")
+        try check(workspace.errorMessage == nil, "Import unexpectedly attempted classification")
+        let first = workspace.reviews[0]
+        workspace.assignAccount(first, accountID: accountID, remember: false)
+        try await waitUntil { !workspace.saving }
+        try check(workspace.totalTransactions == 1 && workspace.transactions.count == 1, "Account choice did not immediately refresh Transactions")
+        try check(workspace.captureFeedback?.transactionID == workspace.transactions[0].id.uuidString, "Account choice did not expose the saved transaction")
+        try check(workspace.captureFeedback?.needsAttention == false && workspace.reviews.isEmpty, "Saved capture remained unresolved")
+        try check(workspace.errorMessage == nil && workspace.unqueuedJobs == 1, "Manual account choice attempted classification")
+
+        try writeCapture("second", to: inbox)
+        await workspace.sync(scope: .suggestions)
+        try check(workspace.errorMessage?.contains("Set up Council") == true, "Explicit suggestions did not reach the selected provider")
+        try check(workspace.pendingCaptures == 1 && workspace.reviews.isEmpty, "Suggest categories imported a capture")
+        try check(FileManager.default.fileExists(atPath: inbox.appendingPathComponent("second.json").path), "Suggest categories consumed a capture file")
+        try check(workspace.totalTransactions == 1, "Suggestion failure removed a saved transaction")
+
+        workspace.errorMessage = nil
+        await workspace.sync(scope: .captures)
+        try check(workspace.errorMessage == nil && workspace.reviews.count == 1, "Capture-only import ran inference")
+        workspace.processingMode = .whileOpen
+        workspace.assignAccount(workspace.reviews[0], accountID: accountID, remember: false)
+        // There is no timer in this workspace: only the post-save wakeup can run.
+        try await waitUntil { !workspace.saving && !workspace.processing && workspace.errorMessage != nil }
+        try check(workspace.errorMessage?.contains("Set up Council") == true, "Automatic processing was lost during account confirmation")
+        try check(workspace.totalTransactions == 2 && workspace.reviews.isEmpty, "Classifier failure blocked account confirmation")
+
+        // A queued automatic wakeup must honor a switch back to manual processing.
+        workspace.errorMessage = nil
+        try writeCapture("third", to: inbox)
+        workspace.perform {
+            await workspace.processIfAutomatic()
+            workspace.processingMode = .manual
+        }
+        try await waitUntil { !workspace.saving }
+        await Task.yield()
+        try check(workspace.errorMessage == nil && workspace.totalTransactions == 2, "Deferred work bypassed manual mode")
+        try check(FileManager.default.fileExists(atPath: inbox.appendingPathComponent("third.json").path), "Manual mode consumed a deferred capture")
+        try check(try await store.integrityCheck(), "Review flow damaged the vault")
+        workspace.processingMode = .whileOpen
+        workspace.perform {
+            await workspace.processIfAutomatic()
+            await workspace.stop()
+        }
+        try await waitUntil { !workspace.saving }
+        await Task.yield()
+        try check(!workspace.ready && !workspace.processing && workspace.errorMessage == nil, "Deferred processing outlived the open vault")
+        try check(FileManager.default.fileExists(atPath: inbox.appendingPathComponent("third.json").path), "Closing the vault consumed deferred work")
+    }
+    private static func writeCapture(_ id: String, to inbox: URL) throws {
+        let payload: [String: Any] = ["schema_version": 2, "event_id": id, "source": "wallet_transaction",
+            "captured_at": "2026-10-17T10:00:00-04:00", "input_shape": "wallet_transaction_fields",
+            "merchant": "FICTIONAL REVIEW CAFE", "amount": "CAD 12.50", "card_or_pass": "Fictional card"]
+        let url = inbox.appendingPathComponent(id + ".json")
+        try JSONSerialization.data(withJSONObject: payload).write(to: url)
+        try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -10)], ofItemAtPath: url.path)
+    }
+    private static func waitUntil(_ predicate: @MainActor () -> Bool) async throws {
+        for _ in 0..<500 {
+            if predicate() { return }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        throw LedgerError.invalid("Timed out waiting for the capture review flow")
     }
     private static var backgroundResult: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

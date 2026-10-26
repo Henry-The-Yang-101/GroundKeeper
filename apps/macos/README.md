@@ -260,18 +260,28 @@ after a replacement-build launch failure.
   may require enabling GroundKeeper in Login Items & Extensions.
 - **Only while GroundKeeper is open** (default): automatic processing every
   15 seconds until the app quits. Closing or minimizing its window does not quit it.
-- **Only when I click Process queue:** counting remains automatic, but capture
+- **Manually:** counting remains automatic, but capture
   ingestion and classifier inference require an explicit button click. Connecting
   a folder, importing a CSV, retrying failures or resolving a review does not
   implicitly run the classifier in this mode.
 
-The **Process queue (N)** button appears in both Settings and Sync. Its count is
-waiting capture files plus transactions awaiting classification, including work
-awaiting model selection or retry deadlines. Failures and review items are
-separate. Counts refresh every 15 seconds and on demand, without importing files,
-starting downloads or loading a model. Unavailable counts are labeled explicitly.
-One click processes the existing backlog in bounded capture batches, respecting
-persisted backoff. Files still downloading or waiting for retry remain pending.
+**Import captures (N)** and **Suggest categories (N)** appear in Settings and
+Sync. The import count covers capture files; receipt storage and file cleanup
+work are disclosed separately and run with imports. The suggestion count covers
+saved transactions awaiting inference, including pending retries. Failures and
+capture reviews are separate. Counts refresh every 15 seconds and on demand,
+without importing files, starting downloads or loading a model. Unavailable
+counts are labeled explicitly. Importing drains the existing files in bounded
+batches, respecting persisted backoff. Suggesting categories never imports files.
+Automatic mode runs both stages, and a failed capture-folder read does not block
+suggestions for saved transactions.
+
+Confirming an account, correcting a capture, or deciding a duplicate immediately
+creates or links its transaction, or leaves the next specific issue in review.
+Sync shows the result and a **View transaction** action for saved entries.
+Categories can remain empty until suggestions or manual review; model failures
+do not prevent saving a valid capture. Automatic work requested during a save or
+processing pass resumes after it finishes, rechecking manual mode and vault state.
 
 The helper uses the same executable, sandbox container, database and bookmarks
 as the UI, through a headless entry point that does not register an application
@@ -308,7 +318,17 @@ Sync contains imports, capture review and queue activity. Settings contains
 accounts, queue processing preferences and local model selection. The earlier charts/planning prototypes
 remain source fixtures but are not exposed as live reports.
 
-In Sync → Review captures, choose an account and **Use for this transaction**.
+For an isolated account-review walkthrough, use
+`./apps/macos/run-demo.sh --no-build --captures --instance capture-review`.
+It opens Sync with fictional captures and separate preview preferences.
+Verification on 2026-10-26: 141 core tests and the sandboxed queue smoke passed.
+The smoke covers separate import/suggestion actions, immediate transaction
+visibility after account confirmation, automatic resumption after saving,
+manual-mode changes, and vault closure. A disposable UI walkthrough also verified
+**Continue import → View transaction** and the new row in Transactions before
+requesting any category suggestions.
+
+In Sync → Review captures, choose an account and **Continue import**.
 Optionally check **Remember this card for future transactions** to save the exact
 Wallet card or bank card description for that source. The option starts unchecked
 and is also available when correcting capture details. Dismissing the review
@@ -389,8 +409,7 @@ an installed local Ollama model, an Apple Intelligence Shortcut by name, or
 Model council with Qwen, Laya and Apple Intelligence using equal votes.
 Ollama is a standalone provider; it does not replace a Council member.
 The saved provider is restored by foreground and background queue processing.
-Manual mode still waits
-for Process queue. No provider automatically falls back to another.
+Manual mode waits for **Suggest categories**. No provider automatically falls back to another.
 
 The selected Qwen continuation from 2026-10-18 is packaged locally at
 `.local/macos/models/qwen-delaware` (`qwen-delaware-v1-step5872`, v2 prompt).
