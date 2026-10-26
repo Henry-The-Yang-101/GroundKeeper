@@ -34,6 +34,14 @@ import GroundKeeperCore
                   workspace.transactionReviewCount == 1 else { throw LedgerError.invalid("Rapid ledger query refresh failed.") }
             workspace.saving = false
             print("ledger_query_refresh_passed")
+            try await store.addAccount(name: "Fictional USD account", currency: "USD")
+            guard let usd = try await store.snapshot().accounts.first(where: { $0.currency == "USD" }) else { throw LedgerError.invalid("Missing currency fixture.") }
+            var entered = Transaction(); entered.amount = 20
+            entered.selectAccount(usd, amountEntered: true)
+            guard entered.currency == "CAD", entered.amount == 20, entered.accountID == usd.id else { throw LedgerError.invalid("Account selection changed an entered amount's currency.") }
+            var blank = Transaction(); blank.selectAccount(usd, amountEntered: false)
+            guard blank.currency == "USD" else { throw LedgerError.invalid("A blank draft did not adopt its account's currency.") }
+            print("ledger_draft_currency_passed")
             if CommandLine.arguments.contains("--ledger-model-picker") {
                 let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true
                 panel.message = "Choose a model for one fictional ledger-to-XPC classification."

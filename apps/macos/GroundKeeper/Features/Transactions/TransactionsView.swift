@@ -80,7 +80,7 @@ struct TransactionsView: View {
                         cell(transaction) {
                             VStack(alignment: .leading, spacing: 4) {
                                 CategoryLabel(transaction: transaction)
-                                if transaction.needsReview {
+                                if transaction.requiresReview {
                                     Label("Needs review", systemImage: "circle.dashed").font(.caption).foregroundStyle(AppStyle.muted)
                                 }
                             }

@@ -72,7 +72,7 @@ private struct CaptureReviewRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(review.description.isEmpty ? "Unparsed capture" : review.description).fontWeight(.medium)
-            Text(review.reason.replacingOccurrences(of: "_", with: " ")).font(.callout).foregroundStyle(AppStyle.muted)
+            Text(TransactionReviewIssue.title(for: review.reason)).font(.callout).foregroundStyle(AppStyle.muted)
             if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
             if let context {
                 CaptureSourceEvidence(context: context)
@@ -94,15 +94,19 @@ private struct CaptureReviewRow: View {
                 }.disabled(accountID.isEmpty)
                 if workspace.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }
             }
-            if review.reason == "possible_duplicate" {
+            if ["possible_duplicate", "statement_match"].contains(review.reason) {
                 Text("Compare with existing transactions").font(.headline)
+                if review.reason == "statement_match" {
+                    Text("The account and amount match within seven days. Check the merchant and date before linking. The source is held out of spending until you decide.")
+                        .font(.caption).foregroundStyle(AppStyle.muted)
+                }
                 ForEach(candidates) { candidate in
                     GroupBox {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(candidate.description).fontWeight(.medium)
                             Text("\((Decimal(candidate.amountMinor) / 100).formatted(.currency(code: candidate.currency))) \(candidate.currency) · \(candidate.day)")
                             Text("Account: \(workspace.accountLabel(id: candidate.accountID, fallback: candidate.accountName))").font(.caption)
-                            Button("Link to this transaction") { workspace.resolve(review, transactionID: candidate.id) }
+                            Button("Link to this transaction") { workspace.resolve(review, transactionID: candidate.id, expectedRevision: candidate.revision) }
                                 .disabled(context == nil)
                                 .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(workspace.accountLabel(id: candidate.accountID, fallback: candidate.accountName))")
                         }.frame(maxWidth: .infinity, alignment: .leading)
@@ -115,17 +119,31 @@ private struct CaptureReviewRow: View {
                 Button("Keep as a separate transaction") { workspace.resolve(review, transactionID: nil) }
                     .disabled(context == nil)
             }
-            if !["possible_duplicate", "event_identity_collision"].contains(review.reason) {
+            if ["external_id_conflict", "csv_mapping_changed"].contains(review.reason) {
+                ForEach(candidates) { candidate in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Saved entry: \(candidate.description)").fontWeight(.medium)
+                        Text("\((Decimal(candidate.amountMinor) / 100).formatted(.currency(code: candidate.currency))) \(candidate.currency) · \(candidate.day)")
+                    }.font(.callout)
+                }
+                Text("Use statement details replaces the saved description, amount, and date. A changed direction reopens category review. Keep saved details retains the entry and records this statement as evidence.")
+                    .font(.caption).foregroundStyle(AppStyle.muted)
+                HStack {
+                    Button("Use statement details") { workspace.resolveCSV(review, useStatement: true, expectedRevision: candidates.first?.revision) }
+                    Button("Keep saved details") { workspace.resolveCSV(review, useStatement: false, expectedRevision: candidates.first?.revision) }
+                }.disabled(context == nil || candidates.isEmpty)
+            }
+            if !["possible_duplicate", "statement_match", "external_id_conflict", "csv_mapping_changed", "event_identity_collision"].contains(review.reason) {
                 Button("Correct capture details…") { correcting = true }
             }
             Button("Dismiss review") { workspace.dismiss(review) }.font(.caption)
         }.disabled(workspace.saving)
         .sheet(isPresented: $correcting) { CaptureCorrection(review: review).vaultSheet() }
-        .task(id: review.id) {
+        .task(id: "\(review.id)|\(workspace.reportingRevision)") {
             do {
                 guard let store = workspace.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
                 context = try await store.captureReviewContext(eventID: review.eventID)
-                candidates = try await store.captureReconciliationCandidates(transactionIDs: review.candidates)
+                candidates = try await store.reviewCandidates(reviewID: review.id)
             } catch { contextError = error.localizedDescription }
         }
     }
@@ -241,7 +259,7 @@ private struct CaptureSourceEvidence: View {
     @Environment(AppWorkspace.self) private var workspace
     let context: CaptureReviewContext
     var body: some View {
-        Section("Original capture") {
+        Section(context.sourceKind == "csv" ? "Statement source" : "Original capture") {
             LabeledContent("Date", value: context.day)
             if let amount = context.amountMinor, let currency = context.currency {
                 LabeledContent("Amount", value: "\((Decimal(amount) / 100).formatted(.currency(code: currency))) \(currency)")

@@ -88,6 +88,9 @@ extension LedgerStore {
             guard let targetID = link?["transaction_id"]?.string ?? reference?["transaction_id"]?.string,
                   let target = try transaction(id: targetID) else { throw LedgerError.invalid("The saved entry is no longer available. Dismiss this review or correct the file’s bank record ID mapping.") }
             if let expectedRevision, target.revision != expectedRevision { throw LedgerError.conflict }
+            guard target.accountID == row["account_id"]?.string, target.currency == row.text("currency") else {
+                throw LedgerError.invalid("This entry now uses a different account or currency. Correct its account in Transactions before resolving the statement review.")
+            }
             if useStatement {
                 guard reference == nil || reference?.text("transaction_id") == targetID else { throw LedgerError.invalid("This bank record ID belongs to another entry. Correct its column mapping before applying these details.") }
                 let parts = try db.query("SELECT id FROM transaction_parts WHERE transaction_id=?", [.text(targetID)])

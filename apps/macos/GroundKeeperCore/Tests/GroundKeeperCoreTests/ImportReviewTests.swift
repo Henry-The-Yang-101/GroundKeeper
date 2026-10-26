@@ -116,6 +116,9 @@ private func statement(_ amount: String = "-12.50", day: String = "2026-10-17", 
     try await store.resolveMatch(eventID: review.eventID, transactionID: nil)
     var saved = try #require(try await store.snapshot().transactions.first { $0.sources == "csv" })
     try await store.saveTransactionNote(transactionID: saved.id, text: "Statement note", revision: saved.revision)
+    let png = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=")!
+    let receiptID = try await store.addReceiptImage(transactionID: saved.id, data: png, ocrText: "Fictional receipt")
+    try await store.seedDetailLocation(transactionID: saved.id)
     saved = try #require(try await store.transaction(id: saved.id))
     #expect(try await store.savedStatementMatches(transactionID: wallet.id).map(\.id) == [saved.id])
     try await store.mergeStatementMatch(transactionID: wallet.id, otherID: saved.id, revision: wallet.revision, otherRevision: saved.revision)
@@ -123,6 +126,9 @@ private func statement(_ amount: String = "-12.50", day: String = "2026-10-17", 
     #expect(merged.transactions.count == 1)
     #expect(merged.transactions[0].notes == "Statement note" && merged.transactions[0].lifecycle == "posted")
     #expect(try await store.transactionEvidence(id: wallet.id).sources.count == 2)
+    #expect(try await store.receipts(transactionID: wallet.id).first?.id == receiptID)
+    #expect(try await store.receiptImage(id: receiptID) == png)
+    #expect(merged.transactions[0].location?.label == "Fictional shop")
     #expect(try await store.transactionEvidence(id: wallet.id).history.contains { $0.reason == "merge_statement" })
     #expect(try await store.savedStatementMatches(transactionID: wallet.id).isEmpty)
     #expect(try await store.integrityCheck())
@@ -218,5 +224,45 @@ extension LedgerStore {
     }
     #expect(try await store.transaction(id: old.id)?.amountMinor == -1250)
     #expect(try await store.snapshot().reviews.count == 1)
+    await store.close()
+}
+
+@Test func statementReviewCannotRelabelAnEntryThatMovedToAnotherCurrency() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "CAD", currency: "CAD")
+    let cad = try await store.snapshot().accounts[0].id
+    var mapping = CSVMapping(); mapping.accountID = cad; mapping.externalIDColumn = 3
+    try await store.importCSV(statement(id: "bank-1"), mapping: mapping)
+    let t = try await store.snapshot().transactions[0]
+    try await store.addAccount(name: "USD", currency: "USD")
+    let usd = try #require(try await store.snapshot().accounts.first { $0.currency == "USD" })
+    try await store.save(.init(id: t.id, revision: t.revision, description: t.description, amountMinor: t.amountMinor,
+        currency: "USD", occurredOn: t.occurredOn, accountID: usd.id, type: "expense", category: "dining", needsReview: false, notes: ""))
+    try await store.importCSV(statement("-15.00", id: "bank-1"), mapping: mapping)
+    let review = try #require(try await store.snapshot().reviews.first)
+    for useStatement in [true, false] {
+        await #expect(throws: LedgerError.self) { try await store.resolveCSVReview(eventID: review.eventID, useStatement: useStatement) }
+    }
+    #expect(try await store.transaction(id: t.id)?.currency == "USD")
+    #expect(try await store.transaction(id: t.id)?.amountMinor == -1250)
+    #expect(try await store.integrityCheck())
+    await store.close()
+}
+
+@Test func resolvingAStatementMatchPrunesOtherNowIneligibleSuggestions() async throws {
+    let (store, _) = try vault()
+    try await store.addAccount(name: "Fictional", currency: "CAD")
+    try await ingestMapped(store, id: "wallet")
+    var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
+    let doc = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n2026-10-17,ANOTHER CAFE,-12.50\n".utf8), filename: "same-amounts.csv")
+    try await store.importCSV(doc, mapping: mapping)
+    let reviews = try await store.snapshot().reviews
+    #expect(reviews.count == 2)
+    let target = try #require(try await store.reviewCandidates(reviewID: reviews[0].id).first)
+    try await store.resolveMatch(eventID: reviews[0].eventID, transactionID: target.id)
+    #expect(try await store.reviewCandidates(reviewID: reviews[1].id).isEmpty)
+    try await store.resolveMatch(eventID: reviews[1].eventID, transactionID: nil)
+    #expect(try await store.snapshot().transactions.count == 2)
+    #expect(try await store.snapshot().reviews.isEmpty)
     await store.close()
 }

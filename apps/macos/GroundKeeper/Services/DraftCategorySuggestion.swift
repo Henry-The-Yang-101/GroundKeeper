@@ -4,6 +4,7 @@ import GroundKeeperCore
 struct DraftCategorySuggestion {
     let decision: ClassificationDecision
     let provider: String
+    var contextSummary = ""
     var kind: TransactionKind { TransactionKind.allCases.first { $0.code == decision.type } ?? .unknown }
     var category: SpendingCategory { SpendingCategory.allCases.first { $0.code == decision.category } ?? .none }
 }
@@ -20,9 +21,21 @@ extension AppWorkspace {
         let suggestionClient = client
         model = nil
         do {
+            guard let store else { throw LedgerError.unavailable("Unlock your vault to get a suggestion.") }
+            var addedText: [String] = []
+            for receipt in draft.newReceiptImages {
+                try Task.checkCancellation()
+                if let result = try? await ReceiptOCR.recognizeText(receipt.data) { addedText.append(result.text) }
+            }
+            let receiptContext = try await store.draftReceiptContext(transactionID: draft.revision > 0 ? draft.id.uuidString : nil,
+                excluding: Set(draft.removedReceiptIDs), additionalTexts: addedText)
+            let shareReceipts = try await store.receiptCloudConsent()
+            let notes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+            var boundedNotes = String(notes.prefix(1600))
+            while boundedNotes.utf8.count > 1600 { boundedNotes.removeLast() }
             let input = ClassifierInput(description: description, direction: draft.isDebit ? "debit" : "credit", currency: draft.currency,
-                                        transactionNotes: draft.notes.isEmpty ? nil : draft.notes)
-            let suggestion: DraftCategorySuggestion
+                                        transactionNotes: boundedNotes.isEmpty ? nil : boundedNotes, receiptContext: receiptContext)
+            var suggestion: DraftCategorySuggestion
             if classifierProvider == "ollama" {
                 guard let data = AppPreferences.defaults.data(forKey: "ollamaSelectedModel"),
                       let selected = try? JSONDecoder().decode(OllamaModel.self, from: data) else {
@@ -31,7 +44,7 @@ extension AppWorkspace {
                 let decision = try await ollama.classify(inputJSON: JSONEncoder().encode(input), model: selected)
                 suggestion = DraftCategorySuggestion(decision: decision, provider: "Ollama · \(selected.name)")
             } else if classifierProvider == "council" {
-                guard let configuration = try await store?.selectedCouncil() else { throw LedgerError.unavailable("Set up Council in Settings.") }
+                guard let configuration = try await store.selectedCouncil() else { throw LedgerError.unavailable("Set up Council in Settings.") }
                 var votes: [CouncilVote] = []
                 for member in configuration.members {
                     try Task.checkCancellation()
@@ -43,7 +56,9 @@ extension AppWorkspace {
                             loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: "activeCouncilPackage.\(member.backend)")
                         }
                         guard loaded.manifestSHA256 == member.id else { throw ClassifierBridgeError.invalidResponse }
-                        let decision = try await draftDecision(client: suggestionClient, input: input, model: loaded, draft: draft)
+                        var memberInput = input
+                        if member.backend == "apple_shortcut" && !shareReceipts { memberInput.receiptContext = nil }
+                        let decision = try await draftDecision(client: suggestionClient, input: memberInput, model: loaded, draft: draft)
                         votes.append(CouncilVote(member: member, disposition: "valid", decision: decision))
                     } catch {
                         try Task.checkCancellation()
@@ -61,7 +76,18 @@ extension AppWorkspace {
                 } else {
                     loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: "classifierModelBookmark")
                 }
-                suggestion = DraftCategorySuggestion(decision: try await draftDecision(client: suggestionClient, input: input, model: loaded, draft: draft), provider: loaded.modelID)
+                var providerInput = input
+                if loaded.backend == "apple_shortcut" && !shareReceipts { providerInput.receiptContext = nil }
+                suggestion = DraftCategorySuggestion(decision: try await draftDecision(client: suggestionClient, input: providerInput, model: loaded, draft: draft), provider: loaded.modelID)
+            }
+            if receiptContext != nil {
+                suggestion.contextSummary = classifierProvider == "shortcut" && !shareReceipts
+                    ? "Receipt text excluded by your Apple sharing setting."
+                    : classifierProvider == "council" && !shareReceipts
+                        ? "Receipt text used locally; excluded from Apple by your sharing setting."
+                        : "Available receipt text was included."
+            } else if !draft.newReceiptImages.isEmpty {
+                suggestion.contextSummary = "No readable receipt text was found. Add a clearer image or describe the purchase in Notes."
             }
             try suggestion.decision.validateSuggestion()
             try Task.checkCancellation()

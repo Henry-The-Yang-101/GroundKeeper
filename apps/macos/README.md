@@ -299,6 +299,29 @@ saved transactions and other reviews retain their existing account choices.
 Keyboard shortcuts: ⌘N adds a transaction, ⌘F opens transaction search, ⌘,
 opens Settings, and ⌘1 through ⌘4 select a navigation tab.
 
+## Import review and transaction evidence
+
+CSV review supports every row through Previous/Next rows. Reopening the same file
+and account restores its column mapping and imports only previously skipped rows.
+Changed mappings require **Review mapping corrections**; approve each proposed
+change in Sync before it alters a saved entry. Bank record ID conflicts offer
+**Use statement details** and **Keep saved details** with both amounts visible.
+
+Possible statement/capture matches are held in Sync until you link them or keep
+them separate. Matching uses the same account, currency, signed amount, and a
+seven-day date window; it never automatically combines statement records. Older
+saved duplicates can be combined from transaction Details, preserving notes,
+receipts, and source history while counting the purchase once.
+
+Details show payment status and posting date separately from category review.
+**Source & history** exposes original capture/statement facts, recorded times,
+card descriptions, and saved changes. Source issues include a reason and a Sync
+action. Uncategorized manual spending remains eligible for the selected provider;
+confirmed categories and non-spending types remain protected. Editor suggestions
+include available saved/staged receipt text and respect Apple receipt-sharing
+preferences. Selecting another account preserves an entered amount's currency
+until the user explicitly changes it.
+
 ## Verification
 
 ```sh

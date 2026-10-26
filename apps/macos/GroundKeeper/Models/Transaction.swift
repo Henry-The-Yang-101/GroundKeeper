@@ -52,9 +52,22 @@ struct Transaction: Identifiable, Equatable {
     var confirmCategory = false
     var location: TransactionLocation?
     var hasReceiptImage = false
+    var reviewIssues: [TransactionReviewIssue] = []
+    var lifecycle = "posted"
+    var postedOn: String?
+    var occurredAtMS: Int64?
+    var utcOffsetMinutes: Int?
+    var timePrecision = "date"
+    var requiresReview: Bool { needsReview || !reviewIssues.isEmpty }
+    var paymentStatus: String { lifecycle.capitalized }
     var newReceiptImages: [DraftReceiptImage] = []
     var removedReceiptIDs: [String] = []
     var hasNote: Bool { !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    mutating func selectAccount(_ selected: Account, amountEntered: Bool) {
+        accountID = selected.id; account = selected.name
+        if !amountEntered { currency = selected.currency }
+    }
 
     var formattedAmount: String {
         (isDebit ? -amount : amount).formatted(.currency(code: currency))
@@ -174,10 +187,13 @@ extension Transaction {
         date = formatter.date(from: stored.occurredOn) ?? Date()
         kind = TransactionKind.allCases.first { $0.code == stored.type } ?? .unknown
         category = SpendingCategory.allCases.first { $0.code == stored.category } ?? .none
-        needsReview = stored.needsReview; notes = stored.notes; source = stored.sourceLabel
+        needsReview = stored.categoryNeedsReview; notes = stored.notes; source = stored.sourceLabel
         categoryAttribution = stored.categoryAttribution
         location = stored.location
         hasReceiptImage = stored.hasReceiptImage
+        reviewIssues = stored.reviewIssues
+        lifecycle = stored.lifecycle; postedOn = stored.postedOn
+        occurredAtMS = stored.occurredAtMS; utcOffsetMinutes = stored.utcOffsetMinutes; timePrecision = stored.timePrecision
     }
     var edit: TransactionEdit {
         get throws {

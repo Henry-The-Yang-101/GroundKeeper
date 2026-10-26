@@ -15,7 +15,7 @@ struct TransactionRow: View {
                 }.font(.caption)
             }
             Spacer(minLength: 12)
-            if transaction.needsReview { ReviewBadge() }
+            if transaction.requiresReview { ReviewBadge() }
             VStack(alignment: .trailing, spacing: 4) {
                 Text(transaction.formattedAmount).monospacedDigit()
                 Text(transaction.date, format: .dateTime.month(.abbreviated).day())

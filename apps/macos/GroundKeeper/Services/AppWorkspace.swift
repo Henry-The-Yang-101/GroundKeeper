@@ -371,8 +371,22 @@ import GroundKeeperCore
             self.feedback = WorkspaceFeedback(message: "Card mapping removed")
         }
     }
-    func resolve(_ review: ReviewRecord, transactionID: String?) {
-        perform { try await self.store?.resolveMatch(eventID: review.eventID, transactionID: transactionID); try await self.refresh(); await self.processIfAutomatic() }
+    func resolve(_ review: ReviewRecord, transactionID: String?, expectedRevision: Int? = nil) {
+        perform { try await self.store?.resolveMatch(eventID: review.eventID, transactionID: transactionID, expectedRevision: expectedRevision); try await self.refresh(); await self.processIfAutomatic() }
+    }
+    func resolveCSV(_ review: ReviewRecord, useStatement: Bool, expectedRevision: Int?) {
+        perform {
+            try await self.store?.resolveCSVReview(eventID: review.eventID, useStatement: useStatement, expectedRevision: expectedRevision)
+            try await self.refresh(); await self.processIfAutomatic()
+        }
+    }
+    func mergeStatement(_ transaction: Transaction, other: Transaction) async throws {
+        guard let store else { throw LedgerError.unavailable("Unlock your vault first.") }
+        guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish.") }
+        saving = true; defer { saving = false }
+        try await store.mergeStatementMatch(transactionID: transaction.id.uuidString, otherID: other.id.uuidString,
+            revision: transaction.revision, otherRevision: other.revision)
+        try await refresh()
     }
     func dismiss(_ review: ReviewRecord) {
         perform { try await self.store?.dismissReview(review.id); try await self.refresh() }
@@ -796,9 +810,9 @@ import GroundKeeperCore
             try await refresh()
         } catch is CancellationError {} catch { errorMessage = error.localizedDescription }
     }
-    func importCSV(_ document: CSVDocument, mapping: CSVMapping, skipped: Set<Int>) async throws -> Int {
+    func importCSV(_ document: CSVDocument, mapping: CSVMapping, skipped: Set<Int>, updateExisting: Bool = false) async throws -> Int {
         guard let store else { throw LedgerError.unavailable("Open the vault first.") }
-        let count = try await store.importCSV(document, mapping: mapping, skipped: skipped)
+        let count = try await store.importCSV(document, mapping: mapping, skipped: skipped, updateExisting: updateExisting)
         page = 0; try await refresh(); Task { await processIfAutomatic() }; return count
     }
     func queryTransactions(_ query: LedgerTransactionQuery) {

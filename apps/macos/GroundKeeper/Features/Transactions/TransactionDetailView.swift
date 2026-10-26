@@ -13,6 +13,10 @@ struct TransactionDetailView: View {
     @State private var error: String?
     @State private var saveError: String?
     @State private var loading = true
+    @State private var evidence: TransactionEvidence?
+    @State private var statementMatches: [CaptureReconciliationCandidate] = []
+    @State private var merging: Transaction?
+    @State private var mergingBusy = false
 
     init(transaction: Transaction) { _transaction = State(initialValue: transaction) }
 
@@ -30,6 +34,16 @@ struct TransactionDetailView: View {
                     summary
                     Divider()
                     details
+                    if !transaction.reviewIssues.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(transaction.reviewIssues) { issue in
+                                Label(issue.title, systemImage: "exclamationmark.bubble")
+                            }
+                            Button("Resolve source issues in Sync") { workspace.selectedTab = .sync; dismiss() }
+                        }
+                    }
+                    if !statementMatches.isEmpty { statementReconciliation }
+                    if let evidence { TransactionSourceHistoryView(evidence: evidence) }
                     if transaction.hasNote {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Notes", systemImage: "note.text").font(.headline)
@@ -52,6 +66,21 @@ struct TransactionDetailView: View {
         }
         .frame(width: 680, height: 700)
         .task { await load() }
+        .confirmationDialog("Combine these records into one purchase?", isPresented: Binding(get: { merging != nil }, set: { if !$0 { merging = nil } }), titleVisibility: .visible, presenting: merging) { other in
+            Button("Combine records") {
+                merging = nil; mergingBusy = true
+                Task {
+                    defer { mergingBusy = false }
+                    do { try await workspace.mergeStatement(transaction, other: other); await load() }
+                    catch { self.error = error.localizedDescription }
+                }
+            }
+            Button("Cancel", role: .cancel) { merging = nil }
+        } message: { _ in
+            Text("Keep this entry’s description, date, and category. Combine notes, receipts, and source evidence; count the purchase once. The other record stays in the vault’s history.")
+        }
+        .disabled(mergingBusy)
+        .onChange(of: workspace.ready) { if !workspace.ready { dismiss() } }
         .sheet(item: $editor, onDismiss: { Task { await load() } }) { current in
             TransactionEditor(transaction: current) { draft in
                 Task {
@@ -76,7 +105,7 @@ struct TransactionDetailView: View {
                         .foregroundStyle(AppStyle.muted)
                 }
                 Spacer(minLength: 0)
-                if transaction.needsReview { ReviewBadge() }
+                if transaction.requiresReview { ReviewBadge() }
             }
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(transaction.formattedAmount).font(.system(size: 36, weight: .medium, design: .rounded)).monospacedDigit()
@@ -99,7 +128,11 @@ struct TransactionDetailView: View {
                     Text("Category").font(.caption).foregroundStyle(AppStyle.muted)
                     CategoryLabel(transaction: transaction)
                 }
-                detail("Status", transaction.needsReview ? "Needs review" : "Reviewed")
+                detail("Category review", transaction.needsReview ? "Needs review" : "Reviewed")
+            }
+            GridRow {
+                detail("Payment status", transaction.paymentStatus)
+                detail("Posted date", transaction.postedOn ?? "Not recorded")
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -118,6 +151,31 @@ struct TransactionDetailView: View {
                 TransactionLocationMap(location: location, merchant: transaction.merchant)
             } else {
                 Text("No location recorded.").foregroundStyle(AppStyle.muted)
+            }
+        }
+    }
+
+    private var statementReconciliation: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Possible statement match").font(.headline)
+            Text("These saved records have the same account and amount within seven days. Combine only if they describe the same purchase.")
+                .font(.caption).foregroundStyle(AppStyle.muted)
+            ForEach(statementMatches) { match in
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(match.description)
+                        Text(match.day + " · " + ReportFormat.money(match.amountMinor, match.currency)).font(.caption).foregroundStyle(AppStyle.muted)
+                    }
+                    Spacer()
+                    Button("Combine…") {
+                        Task {
+                            do {
+                                guard let other = try await workspace.transaction(id: match.id) else { throw LedgerError.conflict }
+                                merging = other
+                            } catch { self.error = error.localizedDescription }
+                        }
+                    }.disabled(loading || workspace.saving)
+                }
             }
         }
     }
@@ -141,6 +199,9 @@ struct TransactionDetailView: View {
                 throw LedgerError.invalid("This transaction is no longer available.")
             }
             transaction = current
+            guard let store = workspace.store else { throw CancellationError() }
+            evidence = try await store.transactionEvidence(id: current.id.uuidString)
+            statementMatches = try await store.savedStatementMatches(transactionID: current.id.uuidString)
             receipts = try await workspace.receiptRecords(transactionID: current.id.uuidString)
             images = [:]
             for receipt in receipts where receipt.imageState == "stored" {
