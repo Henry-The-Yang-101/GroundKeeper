@@ -8,8 +8,8 @@ instance=""
 preview_mode="--spending-preview"
 usage() {
   echo "Usage: $0 [--no-build] [--instance NAME] [--categories] [--transactions] [--recording]"
-  echo "Open a fresh fictional spending demo; --instance gives UI automation a unique app identity."
-  echo "Use --recording for exactly 20 current-month background transactions."
+  echo "Open a fresh fictional spending demo; --instance gives it a unique app name and path."
+  echo "Use --recording for 20 current-month transactions plus 5 per week for the previous 12 weeks."
 }
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -28,8 +28,8 @@ if $build; then "$script_dir/build.sh"; fi
 app="$repo_dir/.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app"
 [[ -x "$app/Contents/MacOS/GroundKeeper" ]] || { echo "Build the Debug app first: $script_dir/build.sh" >&2; exit 1; }
 if [[ -n "$instance" ]]; then
-  # Keep other agents' running apps and bundles intact. A unique bundle ID also
-  # makes native accessibility clients unambiguously address this demo process.
+  # A unique path/name separates demo windows. Retain the host bundle ID because
+  # the classifier XPC service authenticates it; preview flags isolate the vault.
   signing_identity="$(codesign -d --verbose=2 "$app" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
   [[ -n "$signing_identity" ]] || { echo "Named demos require a locally signed Debug build; use run-demo.sh without --instance for an ad-hoc build." >&2; exit 1; }
   token="$(uuidgen | tr '[:upper:]' '[:lower:]')"
@@ -37,8 +37,7 @@ if [[ -n "$instance" ]]; then
   mkdir -p "$destination"
   demo_app="$destination/GroundKeeper Demo $instance.app"
   ditto "$app" "$demo_app"
-  bundle_id="com.groundkeeper.demo.$token"
-  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $bundle_id" "$demo_app/Contents/Info.plist"
+  bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$demo_app/Contents/Info.plist")"
   /usr/libexec/PlistBuddy -c "Set :CFBundleName GroundKeeper Demo $instance" "$demo_app/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string GroundKeeper Demo $instance" "$demo_app/Contents/Info.plist" 2>/dev/null || \
     /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName GroundKeeper Demo $instance" "$demo_app/Contents/Info.plist"

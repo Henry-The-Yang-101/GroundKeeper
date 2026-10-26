@@ -1,7 +1,7 @@
 import Foundation
 import GroundKeeperCore
 
-/// Small, current-month ledger for recording the app in a disposable preview vault.
+/// Fictional recording ledger with a current-month foreground and weekly comparison history.
 enum RecordingPreview {
     static func seed(_ store: LedgerStore, now: Date = Date()) async throws {
         let empty = try await store.snapshot(limit: 1)
@@ -52,10 +52,30 @@ enum RecordingPreview {
                 notes: index == 16 ? "Fictional group order for a study session." : "Fictional recording demo. Not a real purchase.")
             try await store.save(edit)
         }
-        let snapshot = try await store.snapshot(limit: 100)
-        guard snapshot.totalTransactions == 20, snapshot.transactions.allSatisfy({ $0.occurredOn >= monthStart && $0.occurredOn <= today }) else {
-            throw LedgerError.invalid("The recording demo must contain 20 current-month transactions.")
+        // Twelve completed weeks provide a previous-month baseline and enough
+        // history for weekly patterns. All amounts and merchants are fictional.
+        let currentWeek = calendar.day(calendar.calendar.dateInterval(of: .weekOfYear, for: now)!.start)
+        for weeksAgo in (1...12).reversed() {
+            let weekStart = calendar.adding(-7 * weeksAgo, to: currentWeek)
+            let growth = Int64(12 - weeksAgo)
+            let history: [(String, Int64, String)] = [
+                ("Fresh Market", weeksAgo <= 4 ? -6400 : -2000, "groceries"),
+                ("City Transit", -350, "local_transport"),
+                ("Neighbourhood Café", -(500 + growth * 40), "dining"),
+                ("Campus Café", -(1200 + growth * 150), "dining"),
+                ("Campus Bookshop", -2400, "shopping"),
+            ]
+            for (offset, example) in history.enumerated() {
+                let account = ["groceries", "local_transport"].contains(example.2) ? debit : visa
+                try await store.save(TransactionEdit(description: example.0, amountMinor: example.1, currency: "CAD",
+                    occurredOn: calendar.adding(offset, to: weekStart), accountID: account.id, type: "expense",
+                    category: example.2, needsReview: false, notes: "Fictional weekly recording history. Not a real purchase."))
+            }
         }
-        print("recording_demo_seeded transactions=20 start=\(monthStart) end=\(today)")
+        let snapshot = try await store.snapshot(limit: 100)
+        guard snapshot.totalTransactions == 80, snapshot.transactions.allSatisfy({ $0.occurredOn <= today }) else {
+            throw LedgerError.invalid("The recording demo must contain 20 foreground and 60 weekly history transactions.")
+        }
+        print("recording_demo_seeded transactions=80 foreground=20 historical=60 end=\(today)")
     }
 }

@@ -132,28 +132,29 @@ Build and open a separate demo instance from the repository root:
 ```
 
 To reuse the current Debug build, use `./apps/macos/run-demo.sh --no-build`.
-For concurrent UI work, give the demo a distinct app identity:
+For concurrent UI work, give the demo a distinct app name and path:
 
 ```sh
 ./apps/macos/run-demo.sh --instance spending-grid
 ```
 
 The optional name uses letters, digits and hyphens. Each invocation copies the
-Debug app to an ignored `.local/macos/Demos/` directory, assigns a unique bundle
-ID, and prints both its ID and path for precise computer-control targeting. It
+Debug app to an ignored `.local/macos/Demos/` directory with a unique path and
+name, and prints its ID and path for precise computer-control targeting. It
 requires the signing identity used by the Debug build to be available locally.
 Only the copy is re-signed, with sandbox and hardened runtime retained; the
 original app and other demo instances remain intact. The copy omits provisioning
 and keychain entitlements tied to the original app ID and is for fictional UI
-work, not testing live keychain access or classifier XPC services. Combine with
+work, not testing live keychain access. The host bundle ID is retained so the
+classifier XPC service can authenticate the demo. Combine with
 `--no-build` to reuse the build. Demo bundles remain in that ignored directory
 until you remove them after closing their instances.
 
 The normal launcher remains `./apps/macos/run.sh`; build without opening either
 mode with `./apps/macos/build.sh`.
 
-For a short screen-recording walkthrough with exactly **20 fictional transactions
-in the current month**, open:
+For a short screen-recording walkthrough with **20 current-month fictional
+transactions plus five per week for the previous 12 completed weeks** (80 total), open:
 
 ```sh
 ./apps/macos/run-demo.sh --recording --instance recording
@@ -162,8 +163,9 @@ in the current month**, open:
 This mode opens Transactions with two demo CAD accounts, reviewed categories,
 repeated café purchases, groceries, transit, shopping and a refund. The latest
 queue purchase is deliberately not seeded, so it can arrive during recording.
-Dates span the first of the month through yesterday in America/Toronto (or today
-when launched on the first). Use `--no-build`
+The original 20 dates span the first of the month through yesterday in America/Toronto
+(or today when launched on the first). Weekly history supplies comparison data for
+“What changed”; its recent grocery spending is higher than earlier weeks. Use `--no-build`
 after the first build to launch another fresh instance. Each launch uses the same
 disposable-vault isolation described below; it does not connect an iCloud folder
 or choose a classifier.
