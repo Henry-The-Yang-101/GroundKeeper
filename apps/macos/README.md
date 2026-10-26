@@ -46,7 +46,7 @@ appearance changes also propagate.
 ## Build and launch
 
 Requires Xcode and macOS 26.2+ on Apple silicon, matching the bundled MLX runtime.
-Follow the [setup guide](../../docs/setup.md) to install both pinned Python
+Follow the [setup guide](../../docs/setup.md) to install all three pinned Python
 environments on a fresh checkout. Then build and launch with:
 
 ```sh
@@ -232,17 +232,19 @@ prove background execution; check the helper heartbeat.
    a first-run exercise.
 2. Add transactions manually or import a CSV with explicit date, amount/sign,
    and column mapping. A classifier is optional for these workflows.
-3. Choose a verified local model package or explicitly enable an Apple
-   Intelligence Shortcut in Settings to try categorization.
+3. Choose a verified Qwen/Laya package, an installed local Ollama model, an Apple
+   Intelligence Shortcut, or Model council in Settings to try categorization.
 4. If you already use the capture Shortcut, connect the iCloud `GroundKeeper`
    folder or its `inbox` from Sync. Confirm captured card labels against accounts
    in Sync's review list. The iPhone capture export is not included in this repo.
 
-All classifier suggestions require review. Editing confirms an assignment and
-protects it from late classifier replies. Unknown notification formats can be
-corrected without overwriting the original capture. Possible duplicates can be
-linked or retained separately. Successful imports drain JSON and receipt images from iCloud after durable
-vault storage and a hash check. Persisted delivery identities prevent replay.
+All classifier suggestions require review. **Use this category** explicitly
+confirms an assignment and protects it from late classifier replies; unrelated
+field edits preserve its attribution and review state. Unknown notification
+formats can be corrected without overwriting the original capture. Possible
+duplicates can be linked or retained separately. Successful imports drain JSON
+and receipt images from iCloud after durable vault storage and a hash check.
+Persisted delivery identities prevent replay.
 Reconnect an older capture-folder selection once to grant cleanup access.
 
 ## Queue processing modes
@@ -377,10 +379,12 @@ tested by logging out or restarting this Mac.
 
 ## Classifier providers
 
-Settings → Categorization lets you choose a Qwen or Laya data-only package, or
-explicitly enable an Apple Intelligence Shortcut by name, or select Model council
-with Qwen, Laya and Apple Intelligence using equal votes. The saved provider is
-restored by foreground and background queue processing. Manual mode still waits
+Settings → Categorization lets you choose a Qwen or Laya data-only package,
+an installed local Ollama model, an Apple Intelligence Shortcut by name, or
+Model council with Qwen, Laya and Apple Intelligence using equal votes.
+Ollama is a standalone provider; it does not replace a Council member.
+The saved provider is restored by foreground and background queue processing.
+Manual mode still waits
 for Process queue. No provider automatically falls back to another.
 
 The selected Qwen continuation from 2026-10-18 is packaged locally at
@@ -400,9 +404,11 @@ The destination must not exist. Export checks the selected adapter hash and base
 weight hash, clones the base files, and verifies the complete output manifest.
 Training labels were weak labels; every app prediction continues to need review.
 
-The Shortcut receives only description, direction and currency. Its Use Model
-action determines the actual execution service; the app cannot attest which model
-a user-edited Shortcut calls. The database conservatively records this provider
+The Shortcut receives description, direction, currency, available editable
+transaction notes, and optional search/receipt evidence according to their
+separate settings. Its Use Model action determines the actual execution service;
+the app cannot attest which model a user-edited Shortcut calls.
+The database conservatively records this provider
 as cloud-capable (`execution=cloud`), with identity derived from the Shortcut name,
 policy and connector version, not a hash of Apple's model or Shortcut contents.
 Re-enable the provider after renaming a Shortcut. Apple quota/configuration errors

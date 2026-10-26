@@ -171,7 +171,8 @@ embedding-only models cannot be used. General models vary in quality and speed
 and have not been evaluated against GroundKeeper's fine-tuned models.
 
 Inputs use the existing description/direction/currency contract, with available
-receipt evidence, Wallet hints, and separately enabled merchant search context.
+editable transaction notes, receipt evidence, Wallet hints, and separately
+enabled merchant search context.
 Raw amounts, images, capture notes and the vault database are not sent. Output
 uses the same category policy and always requires review. Invalid output leaves
 the existing categorization intact and records a failed attempt. Temporary

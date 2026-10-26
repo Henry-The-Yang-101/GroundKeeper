@@ -15,14 +15,19 @@ both can remain off.
 iPhone Shortcuts capture transactions and pass them to your Mac through files in
 your personal iCloud Drive, the only bridge between the two devices. Your Mac
 processes each file and records its imported or quarantined status locally.
-Source files remain in iCloud; saved delivery identities prevent repeated
-imports. In the app, you can reconcile possible duplicates, correct details,
+Successfully imported JSON and retained receipt images are removed from the
+iCloud queue after durable vault storage and a content-hash check; quarantined
+files stay for review. Saved delivery identities prevent repeated imports.
+In the app, you can reconcile possible duplicates, correct details,
 and confirm category suggestions while preserving the original capture evidence.
 
 ## What you can do
 
 - Add accounts in CAD, USD, EUR, or GBP and record transactions manually.
-- Import a bank CSV, map its columns, and inspect invalid rows before saving.
+- Import a bank CSV, map its columns, and inspect every row before saving.
+  Reopening the same file for the same account restores its mapping and resumes
+  skipped rows. Mapping corrections and possible statement/capture matches
+  require explicit review in Sync.
 - Read captured transaction files from an iCloud Drive folder, resolve card
   labels to accounts, and review possible matches with existing transactions.
   Assign an account for one capture or explicitly remember its card for future
@@ -30,6 +35,10 @@ and confirm category suggestions while preserving the original capture evidence.
   bank descriptions are mapped separately.
 - Search, filter, edit, and soft-delete saved transactions. The transaction
   list loads 500 rows per page; search and filters apply to the current page.
+- Click a transaction to view payment status, category review, notes, receipts,
+  recorded location, and **Source & history**. Inspect original capture/statement
+  facts and saved changes, or combine confirmed statement duplicates while
+  preserving their evidence and counting the purchase once.
 - See the current month's spending on Home and explore the complete ledger in
   **Spending**: purchases, refunds, net spending, counts, averages, largest
   purchases, category breakdowns, and charts with exact-value tables.
@@ -42,9 +51,10 @@ and confirm category suggestions while preserving the original capture evidence.
   trends, sustained shifts, and unusually large merchant purchases. Findings
   explain their method and link to supporting transactions; dismiss them or
   snooze them for seven days.
-- Run Qwen through MLX or Laya through PyTorch MPS on your Mac. Every category
-  suggestion requires review, and later model replies cannot replace a
-  confirmed correction.
+- Run Qwen through MLX, Laya through PyTorch MPS, or an installed local
+  **Ollama** model on your Mac. Ollama needs no GroundKeeper model package.
+  Every category suggestion requires review, and later model replies cannot
+  replace a confirmed correction.
 - Use Model council to consult Qwen, Laya and Apple Intelligence with equal votes,
   saved member decisions and explicit handling of disagreements or missing providers.
   Every suggestion requires review.
@@ -52,6 +62,13 @@ and confirm category suggestions while preserving the original capture evidence.
   later. Review them in **Notes & receipts…** on the Mac. Keeping the image is
   optional; captured notes remain separate from editable transaction notes and
   are not sent to classifiers. See [receipt and note setup](shortcuts/README.md#optional-receipts-and-notes).
+- Add receipt images from **Photos**, **Files…**, or **Take photo…** in the
+  transaction editor; crop them and extract text locally. Save commits the entry
+  and receipt changes together; Cancel discards staged changes. See the
+  [transaction viewer and receipt editor](apps/macos/README.md#transaction-viewer-and-receipt-editing).
+- Request **Suggest category** while editing, using the selected provider,
+  editable notes, and available receipt text. **Use suggestion** accepts the
+  proposed type/category; **Save transaction** saves the entry separately.
 - Choose an ordinary local database or a passphrase-encrypted vault. Lock the
   encrypted vault, change its passphrase, or optionally enable convenience unlock
   in a provisioned build. See [vault protection](docs/onboarding.md#storage-and-unlock).
@@ -98,10 +115,11 @@ notifications remain future work. See [spending reports and analysis rules](docs
 
 ## Classification and optional services
 
-Use a bundled local model, an installed Ollama model, an explicitly selected Apple Intelligence Shortcut, or
-**Model council**. Council gives Qwen, Laya, and Apple one vote each. Two matching
-valid type/category decisions produce a suggestion; if the third provider fails,
-the result is visibly partial. Without consensus, the current categorization
+Use a bundled local model, an installed Ollama model, an explicitly selected
+Apple Intelligence Shortcut, or **Model council**. Council gives Qwen, Laya,
+and Apple one vote each. Two matching valid type/category decisions produce a
+suggestion; if the third provider fails, the result is visibly partial.
+Without consensus, the current categorization
 stays in place. Member decisions and failures remain inspectable, including
 after a user correction. Every suggestion requires review. See [Council setup,
 policy, and verification](docs/council.md).
@@ -114,10 +132,11 @@ cloud-backed models, and keeps every suggestion subject to review. See
 [Ollama setup](docs/setup.md#ollama).
 
 An optional Apple Intelligence Shortcut provider is also wired into the queue.
-Enabling it sends the description, direction, and currency to the selected
-Shortcut. Its **Use Model** action controls whether inference runs on device
-or in the cloud. Apple usage limits apply, and the app never switches providers
-automatically. See [provider setup and verification](docs/setup.md#choose-a-classifier).
+Enabling it sends the description, direction, currency, and available editable
+transaction notes to the selected Shortcut. Its **Use Model** action controls
+whether inference runs on device or in the cloud. Apple usage limits apply,
+and the app never switches providers automatically. See
+[provider setup and verification](docs/setup.md#choose-a-classifier).
 Receipt text is shared with this provider only when **Include receipt text with
 Apple Intelligence** is enabled; that separate setting is on by default.
 
@@ -145,7 +164,7 @@ automations; the standard adapter leaves it blank. See the [Wallet hint guide](s
 
 ```mermaid
 flowchart TD
-    Phone["iPhone capture / notes / receipts"] --> Files["iCloud Drive capture files (retained)"]
+    Phone["iPhone capture / notes / receipts"] --> Files["iCloud Drive capture queue"]
     Files --> Core["Swift ingestion and reconciliation"]
     CSV["Bank CSV / manual entry"] --> Core
     Core --> DB[("Local SQLite / optional SQLCipher encryption")]
@@ -157,9 +176,11 @@ flowchart TD
     Search -. "Bounded evidence" .-> Routing["Swift provider routing / Council orchestration"]
     Jobs --> Routing
     Routing --> XPC["Classifier XPC service / embedded Python"]
+    Routing --> Ollama["Native Swift adapter / local Ollama model"]
     XPC --> Local["Qwen / MLX or Laya / MPS"]
     XPC --> Optional["Optional Apple Shortcut"]
     Local --> Review["Suggestions requiring review"]
+    Ollama --> Review
     Optional --> Review
     Review --> DB
 ```
@@ -172,12 +193,14 @@ the same record again; possible purchase duplicates still require reconciliation
 A bundled Objective-C XPC host runs CPython and the inference libraries outside
 the UI process. Local model packages have file hashes and a versioned manifest
 that the worker checks before loading. The classifier receives the transaction
-description, direction, currency, and authorized optional evidence: bounded
-receipt OCR, a Wallet category hint, and merchant-search snippets. Receipt images
-and captured notes are not sent to the classifier. It has no database connection.
-Swift orchestrates Council and records member inputs and outcomes. Merchant
-search uses a separate network-enabled XPC service; reporting and statistical
-analysis run locally without inference or search requests.
+description, direction, currency, and authorized optional evidence: editable
+transaction notes, bounded receipt OCR, a Wallet category hint, and merchant-search
+snippets. Receipt images and captured notes are not sent to the classifier.
+It has no database connection. Ollama uses a native Swift adapter to contact the
+separately running local service. Swift orchestrates Council and records member
+inputs and outcomes.
+Merchant search uses a separate network-enabled XPC service; reporting and
+statistical analysis run locally without inference or search requests.
 
 iCloud transfers capture files. The live database stays in the Mac's sandbox
 container, outside iCloud Drive. SQLCipher opens an ordinary SQLite database
@@ -185,7 +208,7 @@ without a key, or encrypts the database and WAL with a passphrase. Provisioned
 builds can optionally store the passphrase in a device-local Keychain item,
 requiring Touch ID or the Mac password to retrieve it. Free ad hoc builds retain
 passphrase encryption but hide convenience unlock. Local encryption does not
-encrypt source captures or images retained in iCloud. There is no passphrase
+encrypt source captures or images while they are in iCloud. There is no passphrase
 recovery service, bank login integration, or native iPhone app.
 
 ## Install a release
