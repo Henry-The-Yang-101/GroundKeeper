@@ -1,15 +1,8 @@
 # GroundKeeper
 
-GroundKeeper is a local-first system designed to automatically help you keep track of personal spending. The GROUND in GroundKeeper means your finances stay grounded on your own devices. The end-to-end system lies strictly within your own personal environment, with no external cloud server ever getting hands on your private transaction data. Your personal iCloud Drive simply delivers capture files from iPhone to Mac, and the files get removed once processed by the Mac, meaning our system will not permanently take up your iCloud storage. YOU are fully in control of your own private data.
-
-## Demo
-
-A 74-second walkthrough of iPhone capture, receipt review, category suggestions,
-and local spending insights.
-
 https://github.com/user-attachments/assets/1c05f8a8-2805-4429-a71a-42f95de743aa
 
-[View the full-quality MP4](docs/media/groundkeeper-demo.mp4).
+GroundKeeper is a local-first system designed to automatically help you keep track of personal spending. The GROUND in GroundKeeper means your finances stay grounded on your own devices. The end-to-end system lies strictly within your own personal environment, with no external cloud server ever getting hands on your private transaction data. Your personal iCloud Drive simply delivers capture files from iPhone to Mac, and the files get removed once processed by the Mac, meaning our system will not permanently take up your iCloud storage. YOU are fully in control of your own private data.
 
 ## What you can do
 
