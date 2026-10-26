@@ -16,14 +16,8 @@ struct SyncView: View {
                     Button("Connect folder…", action: workspace.selectFolder)
                     Button("Retry failed work", action: workspace.retryFailures)
                 }.disabled(!workspace.ready || workspace.saving)
-                QueueControls()
-                Text(workspace.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
-                Text("Imported JSON and receipt images are removed from iCloud after they are safely stored in your local vault. Invalid files stay in the queue for review.").font(.caption).foregroundStyle(AppStyle.muted)
-                if workspace.captureFolderNeedsReconnect {
-                    Text("Reconnect this folder once to allow GroundKeeper to remove processed files.").font(.caption)
-                    Button("Reconnect capture folder…", action: workspace.selectFolder)
-                }
-                if let message = workspace.cleanupMessage { Text(message).font(.caption).foregroundStyle(AppStyle.muted) }
+                QueueControls(showsReviewGuidance: false)
+                CaptureFolderInfoButton()
             }
             Surface {
                 HStack {
@@ -60,6 +54,38 @@ struct SyncView: View {
         }
     }
 }
+private struct CaptureFolderInfoButton: View {
+    @Environment(AppWorkspace.self) private var workspace
+    @State private var showingInfo = false
+
+    var body: some View {
+        Button("About capture processing", systemImage: "info.circle") { showingInfo.toggle() }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderless)
+            .font(.body)
+            .foregroundStyle(AppStyle.muted)
+            .help("About capture processing")
+            .popover(isPresented: $showingInfo, arrowEdge: .bottom) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Capture processing").font(.headline).foregroundStyle(AppStyle.text)
+                    Text(QueueControls.reviewGuidance)
+                    Text(workspace.processingDescription)
+                    Text("Imported JSON and receipt images are removed from iCloud after they are safely stored in your local vault. Invalid files stay in the queue for review.")
+                    if workspace.captureFolderNeedsReconnect {
+                        Text("Reconnect this folder once to allow GroundKeeper to remove processed files.")
+                        Button("Reconnect capture folder…", action: workspace.selectFolder)
+                    }
+                    if let message = workspace.cleanupMessage { Text(message) }
+                }
+                .font(.callout)
+                .foregroundStyle(AppStyle.muted)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(20)
+                .frame(width: 400, alignment: .leading)
+            }
+    }
+}
+
 private struct CaptureReviewRow: View {
     @Environment(AppWorkspace.self) private var workspace
     let review: ReviewRecord

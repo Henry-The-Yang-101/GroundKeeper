@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct QueueControls: View {
+    static let reviewGuidance = "Failed work and captures needing your review are listed separately in Sync. In manual mode, retrying marks failures as pending; click Process queue to run them."
+    var showsReviewGuidance = true
     @Environment(AppWorkspace.self) private var workspace
     @State private var showingProviders = false
     @State private var installer = ModelInstaller()
@@ -33,8 +35,9 @@ struct QueueControls: View {
                     Text("Count checked \(date.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(AppStyle.muted)
                 }
             }
-            Text("Failed work and captures needing your review are listed separately in Sync. In manual mode, retrying marks failures as pending; click Process queue to run them.")
-                .font(.caption).foregroundStyle(AppStyle.muted)
+            if showsReviewGuidance {
+                Text(Self.reviewGuidance).font(.caption).foregroundStyle(AppStyle.muted)
+            }
         }
         .sheet(isPresented: $showingProviders) {
             VStack(spacing: 0) {
