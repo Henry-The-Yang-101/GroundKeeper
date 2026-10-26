@@ -152,8 +152,24 @@ until you remove them after closing their instances.
 The normal launcher remains `./apps/macos/run.sh`; build without opening either
 mode with `./apps/macos/build.sh`.
 
-Each demo launch uses a fresh temporary vault and separate preferences and opens
-**Spending**. It imports roughly 600 fictional CAD transactions across two
+For a short screen-recording walkthrough with exactly **20 fictional transactions
+in the current month**, open:
+
+```sh
+./apps/macos/run-demo.sh --recording --instance recording
+```
+
+This mode opens Transactions with two demo CAD accounts, reviewed categories,
+repeated café purchases, groceries, transit, shopping and a refund. The latest
+queue purchase is deliberately not seeded, so it can arrive during recording.
+Dates span the first of the month through yesterday in America/Toronto (or today
+when launched on the first). Use `--no-build`
+after the first build to launch another fresh instance. Each launch uses the same
+disposable-vault isolation described below; it does not connect an iCloud folder
+or choose a classifier.
+
+The default spending demo uses a fresh temporary vault and separate preferences
+and opens **Spending**. It imports roughly 600 fictional CAD transactions across two
 accounts, covering 24 complete weeks plus the current week through today in
 America/Toronto. It uses the real CSV importer, confirms known separate purchases
 through reconciliation, then applies explicit reviewed categories without a model.

@@ -7,14 +7,16 @@ build=true
 instance=""
 preview_mode="--spending-preview"
 usage() {
-  echo "Usage: $0 [--no-build] [--instance NAME] [--categories] [--transactions]"
+  echo "Usage: $0 [--no-build] [--instance NAME] [--categories] [--transactions] [--recording]"
   echo "Open a fresh fictional spending demo; --instance gives UI automation a unique app identity."
+  echo "Use --recording for exactly 20 current-month background transactions."
 }
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --no-build) build=false; shift ;;
     --transactions) preview_mode="--transaction-preview"; shift ;;
     --categories) preview_mode="--category-preview"; shift ;;
+    --recording) preview_mode="--recording-preview"; shift ;;
     --instance)
       [[ $# -ge 2 && "$2" =~ ^[a-zA-Z][a-zA-Z0-9-]{0,39}$ ]] || { echo "Instance names must be 1–40 letters, digits or hyphens, starting with a letter." >&2; exit 2; }
       instance="$2"; shift 2 ;;

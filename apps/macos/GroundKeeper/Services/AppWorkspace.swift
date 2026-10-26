@@ -119,7 +119,7 @@ import GroundKeeperCore
                 try await InterfacePreview.seed(opened.0)
                 status = "Preview vault · fictional transactions"
                 processingMode = .manual
-                if CommandLine.arguments.contains("--transaction-preview") {
+                if CommandLine.arguments.contains("--transaction-preview") || CommandLine.arguments.contains("--recording-preview") {
                     showingSetup = false; showTransactions()
                 }
                 if CommandLine.arguments.contains("--spending-preview") {
