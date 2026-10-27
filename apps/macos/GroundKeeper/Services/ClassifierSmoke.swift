@@ -20,7 +20,7 @@ import GroundKeeperCore
                 if CommandLine.arguments.contains("--classifier-saved-model-smoke") {
                     // Read only the existing package grant. All test preferences and
                     // transactions still belong to the disposable preview workspace.
-                    guard let bookmark = UserDefaults.standard.data(forKey: "classifierModelBookmark") else {
+                    guard let bookmark = UserDefaults.standard.data(forKey: AppPreferences.Key.classifierModelBookmark) else {
                         throw LedgerError.unavailable("No saved local model package; use the package picker.")
                     }
                     var stale = false

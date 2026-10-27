@@ -4,10 +4,10 @@ import AppKit
 struct SetupView: View {
     @Environment(AppWorkspace.self) private var workspace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AppStorage("setupStep") private var savedStep = 0
+    @AppStorage(AppPreferences.Key.setupStep) private var savedStep = 0
     var reviewMode = false
-    @AppStorage("vaultProtectionChosen") private var protectionChosen = false
-    @AppStorage("phoneSetupConfirmed") private var phoneReady = false
+    @AppStorage(AppPreferences.Key.vaultProtectionChosen) private var protectionChosen = false
+    @AppStorage(AppPreferences.Key.phoneSetupConfirmed) private var phoneReady = false
     @State private var installer = ModelInstaller()
     @State private var accountName = ""
     @State private var currency = "CAD"

@@ -9,7 +9,7 @@ extension AppWorkspace {
         councilLayaURL = Self.councilPackage("laya_mps")
     }
     private static func councilPackage(_ backend: String) -> URL? {
-        guard let bookmark = AppPreferences.defaults.data(forKey: "councilPackage.\(backend)") else { return nil }
+        guard let bookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.councilPackage(backend)) else { return nil }
         var stale = false
         guard let url = try? URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale), !stale else { return nil }
         return url
@@ -30,7 +30,7 @@ extension AppWorkspace {
             guard manifest?["backend"] as? String == backend else { throw LedgerError.invalid("Choose a \(backend == "qwen_mlx" ? "Qwen" : "Laya") package.") }
             // Draft package choices do not change the active Council configuration.
             let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            AppPreferences.defaults.set(bookmark, forKey: "councilPackage.\(backend)")
+            AppPreferences.defaults.set(bookmark, forKey: AppPreferences.Key.councilPackage(backend))
             if backend == "qwen_mlx" { councilQwenURL = url } else { councilLayaURL = url }
         } catch { errorMessage = error.localizedDescription }
     }
@@ -63,12 +63,12 @@ extension AppWorkspace {
             try await store.registerCouncil(configuration)
             // Keep the active package bookmarks separate from editable setup choices.
             for backend in ["qwen_mlx", "laya_mps"] {
-                AppPreferences.defaults.set(AppPreferences.defaults.data(forKey: "councilPackage.\(backend)"), forKey: "activeCouncilPackage.\(backend)")
+                AppPreferences.defaults.set(AppPreferences.defaults.data(forKey: AppPreferences.Key.councilPackage(backend)), forKey: AppPreferences.Key.activeCouncilPackage(backend))
             }
             activated = true
             self.councilConfiguration = configuration; self.classifierProvider = "council"
-            AppPreferences.defaults.set("council", forKey: "classifierProvider")
-            AppPreferences.defaults.set(shortcut, forKey: "activeCouncilShortcut")
+            AppPreferences.defaults.set("council", forKey: AppPreferences.Key.classifierProvider)
+            AppPreferences.defaults.set(shortcut, forKey: AppPreferences.Key.activeCouncilShortcut)
             self.shortcutName = shortcut
             self.classifierStatus = "Council · Qwen, Laya and Apple Intelligence · equal votes"
             await self.processIfAutomatic()
@@ -81,13 +81,13 @@ extension AppWorkspace {
         councilConfiguration = configuration
         var packages: [String: URL] = [:]
         for backend in ["qwen_mlx", "laya_mps"] {
-            if let bookmark = AppPreferences.defaults.data(forKey: "activeCouncilPackage.\(backend)") {
+            if let bookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.activeCouncilPackage(backend)) {
                 var stale = false
                 if let url = try? URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale), !stale { packages[backend] = url }
             }
         }
         let engine = CouncilClassifierEngine(client: client, packages: packages,
-            shortcut: AppPreferences.defaults.string(forKey: "activeCouncilShortcut") ?? "GK Categorize Cloud")
+            shortcut: AppPreferences.defaults.string(forKey: AppPreferences.Key.activeCouncilShortcut) ?? "GK Categorize Cloud")
         try await store.enqueueCouncil(configID: configuration.id)
         var remaining = try await store.snapshot(limit: 1).pendingJobs
         do {

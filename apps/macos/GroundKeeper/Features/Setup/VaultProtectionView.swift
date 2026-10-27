@@ -40,7 +40,7 @@ struct VaultProtectionView: View {
                         do {
                             try await workspace.setEncryption(passphrase: encrypt ? passphrase : nil, remember: encrypt && remember, currentPassphrase: currentPassphrase)
                             passphrase = ""; confirmation = ""; currentPassphrase = ""; applied = true
-                            AppPreferences.defaults.set(true, forKey: "vaultProtectionChosen")
+                            AppPreferences.defaults.set(true, forKey: AppPreferences.Key.vaultProtectionChosen)
                             onApplied()
                         } catch { self.error = error.localizedDescription }
                     }

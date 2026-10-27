@@ -4,7 +4,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
-    @AppStorage("appearance") private var appearance = AppAppearance.system
+    @AppStorage(AppPreferences.Key.appearance) private var appearance = AppAppearance.system
     @State private var accountName = ""
     @State private var currency = "CAD"
     @State private var showingProtection = false

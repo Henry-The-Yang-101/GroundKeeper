@@ -4,7 +4,7 @@ import SwiftUI
 import GroundKeeperCore
 
 @MainActor @Observable final class AppWorkspace {
-    var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: "setupCompleted") || CommandLine.arguments.contains("--setup-preview"))
+    var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: AppPreferences.Key.setupCompleted) || CommandLine.arguments.contains("--setup-preview"))
     var reviewingSetup = false
     var encrypted = VaultAccess.isEncrypted
     var unlocking = false
@@ -32,7 +32,7 @@ import GroundKeeperCore
     var countUpdatedAt: Date?
     var pendingFileWork = 0
     var cleanupMessage: String?
-    var captureFolderNeedsReconnect: Bool { hasCaptureFolder && !AppPreferences.defaults.bool(forKey: "captureFolderWritable") }
+    var captureFolderNeedsReconnect: Bool { hasCaptureFolder && !AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderWritable) }
     var queueCount: Int { pendingCaptures + pendingFileWork + (classifierProvider == "manual" ? 0 : pendingJobs + unqueuedJobs) }
     var suggestionCount: Int { pendingJobs + unqueuedJobs }
     var importButtonTitle: String {
@@ -66,10 +66,10 @@ import GroundKeeperCore
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
-    var shortcutName = AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"
-    var classifierProvider = AppPreferences.defaults.string(forKey: "classifierProvider") ?? (AppPreferences.defaults.data(forKey: "classifierModelBookmark") == nil ? "manual" : "local")
+    var shortcutName = AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierShortcutName) ?? "GK Categorize Cloud"
+    var classifierProvider = AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierProvider) ?? (AppPreferences.defaults.data(forKey: AppPreferences.Key.classifierModelBookmark) == nil ? "manual" : "local")
     var classifierStatus = "Manual categorization until you choose a provider"
-    var ollamaModelName = AppPreferences.defaults.string(forKey: "ollamaModelName") ?? ""
+    var ollamaModelName = AppPreferences.defaults.string(forKey: AppPreferences.Key.ollamaModelName) ?? ""
     var processing = false
     var processingScope: QueueProcessingScope?
     var saving = false
@@ -156,7 +156,7 @@ import GroundKeeperCore
                 merchantSearchEnabled = true; merchantSearchLocality = "Waterloo Ontario"
                 merchantSearchStatus = "Using cached DuckDuckGo context · fictional preview"
             }
-            folderBookmark = AppPreferences.defaults.data(forKey: "captureFolderBookmark")
+            folderBookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.captureFolderBookmark)
             if folderBookmark != nil { folderName = "Saved capture folder" }
             restoreCouncilPackages()
             if classifierProvider == "council" {
@@ -166,7 +166,7 @@ import GroundKeeperCore
             else if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
             else if classifierProvider == "ollama" { classifierStatus = "Ollama · \(ollamaModelName) · connects when processing needs it" }
             else if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
-            else if AppPreferences.defaults.data(forKey: "classifierModelBookmark") != nil { classifierStatus = "Saved model · loads when processing needs it" }
+            else if AppPreferences.defaults.data(forKey: AppPreferences.Key.classifierModelBookmark) != nil { classifierStatus = "Saved model · loads when processing needs it" }
             try await refresh()
             loop = Task { [weak self] in
                 while !Task.isCancelled {
@@ -216,8 +216,8 @@ import GroundKeeperCore
     }
     func finishSetup() {
         guard ready else { return }
-        AppPreferences.defaults.set(true, forKey: "setupCompleted")
-        AppPreferences.defaults.removeObject(forKey: "setupStep")
+        AppPreferences.defaults.set(true, forKey: AppPreferences.Key.setupCompleted)
+        AppPreferences.defaults.removeObject(forKey: AppPreferences.Key.setupStep)
         showingSetup = false
         Task { await processIfAutomatic() }
     }
@@ -439,8 +439,8 @@ import GroundKeeperCore
             captureFeedback = WorkspaceFeedback(message: "Capture needs attention: \(TransactionReviewIssue.title(for: reason))." + suffix, needsAttention: true)
         }
     }
-    var hasCaptureFolder: Bool { AppPreferences.defaults.data(forKey: "captureFolderBookmark") != nil }
-    var captureFolderPath: String { AppPreferences.defaults.string(forKey: "captureFolderPath") ?? folderName }
+    var hasCaptureFolder: Bool { AppPreferences.defaults.data(forKey: AppPreferences.Key.captureFolderBookmark) != nil }
+    var captureFolderPath: String { AppPreferences.defaults.string(forKey: AppPreferences.Key.captureFolderPath) ?? folderName }
     func selectFolder() {
         let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
@@ -465,12 +465,12 @@ import GroundKeeperCore
     }
     private func connectCaptureFolder(_ url: URL, exact: Bool) throws {
         let bookmark = try url.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
-        AppPreferences.defaults.set(true, forKey: "captureFolderWritable")
+        AppPreferences.defaults.set(true, forKey: AppPreferences.Key.captureFolderWritable)
         cleanupMessage = nil
         folderBookmark = bookmark
-        AppPreferences.defaults.set(bookmark, forKey: "captureFolderBookmark")
-        AppPreferences.defaults.set(exact, forKey: "captureFolderIsExact")
-        AppPreferences.defaults.set(url.path, forKey: "captureFolderPath")
+        AppPreferences.defaults.set(bookmark, forKey: AppPreferences.Key.captureFolderBookmark)
+        AppPreferences.defaults.set(exact, forKey: AppPreferences.Key.captureFolderIsExact)
+        AppPreferences.defaults.set(url.path, forKey: AppPreferences.Key.captureFolderPath)
         folderName = url.lastPathComponent
         Task { await folder.reset(); await updateQueueCount(); await processIfAutomatic() }
     }
@@ -478,7 +478,7 @@ import GroundKeeperCore
         guard let store else { return }
         do {
             if let folderBookmark {
-                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: false, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: false, exactFolder: AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderIsExact))
                 pendingCaptures = scan.pending; waitingCaptures = scan.waiting
                 pendingFileWork = try await store.pendingFileCleanups().count + store.receiptImageRequests().count
             } else { pendingCaptures = 0; waitingCaptures = 0; pendingFileWork = 0 }
@@ -553,7 +553,7 @@ import GroundKeeperCore
             var remaining = Int.max
             repeat {
                 try Task.checkCancellation()
-                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+                let scan = try await folder.scan(bookmark: folderBookmark, store: store, readFiles: true, exactFolder: AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderIsExact))
                 if remaining == Int.max { remaining = scan.pending }
                 for entry in scan.files.prefix(remaining) {
                     try Task.checkCancellation()
@@ -563,8 +563,8 @@ import GroundKeeperCore
                 lastSync = Date(); status = scan.waiting == 0 ? "Capture folder checked" : "Waiting for \(scan.waiting) iCloud files"
                 if scan.files.count < 200 { break }
             } while remaining > 0
-            try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
-            let failed = try await folder.cleanStoredFiles(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: "captureFolderIsExact"))
+            try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderIsExact))
+            let failed = try await folder.cleanStoredFiles(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderIsExact))
             cleanupMessage = failed == 0 ? nil : "Saved safely in the vault. Reconnect the capture folder to remove \(failed) queued files."
         }
     }
@@ -695,14 +695,14 @@ import GroundKeeperCore
     private func restoreModel() async throws {
         if classifierProvider == "manual" || classifierProvider == "council" { return }
         if classifierProvider == "ollama" {
-            guard let data = AppPreferences.defaults.data(forKey: "ollamaSelectedModel"),
+            guard let data = AppPreferences.defaults.data(forKey: AppPreferences.Key.ollamaSelectedModel),
                   let selected = try? JSONDecoder().decode(OllamaModel.self, from: data) else {
                 throw LedgerError.unavailable("Choose an installed Ollama model in Settings.")
             }
             try await loadOllama(selected); return
         }
-        if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud"); return }
-        guard let bookmark = AppPreferences.defaults.data(forKey: "classifierModelBookmark") else { return }
+        if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierShortcutName) ?? "GK Categorize Cloud"); return }
+        guard let bookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.classifierModelBookmark) else { return }
         var stale = false
         let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
         guard !stale else { throw LedgerError.unavailable("Select the model package again.") }
@@ -759,8 +759,8 @@ import GroundKeeperCore
             let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
             try await self.loadModel(url)
             self.classifierProvider = "local"
-            AppPreferences.defaults.set("local", forKey: "classifierProvider")
-            AppPreferences.defaults.set(bookmark, forKey: "classifierModelBookmark")
+            AppPreferences.defaults.set("local", forKey: AppPreferences.Key.classifierProvider)
+            AppPreferences.defaults.set(bookmark, forKey: AppPreferences.Key.classifierModelBookmark)
             await self.processIfAutomatic()
         }
     }
@@ -768,9 +768,9 @@ import GroundKeeperCore
         guard !processing, !saving else { return }
         perform {
             try await self.loadOllama(selected)
-            AppPreferences.defaults.set(try JSONEncoder().encode(selected), forKey: "ollamaSelectedModel")
-            AppPreferences.defaults.set(selected.name, forKey: "ollamaModelName")
-            AppPreferences.defaults.set("ollama", forKey: "classifierProvider")
+            AppPreferences.defaults.set(try JSONEncoder().encode(selected), forKey: AppPreferences.Key.ollamaSelectedModel)
+            AppPreferences.defaults.set(selected.name, forKey: AppPreferences.Key.ollamaModelName)
+            AppPreferences.defaults.set("ollama", forKey: AppPreferences.Key.classifierProvider)
             self.ollamaModelName = selected.name
             self.classifierProvider = "ollama"
             await self.processIfAutomatic()
@@ -797,8 +797,8 @@ import GroundKeeperCore
             self.shortcutName = name
             try await self.loadShortcut(name: name)
             self.classifierProvider = "shortcut"
-            AppPreferences.defaults.set(name, forKey: "classifierShortcutName")
-            AppPreferences.defaults.set("shortcut", forKey: "classifierProvider")
+            AppPreferences.defaults.set(name, forKey: AppPreferences.Key.classifierShortcutName)
+            AppPreferences.defaults.set("shortcut", forKey: AppPreferences.Key.classifierProvider)
             await self.processIfAutomatic()
         }
     }
@@ -814,8 +814,8 @@ import GroundKeeperCore
         perform {
             try await self.loadModel(url)
             let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            AppPreferences.defaults.set(bookmark, forKey: "classifierModelBookmark")
-            AppPreferences.defaults.set("local", forKey: "classifierProvider")
+            AppPreferences.defaults.set(bookmark, forKey: AppPreferences.Key.classifierModelBookmark)
+            AppPreferences.defaults.set("local", forKey: AppPreferences.Key.classifierProvider)
             self.classifierProvider = "local"
             await self.processIfAutomatic()
         }
@@ -823,8 +823,8 @@ import GroundKeeperCore
     func useManualCategorization() {
         guard !processing, !saving else { return }
         classifierProvider = "manual"; model = nil; modelURL = nil
-        AppPreferences.defaults.set("manual", forKey: "classifierProvider")
-        AppPreferences.defaults.removeObject(forKey: "classifierModelBookmark")
+        AppPreferences.defaults.set("manual", forKey: AppPreferences.Key.classifierProvider)
+        AppPreferences.defaults.removeObject(forKey: AppPreferences.Key.classifierModelBookmark)
         classifierStatus = "Manual categorization"
         Task { await client.shutdown() }
     }

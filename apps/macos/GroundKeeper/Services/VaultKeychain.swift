@@ -16,11 +16,11 @@ enum VaultKeychain {
               let value = SecTaskCopyValueForEntitlement(task, "com.apple.application-identifier" as CFString, nil) as? String else { return false }
         return value.contains(".com.groundkeeper.")
     }
-    static var isEnabled: Bool { AppPreferences.defaults.bool(forKey: "vaultConvenienceUnlock") }
+    static var isEnabled: Bool { AppPreferences.defaults.bool(forKey: AppPreferences.Key.vaultConvenienceUnlock) }
     static func remove() throws {
         let code = SecItemDelete(identity as CFDictionary)
         guard code == errSecSuccess || code == errSecItemNotFound else { throw failure(code) }
-        AppPreferences.defaults.set(false, forKey: "vaultConvenienceUnlock")
+        AppPreferences.defaults.set(false, forKey: AppPreferences.Key.vaultConvenienceUnlock)
     }
     static func save(_ passphrase: String) throws {
         try remove()
@@ -34,7 +34,7 @@ enum VaultKeychain {
         item[kSecAttrLabel as String] = "GroundKeeper vault unlock"
         let code = SecItemAdd(item as CFDictionary, nil)
         guard code == errSecSuccess else { throw failure(code) }
-        AppPreferences.defaults.set(true, forKey: "vaultConvenienceUnlock")
+        AppPreferences.defaults.set(true, forKey: AppPreferences.Key.vaultConvenienceUnlock)
     }
     static func load() throws -> String {
         let context = LAContext()

@@ -37,7 +37,7 @@ extension AppWorkspace {
                                         transactionNotes: boundedNotes.isEmpty ? nil : boundedNotes, receiptContext: receiptContext)
             var suggestion: DraftCategorySuggestion
             if classifierProvider == "ollama" {
-                guard let data = AppPreferences.defaults.data(forKey: "ollamaSelectedModel"),
+                guard let data = AppPreferences.defaults.data(forKey: AppPreferences.Key.ollamaSelectedModel),
                       let selected = try? JSONDecoder().decode(OllamaModel.self, from: data) else {
                     throw LedgerError.unavailable("Choose an installed Ollama model in Settings.")
                 }
@@ -51,9 +51,9 @@ extension AppWorkspace {
                     do {
                         let loaded: ClassifierModel
                         if member.backend == "apple_shortcut" {
-                            loaded = try await suggestionClient.prepareShortcut(name: AppPreferences.defaults.string(forKey: "activeCouncilShortcut") ?? "GK Categorize Cloud")
+                            loaded = try await suggestionClient.prepareShortcut(name: AppPreferences.defaults.string(forKey: AppPreferences.Key.activeCouncilShortcut) ?? "GK Categorize Cloud")
                         } else {
-                            loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: "activeCouncilPackage.\(member.backend)")
+                            loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: AppPreferences.Key.activeCouncilPackage(member.backend))
                         }
                         guard loaded.manifestSHA256 == member.id else { throw ClassifierBridgeError.invalidResponse }
                         var memberInput = input
@@ -72,9 +72,9 @@ extension AppWorkspace {
             } else {
                 let loaded: ClassifierModel
                 if classifierProvider == "shortcut" {
-                    loaded = try await suggestionClient.prepareShortcut(name: AppPreferences.defaults.string(forKey: "classifierShortcutName") ?? "GK Categorize Cloud")
+                    loaded = try await suggestionClient.prepareShortcut(name: AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierShortcutName) ?? "GK Categorize Cloud")
                 } else {
-                    loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: "classifierModelBookmark")
+                    loaded = try await prepareDraftModel(client: suggestionClient, bookmarkKey: AppPreferences.Key.classifierModelBookmark)
                 }
                 var providerInput = input
                 if loaded.backend == "apple_shortcut" && !shareReceipts { providerInput.receiptContext = nil }

@@ -4,10 +4,10 @@ import Charts
 
 struct HomeSpendingOverview: View {
     @Environment(AppWorkspace.self) private var workspace
-    @AppStorage("reportCurrency", store: AppPreferences.defaults) private var currency = "CAD"
-    @AppStorage("reportTimezone", store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
-    @AppStorage("reportWeekStart", store: AppPreferences.defaults) private var weekStart = 2
-    @AppStorage("insightSensitivity", store: AppPreferences.defaults) private var sensitivity = InsightSensitivity.balanced
+    @AppStorage(AppPreferences.Key.reportCurrency, store: AppPreferences.defaults) private var currency = "CAD"
+    @AppStorage(AppPreferences.Key.reportTimezone, store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
+    @AppStorage(AppPreferences.Key.reportWeekStart, store: AppPreferences.defaults) private var weekStart = 2
+    @AppStorage(AppPreferences.Key.insightSensitivity, store: AppPreferences.defaults) private var sensitivity = InsightSensitivity.balanced
     @State private var report: SpendingReport?
     @State private var error: String?
     @State private var refresh = 0

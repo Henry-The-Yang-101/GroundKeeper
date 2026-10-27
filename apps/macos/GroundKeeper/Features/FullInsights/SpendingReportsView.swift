@@ -30,10 +30,10 @@ struct ReportDrilldown: Identifiable {
 struct SpendingReportsView: View {
     @Environment(AppWorkspace.self) private var workspace
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @AppStorage("reportCurrency", store: AppPreferences.defaults) private var currency = "CAD"
-    @AppStorage("reportTimezone", store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
-    @AppStorage("reportWeekStart", store: AppPreferences.defaults) private var weekStart = 2
-    @AppStorage("insightSensitivity", store: AppPreferences.defaults) private var sensitivity = InsightSensitivity.balanced
+    @AppStorage(AppPreferences.Key.reportCurrency, store: AppPreferences.defaults) private var currency = "CAD"
+    @AppStorage(AppPreferences.Key.reportTimezone, store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
+    @AppStorage(AppPreferences.Key.reportWeekStart, store: AppPreferences.defaults) private var weekStart = 2
+    @AppStorage(AppPreferences.Key.insightSensitivity, store: AppPreferences.defaults) private var sensitivity = InsightSensitivity.balanced
     @State private var period = ReportPeriod.month
     @State private var comparison = "Previous period"
     @State private var accountID = ""
