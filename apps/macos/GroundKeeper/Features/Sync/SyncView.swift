@@ -3,20 +3,21 @@ import GroundKeeperCore
 
 struct SyncView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @State private var viewedTransaction: Transaction?
     var body: some View {
         PageContent {
             PageHeading(title: "Sync")
             Surface {
-                SectionHeading(title: "iCloud capture folder", detail: workspace.captureFolderPath)
+                SectionHeading(title: "iCloud capture folder", detail: captureState.captureFolderPath)
                     .textSelection(.enabled)
-                    .help(workspace.captureFolderPath)
+                    .help(captureState.captureFolderPath)
                 Text(workspace.status).foregroundStyle(AppStyle.muted)
-                if let last = workspace.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
+                if let last = captureState.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
                 HStack {
-                    Button("Connect folder…", action: workspace.selectFolder)
-                    Button("Retry failed work", action: workspace.retryFailures)
+                    Button("Connect folder…", action: captureState.selectFolder)
+                    Button("Retry failed work", action: captureState.retryFailures)
                 }.disabled(!workspace.ready || workspace.saving)
                 QueueControls(showsReviewGuidance: false)
                 CaptureFolderInfoButton()
@@ -29,8 +30,8 @@ struct SyncView: View {
                 if transactionState.accounts.isEmpty { Text("Add an account in Settings before importing.").font(.caption) }
             }
             Surface {
-                SectionHeading(title: "Review captures", detail: "\(workspace.reviews.count) open items shown")
-                if let result = workspace.captureFeedback {
+                SectionHeading(title: "Review captures", detail: "\(captureState.reviews.count) open items shown")
+                if let result = captureState.captureFeedback {
                     VStack(alignment: .leading, spacing: 8) {
                         Label(result.message, systemImage: result.needsAttention ? "exclamationmark.circle" : "checkmark.circle")
                             .font(.callout)
@@ -49,23 +50,23 @@ struct SyncView: View {
                                     }
                                 }
                             }
-                            Button("Dismiss message") { workspace.captureFeedback = nil }.buttonStyle(.borderless)
+                            Button("Dismiss message") { captureState.captureFeedback = nil }.buttonStyle(.borderless)
                         }
                     }.padding(.vertical, 6)
                 }
-                if workspace.reviews.isEmpty { Text("No capture issues to review.").foregroundStyle(AppStyle.muted) }
-                ForEach(workspace.reviews) { review in
+                if captureState.reviews.isEmpty { Text("No capture issues to review.").foregroundStyle(AppStyle.muted) }
+                ForEach(captureState.reviews) { review in
                     CaptureReviewRow(review: review)
                     Divider()
                 }
             }
             Surface {
-                SectionHeading(title: "Activity", detail: "\(workspace.pendingJobs) classification jobs pending · \(workspace.failedJobs) failed")
-                if workspace.queue.isEmpty {
+                SectionHeading(title: "Activity", detail: "\(captureState.pendingJobs) classification jobs pending · \(captureState.failedJobs) failed")
+                if captureState.queue.isEmpty {
                     Label("No recent capture activity", systemImage: "tray")
                         .foregroundStyle(AppStyle.muted)
                 }
-                ForEach(workspace.queue) { item in
+                ForEach(captureState.queue) { item in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(item.path).lineLimit(1)
@@ -84,6 +85,7 @@ struct SyncView: View {
 }
 private struct CaptureFolderInfoButton: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @State private var showingInfo = false
 
@@ -98,13 +100,13 @@ private struct CaptureFolderInfoButton: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Capture processing").font(.headline).foregroundStyle(AppStyle.text)
                     Text(QueueControls.reviewGuidance)
-                    Text(workspace.processingDescription)
+                    Text(captureState.processingDescription)
                     Text("Imported JSON and receipt images are removed from iCloud after they are safely stored in your local vault. Invalid files stay in the queue for review.")
-                    if workspace.captureFolderNeedsReconnect {
+                    if captureState.captureFolderNeedsReconnect {
                         Text("Reconnect this folder once to allow GroundKeeper to remove processed files.")
-                        Button("Reconnect capture folder…", action: workspace.selectFolder)
+                        Button("Reconnect capture folder…", action: captureState.selectFolder)
                     }
-                    if let message = workspace.cleanupMessage { Text(message) }
+                    if let message = captureState.cleanupMessage { Text(message) }
                 }
                 .font(.callout)
                 .foregroundStyle(AppStyle.muted)
@@ -117,6 +119,7 @@ private struct CaptureFolderInfoButton: View {
 
 private struct CaptureReviewRow: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     let review: ReviewRecord
     @State private var accountID = ""
@@ -146,7 +149,7 @@ private struct CaptureReviewRow: View {
                 }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
                 Button("Continue import") {
-                    workspace.assignAccount(review, accountID: accountID, remember: rememberCard)
+                    captureState.assignAccount(review, accountID: accountID, remember: rememberCard)
                 }.disabled(accountID.isEmpty)
                 if transactionState.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }
             }
@@ -162,7 +165,7 @@ private struct CaptureReviewRow: View {
                             Text(candidate.description).fontWeight(.medium)
                             Text("\((Decimal(candidate.amountMinor) / 100).formatted(.currency(code: candidate.currency))) \(candidate.currency) · \(candidate.day)")
                             Text("Account: \(transactionState.accountLabel(id: candidate.accountID, fallback: candidate.accountName))").font(.caption)
-                            Button("Link to this transaction") { workspace.resolve(review, transactionID: candidate.id, expectedRevision: candidate.revision) }
+                            Button("Link to this transaction") { captureState.resolve(review, transactionID: candidate.id, expectedRevision: candidate.revision) }
                                 .disabled(context == nil)
                                 .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(transactionState.accountLabel(id: candidate.accountID, fallback: candidate.accountName))")
                         }.frame(maxWidth: .infinity, alignment: .leading)
@@ -172,7 +175,7 @@ private struct CaptureReviewRow: View {
                     Text("Some suggested transactions are no longer available. Refresh Sync before deciding.")
                         .font(.caption).foregroundStyle(AppStyle.muted)
                 }
-                Button("Keep as a separate transaction") { workspace.resolve(review, transactionID: nil) }
+                Button("Keep as a separate transaction") { captureState.resolve(review, transactionID: nil) }
                     .disabled(context == nil)
             }
             if ["external_id_conflict", "csv_mapping_changed"].contains(review.reason) {
@@ -185,14 +188,14 @@ private struct CaptureReviewRow: View {
                 Text("Use statement details replaces the saved description, amount, and date. A changed direction reopens category review. Keep saved details retains the entry and records this statement as evidence.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 HStack {
-                    Button("Use statement details") { workspace.resolveCSV(review, useStatement: true, expectedRevision: candidates.first?.revision) }
-                    Button("Keep saved details") { workspace.resolveCSV(review, useStatement: false, expectedRevision: candidates.first?.revision) }
+                    Button("Use statement details") { captureState.resolveCSV(review, useStatement: true, expectedRevision: candidates.first?.revision) }
+                    Button("Keep saved details") { captureState.resolveCSV(review, useStatement: false, expectedRevision: candidates.first?.revision) }
                 }.disabled(context == nil || candidates.isEmpty)
             }
             if !["possible_duplicate", "statement_match", "external_id_conflict", "csv_mapping_changed", "event_identity_collision"].contains(review.reason) {
                 Button("Correct capture details…") { correcting = true }
             }
-            Button("Dismiss review") { workspace.dismiss(review) }.font(.caption)
+            Button("Dismiss review") { captureState.dismiss(review) }.font(.caption)
         }.disabled(workspace.saving)
         .sheet(isPresented: $correcting) { CaptureCorrection(review: review).vaultSheet() }
         .task(id: "\(review.id)|\(transactionState.reportingRevision)") {
@@ -215,6 +218,7 @@ private struct CaptureCorrection: View {
         let rememberCard: Bool
     }
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let review: ReviewRecord
@@ -275,7 +279,7 @@ private struct CaptureCorrection: View {
                     saving = true
                     Task {
                         defer { saving = false }
-                        do { try await workspace.correct(review, description: description, amount: signedAmount, accountID: accountID, day: day, remember: rememberCard); dismiss() }
+                        do { try await captureState.correct(review, description: description, amount: signedAmount, accountID: accountID, day: day, remember: rememberCard); dismiss() }
                         catch { self.error = error.localizedDescription }
                     }
                 }.keyboardShortcut(.defaultAction)
@@ -314,6 +318,7 @@ private struct CaptureCorrection: View {
 
 private struct CaptureSourceEvidence: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     let context: CaptureReviewContext
     var body: some View {

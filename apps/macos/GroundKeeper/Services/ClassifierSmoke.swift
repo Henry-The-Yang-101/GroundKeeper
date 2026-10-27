@@ -152,7 +152,7 @@ import GroundKeeperCore
     private static func verifyDraftSuggestions(package: URL) async throws {
         let workspace = AppWorkspace()
         await workspace.start()
-        workspace.processingMode = .manual
+        workspace.captureState.processingMode = .manual
         guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
         workspace.classifier.useInstalledModel(package)
         while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
@@ -176,7 +176,7 @@ import GroundKeeperCore
             let after = try await store.snapshot()
             guard after.transactions.count == 1, after.transactions[0].revision == before.revision,
                   after.transactions[0].category == before.category,
-                  !workspace.processing, workspace.classifier.model == nil else {
+                  !workspace.captureState.processing, workspace.classifier.model == nil else {
                 throw LedgerError.invalid("Suggestion changed the ledger or retained classifier resources.")
             }
             write(["event": "draft_suggestion_verified", "draft_revision": draft.revision, "type": suggestion.decision.type,

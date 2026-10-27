@@ -4,6 +4,7 @@ import GroundKeeperCore
 
 struct TransactionDetailView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     // Seed the sheet once; reload from persistence after editing.
@@ -72,7 +73,7 @@ struct TransactionDetailView: View {
                 merging = nil; mergingBusy = true
                 Task {
                     defer { mergingBusy = false }
-                    do { try await workspace.mergeStatement(transaction, other: other); await load() }
+                    do { try await captureState.mergeStatement(transaction, other: other); await load() }
                     catch { self.error = error.localizedDescription }
                 }
             }

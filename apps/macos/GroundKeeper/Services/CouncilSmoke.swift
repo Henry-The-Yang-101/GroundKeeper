@@ -17,7 +17,7 @@ import GroundKeeperCore
             }
             await workspace.start()
             guard let store = workspace.store else { throw LedgerError.unavailable("Disposable vault did not open.") }
-            workspace.showingSetup = false; workspace.processingMode = .manual
+            workspace.showingSetup = false; workspace.captureState.processingMode = .manual
             for (backend, title) in [("qwen_mlx", "Qwen"), ("laya_mps", "Laya")] {
                 let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true
                 panel.message = "Council smoke: choose \(title) for a fictional transaction in a disposable vault."
@@ -36,9 +36,9 @@ import GroundKeeperCore
             try await store.addAccount(name: "Fictional council account", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
             _ = try await store.importCSV(CSVDocument(data: Data("Date,Description,Amount\n2026-10-23,FICTIONAL CAFE,-8.50\n".utf8), filename: "fictional-council.csv"), mapping: mapping)
-            await workspace.sync(automatic: true)
+            await workspace.captureState.sync(automatic: true)
             guard try await store.snapshot().pendingJobs == 0 else { throw LedgerError.invalid("Manual mode was bypassed.") }
-            await workspace.sync()
+            await workspace.captureState.sync()
             let transaction = try await store.snapshot().transactions[0]
             guard let report = try await store.councilReport(transactionID: transaction.id), report.result.votes.count == 3,
                   report.result.votes.filter({ $0.member.backend != "apple_shortcut" }).allSatisfy({ $0.disposition == "valid" }),

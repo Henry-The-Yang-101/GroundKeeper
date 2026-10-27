@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     var body: some View {
         PageContent {
@@ -10,7 +11,7 @@ struct HomeView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 18) {
                     Metric(label: "Saved transactions", value: "\(transactionState.totalTransactions)")
                     Metric(label: "Transactions to review", value: "\(transactionState.transactionReviewCount)")
-                    Metric(label: "Captures to review", value: "\(workspace.reviews.count)")
+                    Metric(label: "Captures to review", value: "\(captureState.reviews.count)")
                 }
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) { actions }
@@ -45,8 +46,8 @@ struct HomeView: View {
         Button("View transactions") { workspace.showTransactions() }.buttonStyle(.brass)
         Button("Review transactions (\(transactionState.transactionReviewCount))") { workspace.showTransactions(needingReview: true) }
             .disabled(transactionState.transactionReviewCount == 0)
-        Button("Review captures (\(workspace.reviews.count))") { workspace.selectedTab = .sync }
-            .disabled(workspace.reviews.isEmpty)
+        Button("Review captures (\(captureState.reviews.count))") { workspace.selectedTab = .sync }
+            .disabled(captureState.reviews.isEmpty)
         Button("Import CSV…") { transactionState.showingImportPreview = true }.disabled(transactionState.accounts.isEmpty)
     }
 }

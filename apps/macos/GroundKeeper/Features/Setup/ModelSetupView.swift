@@ -3,6 +3,7 @@ import AppKit
 
 struct ModelSetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Bindable var installer: ModelInstaller
     private var models: [ModelCatalog.Model] { (try? ModelCatalog.bundled().models) ?? [] }
@@ -54,7 +55,7 @@ struct ModelSetupView: View {
             Divider()
             CouncilSetupView(installed: installer.installed).disabled(installer.busy)
             Divider()
-            HStack { Button("Use manual categorization", action: classifier.useManualCategorization).disabled(workspace.saving || workspace.processing)
+            HStack { Button("Use manual categorization", action: classifier.useManualCategorization).disabled(workspace.saving || captureState.processing)
                 Spacer(); Text(classifier.classifierStatus).font(.caption).foregroundStyle(AppStyle.muted) }
             Text("Every model suggestion needs your review. You can change providers in Settings; GroundKeeper never switches to cloud automatically.")
                 .font(.callout).foregroundStyle(AppStyle.muted)

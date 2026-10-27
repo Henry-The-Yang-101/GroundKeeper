@@ -4,6 +4,7 @@ import GroundKeeperCore
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
     // A sheet owns an edit session. Parent refreshes must not overwrite unsaved input.
@@ -59,7 +60,7 @@ struct TransactionEditor: View {
                         Button(action: suggestCategory) {
                             Label(suggesting ? "Suggesting…" : "Suggest category", systemImage: "sparkles")
                         }
-                        .disabled(draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || suggesting || workspace.processing)
+                        .disabled(draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || suggesting || captureState.processing)
                         if suggesting { ProgressView().controlSize(.small) }
                     }
                     Text("Suggestions use your description, notes, and available receipt text. Apple receipt sharing follows Settings.")

@@ -13,7 +13,7 @@ import GroundKeeperCore
             let name = CommandLine.arguments[index + 1]
             let workspace = AppWorkspace()
             await workspace.start()
-            workspace.processingMode = .manual
+            workspace.captureState.processingMode = .manual
             guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
             try await store.addAccount(name: "Fictional Ollama smoke card", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
@@ -30,13 +30,13 @@ import GroundKeeperCore
             try suggested.decision.validateSuggestion()
             let afterSuggestion = try await store.snapshot()
             guard beforeSuggestion.transactions.count == afterSuggestion.transactions.count,
-                  !workspace.processing else { throw LedgerError.invalid("Draft suggestion changed the ledger or left processing locked.") }
+                  !workspace.captureState.processing else { throw LedgerError.invalid("Draft suggestion changed the ledger or left processing locked.") }
             draft.merchant = "   "
             do {
                 _ = try await workspace.classifier.suggestCategory(for: draft)
                 throw ClassifierBridgeError.invalidResponse
             } catch is LedgerError { }
-            await workspace.sync()
+            await workspace.captureState.sync()
             let snapshot = try await store.snapshot()
             guard workspace.errorMessage == nil, snapshot.pendingJobs == 0, snapshot.failedJobs == 0,
                   snapshot.transactions.first?.needsReview == true,
@@ -49,7 +49,7 @@ import GroundKeeperCore
             guard reopened.classifierProvider == "ollama", reopened.model == nil else { throw LedgerError.invalid("Saved provider did not restore lazily.") }
             let second = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-21,FICTIONAL BOOK SHOP,-9.25\n".utf8), filename: "ollama-second.csv")
             _ = try await reopened.transactionState.importCSV(second, mapping: mapping, skipped: [])
-            await reopened.sync()
+            await reopened.captureState.sync()
             guard reopened.errorMessage == nil, reopened.model == nil, reopened.pendingJobs == 0,
                   reopened.failedJobs == 0 else { throw LedgerError.invalid(reopened.errorMessage ?? "Restored Ollama provider did not process the queue.") }
             await reopened.stop()

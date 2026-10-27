@@ -3,6 +3,7 @@ import AppKit
 
 struct SetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -93,10 +94,10 @@ struct SetupView: View {
             header("icloud.fill", "From your iPhone.\nTo your Mac.", "Choose an iCloud Drive inbox for the transaction files your iPhone captures. Both devices must use the same Apple Account and have iCloud Drive enabled.")
             feature("folder.badge.plus", "A home for your captures", "The standard location is iCloud Drive/Shortcuts/Groundkeeper/inbox. GroundKeeper can create it after you grant folder access.")
             HStack {
-                Button("Create standard iCloud inbox…", action: workspace.createDefaultCaptureFolder).buttonStyle(.brass)
-                Button("Choose another folder…", action: workspace.selectFolder)
+                Button("Create standard iCloud inbox…", action: captureState.createDefaultCaptureFolder).buttonStyle(.brass)
+                Button("Choose another folder…", action: captureState.selectFolder)
             }
-            if workspace.hasCaptureFolder { Label("Connected", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Text(workspace.captureFolderPath).font(.callout).textSelection(.enabled) }
+            if captureState.hasCaptureFolder { Label("Connected", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Text(captureState.captureFolderPath).font(.callout).textSelection(.enabled) }
             feature("externaldrive.badge.icloud", "Capture files sync. Your vault stays local.", "Original capture files remain readable in your personal iCloud Drive after import. The Mac database, model files, and vault key stay outside iCloud Drive.")
             Text("Use exactly this folder in your iPhone capture Shortcut. If you skip this step, manual entries and CSV imports still work.").foregroundStyle(AppStyle.muted)
         case 4:
@@ -133,7 +134,7 @@ struct SetupView: View {
             header("checkmark.seal.fill", "Make yourself at home.", "Your workspace is ready. Here is how GroundKeeper is configured.")
             feature("lock.shield", "Local vault", workspace.encrypted ? "Encrypted with SQLCipher. Unlock with your passphrase" + (VaultKeychain.isEnabled ? " or this Mac’s protected Keychain." : ".") : "Standard, unencrypted SQLite on this Mac.")
             feature("sparkles", "Categorization", classifier.classifierStatus)
-            feature("icloud", "Capture inbox", workspace.hasCaptureFolder ? workspace.captureFolderPath : "Not connected. Start with a CSV or a manual transaction.")
+            feature("icloud", "Capture inbox", captureState.hasCaptureFolder ? captureState.captureFolderPath : "Not connected. Start with a CSV or a manual transaction.")
             feature("iphone", "iPhone automation", phoneReady ? "Marked configured by you. Review the first real capture in Sync." : "Still to set up. Return to this guide from Settings.")
             Text("Start with a fictional transaction. Review suggestions, confirm account mappings, and check Sync for anything that needs attention.").foregroundStyle(AppStyle.muted)
         }

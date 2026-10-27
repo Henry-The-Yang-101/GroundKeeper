@@ -2,6 +2,7 @@ import SwiftUI
 
 struct VaultProtectionView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onboarding = false
     var onApplied: () -> Void = {}
@@ -45,7 +46,7 @@ struct VaultProtectionView: View {
                         } catch { self.error = error.localizedDescription }
                     }
                 }.buttonStyle(.brass)
-                    .disabled(!workspace.ready || workspace.saving || workspace.processing || (workspace.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
+                    .disabled(!workspace.ready || workspace.saving || captureState.processing || (workspace.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
                 if applied {
                     Label("Saved", systemImage: "checkmark.circle.fill").foregroundStyle(AppStyle.accent)
                         .transition(.opacity)
@@ -61,6 +62,7 @@ struct VaultProtectionView: View {
 
 struct VaultUnlockView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @State private var passphrase = ""
     var body: some View {
         VStack(spacing: 24) {

@@ -4,6 +4,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
     @AppStorage(AppPreferences.Key.appearance) private var appearance = AppAppearance.system
@@ -24,18 +25,18 @@ struct SettingsView: View {
                 }.pickerStyle(.segmented).tint(AppStyle.controlAccent)
             }
             VaultFormSection("Queue processing") {
-                Picker("Import and suggest categories", selection: Binding(get: { workspace.processingMode }, set: workspace.changeProcessingMode)) {
+                Picker("Import and suggest categories", selection: Binding(get: { captureState.processingMode }, set: captureState.changeProcessingMode)) {
                     ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !workspace.encrypted) }) { Text($0.title).tag($0) }
-                }.disabled(workspace.changingProcessingMode || workspace.saving)
-                Text(workspace.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
+                }.disabled(captureState.changingProcessingMode || workspace.saving)
+                Text(captureState.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
                 if !QueueBackgroundService.isSupported {
                     Text(QueueBackgroundService.unsupportedMessage).font(.caption).foregroundStyle(AppStyle.muted)
                 }
-                if workspace.processingMode == .background {
-                    Text(workspace.backgroundStatus).font(.caption)
+                if captureState.processingMode == .background {
+                    Text(captureState.backgroundStatus).font(.caption)
                     HStack {
-                        Button("Enable background service") { workspace.changeProcessingMode(.background) }
-                            .disabled(workspace.changingProcessingMode)
+                        Button("Enable background service") { captureState.changeProcessingMode(.background) }
+                            .disabled(captureState.changingProcessingMode)
                         Button("Open Login Items settings…") { SMAppService.openSystemSettingsLoginItems() }
                     }
                 }
@@ -47,27 +48,27 @@ struct SettingsView: View {
                 Text("The database is stored locally in Application Support, outside iCloud Drive. Original capture files keep their existing iCloud protection.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 HStack {
-                    Button("Change vault protection…") { showingProtection = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
-                    if workspace.encrypted { Button("Lock vault") { Task { await workspace.lockVault() } }.disabled(workspace.saving || workspace.changingProcessingMode) }
+                    Button("Change vault protection…") { showingProtection = true }.disabled(!workspace.ready || captureState.processing || workspace.saving)
+                    if workspace.encrypted { Button("Lock vault") { Task { await workspace.lockVault() } }.disabled(workspace.saving || captureState.changingProcessingMode) }
                 }
                 if workspace.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(AppStyle.muted) }
                 if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
             } header: { Text("Local vault").font(VaultTypography.section) }
             Section {
                 LabeledContent("Model", value: classifier.classifierStatus)
-                Button("Install models or choose a provider…") { showingModels = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
-                Button("Choose local model package…", action: classifier.selectModel).disabled(!workspace.ready || workspace.processing || workspace.saving)
+                Button("Install models or choose a provider…") { showingModels = true }.disabled(!workspace.ready || captureState.processing || workspace.saving)
+                Button("Choose local model package…", action: classifier.selectModel).disabled(!workspace.ready || captureState.processing || workspace.saving)
                 TextField("Apple Intelligence Shortcut", text: Binding(get: { classifier.shortcutName }, set: { classifier.shortcutName = $0 }))
-                    .disabled(workspace.processing || workspace.saving)
+                    .disabled(captureState.processing || workspace.saving)
                 Text("Using this provider sends description, direction and currency to the selected Shortcut. Its Use Model action controls whether Apple Intelligence runs on device or in the cloud. Check that action in Shortcuts before enabling.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Toggle("Include receipt text with Apple Intelligence", isOn: Binding(get: { workspace.shareReceiptContextWithApple }, set: workspace.setReceiptSharing))
-                    .disabled(!workspace.ready || workspace.processing || workspace.saving)
+                    .disabled(!workspace.ready || captureState.processing || workspace.saving)
                 Text("On by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Button("Use Apple Intelligence Shortcut", action: classifier.useShortcut)
-                    .disabled(!workspace.ready || workspace.processing || workspace.saving)
-                LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
+                    .disabled(!workspace.ready || captureState.processing || workspace.saving)
+                LabeledContent("Queue", value: "\(captureState.pendingJobs) pending · \(captureState.failedJobs) failed")
                 MerchantSearchSettingsView(workspace: workspace)
                 Text("Choose Qwen or Laya, Apple Intelligence, or Model council in provider setup. Council consults all three with equal votes. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
@@ -98,11 +99,11 @@ struct SettingsView: View {
             CardMappingsSection()
             VaultFormSection("Setup and iPhone") {
                 Button("Review setup assistant…") { workspace.reviewingSetup = true; workspace.showingSetup = true }
-                    .disabled(workspace.processing || workspace.saving)
+                    .disabled(captureState.processing || workspace.saving)
                 Button("iPhone Shortcuts and automation guide…") { showingPhoneGuide = true }
-                Button("Create standard iCloud inbox…", action: workspace.createDefaultCaptureFolder)
-                Button("Choose capture folder…", action: workspace.selectFolder)
-                Text(workspace.captureFolderPath).font(.caption).textSelection(.enabled)
+                Button("Create standard iCloud inbox…", action: captureState.createDefaultCaptureFolder)
+                Button("Choose capture folder…", action: captureState.selectFolder)
+                Text(captureState.captureFolderPath).font(.caption).textSelection(.enabled)
             }
             VaultFormSection("GroundKeeper") {
                 Text("Local capture, import, reconciliation and classification")

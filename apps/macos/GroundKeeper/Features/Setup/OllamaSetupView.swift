@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct OllamaSetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @State private var models: [OllamaModel] = []
     @State private var selectedName = ""
@@ -36,11 +37,11 @@ struct OllamaSetupView: View {
                         Text("\(model.name) · \(ByteCountFormatter.string(fromByteCount: model.size, countStyle: .file))").tag(model.name)
                     }
                 }
-                .disabled(workspace.saving || workspace.processing || refreshing)
+                .disabled(workspace.saving || captureState.processing || refreshing)
                 Button("Use Ollama model") {
                     if let selected = models.first(where: { $0.name == selectedName }) { classifier.useOllama(selected) }
                 }
-                .disabled(workspace.saving || workspace.processing || !workspace.ready || refreshing || !models.contains(where: { $0.name == selectedName }))
+                .disabled(workspace.saving || captureState.processing || !workspace.ready || refreshing || !models.contains(where: { $0.name == selectedName }))
             }
             if !status.isEmpty { Text(status).font(.callout).foregroundStyle(AppStyle.muted) }
             if classifier.classifierProvider == "ollama" {

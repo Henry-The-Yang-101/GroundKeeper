@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
 
     var body: some View {
@@ -12,7 +13,7 @@ struct RootView: View {
         GeometryReader { geometry in
             NavigationSplitView {
                 SidebarView(selection: $workspace.selectedTab, reviewCount: workspace.reviewCount,
-                            queueCount: workspace.queueCount, isProcessingQueue: workspace.processing)
+                            queueCount: captureState.queueCount, isProcessingQueue: captureState.processing)
                     .navigationSplitViewColumnWidth(min: 220, ideal: 230, max: 280)
             } detail: {
                 selectedPage

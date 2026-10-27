@@ -5,6 +5,7 @@ import Observation
 /// Shared vault access and operation feedback. Feature components own their own
 /// observable state; these callbacks are the coordinator's cross-feature events.
 @MainActor @Observable final class WorkspaceSession {
+    var status = "Opening local vault…"
     var store: LedgerStore?
     var saving = false
     var errorMessage: String?

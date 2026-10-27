@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MerchantSearchSettingsView: View {
+    @Environment(CaptureWorkspace.self) private var captureState
     let workspace: AppWorkspace
     var body: some View {
         Toggle("Use DuckDuckGo merchant search", isOn: Binding(get: { workspace.merchantSearchEnabled }, set: workspace.setMerchantSearch))
@@ -12,14 +13,14 @@ struct MerchantSearchSettingsView: View {
         if workspace.merchantSearchEnabled {
             TextField("Search city/region (optional)", text: Binding(get: { workspace.merchantSearchLocality }, set: { workspace.merchantSearchLocality = $0 }))
                 .onSubmit(workspace.saveMerchantSearchLocality)
-                .disabled(workspace.processing || workspace.saving)
+                .disabled(captureState.processing || workspace.saving)
             Button("Save search locality", action: workspace.saveMerchantSearchLocality)
-                .disabled(workspace.processing || workspace.saving)
+                .disabled(captureState.processing || workspace.saving)
             Text("Uncached searches are paced approximately 11 seconds apart; model inference adds processing time. Cached merchants skip the search wait. DuckDuckGo may temporarily block searches.")
                 .font(.caption).foregroundStyle(AppStyle.muted)
             if !workspace.merchantSearchStatus.isEmpty { Text(workspace.merchantSearchStatus).font(.caption).accessibilityLabel("Merchant search: \(workspace.merchantSearchStatus)") }
             Button("Clear search cache", action: workspace.clearMerchantSearchCache)
-                .disabled(workspace.processing || workspace.saving)
+                .disabled(captureState.processing || workspace.saving)
         }
     }
 }
