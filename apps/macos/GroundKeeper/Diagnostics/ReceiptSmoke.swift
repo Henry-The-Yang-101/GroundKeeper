@@ -6,6 +6,7 @@ import GroundKeeperCore
     /// App receipt operations without a model picker, model weights, or network.
     static func runWorkspace() async {
         DispatchQueue.global().asyncAfter(deadline: .now() + 60) { exit(124) }
+        guard AppPreferences.isSetupPreview else { print("receipt_workspace_smoke_requires_disposable_preview"); exit(1) }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("receipt-workspace-\(UUID().uuidString)")
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

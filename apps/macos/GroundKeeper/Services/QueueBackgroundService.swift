@@ -123,12 +123,8 @@ enum QueueAgentHeartbeat {
 
 @main enum GroundKeeperEntry {
     @MainActor static func main() {
-        if CommandLine.arguments.contains("--background-smoke") {
-            Task { await QueueSmoke.backgroundRegistration() }
-            dispatchMain()
-        }
-        if CommandLine.arguments.contains("--queue-smoke") {
-            Task { await QueueSmoke.run() }
+        if let run = SmokeDiagnostics.runner(for: .headless) {
+            Task { await run() }
             dispatchMain()
         }
         if CommandLine.arguments.contains("--queue-agent") {

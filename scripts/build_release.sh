@@ -49,9 +49,10 @@ test -f "$app/Contents/XPCServices/GroundKeeperMerchantSearch.xpc/Contents/Resou
 .venv/bin/python - "$app/Contents/MacOS/GroundKeeper" <<'PY'
 import subprocess, sys
 for mode in ('--ledger-smoke', '--queue-smoke', '--classifier-connection-smoke'):
-    subprocess.run([sys.argv[1], mode, "--adhoc-release-smoke"], check=True, timeout=180)
-subprocess.run([sys.argv[1], '--setup-preview', '--setup-smoke', '--adhoc-release-smoke'],
-               check=True, timeout=120)
+    subprocess.run([sys.argv[1], '--setup-preview', mode, "--adhoc-release-smoke"], check=True, timeout=180)
+for mode in ('--setup-smoke', '--receipt-workspace-smoke'):
+    subprocess.run([sys.argv[1], '--setup-preview', mode, '--adhoc-release-smoke'],
+                   check=True, timeout=120)
 PY
 
 image_root="$(mktemp -d "$build_root/image.XXXXXX")"

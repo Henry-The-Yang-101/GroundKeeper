@@ -367,11 +367,30 @@ until the user explicitly changes it.
 
 ## Verification
 
+`AppWorkspace` owns one `WorkspaceSession` and the observable feature components.
+The session holds the active `LedgerStore`, shared save/error feedback, and
+coordination callbacks. `VaultWorkspace` controls store lifetime;
+`TransactionWorkspace` owns queries, paging, and edits; `CaptureWorkspace` owns
+inventory, review actions, and scheduling; `ClassifierWorkspace` owns provider
+selection, Council, and draft suggestions; `MerchantWorkspace` and
+`ReceiptWorkspace` own their respective settings and operations. Cross-feature
+events are wired once by the coordinator. Views receive the same component
+instances through `workspaceEnvironment`, including previews.
+
+Smoke runners live in `GroundKeeper/Diagnostics/`. `SmokeDiagnostics` maps flags
+and aliases to their runners and launch phase, including the headless queue
+checks. They remain available in Release because installer packaging runs them
+against the actual shipped executable. The noninteractive receipt-workspace
+check covers notes, images, reversible removal, and the Apple sharing preference;
+`--receipt-smoke` remains the interactive model/XPC receipt check.
+
 ```sh
 swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
-.venv/bin/python -m pytest tests/test_database_schema.py tests/test_worker.py -q
-.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --ledger-smoke
-.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --queue-smoke
+.venv/bin/python -m pytest -q -m "not gpu"
+.venv/bin/python -m scripts.database_schema --check
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --setup-preview --ledger-smoke
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --setup-preview --queue-smoke
+.local/macos/DerivedData/Build/Products/Debug/GroundKeeper.app/Contents/MacOS/GroundKeeper --setup-preview --receipt-workspace-smoke
 ```
 
 For a synthetic database → real XPC classifier → persisted assignment check,

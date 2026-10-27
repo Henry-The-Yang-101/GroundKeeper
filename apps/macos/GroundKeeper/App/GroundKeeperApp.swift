@@ -32,13 +32,7 @@ struct GroundKeeperApp: App {
                 .foregroundStyle(AppStyle.text)
                 .task {
                     lifecycle.workspace = workspace
-                    if AppPreferences.isReceiptSmoke { await ReceiptSmoke.run() }
-                    else if CommandLine.arguments.contains("--receipt-workspace-smoke") { await ReceiptSmoke.runWorkspace() }
-                    else if CommandLine.arguments.contains("--council-smoke") { await CouncilSmoke.run() }
-                    else if CommandLine.arguments.contains("--ollama-smoke") { await OllamaSmoke.run() }
-                    else if CommandLine.arguments.contains("--setup-smoke") { await SetupSmoke.run() }
-                    else if CommandLine.arguments.contains("--classifier-smoke") || CommandLine.arguments.contains("--classifier-connection-smoke") { await ClassifierSmoke.run() }
-                    else if CommandLine.arguments.contains("--ledger-smoke") { await LedgerSmoke.run() }
+                    if let run = SmokeDiagnostics.runner(for: .application) { await run() }
                     else { await vault.start() }
                 }
         }

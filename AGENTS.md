@@ -38,7 +38,10 @@ Within `apps/macos/GroundKeeper/`:
   presentation helpers, and theme code.
 - `Models/`: app-facing transaction, navigation, feedback, and preference types.
 - `Services/`: workspace coordination, vault access, preferences, classifier/XPC
-  client, model installation, background processing, and app smoke checks.
+  client, model installation, and background processing. `AppWorkspace` owns the
+  shared session and wires observable transaction, capture, classifier, merchant,
+  receipt, and vault components; feature views observe those components directly.
+- `Diagnostics/`: fictional-data app smoke checks and their shared flag registry.
 - `Preview/`: fictional fixtures and interface preview support.
 - `Resources/`: asset catalogs and bundled fonts/licenses.
 
