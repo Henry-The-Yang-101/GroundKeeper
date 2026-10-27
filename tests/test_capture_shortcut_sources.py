@@ -137,6 +137,12 @@ def test_wallet_priority_stops_matching_bank_runs_before_location_or_prompts():
     prompt = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
     assert store < delay < lookup < gps < prompt
     assert actions[delay]["WFWorkflowActionParameters"]["WFDelayTime"] == 15.0
+    clock = next(a["WFWorkflowActionParameters"] for a in actions[:store]
+                 if a["WFWorkflowActionIdentifier"].endswith(".gettimebetweendates"))
+    native_date = next(a["WFWorkflowActionParameters"]["UUID"] for a in actions
+                       if a["WFWorkflowActionIdentifier"] == "is.workflow.actions.date")
+    # ISO-text coercion silently discarded the time in native Shortcuts.
+    assert list(clock["WFInput"]["Value"]["attachmentsByRange"].values())[0]["OutputUUID"] == native_date
     # The Wallet branch writes immediately. Only bank notifications wait/read.
     wallet = next(a["WFWorkflowActionParameters"] for a in reversed(actions[:store])
                   if a["WFWorkflowActionParameters"].get("WFConditionalActionString") == "wallet_transaction")

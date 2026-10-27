@@ -117,6 +117,72 @@ explicit purchase/receipt evidence taking priority. It never directly assigns
 a GroundKeeper category or bypasses review. Update the selected GK Categorize
 Shortcut too when using the Apple Shortcut provider so it includes these rules.
 
+## Wallet priority when both automations fire
+
+The current shared writer uses the native **Store Content** and **Get Stored
+Content** actions, available in [iOS 27 and macOS 27](https://support.apple.com/en-tm/149045).
+Both system triggers can still fire. The writer makes Wallet proceed immediately
+and makes a recognizable CIBC purchase wait **15 seconds** before requesting
+location or showing any receipt/note menus. If it finds a matching Wallet run
+whose original capture time is **less than 90 seconds** apart, CIBC stops with
+no saved file, receipt prompts or success notification. A bank-only purchase
+continues normally after the delay. This also covers CIBC starting first when
+Wallet reaches the writer during that 15-second grace period.
+
+Matching requires the same merchant after trimming/collapsing whitespace and
+uppercasing, the same positive amount in minor units, the same currency and the
+same adapter group. Punctuation differences remain different merchants. Only a
+complete purchase amount is recognized; narrative, refund, zero, malformed and
+conflicting-currency amounts continue through the normal capture flow. Missing
+merchant/currency evidence never suppresses a capture.
+
+Both adapter dictionaries include two matching hints:
+
+- **wallet_priority_currency**: defaults to `CAD` when the amount has no explicit
+  currency. Set the actual card currency in both adapters. An explicit CAD, USD,
+  EUR or GBP amount takes precedence; € and £ identify their own currencies.
+- **wallet_priority_group**: defaults to `default`. If using several card pairs,
+  give each pair its own matching label in both adapters. The writer cannot
+  equate the phone's Wallet card/pass label with a bank's notification title.
+
+These hints do not rewrite payment amounts, currencies or account mappings on
+the Mac. Older adapters that omit them use the same defaults. Reimport **GroundKeeper
+Capture Transaction** to enable the check, and reimport the adapters to expose
+the settings. Recheck the writer's existing inbox/assets Save File destinations
+and the adapters' Run Shortcut targets after replacement.
+
+The marker is written before Wallet's location request and menus, so CIBC can
+recognize a Wallet capture that is still open. Cancelling or failing that Wallet
+run does not resume an already skipped CIBC run: retry the Wallet capture or
+capture the payment manually. Separate same-price purchases at the same merchant
+within the window cannot be distinguished without a shared transaction ID.
+If Wallet arrives after CIBC's grace period, both flows can proceed; the Mac's
+existing duplicate review remains available.
+
+Storage is scoped to the shared writer. At most 256 slots retain a SHA-256
+fingerprint and original capture time, without storing merchant/amount text in
+the marker. Each lookup checks the full fingerprint, so a slot collision can
+only let a duplicate through. Stored values can sync through Shortcuts iCloud
+sync; this is intended to coordinate runs on the same iPhone and does not rely
+on timely cross-device delivery.
+
+For native verification without real payments, location, menus or inbox writes:
+
+```sh
+.venv/bin/python scripts/check_wallet_priority_shortcuts.py --prepare
+# Import the printed test-only Shortcut, then:
+.venv/bin/python scripts/check_wallet_priority_shortcuts.py --run
+```
+
+The harness executes the production priority actions with fictional inputs and
+separate Shortcut storage, including simultaneous runs with CIBC starting first.
+On 2026-10-27, all 16 native macOS scenarios and 48 Python capture/classifier/
+schema checks passed. Native checks included matching captures, both trigger
+orders, 89/90-second expiry boundaries, mismatched merchants/amounts/currencies/
+groups, and unrecognized/refund/zero/conflicting-currency inputs.
+Real iPhone automation scheduling, locked-phone execution and sync still require
+a receiving-device check.
+
 ## Location at capture
 
 The shared writer uses **Get Current Location** once before the receipt/note

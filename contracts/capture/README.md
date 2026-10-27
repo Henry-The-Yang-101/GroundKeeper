@@ -145,6 +145,24 @@ transactions without coordinates cannot acquire a historical location from this
 update. Real iPhone GPS, permissions and Wallet-trigger delivery require a device
 check; native Mac action/serialization checks do not establish those behaviors.
 
+## Shortcut coordination hints
+
+The iOS 27 shared writer can use `wallet_priority_currency` (default `CAD`) and
+`wallet_priority_group` (default `default`) to compare Wallet and bank automation
+inputs before location acquisition or optional details. These producer hints
+are not account mappings or authoritative currency evidence. The importer keeps
+the original payload and continues to derive currency/account data using the
+existing capture parser and user mappings; no schema version or database change
+is required.
+
+A recognizable bank purchase waits 15 seconds, then stops if the writer's
+Shortcuts storage contains the same normalized merchant, positive amount,
+currency and group from Wallet less than 90 seconds apart by original capture
+time. The marker is a bounded-slot hash and timestamp, written before Wallet's
+menus; it does not prove the payment JSON was saved. A suppressed bank run emits
+no capture envelope. Wallet cancellation/failure does not restart that bank run.
+See [Wallet priority setup and limitations](../../shortcuts/README.md#wallet-priority-when-both-automations-fire).
+
 ## Viewing transactions and adding images on Mac
 
 Click a transaction once to open **View transaction**, including notes, any
