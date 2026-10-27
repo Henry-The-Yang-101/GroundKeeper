@@ -130,11 +130,17 @@ After installing the Python dependencies on Apple silicon:
 ```
 
 Python tests are discovered automatically. The default `uv sync` includes the
-development group (pytest); `uv sync --no-dev` omits test tools. Run the full
+development group (pytest and Ruff); `uv sync --no-dev` omits test tools. Run the full
 suite without `-m "not gpu"` on a Mac with an available Metal device. Optional
 MLX and PyTorch tests skip when their libraries or accelerators are unavailable;
 mocked backend and policy tests run on CPU. Check the generated schema reference
 with `.venv/bin/python -m scripts.database_schema --check`.
+
+The Python distribution is named `groundkeeper`; its import package remains
+`groundkeeper`. Module shipping boundaries are listed in
+[`groundkeeper/README.md`](groundkeeper/README.md), and the
+[script inventory](scripts/README.md) distinguishes release commands, current
+diagnostics, and historical experiments.
 
 After building Debug, run `./scripts/check_spending_demo.sh` to check the
 fictional spending reports in temporary databases. Model inference and signed
