@@ -8,6 +8,7 @@ private struct WorkspaceEnvironment: ViewModifier {
         content
             .environment(workspace)
             .environment(workspace.session)
+            .environment(workspace.vault)
             .environment(workspace.receiptState)
             .environment(workspace.merchantState)
             .environment(workspace.captureState)

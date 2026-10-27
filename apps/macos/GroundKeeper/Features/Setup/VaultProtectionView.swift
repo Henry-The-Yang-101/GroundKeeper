@@ -2,6 +2,7 @@ import SwiftUI
 
 struct VaultProtectionView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(VaultWorkspace.self) private var vault
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onboarding = false
@@ -22,9 +23,9 @@ struct VaultProtectionView: View {
             }.pickerStyle(.segmented).tint(AppStyle.controlAccent)
             Text(encrypt ? "Protect your local database with a passphrase. Unlock it when you open GroundKeeper, then process and review your transactions as usual." : "Store your transactions in a standard SQLite database on this Mac. Anyone who can read that file can read its contents.")
                 .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
-            if workspace.encrypted { SecureField("Current vault passphrase", text: $currentPassphrase) }
+            if vault.encrypted { SecureField("Current vault passphrase", text: $currentPassphrase) }
             if encrypt {
-                SecureField(workspace.encrypted ? "New passphrase (at least 12 characters)" : "Passphrase (at least 12 characters)", text: $passphrase)
+                SecureField(vault.encrypted ? "New passphrase (at least 12 characters)" : "Passphrase (at least 12 characters)", text: $passphrase)
                 SecureField("Confirm passphrase", text: $confirmation)
                 Toggle("Also unlock with Touch ID or my Mac password", isOn: $remember).disabled(!VaultKeychain.isSupported)
                 if !VaultKeychain.isSupported { Text("Convenience unlock requires a build provisioned for Keychain access. Passphrase encryption works in this build.").font(.caption).foregroundStyle(AppStyle.muted) }
@@ -35,18 +36,18 @@ struct VaultProtectionView: View {
                 .font(.callout).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             if let error { Text(error).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             HStack {
-                Button(workspace.saving ? "Saving…" : encrypt ? (workspace.encrypted ? "Change passphrase" : "Encrypt my vault") : "Use unencrypted SQLite") {
+                Button(workspace.saving ? "Saving…" : encrypt ? (vault.encrypted ? "Change passphrase" : "Encrypt my vault") : "Use unencrypted SQLite") {
                     error = nil
                     Task {
                         do {
-                            try await workspace.setEncryption(passphrase: encrypt ? passphrase : nil, remember: encrypt && remember, currentPassphrase: currentPassphrase)
+                            try await vault.setEncryption(passphrase: encrypt ? passphrase : nil, remember: encrypt && remember, currentPassphrase: currentPassphrase)
                             passphrase = ""; confirmation = ""; currentPassphrase = ""; applied = true
                             AppPreferences.defaults.set(true, forKey: AppPreferences.Key.vaultProtectionChosen)
                             onApplied()
                         } catch { self.error = error.localizedDescription }
                     }
                 }.buttonStyle(.brass)
-                    .disabled(!workspace.ready || workspace.saving || captureState.processing || (workspace.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
+                    .disabled(!workspace.ready || workspace.saving || captureState.processing || (vault.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
                 if applied {
                     Label("Saved", systemImage: "checkmark.circle.fill").foregroundStyle(AppStyle.accent)
                         .transition(.opacity)
@@ -55,13 +56,14 @@ struct VaultProtectionView: View {
             .animation(reduceMotion ? nil : VaultMotion.feedback, value: applied)
         }
         .textFieldStyle(.roundedBorder)
-        .onAppear { encrypt = onboarding ? true : workspace.encrypted; remember = VaultKeychain.isEnabled }
+        .onAppear { encrypt = onboarding ? true : vault.encrypted; remember = VaultKeychain.isEnabled }
         .onDisappear { passphrase = ""; confirmation = ""; currentPassphrase = "" }
     }
 }
 
 struct VaultUnlockView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(VaultWorkspace.self) private var vault
     @Environment(CaptureWorkspace.self) private var captureState
     @State private var passphrase = ""
     var body: some View {
@@ -72,11 +74,11 @@ struct VaultUnlockView: View {
             SecureField("Vault passphrase", text: $passphrase).textFieldStyle(.roundedBorder).frame(width: 340)
                 .onSubmit { unlock() }
             HStack {
-                Button(workspace.unlocking ? "Unlocking…" : "Unlock", action: unlock).buttonStyle(.brass)
-                    .disabled(passphrase.isEmpty || workspace.unlocking)
+                Button(vault.unlocking ? "Unlocking…" : "Unlock", action: unlock).buttonStyle(.brass)
+                    .disabled(passphrase.isEmpty || vault.unlocking)
                 if VaultKeychain.isEnabled {
-                    Button("Touch ID or Mac password") { Task { await workspace.unlock(usingKeychain: true) } }
-                        .disabled(workspace.unlocking)
+                    Button("Touch ID or Mac password") { Task { await vault.unlock(usingKeychain: true) } }
+                        .disabled(vault.unlocking)
                 }
             }
             if let error = workspace.errorMessage { Text(error).foregroundStyle(.red).frame(maxWidth: 440) }
@@ -86,5 +88,5 @@ struct VaultUnlockView: View {
             .background(AppStyle.pageBackground)
             .onDisappear { passphrase = "" }
     }
-    private func unlock() { let key = passphrase; passphrase = ""; Task { await workspace.unlock(passphrase: key) } }
+    private func unlock() { let key = passphrase; passphrase = ""; Task { await vault.unlock(passphrase: key) } }
 }

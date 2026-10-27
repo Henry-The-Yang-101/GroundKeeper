@@ -109,12 +109,12 @@ enum QueueAgentHeartbeat {
                 // Synchronize bookmarks after the foreground app has released its lease.
                 AppPreferences.defaults.synchronize()
                 let workspace = AppWorkspace(isBackgroundAgent: true)
-                await workspace.start()
+                await workspace.vault.start()
                 while workspace.ready && !Task.isCancelled && QueuePreferences.mode == .background && !QueueProcessLease.foregroundIsRunning {
                     heartbeat()
                     do { try await Task.sleep(for: .seconds(1)) } catch { break }
                 }
-                await workspace.stop()
+                await workspace.vault.stop()
             }
             do { try await Task.sleep(for: .seconds(2)) } catch { break }
         }

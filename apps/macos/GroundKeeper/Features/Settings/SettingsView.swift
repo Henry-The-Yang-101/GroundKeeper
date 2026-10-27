@@ -4,6 +4,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(VaultWorkspace.self) private var vault
     @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
@@ -27,7 +28,7 @@ struct SettingsView: View {
             }
             VaultFormSection("Queue processing") {
                 Picker("Import and suggest categories", selection: Binding(get: { captureState.processingMode }, set: captureState.changeProcessingMode)) {
-                    ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !workspace.encrypted) }) { Text($0.title).tag($0) }
+                    ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !vault.encrypted) }) { Text($0.title).tag($0) }
                 }.disabled(captureState.changingProcessingMode || workspace.saving)
                 Text(captureState.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
                 if !QueueBackgroundService.isSupported {
@@ -44,16 +45,16 @@ struct SettingsView: View {
                 QueueControls()
             }
             Section {
-                LabeledContent("Storage", value: workspace.ready ? (workspace.encrypted ? "SQLCipher · encrypted · local Mac" : "SQLite · unencrypted · local Mac") : "Unavailable")
-                Text(workspace.vaultPath).font(.caption).textSelection(.enabled)
+                LabeledContent("Storage", value: workspace.ready ? (vault.encrypted ? "SQLCipher · encrypted · local Mac" : "SQLite · unencrypted · local Mac") : "Unavailable")
+                Text(vault.vaultPath).font(.caption).textSelection(.enabled)
                 Text("The database is stored locally in Application Support, outside iCloud Drive. Original capture files keep their existing iCloud protection.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 HStack {
                     Button("Change vault protection…") { showingProtection = true }.disabled(!workspace.ready || captureState.processing || workspace.saving)
-                    if workspace.encrypted { Button("Lock vault") { Task { await workspace.lockVault() } }.disabled(workspace.saving || captureState.changingProcessingMode) }
+                    if vault.encrypted { Button("Lock vault") { Task { await vault.lockVault() } }.disabled(workspace.saving || captureState.changingProcessingMode) }
                 }
-                if workspace.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(AppStyle.muted) }
-                if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
+                if vault.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(AppStyle.muted) }
+                if !workspace.ready { Button("Retry opening vault") { Task { await vault.start() } } }
             } header: { Text("Local vault").font(VaultTypography.section) }
             Section {
                 LabeledContent("Model", value: classifier.classifierStatus)
@@ -99,7 +100,7 @@ struct SettingsView: View {
             } header: { Text("Accounts").font(VaultTypography.section) }
             CardMappingsSection()
             VaultFormSection("Setup and iPhone") {
-                Button("Review setup assistant…") { workspace.reviewingSetup = true; workspace.showingSetup = true }
+                Button("Review setup assistant…") { vault.reviewingSetup = true; vault.showingSetup = true }
                     .disabled(captureState.processing || workspace.saving)
                 Button("iPhone Shortcuts and automation guide…") { showingPhoneGuide = true }
                 Button("Create standard iCloud inbox…", action: captureState.createDefaultCaptureFolder)

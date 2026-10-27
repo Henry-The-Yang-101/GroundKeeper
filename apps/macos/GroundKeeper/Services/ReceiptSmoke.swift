@@ -35,7 +35,7 @@ import GroundKeeperCore
             for _ in 0..<100 where workspace.saving { try await Task.sleep(for: .milliseconds(10)) }
             guard !workspace.saving, try await !store.receiptCloudConsent(), !workspace.receiptState.shareReceiptContextWithApple else { throw LedgerError.invalid("Receipt sharing preference did not persist.") }
             guard try await store.integrityCheck() else { throw LedgerError.invalid("Receipt fixture integrity failed.") }
-            await workspace.stop()
+            await workspace.vault.stop()
             print("receipt_workspace_smoke_passed: notes, image attachment, removal/restoration, sharing")
             exit(0)
         } catch { print("receipt_workspace_smoke_failed: \(error.localizedDescription)"); exit(1) }

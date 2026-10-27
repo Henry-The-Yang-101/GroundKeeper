@@ -12,7 +12,7 @@ import GroundKeeperCore
                   CommandLine.arguments.indices.contains(index + 1) else { throw LedgerError.invalid("Pass --ollama-model with an installed model name.") }
             let name = CommandLine.arguments[index + 1]
             let workspace = AppWorkspace()
-            await workspace.start()
+            await workspace.vault.start()
             workspace.captureState.processingMode = .manual
             guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
             try await store.addAccount(name: "Fictional Ollama smoke card", currency: "CAD")
@@ -41,10 +41,10 @@ import GroundKeeperCore
             guard workspace.errorMessage == nil, snapshot.pendingJobs == 0, snapshot.failedJobs == 0,
                   snapshot.transactions.first?.needsReview == true,
                   snapshot.transactions.first?.category != nil else { throw LedgerError.invalid(workspace.errorMessage ?? "Classification queue did not complete.") }
-            await workspace.stop()
+            await workspace.vault.stop()
             // Recreate the workspace to exercise the persisted selection and lazy restore.
             let reopened = AppWorkspace()
-            await reopened.start()
+            await reopened.vault.start()
             reopened.processingMode = .manual
             guard reopened.classifierProvider == "ollama", reopened.model == nil else { throw LedgerError.invalid("Saved provider did not restore lazily.") }
             let second = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-21,FICTIONAL BOOK SHOP,-9.25\n".utf8), filename: "ollama-second.csv")
@@ -52,7 +52,7 @@ import GroundKeeperCore
             await reopened.captureState.sync()
             guard reopened.errorMessage == nil, reopened.model == nil, reopened.pendingJobs == 0,
                   reopened.failedJobs == 0 else { throw LedgerError.invalid(reopened.errorMessage ?? "Restored Ollama provider did not process the queue.") }
-            await reopened.stop()
+            await reopened.vault.stop()
             print("ollama_smoke_passed: sandboxed_local_connection, provider_selection, queue_classification, mandatory_review, persisted_selection, draft_suggestion_without_saving, empty_description_rejected")
             exit(0)
         } catch { print("ollama_smoke_failed: \(error.localizedDescription)"); exit(1) }

@@ -151,7 +151,7 @@ import GroundKeeperCore
     }
     private static func verifyDraftSuggestions(package: URL) async throws {
         let workspace = AppWorkspace()
-        await workspace.start()
+        await workspace.vault.start()
         workspace.captureState.processingMode = .manual
         guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
         workspace.classifier.useInstalledModel(package)
@@ -182,7 +182,7 @@ import GroundKeeperCore
             write(["event": "draft_suggestion_verified", "draft_revision": draft.revision, "type": suggestion.decision.type,
                    "category": suggestion.decision.category ?? "none"])
         }
-        await workspace.stop()
+        await workspace.vault.stop()
     }
 
     private static func verifyConnectionBoundary() async throws {

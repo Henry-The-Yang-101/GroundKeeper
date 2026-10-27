@@ -3,6 +3,7 @@ import AppKit
 
 struct SetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(VaultWorkspace.self) private var vault
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
@@ -29,7 +30,7 @@ struct SetupView: View {
                 Spacer()
                 Text("\(titles[step]) · \(step + 1) of \(titles.count)").foregroundStyle(AppStyle.muted)
                 if reviewMode {
-                    Button("Return to app") { workspace.showingSetup = false }
+                    Button("Return to app") { vault.showingSetup = false }
                         .disabled(workspace.saving || installer.busy)
                         .keyboardShortcut(.cancelAction)
                 }
@@ -50,7 +51,7 @@ struct SetupView: View {
                 if step > 1 && step < 6 { Text("You can revisit this in Settings.").font(.callout).foregroundStyle(AppStyle.muted) }
                 Button(step == 6 ? "Open GroundKeeper" : "Continue") {
                     if step == 6 {
-                        if reviewMode { workspace.showingSetup = false } else { workspace.finishSetup() }
+                        if reviewMode { vault.showingSetup = false } else { vault.finishSetup() }
                     } else { move(to: step + 1) }
                 }.buttonStyle(.brass).controlSize(.large).keyboardShortcut(.defaultAction).disabled(!canContinue)
             }.padding(.horizontal, 36).padding(.vertical, 22)
@@ -69,14 +70,14 @@ struct SetupView: View {
             feature("sparkles", "Get a useful first pass", "Qwen, Laya, or Apple Intelligence suggest categories. You review the result.")
             feature("externaldrive", "Keep the full record", "Import CSVs, reconcile repeated captures, and edit transactions in a local vault.")
             Text("Setup takes a few minutes. Model downloads and iPhone setup can be completed later. Spending reports run locally; budgeting and planning are coming later.").font(.callout).foregroundStyle(AppStyle.muted)
-            if !workspace.ready { Text(workspace.status).foregroundStyle(AppStyle.muted); Button("Retry opening vault") { Task { await workspace.start() } } }
+            if !workspace.ready { Text(workspace.status).foregroundStyle(AppStyle.muted); Button("Retry opening vault") { Task { await vault.start() } } }
         case 1:
             header("lock.shield.fill", "Your records.\nYour choice of protection.", reviewMode
                    ? "Review how your vault is protected on this Mac. You can continue without changing or reapplying protection."
                    : "Choose how GroundKeeper stores the transaction database on this Mac. Your existing records are preserved when you change protection.")
             if reviewMode {
                 LabeledContent("Current protection", value: workspace.ready
-                               ? (workspace.encrypted ? "Encrypted vault" : "Unencrypted vault") : workspace.status)
+                               ? (vault.encrypted ? "Encrypted vault" : "Unencrypted vault") : workspace.status)
                 if changingProtection {
                     VaultProtectionView(onApplied: { changingProtection = false })
                     Button("Cancel protection change") { changingProtection = false }.disabled(workspace.saving)
@@ -85,7 +86,7 @@ struct SetupView: View {
                 }
             } else {
                 VaultProtectionView(onboarding: true)
-                if protectionChosen { Label(workspace.encrypted ? "Encrypted vault selected" : "Unencrypted vault selected", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
+                if protectionChosen { Label(vault.encrypted ? "Encrypted vault selected" : "Unencrypted vault selected", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
             }
         case 2:
             header("sparkles", "Intelligence,\nwhere you want it.", "Install local models, use Ollama, choose Apple Intelligence Cloud, or categorize by hand. You are in control of where your transaction text goes.")
@@ -132,7 +133,7 @@ struct SetupView: View {
             Text("No bank login is needed. CSV imports and captured transactions are matched to accounts you create.").foregroundStyle(AppStyle.muted)
         default:
             header("checkmark.seal.fill", "Make yourself at home.", "Your workspace is ready. Here is how GroundKeeper is configured.")
-            feature("lock.shield", "Local vault", workspace.encrypted ? "Encrypted with SQLCipher. Unlock with your passphrase" + (VaultKeychain.isEnabled ? " or this Mac’s protected Keychain." : ".") : "Standard, unencrypted SQLite on this Mac.")
+            feature("lock.shield", "Local vault", vault.encrypted ? "Encrypted with SQLCipher. Unlock with your passphrase" + (VaultKeychain.isEnabled ? " or this Mac’s protected Keychain." : ".") : "Standard, unencrypted SQLite on this Mac.")
             feature("sparkles", "Categorization", classifier.classifierStatus)
             feature("icloud", "Capture inbox", captureState.hasCaptureFolder ? captureState.captureFolderPath : "Not connected. Start with a CSV or a manual transaction.")
             feature("iphone", "iPhone automation", phoneReady ? "Marked configured by you. Review the first real capture in Sync." : "Still to set up. Return to this guide from Settings.")

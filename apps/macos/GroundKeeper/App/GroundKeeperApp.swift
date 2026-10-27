@@ -6,6 +6,8 @@ struct GroundKeeperApp: App {
     private var transactionState: TransactionWorkspace { workspace.transactionState }
     @AppStorage(AppPreferences.Key.appearance, store: AppPreferences.defaults) private var appearance = AppAppearance.system
 
+    private var vault: VaultWorkspace { workspace.vault }
+
     init() {
         VaultTypography.register()
     }
@@ -13,8 +15,8 @@ struct GroundKeeperApp: App {
     var body: some Scene {
         Window("GroundKeeper", id: "main") {
             Group {
-                if workspace.encrypted && !workspace.ready { VaultUnlockView() }
-                else if workspace.showingSetup { SetupView(reviewMode: workspace.reviewingSetup) }
+                if vault.encrypted && !workspace.ready { VaultUnlockView() }
+                else if vault.showingSetup { SetupView(reviewMode: vault.reviewingSetup) }
                 else { RootView() }
             }
                 .workspaceEnvironment(workspace)
@@ -35,7 +37,7 @@ struct GroundKeeperApp: App {
                     else if CommandLine.arguments.contains("--setup-smoke") { await SetupSmoke.run() }
                     else if CommandLine.arguments.contains("--classifier-smoke") || CommandLine.arguments.contains("--classifier-connection-smoke") { await ClassifierSmoke.run() }
                     else if CommandLine.arguments.contains("--ledger-smoke") { await LedgerSmoke.run() }
-                    else { await workspace.start() }
+                    else { await vault.start() }
                 }
         }
         .defaultSize(width: 1140, height: 800)
@@ -45,23 +47,23 @@ struct GroundKeeperApp: App {
                 Button("New Transaction…", systemImage: "plus") {
                     transactionState.editor = Transaction()
                 }
-                .keyboardShortcut("n").disabled(!workspace.ready || workspace.showingSetup)
+                .keyboardShortcut("n").disabled(!workspace.ready || vault.showingSetup)
             }
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") { workspace.selectedTab = .settings }
-                    .keyboardShortcut(",").disabled(!workspace.ready || workspace.showingSetup)
+                    .keyboardShortcut(",").disabled(!workspace.ready || vault.showingSetup)
             }
             CommandGroup(after: .textEditing) {
                 Button("Find Transactions…") {
                     workspace.showTransactions()
                     transactionState.focusTransactionSearch = true
                 }
-                .keyboardShortcut("f").disabled(!workspace.ready || workspace.showingSetup)
+                .keyboardShortcut("f").disabled(!workspace.ready || vault.showingSetup)
             }
             CommandMenu("Navigate") {
                 ForEach(AppTab.allCases) { tab in
                     Button(tab.title) { workspace.selectedTab = tab }
-                        .keyboardShortcut(KeyEquivalent(tab.shortcut)).disabled(!workspace.ready || workspace.showingSetup)
+                        .keyboardShortcut(KeyEquivalent(tab.shortcut)).disabled(!workspace.ready || vault.showingSetup)
                 }
             }
         }
@@ -78,7 +80,7 @@ struct GroundKeeperApp: App {
         guard !terminating else { return .terminateLater }
         terminating = true
         Task {
-            await workspace.stop()
+            await workspace.vault.stop()
             sender.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater

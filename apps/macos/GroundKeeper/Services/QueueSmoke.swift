@@ -60,7 +60,7 @@ import Synchronization
             let fresh = CaptureFolder()
             let inventory = try await fresh.scan(bookmark: bookmark, store: store, readFiles: false)
             try check(inventory.pending == 0, "Restart inventory counted completed files")
-            workspace.showingSetup = false
+            workspace.vault.showingSetup = false
             workspace.captureState.processingMode = .whileOpen
             let idleProcessingChanged = Mutex(false)
             withObservationTracking { _ = workspace.captureState.processing } onChange: { idleProcessingChanged.withLock { $0 = true } }
@@ -89,7 +89,7 @@ import Synchronization
             await workspace.captureState.processIfAutomatic()
             try check(!manualProcessingChanged.withLock { $0 }, "Manual categorization backlog briefly locked settings")
             try check(try await store.integrityCheck(), "Integrity check failed")
-            await workspace.stop()
+            await workspace.vault.stop()
             try await captureReviewFlow(in: directory)
             if CommandLine.arguments.contains("--background-smoke-agent") {
                 guard Bundle.main.bundleIdentifier == "com.groundkeeper.macos.queue-smoke" else {
@@ -157,7 +157,7 @@ import Synchronization
         workspace.captureState.processingMode = .whileOpen
         workspace.perform {
             await workspace.captureState.processIfAutomatic()
-            await workspace.stop()
+            await workspace.vault.stop()
         }
         try await waitUntil { !workspace.saving }
         await Task.yield()

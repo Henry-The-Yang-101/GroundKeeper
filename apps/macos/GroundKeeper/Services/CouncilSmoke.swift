@@ -15,9 +15,9 @@ import GroundKeeperCore
             if CommandLine.arguments.contains("--checks-only") {
                 print("council_error_mapping_passed"); exit(0)
             }
-            await workspace.start()
+            await workspace.vault.start()
             guard let store = workspace.store else { throw LedgerError.unavailable("Disposable vault did not open.") }
-            workspace.showingSetup = false; workspace.captureState.processingMode = .manual
+            workspace.vault.showingSetup = false; workspace.captureState.processingMode = .manual
             for (backend, title) in [("qwen_mlx", "Qwen"), ("laya_mps", "Laya")] {
                 let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true
                 panel.message = "Council smoke: choose \(title) for a fictional transaction in a disposable vault."
@@ -48,10 +48,10 @@ import GroundKeeperCore
             guard try await store.selectedCouncil()?.id == configuration.id else { throw LedgerError.invalid("Council selection changed during inference.") }
             for vote in report.result.votes { print("council_member: \(vote.member.title), \(vote.disposition), \(vote.errorCode ?? "none")") }
             print("council_smoke_passed: manual gating, verified local XPC members, Apple outcome, parent persistence, review, integrity; \(report.result.reason)")
-            await workspace.stop()
+            await workspace.vault.stop()
             exit(0)
         } catch {
-            await workspace.stop()
+            await workspace.vault.stop()
             print("council_smoke_failed: \(error.localizedDescription)"); exit(1)
         }
     }
