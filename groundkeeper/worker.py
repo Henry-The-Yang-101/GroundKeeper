@@ -21,6 +21,18 @@ PROTOCOL_VERSION = 1
 POLICY_VERSION = "groundkeeper-19-v2"
 MAX_DESCRIPTION = 2048
 MAX_PACKAGE_BYTES = 3_000_000_000
+# First matching context wins, including requests with several evidence fields.
+INPUT_TOKEN_LIMITS = (
+    ("merchant_context", 3072),
+    ("transaction_notes", 3072),
+    ("receipt_context", 2048),
+    ("wallet_category_raw", 768),
+)
+DEFAULT_INPUT_TOKEN_LIMIT = 512
+
+
+def input_token_limit(inputs):
+    return next((limit for field, limit in INPUT_TOKEN_LIMITS if field in inputs), DEFAULT_INPUT_TOKEN_LIMIT)
 
 
 class WorkerError(Exception):
@@ -295,7 +307,7 @@ class Worker:
                 inputs = shrink_web_evidence(inputs)
                 prompt = self.tokenizer.apply_chat_template(builder(inputs), tokenize=True,
                     add_generation_prompt=True, enable_thinking=False, return_dict=False)
-        if len(prompt) > (3072 if "merchant_context" in inputs else 3072 if "transaction_notes" in inputs else 2048 if "receipt_context" in inputs else 768 if "wallet_category_raw" in inputs else 512):
+        if len(prompt) > input_token_limit(inputs):
             raise WorkerError("input_too_large", "Tokenized input exceeds model context policy")
         chunks = []
         with mx.stream(mx.gpu):

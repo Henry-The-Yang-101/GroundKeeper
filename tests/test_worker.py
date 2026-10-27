@@ -7,6 +7,18 @@ import pytest
 from groundkeeper.worker import Worker, POLICY_VERSION, WorkerError, verify_package
 
 
+@pytest.mark.parametrize("fields,expected", [
+    ([], 512),
+    (["wallet_category_raw"], 768),
+    (["receipt_context", "wallet_category_raw"], 2048),
+    (["transaction_notes", "receipt_context"], 3072),
+    (["merchant_context", "transaction_notes", "receipt_context", "wallet_category_raw"], 3072),
+])
+def test_input_token_limits_preserve_context_precedence(fields, expected):
+    from groundkeeper.worker import input_token_limit
+    assert input_token_limit(dict.fromkeys(fields)) == expected
+
+
 def request(operation="handshake", **values):
     return {"protocol_version": 1, "request_id": "request-1", "operation": operation, **values}
 
