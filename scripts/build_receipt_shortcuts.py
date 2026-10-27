@@ -3,10 +3,11 @@
 Destinations remain import-time choices. No personal bookmarks or automations
 are exported. Run sign_capture_shortcuts after generating these XML sources.
 """
+
 import copy
-from pathlib import Path
 import plistlib
 import uuid
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "shortcuts/sources"
 
@@ -26,7 +27,10 @@ def output(identifier, name="Result"):
 def text(value):
     if isinstance(value, str):
         return {"Value": {"string": value}, "WFSerializationType": "WFTextTokenString"}
-    return {"Value": {"string": "\ufffc", "attachmentsByRange": {"{0, 1}": value}}, "WFSerializationType": "WFTextTokenString"}
+    return {
+        "Value": {"string": "\ufffc", "attachmentsByRange": {"{0, 1}": value}},
+        "WFSerializationType": "WFTextTokenString",
+    }
 
 
 class Workflow:
@@ -39,9 +43,15 @@ class Workflow:
         self.data.pop("WFWorkflowNoInputBehavior", None)
 
     def add(self, action, **params):
-        identifier = str(uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{self.name}/{len(self.actions)}" )).upper()
-        self.actions.append({"WFWorkflowActionIdentifier": "is.workflow.actions." + action,
-                             "WFWorkflowActionParameters": {"UUID": identifier, **params}})
+        identifier = str(
+            uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{self.name}/{len(self.actions)}")
+        ).upper()
+        self.actions.append(
+            {
+                "WFWorkflowActionIdentifier": "is.workflow.actions." + action,
+                "WFWorkflowActionParameters": {"UUID": identifier, **params},
+            }
+        )
         return output(identifier)
 
     def setvar(self, name, value):
@@ -52,26 +62,54 @@ class Workflow:
         return self.add("getvalueforkey", WFInput=token(dictionary), WFDictionaryKey=key)
 
     def dictionary(self, values, *, numbers=()):
-        fields = [{"WFItemType": 3 if k in numbers else 0, "WFKey": text(k), "WFValue": text(v)} for k, v in values.items()]
-        return self.add("dictionary", WFItems={"Value": {"WFDictionaryFieldValueItems": fields}, "WFSerializationType": "WFDictionaryFieldValue"})
+        fields = [
+            {"WFItemType": 3 if k in numbers else 0, "WFKey": text(k), "WFValue": text(v)}
+            for k, v in values.items()
+        ]
+        return self.add(
+            "dictionary",
+            WFItems={
+                "Value": {"WFDictionaryFieldValueItems": fields},
+                "WFSerializationType": "WFDictionaryFieldValue",
+            },
+        )
 
     def put(self, dictionary, key, value):
-        return self.add("setvalueforkey", WFDictionary=token(dictionary), WFDictionaryKey=key,
-                        WFDictionaryValue=text(value))
+        return self.add(
+            "setvalueforkey",
+            WFDictionary=token(dictionary),
+            WFDictionaryKey=key,
+            WFDictionaryValue=text(value),
+        )
 
     def menu(self, prompt, items):
-        group = str(uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{self.name}/menu/{len(self.actions)}")).upper()
-        self.add("choosefrommenu", WFMenuPrompt=text(prompt), WFMenuItems=items, GroupingIdentifier=group, WFControlFlowMode=0)
+        group = str(
+            uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{self.name}/menu/{len(self.actions)}")
+        ).upper()
+        self.add(
+            "choosefrommenu",
+            WFMenuPrompt=text(prompt),
+            WFMenuItems=items,
+            GroupingIdentifier=group,
+            WFControlFlowMode=0,
+        )
         return group
 
     def branch(self, group, title):
-        self.add("choosefrommenu", WFMenuItemTitle=title, GroupingIdentifier=group, WFControlFlowMode=1)
+        self.add(
+            "choosefrommenu", WFMenuItemTitle=title, GroupingIdentifier=group, WFControlFlowMode=1
+        )
 
     def endmenu(self, group):
         return self.add("choosefrommenu", GroupingIdentifier=group, WFControlFlowMode=2)
 
     def run(self, name, value):
-        return self.add("runworkflow", WFWorkflowName=name, WFWorkflow={"isSelf": False, "workflowName": name}, WFInput=token(value))
+        return self.add(
+            "runworkflow",
+            WFWorkflowName=name,
+            WFWorkflow={"isSelf": False, "workflowName": name},
+            WFInput=token(value),
+        )
 
     def save(self):
         (ROOT / (self.name + ".plist")).write_bytes(plistlib.dumps(self.data, sort_keys=False))
@@ -85,15 +123,26 @@ def formatted(*parts):
         else:
             attachments[f"{{{len(string)}, 1}}"] = part
             string += "\ufffc"
-    return {"Value": {"string": string, "attachmentsByRange": attachments}, "WFSerializationType": "WFTextTokenString"}
+    return {
+        "Value": {"string": string, "attachmentsByRange": attachments},
+        "WFSerializationType": "WFTextTokenString",
+    }
 
 
 def condition(w, value, code=100, equals=None):
-    group = str(uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{w.name}/if/{len(w.actions)}")).upper()
+    group = str(
+        uuid.uuid5(uuid.NAMESPACE_URL, f"groundkeeper/{w.name}/if/{len(w.actions)}")
+    ).upper()
     value = copy.deepcopy(value)
-    value["Aggrandizements"] = [{"CoercionItemClass": "WFStringContentItem", "Type": "WFCoercionVariableAggrandizement"}]
-    params = dict(GroupingIdentifier=group, WFControlFlowMode=0, WFCondition=code,
-                  WFInput={"Type": "Variable", "Variable": token(value)})
+    value["Aggrandizements"] = [
+        {"CoercionItemClass": "WFStringContentItem", "Type": "WFCoercionVariableAggrandizement"}
+    ]
+    params = dict(
+        GroupingIdentifier=group,
+        WFControlFlowMode=0,
+        WFCondition=code,
+        WFInput={"Type": "Variable", "Variable": token(value)},
+    )
     if equals is not None:
         params["WFConditionalActionString"] = equals
     w.add("conditional", **params)
@@ -107,15 +156,25 @@ def endif(w, group):
 def require(w, value, message):
     # Does not have any value. Cancellation/no output must never fall through to Save File.
     group = condition(w, value, 101)
-    w.add("alert", WFAlertActionTitle="Capture not saved", WFAlertActionMessage=message, WFAlertActionCancelButtonShown=False)
+    w.add(
+        "alert",
+        WFAlertActionTitle="Capture not saved",
+        WFAlertActionMessage=message,
+        WFAlertActionCancelButtonShown=False,
+    )
     w.add("exit")
     endif(w, group)
 
 
 def replace(w, value, pattern, replacement):
-    return w.add("text.replace", WFInput=text(value), WFReplaceTextFind=pattern,
-                 WFReplaceTextReplace=replacement, WFReplaceTextRegularExpression=True,
-                 WFReplaceTextCaseSensitive=True)
+    return w.add(
+        "text.replace",
+        WFInput=text(value),
+        WFReplaceTextFind=pattern,
+        WFReplaceTextReplace=replacement,
+        WFReplaceTextRegularExpression=True,
+        WFReplaceTextCaseSensitive=True,
+    )
 
 
 def bounded(w, value, maximum, message):
@@ -148,14 +207,24 @@ def collect_receipt(w):
     has_text = condition(w, variable("Receipt Text"))
     bounded(w, variable("Receipt Text"), 8000, "The recognized receipt text is too long.")
     endif(w, has_text)
-    payload = w.put(w.dictionary({}), "ocr", w.dictionary({"producer": "apple_shortcuts", "text": variable("Receipt Text")}))
+    payload = w.put(
+        w.dictionary({}),
+        "ocr",
+        w.dictionary({"producer": "apple_shortcuts", "text": variable("Receipt Text")}),
+    )
     w.setvar("Receipt Payload", payload)
     keep = w.menu("Keep the receipt image too?", ["Text only", "Keep image"])
     w.branch(keep, "Text only")
     nonblank = replace(w, variable("Receipt Text"), r"^\s+|\s+$", "")
     require(w, nonblank, "No text was recognized. Run again and choose Keep image.")
     w.branch(keep, "Keep image")
-    converted = w.add("image.convert", WFInput=token(variable("Receipt Photo")), WFImageFormat="JPEG", WFImageCompressionQuality=0.85, WFImagePreserveMetadata=False)
+    converted = w.add(
+        "image.convert",
+        WFInput=token(variable("Receipt Photo")),
+        WFImageFormat="JPEG",
+        WFImageCompressionQuality=0.85,
+        WFImagePreserveMetadata=False,
+    )
     require(w, converted, "The receipt could not be converted to JPEG.")
     w.setvar("Receipt JPEG", converted)
     digest = w.add("hash", WFInput=token(converted), WFHashType="SHA256")
@@ -169,7 +238,9 @@ def collect_receipt(w):
 
 
 def optional_details(w):
-    menu = w.menu("Add details to this transaction", ["Add receipt", "Add note", "Skip adding receipt"])
+    menu = w.menu(
+        "Add details to this transaction", ["Add receipt", "Add note", "Skip adding receipt"]
+    )
     w.branch(menu, "Add receipt")
     collect_receipt(w)
     more = w.menu("Receipt added. Add a note?", ["Add note", "Save transaction"])
@@ -203,26 +274,41 @@ def transaction_context(workflow):
     wallet = condition(context, source, 4, "wallet_transaction")
     amount = context.get(saved, "amount")
     card = context.get(saved, "card_or_pass")
-    summary = context.add("gettext", WFTextActionText=formatted(
-        variable("Capture Description"), "\nAmount: ", amount,
-        "\n", variable("Capture App"), "\n", card))
+    summary = context.add(
+        "gettext",
+        WFTextActionText=formatted(
+            variable("Capture Description"),
+            "\nAmount: ",
+            amount,
+            "\n",
+            variable("Capture App"),
+            "\n",
+            card,
+        ),
+    )
     context.setvar("Transaction Context", summary)
     context.add("conditional", GroupingIdentifier=wallet, WFControlFlowMode=1)
     title = context.get(saved, "title")
     body = context.get(saved, "body")
     # Keep the bank's original amount/currency wording instead of guessing at
     # notification formats or accidentally picking a card suffix as the amount.
-    summary = context.add("gettext", WFTextActionText=formatted(
-        variable("Capture Description"), "\n", body,
-        "\n", variable("Capture App"), "\n", title))
+    summary = context.add(
+        "gettext",
+        WFTextActionText=formatted(
+            variable("Capture Description"), "\n", body, "\n", variable("Capture App"), "\n", title
+        ),
+    )
     context.setvar("Transaction Context", summary)
     endif(context, wallet)
 
     actions = workflow["WFWorkflowActions"]
-    first_menu = next(i for i, action in enumerate(actions)
-                      if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    first_menu = next(
+        i
+        for i, action in enumerate(actions)
+        if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu")
+    )
     actions[first_menu:first_menu] = context.actions
-    for action in actions[first_menu + len(context.actions):]:
+    for action in actions[first_menu + len(context.actions) :]:
         params = action["WFWorkflowActionParameters"]
         for key in ("WFMenuPrompt", "WFAskActionPrompt"):
             if key in params:
@@ -250,19 +336,33 @@ def location_capture(workflow):
     sample = w.add("getcurrentlocation")
     available = condition(w, sample)
     acquired = w.add("date")
-    measured = w.add("format.date", WFDate=text(acquired), WFDateFormatStyle="ISO 8601", WFISO8601IncludeTime=True)
-    latitude = w.add("properties.locations", WFInput=token(sample), WFContentItemPropertyName="Latitude")
-    longitude = w.add("properties.locations", WFInput=token(sample), WFContentItemPropertyName="Longitude")
-    location = w.dictionary({"latitude": latitude, "longitude": longitude, "measured_at": measured},
-                            numbers=("latitude", "longitude"))
+    measured = w.add(
+        "format.date",
+        WFDate=text(acquired),
+        WFDateFormatStyle="ISO 8601",
+        WFISO8601IncludeTime=True,
+    )
+    latitude = w.add(
+        "properties.locations", WFInput=token(sample), WFContentItemPropertyName="Latitude"
+    )
+    longitude = w.add(
+        "properties.locations", WFInput=token(sample), WFContentItemPropertyName="Longitude"
+    )
+    location = w.dictionary(
+        {"latitude": latitude, "longitude": longitude, "measured_at": measured},
+        numbers=("latitude", "longitude"),
+    )
     w.setvar("Saved Event", w.put(saved, "location", location))
     w.setvar("Saved Event", w.put(saved, "location_status", "available"))
     endif(w, available)
     endif(w, disabled)
 
     actions = workflow["WFWorkflowActions"]
-    first_menu = next(i for i, action in enumerate(actions)
-                      if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    first_menu = next(
+        i
+        for i, action in enumerate(actions)
+        if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu")
+    )
     actions[first_menu:first_menu] = w.actions
 
 
@@ -279,8 +379,12 @@ def wallet_priority(workflow, *, captured_date=None, captured_seconds=None):
         captured_date = captured_date or w.add("date")
         # Keep the original native Date. Coercing two ISO 8601 strings through
         # Get Time Between Dates can silently drop their times and return zero.
-        captured_seconds = w.add("gettimebetweendates", WFInput=text(captured_date),
-                                 WFTimeUntilFromDate="January 1, 2001", WFTimeUntilUnit="Seconds")
+        captured_seconds = w.add(
+            "gettimebetweendates",
+            WFInput=text(captured_date),
+            WFTimeUntilFromDate="January 1, 2001",
+            WFTimeUntilUnit="Seconds",
+        )
     w.setvar("Priority Captured Seconds", captured_seconds)
     saved = variable("Saved Event")
     source = w.get(saved, "source")
@@ -305,10 +409,13 @@ def wallet_priority(workflow, *, captured_date=None, captured_seconds=None):
     # Accept only a complete positive purchase amount, like the Mac parser.
     # A narrative, refund, decline or card suffix must never become an amount.
     amount = replace(w, variable("Priority Amount"), r"^\s+|\s+$", "")
-    money = w.add("text.match", text=text(amount), WFMatchTextPattern=
-                  r"(?i)^(?:(?:CAD|USD|EUR|GBP)\s*|[$€£]\s*)?"
-                  r"(?:[0-9]{1,13}|[0-9]{1,3}(?:,[0-9]{3}){1,4})"
-                  r"(?:\.[0-9]{1,2})?(?:\s*(?:CAD|USD|EUR|GBP))?$")
+    money = w.add(
+        "text.match",
+        text=text(amount),
+        WFMatchTextPattern=r"(?i)^(?:(?:CAD|USD|EUR|GBP)\s*|[$€£]\s*)?"
+        r"(?:[0-9]{1,13}|[0-9]{1,3}(?:,[0-9]{3}){1,4})"
+        r"(?:\.[0-9]{1,2})?(?:\s*(?:CAD|USD|EUR|GBP))?$",
+    )
     valid_money = condition(w, money)
     explicit = w.add("text.match", text=text(amount), WFMatchTextPattern=r"(?i)CAD|USD|EUR|GBP")
     has_code = condition(w, explicit)
@@ -322,7 +429,9 @@ def wallet_priority(workflow, *, captured_date=None, captured_seconds=None):
     endif(w, has_code)
     currency = replace(w, variable("Priority Currency"), r"^\s+|\s+$", "")
     currency = w.add("text.changecase", text=text(currency), WFCaseType="UPPERCASE")
-    valid_currency = w.add("text.match", text=text(currency), WFMatchTextPattern=r"^(?:CAD|USD|EUR|GBP)$")
+    valid_currency = w.add(
+        "text.match", text=text(currency), WFMatchTextPattern=r"^(?:CAD|USD|EUR|GBP)$"
+    )
     # A dollar sign cannot safely stand for EUR/GBP, even with a manual hint.
     dollar = w.add("text.match", text=text(amount), WFMatchTextPattern=r"\$")
     has_dollar = condition(w, dollar)
@@ -349,8 +458,9 @@ def wallet_priority(workflow, *, captured_date=None, captured_seconds=None):
     # Dictionary-to-JSON key order is not stable across native shortcut runs.
     group = replace(w, variable("Priority Group"), r"^\s+|\s+$", "")
     group = replace(w, group, r"\s+", " ")
-    identity = w.add("gettext", WFTextActionText=formatted(
-        group, "\n", currency, "\n", minor, "\n", merchant))
+    identity = w.add(
+        "gettext", WFTextActionText=formatted(group, "\n", currency, "\n", minor, "\n", merchant)
+    )
     fingerprint = w.add("hash", WFInput=token(identity), WFHashType="SHA256")
     slot = replace(w, fingerprint, r"^.*(.{2})$", "$1")
     key = w.add("gettext", WFTextActionText=formatted("groundkeeper-wallet-priority-v2-", slot))
@@ -364,30 +474,56 @@ def wallet_priority(workflow, *, captured_date=None, captured_seconds=None):
     has_marker = condition(w, marker)
     matches = condition(w, w.get(marker, "fingerprint"), 4, text(fingerprint))
     marker_seconds = w.get(marker, "captured_seconds")
-    timestamp = w.add("text.match", text=text(marker_seconds),
-                      WFMatchTextPattern=r"^[0-9]{1,12}(?:\.[0-9]{1,6})?$")
+    timestamp = w.add(
+        "text.match",
+        text=text(marker_seconds),
+        WFMatchTextPattern=r"^[0-9]{1,12}(?:\.[0-9]{1,6})?$",
+    )
     has_date = condition(w, timestamp)
     age = w.add("calculateexpression", Input=formatted(captured_seconds, " - ", marker_seconds))
     # Both trigger orders count. Use their original times, before the delay.
-    recent = w.add("text.match", text=text(age),
-                   WFMatchTextPattern=r"^-?(?:[0-9]|[1-8][0-9])(?:\.[0-9]+)?$")
+    recent = w.add(
+        "text.match", text=text(age), WFMatchTextPattern=r"^-?(?:[0-9]|[1-8][0-9])(?:\.[0-9]+)?$"
+    )
     recent = condition(w, recent)
     w.add("nothing")
     w.add("exit")
-    for branch in (recent, has_date, matches, has_marker, bank, wallet,
-                   has_merchant, positive, valid_currency, valid_money):
+    for branch in (
+        recent,
+        has_date,
+        matches,
+        has_marker,
+        bank,
+        wallet,
+        has_merchant,
+        positive,
+        valid_currency,
+        valid_money,
+    ):
         endif(w, branch)
 
     actions = workflow["WFWorkflowActions"]
-    first_menu = next(i for i, action in enumerate(actions)
-                      if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    first_menu = next(
+        i
+        for i, action in enumerate(actions)
+        if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu")
+    )
     actions[first_menu:first_menu] = w.actions
 
 
 def save_image(w):
     group = condition(w, variable("Receipt JPEG"))
-    image = w.add("setitemname", WFInput=token(variable("Receipt JPEG")), WFName=text(variable("Receipt Filename")))
-    saved = w.add("documentpicker.save", WFInput=token(image), WFAskWhereToSave=True, WFSaveFileOverwrite=False)
+    image = w.add(
+        "setitemname",
+        WFInput=token(variable("Receipt JPEG")),
+        WFName=text(variable("Receipt Filename")),
+    )
+    saved = w.add(
+        "documentpicker.save",
+        WFInput=token(image),
+        WFAskWhereToSave=True,
+        WFSaveFileOverwrite=False,
+    )
     require(w, saved, "The receipt image was not saved. No capture JSON was created.")
     endif(w, group)
 
@@ -400,8 +536,15 @@ def filename(w, description, app, date):
         value = replace(w, value, r"^(.{60}).*$", "$1")
         require(w, value, "The transaction description and app are required.")
         w.setvar(name, value)
-    stamp = w.add("format.date", WFDate=text(date), WFDateFormatStyle="Custom", WFDateFormat="yyyy-MM-dd_HH-mm-ss-SSS")
-    return formatted(variable("Filename Description"), "_", variable("Filename App"), "_CAPTURE_", stamp, ".json")
+    stamp = w.add(
+        "format.date",
+        WFDate=text(date),
+        WFDateFormatStyle="Custom",
+        WFDateFormat="yyyy-MM-dd_HH-mm-ss-SSS",
+    )
+    return formatted(
+        variable("Filename Description"), "_", variable("Filename App"), "_CAPTURE_", stamp, ".json"
+    )
 
 
 def main():
@@ -412,7 +555,9 @@ def main():
     actions[16]["WFWorkflowActionParameters"]["WFNumberActionNumber"] = "4"
     w = Workflow("GroundKeeper Capture Transaction", writer)
     w.actions.extend(actions)
-    saved = w.setvar("Saved Event", output(actions[-1]["WFWorkflowActionParameters"]["UUID"], "Dictionary"))
+    saved = w.setvar(
+        "Saved Event", output(actions[-1]["WFWorkflowActionParameters"]["UUID"], "Dictionary")
+    )
     # Initialize image variables on every invocation, including no-receipt runs.
     empty = w.add("nothing")
     w.setvar("Receipt JPEG", empty)
@@ -436,7 +581,12 @@ def main():
     w.setvar("Capture Description", w.get(saved, "subtitle"))
     require(w, w.get(saved, "body"), "The bank notification body is missing.")
     w.add("conditional", GroupingIdentifier=bank, WFControlFlowMode=1)
-    w.add("alert", WFAlertActionTitle="Capture not saved", WFAlertActionMessage="Unsupported transaction source.", WFAlertActionCancelButtonShown=False)
+    w.add(
+        "alert",
+        WFAlertActionTitle="Capture not saved",
+        WFAlertActionMessage="Unsupported transaction source.",
+        WFAlertActionCancelButtonShown=False,
+    )
     w.add("exit")
     endif(w, bank)
     endif(w, wallet)
@@ -445,21 +595,33 @@ def main():
     require(w, variable("Capture App"), "The source app is missing.")
     optional_details(w)
     endif(w, group)
-    name = filename(w, variable("Capture Description"), variable("Capture App"), output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date"))
+    name = filename(
+        w,
+        variable("Capture Description"),
+        variable("Capture App"),
+        output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date"),
+    )
     serialized = w.add("detect.text", WFInput=token(saved))
     w.setvar("Capture JSON", serialized)
     # Conservative cap: <=16k Unicode characters fit within 64KiB UTF-8.
     bounded(w, serialized, 16000, "The capture is too large. Use a shorter note or receipt.")
     save_image(w)
     named = w.add("setitemname", WFInput=token(variable("Capture JSON")), WFName=name)
-    saved_file = w.add("documentpicker.save", WFAskWhereToSave=True, WFSaveFileOverwrite=False, WFInput=token(named))
+    saved_file = w.add(
+        "documentpicker.save",
+        WFAskWhereToSave=True,
+        WFSaveFileOverwrite=False,
+        WFInput=token(named),
+    )
     # A cancelled Save File may return no item instead of throwing. Never return
     # a success envelope unless that final action produced a saved file.
     missing_file = condition(w, saved_file, 101)
     w.add("exit")
     endif(w, missing_file)
     w.add("output", WFOutput=text(saved))
-    wallet_priority(w.data, captured_date=output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date"))
+    wallet_priority(
+        w.data, captured_date=output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date")
+    )
     location_capture(w.data)
     transaction_context(w.data)
     w.save()
@@ -469,19 +631,32 @@ def main():
         path = ROOT / (name + ".plist")
         adapter = plistlib.loads(path.read_bytes())
         adapter["WFWorkflowActions"] = adapter["WFWorkflowActions"][:2]
-        fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
+        fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"][
+            "WFDictionaryFieldValueItems"
+        ]
         if not any(field["WFKey"]["Value"]["string"] == "capture_location" for field in fields):
-            fields.append({"WFItemType": 0, "WFKey": text("capture_location"), "WFValue": text("on")})
-        for key, value in (("wallet_priority_currency", "CAD"), ("wallet_priority_group", "default")):
+            fields.append(
+                {"WFItemType": 0, "WFKey": text("capture_location"), "WFValue": text("on")}
+            )
+        for key, value in (
+            ("wallet_priority_currency", "CAD"),
+            ("wallet_priority_group", "default"),
+        ):
             if not any(field["WFKey"]["Value"]["string"] == key for field in fields):
                 fields.append({"WFItemType": 0, "WFKey": text(key), "WFValue": text(value)})
         if name == "GroundKeeper Wallet Automation":
-            fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
-            if not any(field["WFKey"]["Value"]["string"] == "wallet_category_raw" for field in fields):
+            fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"][
+                "Value"
+            ]["WFDictionaryFieldValueItems"]
+            if not any(
+                field["WFKey"]["Value"]["string"] == "wallet_category_raw" for field in fields
+            ):
                 # No Category property exists in the inspected transaction picker.
                 # Leave blank for Any Category; a category-filtered iPhone
                 # automation can supply its exact filter label as literal text.
-                fields.append({"WFItemType": 0, "WFKey": text("wallet_category_raw"), "WFValue": text("")})
+                fields.append(
+                    {"WFItemType": 0, "WFKey": text("wallet_category_raw"), "WFValue": text("")}
+                )
         a = Workflow(name, adapter)
         a.actions.extend(adapter["WFWorkflowActions"])
         result = output(a.actions[1]["WFWorkflowActionParameters"]["UUID"], "Shortcut Result")
@@ -490,9 +665,14 @@ def main():
         saved_capture = condition(a, event_id)
         description = a.get(result, "merchant" if "Wallet" in name else "subtitle")
         has_description = condition(a, description)
-        a.add("notification", WFNotificationActionTitle=text(name),
-              WFNotificationActionBody=formatted("Successfully captured and saved ", description, "!"),
-              WFNotificationActionSound=False)
+        a.add(
+            "notification",
+            WFNotificationActionTitle=text(name),
+            WFNotificationActionBody=formatted(
+                "Successfully captured and saved ", description, "!"
+            ),
+            WFNotificationActionSound=False,
+        )
         endif(a, has_description)
         endif(a, saved_capture)
         endif(a, returned)
@@ -500,7 +680,9 @@ def main():
 
     # Standalone later attachment still writes schema 3 and never another payment.
     r = Workflow("GroundKeeper Add Receipt", writer)
-    payment = r.setvar("Payment", r.add("detect.dictionary", WFInput=token({"Type": "ExtensionInput"})))
+    payment = r.setvar(
+        "Payment", r.add("detect.dictionary", WFInput=token({"Type": "ExtensionInput"}))
+    )
     for key in ("source", "app", "event_id"):
         require(r, r.get(payment, key), "Select the original payment capture JSON.")
     source = r.get(payment, "source")
@@ -514,7 +696,13 @@ def main():
     endif(r, bank)
     endif(r, group)
     target = r.dictionary({key: r.get(payment, key) for key in ("source", "app", "event_id")})
-    event = r.dictionary({"source": "receipt_attachment", "app": "Shortcuts", "capture_description": variable("Capture Description")})
+    event = r.dictionary(
+        {
+            "source": "receipt_attachment",
+            "app": "Shortcuts",
+            "capture_description": variable("Capture Description"),
+        }
+    )
     event = r.put(event, "target", target)
     r.setvar("Saved Event", event)
     menu = r.menu("Add a receipt to this saved payment?", ["Add receipt", "Skip"])

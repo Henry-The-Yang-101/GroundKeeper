@@ -4,17 +4,17 @@ Run --prepare, import the printed signed file, then run --run. The harness uses
 the production priority actions and its own shortcut-scoped storage. Results
 and fictional inputs stay under ignored .local/wallet-priority-check/.
 """
+
 import argparse
-from datetime import datetime, timedelta
 import json
-from pathlib import Path
 import plistlib
 import subprocess
 import time
 import uuid
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import build_receipt_shortcuts as builder
-
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / ".local/wallet-priority-check"
@@ -22,7 +22,9 @@ NAME = "GroundKeeper Wallet Priority Check"
 
 
 def prepare():
-    template = plistlib.loads((builder.ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())
+    template = plistlib.loads(
+        (builder.ROOT / "GroundKeeper Capture Transaction.plist").read_bytes()
+    )
     workflow = builder.Workflow(NAME, template)
     event = workflow.add("detect.dictionary", WFInput=builder.token({"Type": "ExtensionInput"}))
     workflow.setvar("Saved Event", event)
@@ -32,18 +34,37 @@ def prepare():
     sentinel = workflow.menu("Unused insertion point", [])
     workflow.endmenu(sentinel)
     builder.wallet_priority(workflow.data, captured_seconds=seconds)
-    workflow.actions[:] = [a for a in workflow.actions
-                           if not a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu")]
+    workflow.actions[:] = [
+        a
+        for a in workflow.actions
+        if not a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu")
+    ]
     native_date = workflow.add("date")
-    native_clock = workflow.add("gettimebetweendates", WFInput=builder.text(native_date),
-                                WFTimeUntilFromDate="January 1, 2001", WFTimeUntilUnit="Seconds")
+    native_clock = workflow.add(
+        "gettimebetweendates",
+        WFInput=builder.text(native_date),
+        WFTimeUntilFromDate="January 1, 2001",
+        WFTimeUntilUnit="Seconds",
+    )
     result = workflow.dictionary({"result": "proceed", "native_clock": native_clock})
     workflow.add("output", WFOutput=builder.text(result))
     unsigned = WORK / (NAME + ".unsigned.shortcut")
     signed = WORK / (NAME + ".shortcut")
     unsigned.write_bytes(plistlib.dumps(workflow.data))
-    subprocess.run(["/usr/bin/shortcuts", "sign", "--mode", "anyone", "--input", str(unsigned),
-                    "--output", str(signed)], check=True, timeout=60)
+    subprocess.run(
+        [
+            "/usr/bin/shortcuts",
+            "sign",
+            "--mode",
+            "anyone",
+            "--input",
+            str(unsigned),
+            "--output",
+            str(signed),
+        ],
+        check=True,
+        timeout=60,
+    )
     print(f"Import this test-only Shortcut, then run this script with --run:\n{signed}")
 
 
@@ -53,9 +74,12 @@ def check(shortcut):
     report = []
 
     def event(source, group, seconds=0, **fields):
-        base = {"source": source, "captured_at": (stamp + timedelta(seconds=seconds)).isoformat(),
-                "test_seconds": str(int(stamp.timestamp()) + seconds),
-                "wallet_priority_group": f"native-test-{run_id}-{group}"}
+        base = {
+            "source": source,
+            "captured_at": (stamp + timedelta(seconds=seconds)).isoformat(),
+            "test_seconds": str(int(stamp.timestamp()) + seconds),
+            "wallet_priority_group": f"native-test-{run_id}-{group}",
+        }
         if source == "wallet_transaction":
             base.update(merchant="  Fictional Coffee  Shop ", amount="$0012.3")
         else:
@@ -66,9 +90,22 @@ def check(shortcut):
         input_path, output_path = WORK / (label + ".json"), WORK / (label + ".out.json")
         input_path.write_text(json.dumps(payload))
         output_path.unlink(missing_ok=True)
-        process = subprocess.Popen(["/usr/bin/shortcuts", "run", shortcut, "--input-path", str(input_path),
-                                    "--output-path", str(output_path), "--output-type", "public.json"],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(
+            [
+                "/usr/bin/shortcuts",
+                "run",
+                shortcut,
+                "--input-path",
+                str(input_path),
+                "--output-path",
+                str(output_path),
+                "--output-type",
+                "public.json",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
         return process, output_path
 
     def finish(label, pending, expected):
@@ -106,7 +143,10 @@ def check(shortcut):
     run("another-amount", event("bank_notification", "matching", 5, body="CAD 12.31"))
     run("another-currency", event("bank_notification", "matching", 5, body="USD 12.30"))
     run("another-card-group", event("bank_notification", "another-group", 5))
-    run("narrative-amount", event("bank_notification", "matching", 5, body="Paid CAD 12.30 on card 1234"))
+    run(
+        "narrative-amount",
+        event("bank_notification", "matching", 5, body="Paid CAD 12.30 on card 1234"),
+    )
     run("refund", event("bank_notification", "matching", 5, body="-CAD 12.30"))
     run("zero-amount", event("bank_notification", "matching", 5, body="CAD 0.00"))
     run("same-source-wallet", event("wallet_transaction", "matching", 5))

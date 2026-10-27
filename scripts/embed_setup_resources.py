@@ -1,11 +1,14 @@
 """Bundle the pinned model catalog and available Shortcut installers into the app."""
+
 import os
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-destination = Path(os.environ["TARGET_BUILD_DIR"]) / os.environ["UNLOCALIZED_RESOURCES_FOLDER_PATH"] / "Setup"
+destination = (
+    Path(os.environ["TARGET_BUILD_DIR"]) / os.environ["UNLOCALIZED_RESOURCES_FOLDER_PATH"] / "Setup"
+)
 destination.mkdir(parents=True, exist_ok=True)
 shutil.copy2(root / "release/models.json", destination / "models.json")
 shutil.copy2(root / "release/MODEL-NOTICES.txt", destination / "MODEL-NOTICES.txt")
@@ -21,6 +24,8 @@ for name in ("GroundKeeperClassifier.xpc", "GroundKeeperMerchantSearch.xpc"):
     service = Path(os.environ["TARGET_BUILD_DIR"]) / name
     embedded = destination.parents[1] / "XPCServices" / service.name
     embedded.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["/usr/bin/rsync", "-a", "--delete", str(service) + "/", str(embedded) + "/"], check=True)
+    subprocess.run(
+        ["/usr/bin/rsync", "-a", "--delete", str(service) + "/", str(embedded) + "/"], check=True
+    )
     if os.environ.get("CODE_SIGNING_ALLOWED") != "NO":
         subprocess.run(["/usr/bin/codesign", "--verify", "--strict", str(embedded)], check=True)

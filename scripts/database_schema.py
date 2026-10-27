@@ -7,9 +7,9 @@ remains responsible for production migration checksums, locking, and SQLCipher.
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import re
 import sqlite3
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "apps/macos/GroundKeeperCore/Sources/GroundKeeperCore/Resources"
@@ -39,7 +39,9 @@ def apply_migrations(connection, through=None):
     exists = connection.execute(
         "SELECT 1 FROM sqlite_master WHERE name='schema_migrations'"
     ).fetchone()
-    applied = dict(connection.execute("SELECT version,checksum FROM schema_migrations")) if exists else {}
+    applied = (
+        dict(connection.execute("SELECT version,checksum FROM schema_migrations")) if exists else {}
+    )
     if any(version > len(names) for version in applied):
         raise ValueError("Database requires newer migrations")
     for version, name in enumerate(names[:through], 1):
@@ -73,7 +75,8 @@ def schema_snapshot():
             "",
         ]
         lines.extend(
-            line for line in connection.iterdump()
+            line
+            for line in connection.iterdump()
             if not line.startswith('INSERT INTO "schema_migrations"')
         )
         return "\n".join(lines) + "\n"
@@ -81,7 +84,9 @@ def schema_snapshot():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="Fail if the checked-in reference is stale")
+    parser.add_argument(
+        "--check", action="store_true", help="Fail if the checked-in reference is stale"
+    )
     args = parser.parse_args()
     generated = schema_snapshot()
     if args.check:

@@ -1,11 +1,12 @@
 """Fetch a reproducible, attributed SROIE image sample without training on it."""
+
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
-from pathlib import Path
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 REPOSITORY = "zzzDavid/ICDAR-2019-SROIE"
 REVISION = "27be4271b251c256f695acbade9a801bffe85994"
@@ -30,11 +31,15 @@ def main():
     args = parser.parse_args()
     root = args.output
     root.mkdir(parents=True, exist_ok=True)
-    tree = json.loads(fetch(f"https://api.github.com/repos/{REPOSITORY}/git/trees/{REVISION}?recursive=1"))
+    tree = json.loads(
+        fetch(f"https://api.github.com/repos/{REPOSITORY}/git/trees/{REVISION}?recursive=1")
+    )
     entries = {entry["path"]: entry for entry in tree["tree"] if entry["type"] == "blob"}
     # Distributed across the mirror, selected by a fixed hash, not by OCR/model quality.
-    images = sorted((p for p in entries if p.startswith("data/img/") and p.endswith(".jpg")),
-                    key=lambda p: hashlib.sha256(("groundkeeper-receipts-v1|" + p).encode()).hexdigest())[:args.count]
+    images = sorted(
+        (p for p in entries if p.startswith("data/img/") and p.endswith(".jpg")),
+        key=lambda p: hashlib.sha256(("groundkeeper-receipts-v1|" + p).encode()).hexdigest(),
+    )[: args.count]
 
     def sample(path):
         sample_id = Path(path).stem
@@ -51,25 +56,50 @@ def main():
                 raise ValueError(f"Source hash mismatch: {source}")
             if not local.exists():
                 local.write_bytes(blob)
-            files.append({"path": str(local.relative_to(root)), "source_url": f"{BASE}/{source}",
-                          "bytes": len(blob), "sha256": hashlib.sha256(blob).hexdigest()})
+            files.append(
+                {
+                    "path": str(local.relative_to(root)),
+                    "source_url": f"{BASE}/{source}",
+                    "bytes": len(blob),
+                    "sha256": hashlib.sha256(blob).hexdigest(),
+                }
+            )
         return {"id": sample_id, "files": files}
 
     with ThreadPoolExecutor(max_workers=8) as pool:
         samples = list(pool.map(sample, images))
-    manifest = {"dataset": "ICDAR 2019 SROIE", "mirror": f"https://github.com/{REPOSITORY}",
-                "revision": REVISION, "license": "CC-BY-4.0 (dataset; mirror code license is separate)",
-                "dataset_license_source": "https://rrc.cvc.uab.es/?ch=13&com=downloads",
-                "license_documentation": "https://github.com/jsdnrs/ICDAR2019-SROIE/blob/77c4c11490e3c4179ee22f86611569c71c04b5f9/DATASET.md",
-                "attribution": "Huang et al., ICDAR2019 Competition on Scanned Receipt OCR and Information Extraction, 2019, doi:10.1109/ICDAR.2019.00244",
-                "selection": "First N image paths sorted by SHA256('groundkeeper-receipts-v1|' + path)",
-                "use": "OCR and integration evaluation only; no GroundKeeper category ground truth; no training",
-                "domain": "English-language Malaysian receipts; not a Canadian accuracy benchmark",
-                "count": len(samples), "samples": samples}
+    manifest = {
+        "dataset": "ICDAR 2019 SROIE",
+        "mirror": f"https://github.com/{REPOSITORY}",
+        "revision": REVISION,
+        "license": "CC-BY-4.0 (dataset; mirror code license is separate)",
+        "dataset_license_source": "https://rrc.cvc.uab.es/?ch=13&com=downloads",
+        "license_documentation": "https://github.com/jsdnrs/ICDAR2019-SROIE/blob/77c4c11490e3c4179ee22f86611569c71c04b5f9/DATASET.md",
+        "attribution": "Huang et al., ICDAR2019 Competition on Scanned Receipt OCR and Information Extraction, 2019, doi:10.1109/ICDAR.2019.00244",
+        "selection": "First N image paths sorted by SHA256('groundkeeper-receipts-v1|' + path)",
+        "use": "OCR and integration evaluation only; no GroundKeeper category ground truth; no training",
+        "domain": "English-language Malaysian receipts; not a Canadian accuracy benchmark",
+        "count": len(samples),
+        "samples": samples,
+    }
     (root / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    (root / "ATTRIBUTION.txt").write_text(manifest["attribution"] + "\n" + manifest["license"] + "\n" + manifest["dataset_license_source"] + "\n")
-    print(json.dumps({"downloaded_images": len(samples), "directory": str(root.resolve()),
-                      "bytes": sum(f["bytes"] for s in samples for f in s["files"])}))
+    (root / "ATTRIBUTION.txt").write_text(
+        manifest["attribution"]
+        + "\n"
+        + manifest["license"]
+        + "\n"
+        + manifest["dataset_license_source"]
+        + "\n"
+    )
+    print(
+        json.dumps(
+            {
+                "downloaded_images": len(samples),
+                "directory": str(root.resolve()),
+                "bytes": sum(f["bytes"] for s in samples for f in s["files"]),
+            }
+        )
+    )
 
 
 if __name__ == "__main__":

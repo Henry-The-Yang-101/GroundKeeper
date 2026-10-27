@@ -3,10 +3,12 @@
 These are seed inputs, not augmentation of an already split corpus. Blind Luna
 labels are required. Item hints appear in the input itself, never hidden fields.
 """
+
 import json
 from pathlib import Path
+
 # Each line is a distinct input. No private transactions were used.
-DESCRIPTIONS='''LOBLAWS #1020
+DESCRIPTIONS = """LOBLAWS #1020
 SOBEYS WATERLOO
 FARM BOY OTTAWA
 METRO GROCERY DELIVERY
@@ -105,15 +107,28 @@ PERSONAL DOCUMENT TRANSLATION
 UNKNOWN MERCHANT 82941
 UBER
 COSTCO GASOLINE
-COSTCO PHARMACY PRESCRIPTION'''.splitlines()
-assert len(DESCRIPTIONS)==100
-root=Path('.local/finetune');records=[]
-for i,desc in enumerate(DESCRIPTIONS):
- direction='credit' if i in range(86,92) else 'debit'
- records.append({'id':f'ca-synthetic-{i:03d}','input':{'description':desc,'direction':direction,'currency':'CAD'},'source':'groundkeeper-authored-canadian-pilot-v1','source_category':None,'source_revision':'v1','source_row':i,'origin':'authored_synthetic_not_real'})
-with (root/'canadian_selected.jsonl').open('w') as f:
- for r in records:f.write(json.dumps(r)+'\n')
+COSTCO PHARMACY PRESCRIPTION""".splitlines()
+assert len(DESCRIPTIONS) == 100
+root = Path(".local/finetune")
+records = []
+for i, desc in enumerate(DESCRIPTIONS):
+    direction = "credit" if i in range(86, 92) else "debit"
+    records.append(
+        {
+            "id": f"ca-synthetic-{i:03d}",
+            "input": {"description": desc, "direction": direction, "currency": "CAD"},
+            "source": "groundkeeper-authored-canadian-pilot-v1",
+            "source_category": None,
+            "source_revision": "v1",
+            "source_row": i,
+            "origin": "authored_synthetic_not_real",
+        }
+    )
+with (root / "canadian_selected.jsonl").open("w") as f:
+    for r in records:
+        f.write(json.dumps(r) + "\n")
 for i in range(4):
- with (root/f'packets/batch_{34+i:03d}.jsonl').open('w') as f:
-  for r in records[i*25:(i+1)*25]:f.write(json.dumps({'id':r['id'],'input':r['input']})+'\n')
-print('100 explicitly synthetic Canadian diagnostic inputs; blind labeling required')
+    with (root / f"packets/batch_{34 + i:03d}.jsonl").open("w") as f:
+        for r in records[i * 25 : (i + 1) * 25]:
+            f.write(json.dumps({"id": r["id"], "input": r["input"]}) + "\n")
+print("100 explicitly synthetic Canadian diagnostic inputs; blind labeling required")

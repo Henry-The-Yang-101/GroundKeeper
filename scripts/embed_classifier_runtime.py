@@ -1,7 +1,8 @@
 """Embed each service's worker code; the host app owns the shared runtime."""
+
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 from scripts.prepare_classifier_runtime import DEST, ROOT
 from scripts.service_modules import service_files
@@ -9,7 +10,9 @@ from scripts.service_modules import service_files
 
 def main():
     if not (DEST / "runtime-lock.json").is_file():
-        raise SystemExit("Run .venv/bin/python -m scripts.prepare_classifier_runtime before building the app")
+        raise SystemExit(
+            "Run .venv/bin/python -m scripts.prepare_classifier_runtime before building the app"
+        )
     bundle = Path(os.environ["TARGET_BUILD_DIR"]) / os.environ["CONTENTS_FOLDER_PATH"]
     bundle.mkdir(parents=True, exist_ok=True)
     # Runtime lives once in the enclosing app. Retire copies from older builds.
@@ -21,7 +24,11 @@ def main():
     marker.unlink(missing_ok=True)
     worker = bundle / "Resources/Worker/groundkeeper"
     worker.mkdir(parents=True, exist_ok=True)
-    service = "merchant_search" if os.environ.get("TARGET_NAME") == "GroundKeeperMerchantSearch" else "classifier"
+    service = (
+        "merchant_search"
+        if os.environ.get("TARGET_NAME") == "GroundKeeperMerchantSearch"
+        else "classifier"
+    )
     names = service_files(service)
     for existing in worker.glob("*.py"):
         if existing.name not in names:

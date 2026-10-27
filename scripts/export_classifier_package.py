@@ -1,11 +1,11 @@
 """Export an existing verified experimental model as a data-only app package."""
+
 import argparse
 import hashlib
 import json
 from pathlib import Path
-import shutil
 
-from groundkeeper.worker import POLICY_VERSION, MAX_PACKAGE_BYTES
+from groundkeeper.worker import MAX_PACKAGE_BYTES, POLICY_VERSION
 
 
 def main():
@@ -15,8 +15,11 @@ def main():
     parser.add_argument("--backend", choices=("qwen_mlx", "laya_mps"), required=True)
     parser.add_argument("--model-id", required=True)
     parser.add_argument("--prompt-version", choices=("v1", "v2"), default="v1")
-    parser.add_argument("--verified-fallback", type=Path,
-                        help="Recover changed source metadata only from files matching the original manifest hash")
+    parser.add_argument(
+        "--verified-fallback",
+        type=Path,
+        help="Recover changed source metadata only from files matching the original manifest hash",
+    )
     args = parser.parse_args()
     source = args.source.resolve()
     destination = args.destination.resolve()
@@ -30,7 +33,14 @@ def main():
         relative = Path(name)
         if relative.is_absolute() or ".." in relative.parts:
             parser.error("Invalid source manifest path")
-        if relative.suffix not in (".safetensors", ".json", ".jinja", ".model", ".txt", ".tiktoken"):
+        if relative.suffix not in (
+            ".safetensors",
+            ".json",
+            ".jinja",
+            ".model",
+            ".txt",
+            ".tiktoken",
+        ):
             continue
         # Model code from experiment packages must never become executable app code.
         if relative.parts[0] == "groundkeeper":
@@ -44,14 +54,23 @@ def main():
                 digest.update(chunk)
         size = path.stat().st_size
         if digest.hexdigest() != recorded["sha256"] or size != recorded["bytes"]:
-            fallback = (args.verified_fallback / relative).resolve() if args.verified_fallback else None
-            if fallback is None or not fallback.is_relative_to(args.verified_fallback.resolve()) or not fallback.is_file():
+            fallback = (
+                (args.verified_fallback / relative).resolve() if args.verified_fallback else None
+            )
+            if (
+                fallback is None
+                or not fallback.is_relative_to(args.verified_fallback.resolve())
+                or not fallback.is_file()
+            ):
                 parser.error(f"Source package integrity mismatch: {name}")
             # Metadata recovery is bounded and explicit, never a bypass for weights.
             if relative.suffix != ".json" or fallback.stat().st_size > 65536:
                 parser.error(f"Only small manifest-verified JSON metadata can be recovered: {name}")
             content = fallback.read_bytes()
-            if len(content) != recorded["bytes"] or hashlib.sha256(content).hexdigest() != recorded["sha256"]:
+            if (
+                len(content) != recorded["bytes"]
+                or hashlib.sha256(content).hexdigest() != recorded["sha256"]
+            ):
                 parser.error(f"Fallback integrity mismatch: {name}")
             path = fallback
             size = len(content)
@@ -68,6 +87,7 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         # macOS copy-on-write clone avoids duplicating multi-GB weights on APFS.
         import subprocess
+
         subprocess.run(["/bin/cp", "-c", str(verified_sources[name]), str(target)], check=True)
     if args.backend == "laya_mps":
         # Normalize before hashing/export: Laya must not rewrite a read-only package.
@@ -78,12 +98,23 @@ def main():
             value.pop("backend", None)
             value.pop("is_local", None)
         if isinstance(value.get("extra_special_tokens"), list):
-            value["extra_special_tokens"] = {f"extra_{i}": token for i, token in enumerate(value["extra_special_tokens"])}
+            value["extra_special_tokens"] = {
+                f"extra_{i}": token for i, token in enumerate(value["extra_special_tokens"])
+            }
         config.write_text(json.dumps(value, indent=2))
-        files["tokenizer/tokenizer_config.json"] = {"bytes": config.stat().st_size, "sha256": hashlib.sha256(config.read_bytes()).hexdigest()}
-    manifest = {"format_version": 1, "model_id": args.model_id, "backend": args.backend,
-                "policy_version": POLICY_VERSION, "prompt_version": args.prompt_version,
-                "model_directory": "model" if args.backend == "qwen_mlx" else ".", "files": files}
+        files["tokenizer/tokenizer_config.json"] = {
+            "bytes": config.stat().st_size,
+            "sha256": hashlib.sha256(config.read_bytes()).hexdigest(),
+        }
+    manifest = {
+        "format_version": 1,
+        "model_id": args.model_id,
+        "backend": args.backend,
+        "policy_version": POLICY_VERSION,
+        "prompt_version": args.prompt_version,
+        "model_directory": "model" if args.backend == "qwen_mlx" else ".",
+        "files": files,
+    }
     if args.backend == "qwen_mlx" and (destination / "adapters").is_dir():
         manifest["adapter_directory"] = "adapters"
     encoded = json.dumps(manifest, indent=2) + "\n"
