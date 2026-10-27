@@ -7,7 +7,12 @@ from scripts.receipt_case import variants
 
 
 def test_user_costco_case_preserves_label_and_only_adds_receipt_evidence():
-    case = json.loads((Path(__file__).resolve().parents[1] / "experiments/receipts/user-cases/costco-groceries.json").read_text())
+    case = json.loads(
+        (
+            Path(__file__).resolve().parents[1]
+            / "experiments/receipts/user-cases/costco-groceries.json"
+        ).read_text()
+    )
     assert case["expected"] == {"type": "expense", "category": "groceries"}
     assert case["provenance"]["receipt_transaction_amount_match"] is False
     baseline, enriched = [value for _, value in variants(case)]

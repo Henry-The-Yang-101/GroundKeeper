@@ -1,23 +1,45 @@
 import pytest
 
-from groundkeeper.laya_runtime import CATEGORY_CRITERIA, DECISIONS, NULL, QUESTIONS, TYPE_CRITERIA, decode, training_row
+from groundkeeper.laya_runtime import (
+    CATEGORY_CRITERIA,
+    DECISIONS,
+    NULL,
+    QUESTIONS,
+    TYPE_CRITERIA,
+    decode,
+    training_row,
+)
 from groundkeeper.policy import CATEGORIES, TYPES, validate_answer
 
 
 def distributions(typ="expense", cat="dining", review="false"):
     chosen = {"type": typ, "category": cat, "review": review}
-    return {field: {"choice": chosen[field], "probabilities": {
-        key: 0.9 if key == chosen[field] else 0.1 / (len(q["criteria"]) - 1)
-        for key in q["criteria"]}} for field, q in QUESTIONS.items()}
+    return {
+        field: {
+            "choice": chosen[field],
+            "probabilities": {
+                key: 0.9 if key == chosen[field] else 0.1 / (len(q["criteria"]) - 1)
+                for key in q["criteria"]
+            },
+        }
+        for field, q in QUESTIONS.items()
+    }
 
 
 def test_contract_coverage_and_round_trip():
     assert set(TYPE_CRITERIA) == set(TYPES)
     assert set(CATEGORY_CRITERIA) == set(CATEGORIES) | {NULL}
     for answer in DECISIONS:
-        expected = training_row({"id": "synthetic", "input": {
-            "description": "test", "direction": "unknown", "currency": "CAD"}, "answer": answer})["expected"]
-        prediction, detail = decode(distributions(expected["type"], expected["category"], expected["review"]))
+        expected = training_row(
+            {
+                "id": "synthetic",
+                "input": {"description": "test", "direction": "unknown", "currency": "CAD"},
+                "answer": answer,
+            }
+        )["expected"]
+        prediction, detail = decode(
+            distributions(expected["type"], expected["category"], expected["review"])
+        )
         assert prediction == answer
         assert detail["raw_valid_schema"]
 
@@ -49,6 +71,7 @@ def test_missing_option_fails_closed():
 @pytest.mark.gpu
 def test_agent_precision_supports_an_mps_forward_pass(torch_mps):
     from types import SimpleNamespace
+
     from groundkeeper.laya_runtime import configure_agent
 
     agent = configure_agent(SimpleNamespace())
@@ -63,6 +86,7 @@ def test_package_tokenizer_cache_evicted_after_load(monkeypatch, tmp_path, fails
     import sys
     import threading
     from types import SimpleNamespace
+
     import groundkeeper.laya_runtime as runtime
 
     (tmp_path / "model.safetensors").touch()
@@ -70,14 +94,24 @@ def test_package_tokenizer_cache_evicted_after_load(monkeypatch, tmp_path, fails
     tokenizer = object()
     cache = {(directory, 1): tokenizer, (directory, 2): tokenizer, ("unrelated", 1): object()}
     device = SimpleNamespace(type="mps")
-    agent = SimpleNamespace(tok=tokenizer, device=device,
-        model=SimpleNamespace(parameters=lambda: iter([SimpleNamespace(device=device)])))
+    agent = SimpleNamespace(
+        tok=tokenizer,
+        device=device,
+        model=SimpleNamespace(parameters=lambda: iter([SimpleNamespace(device=device)])),
+    )
+
     def load(*args, **kwargs):
         if fails:
             raise RuntimeError("failed loading")
         return agent
-    monkeypatch.setitem(sys.modules, "laya", SimpleNamespace(load=load,
-        agent=SimpleNamespace(_TOKENIZERS=cache, _TOKENIZERS_LOCK=threading.Lock())))
+
+    monkeypatch.setitem(
+        sys.modules,
+        "laya",
+        SimpleNamespace(
+            load=load, agent=SimpleNamespace(_TOKENIZERS=cache, _TOKENIZERS_LOCK=threading.Lock())
+        ),
+    )
     monkeypatch.setattr(runtime, "configure_agent", lambda value: value)
     if fails:
         with pytest.raises(RuntimeError, match="failed loading"):

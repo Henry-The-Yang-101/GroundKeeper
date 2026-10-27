@@ -26,11 +26,16 @@ def test_every_package_module_has_an_explicit_shipping_or_experiment_role():
             assert imports <= available, (service, name, imports - available)
 
 
-@pytest.mark.parametrize("service,target", [
-    ("classifier", "GroundKeeperClassifier"),
-    ("merchant_search", "GroundKeeperMerchantSearch"),
-])
-def test_embedding_copies_only_service_modules_and_removes_retired_code(tmp_path, monkeypatch, service, target):
+@pytest.mark.parametrize(
+    "service,target",
+    [
+        ("classifier", "GroundKeeperClassifier"),
+        ("merchant_search", "GroundKeeperMerchantSearch"),
+    ],
+)
+def test_embedding_copies_only_service_modules_and_removes_retired_code(
+    tmp_path, monkeypatch, service, target
+):
     runtime = tmp_path / "runtime"
     runtime.mkdir()
     (runtime / "runtime-lock.json").write_text('{"format_version":2}')

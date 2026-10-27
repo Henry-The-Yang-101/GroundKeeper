@@ -25,15 +25,19 @@ def test_hint_and_receipt_reach_both_prompts_and_laya(receipt):
         assert json.loads(prompt[1]["content"]) == inputs
     assert laya_receipt_state(inputs)["wallet_category_raw"] == "Food & Drink"
     observed = {}
+
     def predict(state, questions, **kwargs):
         observed.update(state=state, questions=questions, **kwargs)
         return {"answers": {}}  # Invalid model output must still fall back to review.
+
     model = LocalLayaCategorizer.__new__(LocalLayaCategorizer)
     model.agent = SimpleNamespace(predict=predict)
     answer, _ = model.predict(inputs)
     assert answer["review"]
     assert observed["state"]["wallet_category_raw"] == "Food & Drink"
-    assert all(WALLET_CATEGORY_INSTRUCTIONS in q["instructions"] for q in observed["questions"].values())
+    assert all(
+        WALLET_CATEGORY_INSTRUCTIONS in q["instructions"] for q in observed["questions"].values()
+    )
     assert observed["max_len"] == 1024
 
 
@@ -43,17 +47,27 @@ def test_absent_hint_keeps_legacy_prompts_unchanged():
     assert laya_receipt_state(BASE) == BASE
 
 
-@pytest.mark.parametrize("hint", [None, 5, {}, "", "   ", "a" * 129, "界" * 43, "Food\nDrink", "Food\0", "Food\x7f"])
+@pytest.mark.parametrize(
+    "hint", [None, 5, {}, "", "   ", "a" * 129, "界" * 43, "Food\nDrink", "Food\0", "Food\x7f"]
+)
 def test_invalid_hint_is_rejected_at_worker_boundary(hint):
     with pytest.raises(ValueError, match="Wallet category"):
         validate_input({**BASE, "wallet_category_raw": hint})
 
 
 def test_apple_adapter_forwards_hint_as_data(monkeypatch):
-    inputs = {**BASE, "wallet_category_raw": "Food & Drink", "receipt_context": context_from_text("MILK")}
+    inputs = {
+        **BASE,
+        "wallet_category_raw": "Food & Drink",
+        "receipt_context": context_from_text("MILK"),
+    }
+
     def execute(command, **kwargs):
         assert json.loads(Path(command[command.index("--input-path") + 1]).read_text()) == inputs
-        Path(command[command.index("--output-path") + 1]).write_text('{"type":"expense","category":"groceries","review":true}')
+        Path(command[command.index("--output-path") + 1]).write_text(
+            '{"type":"expense","category":"groceries","review":true}'
+        )
         return subprocess.CompletedProcess(command, 0, "", "")
+
     monkeypatch.setattr(subprocess, "run", execute)
     assert run_shortcut(inputs)[0]["category"] == "groceries"
