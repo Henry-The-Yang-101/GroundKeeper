@@ -9,21 +9,21 @@ import GroundKeeperCore
         do {
             let workspace = AppWorkspace()
             await workspace.vault.start()
-            guard workspace.ready else { throw LedgerError.invalid("Preview vault did not open.") }
+            guard workspace.session.ready else { throw LedgerError.invalid("Preview vault did not open.") }
             let first = "fictional setup smoke passphrase"
             let second = "fictional rotated smoke passphrase"
             try await workspace.vault.setEncryption(passphrase: first, remember: false)
             guard workspace.vault.encrypted else { throw LedgerError.invalid("Vault was not encrypted.") }
             await workspace.vault.lockVault()
-            guard !workspace.ready, workspace.transactionState.transactions.isEmpty else { throw LedgerError.invalid("Lock did not close the workspace.") }
+            guard !workspace.session.ready, workspace.transactionState.transactions.isEmpty else { throw LedgerError.invalid("Lock did not close the workspace.") }
             await workspace.vault.unlock(passphrase: "deliberately incorrect")
-            guard !workspace.ready else { throw LedgerError.invalid("Incorrect passphrase was accepted.") }
+            guard !workspace.session.ready else { throw LedgerError.invalid("Incorrect passphrase was accepted.") }
             await workspace.vault.unlock(passphrase: first)
-            guard workspace.ready else { throw LedgerError.invalid("Correct passphrase failed.") }
+            guard workspace.session.ready else { throw LedgerError.invalid("Correct passphrase failed.") }
             try await workspace.vault.setEncryption(passphrase: second, remember: false, currentPassphrase: first)
             await workspace.vault.lockVault()
             await workspace.vault.unlock(passphrase: second)
-            guard workspace.ready else { throw LedgerError.invalid("Rotated passphrase failed.") }
+            guard workspace.session.ready else { throw LedgerError.invalid("Rotated passphrase failed.") }
             try await workspace.vault.setEncryption(passphrase: nil, remember: false, currentPassphrase: second)
             guard !workspace.vault.encrypted else { throw LedgerError.invalid("Plain SQLite conversion failed.") }
             if VaultKeychain.isSupported {

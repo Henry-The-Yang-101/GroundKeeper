@@ -2,7 +2,6 @@ import SwiftUI
 import GroundKeeperCore
 
 struct ReceiptEvidenceView: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(\.dismiss) private var dismiss
     let transactionID: String

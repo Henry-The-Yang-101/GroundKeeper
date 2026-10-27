@@ -14,15 +14,15 @@ import GroundKeeperCore
             let workspace = AppWorkspace()
             await workspace.vault.start()
             workspace.captureState.processingMode = .manual
-            guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
+            guard let store = workspace.session.store else { throw LedgerError.unavailable("Preview vault did not open.") }
             try await store.addAccount(name: "Fictional Ollama smoke card", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
             let first = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-20,FICTIONAL CAFE,-12.50\n".utf8), filename: "ollama-first.csv")
             _ = try await workspace.transactionState.importCSV(first, mapping: mapping, skipped: [])
             guard let selected = try await workspace.classifier.ollama.models().first(where: { $0.name == name }) else { throw OllamaError.modelUnavailable }
             workspace.classifier.useOllama(selected)
-            while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
-            guard workspace.classifier.classifierProvider == "ollama", workspace.errorMessage == nil else { throw LedgerError.invalid(workspace.errorMessage ?? "Provider selection failed.") }
+            while workspace.session.saving { try await Task.sleep(for: .milliseconds(50)) }
+            guard workspace.classifier.classifierProvider == "ollama", workspace.session.errorMessage == nil else { throw LedgerError.invalid(workspace.session.errorMessage ?? "Provider selection failed.") }
             let beforeSuggestion = try await store.snapshot()
             var draft = Transaction()
             draft.merchant = "FICTIONAL CAFE"
@@ -38,20 +38,20 @@ import GroundKeeperCore
             } catch is LedgerError { }
             await workspace.captureState.sync()
             let snapshot = try await store.snapshot()
-            guard workspace.errorMessage == nil, snapshot.pendingJobs == 0, snapshot.failedJobs == 0,
+            guard workspace.session.errorMessage == nil, snapshot.pendingJobs == 0, snapshot.failedJobs == 0,
                   snapshot.transactions.first?.needsReview == true,
-                  snapshot.transactions.first?.category != nil else { throw LedgerError.invalid(workspace.errorMessage ?? "Classification queue did not complete.") }
+                  snapshot.transactions.first?.category != nil else { throw LedgerError.invalid(workspace.session.errorMessage ?? "Classification queue did not complete.") }
             await workspace.vault.stop()
             // Recreate the workspace to exercise the persisted selection and lazy restore.
             let reopened = AppWorkspace()
             await reopened.vault.start()
-            reopened.processingMode = .manual
-            guard reopened.classifierProvider == "ollama", reopened.model == nil else { throw LedgerError.invalid("Saved provider did not restore lazily.") }
+            reopened.captureState.processingMode = .manual
+            guard reopened.classifier.classifierProvider == "ollama", reopened.classifier.model == nil else { throw LedgerError.invalid("Saved provider did not restore lazily.") }
             let second = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-21,FICTIONAL BOOK SHOP,-9.25\n".utf8), filename: "ollama-second.csv")
             _ = try await reopened.transactionState.importCSV(second, mapping: mapping, skipped: [])
             await reopened.captureState.sync()
-            guard reopened.errorMessage == nil, reopened.model == nil, reopened.pendingJobs == 0,
-                  reopened.failedJobs == 0 else { throw LedgerError.invalid(reopened.errorMessage ?? "Restored Ollama provider did not process the queue.") }
+            guard reopened.session.errorMessage == nil, reopened.classifier.model == nil, reopened.captureState.pendingJobs == 0,
+                  reopened.captureState.failedJobs == 0 else { throw LedgerError.invalid(reopened.session.errorMessage ?? "Restored Ollama provider did not process the queue.") }
             await reopened.vault.stop()
             print("ollama_smoke_passed: sandboxed_local_connection, provider_selection, queue_classification, mandatory_review, persisted_selection, draft_suggestion_without_saving, empty_description_rejected")
             exit(0)

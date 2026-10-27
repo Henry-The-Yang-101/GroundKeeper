@@ -2,7 +2,6 @@ import SwiftUI
 import GroundKeeperCore
 
 struct ReportEntryRow: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(TransactionWorkspace.self) private var transactionState
     let entry: SpendingEntry
     let currency: String
@@ -25,6 +24,7 @@ struct ReportEntryRow: View {
 
 struct ReportTransactionsSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let drilldown: ReportDrilldown
@@ -93,7 +93,7 @@ struct ReportTransactionsSheet: View {
             }
         }
         .frame(minWidth: 540, idealWidth: 680, minHeight: 450, idealHeight: 620)
-        .task(id: "\(page)|\(previous)|\(transactionState.reportingRevision)|\(workspace.ready)") {
+        .task(id: "\(page)|\(previous)|\(transactionState.reportingRevision)|\(session.ready)") {
             rows = []; error = nil; loading = true
             do {
                 let fetched = try await transactionState.spendingEntries(filter, offset: page * 100)
@@ -111,7 +111,7 @@ struct ReportTransactionsSheet: View {
                 }
             }.workspaceEnvironment(workspace).vaultSheet()
         }
-        .onChange(of: workspace.ready) { if !workspace.ready { rows = []; presentation = nil; dismiss() } }
+        .onChange(of: session.ready) { if !session.ready { rows = []; presentation = nil; dismiss() } }
     }
 
     private func open(_ entry: SpendingEntry, receipts: Bool) {
@@ -147,7 +147,6 @@ private enum ReportEntryPresentation: Identifiable {
 }
 
 private struct ReportEvidenceEditor: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let transaction: Transaction

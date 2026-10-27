@@ -110,7 +110,7 @@ enum QueueAgentHeartbeat {
                 AppPreferences.defaults.synchronize()
                 let workspace = AppWorkspace(isBackgroundAgent: true)
                 await workspace.vault.start()
-                while workspace.ready && !Task.isCancelled && QueuePreferences.mode == .background && !QueueProcessLease.foregroundIsRunning {
+                while workspace.session.ready && !Task.isCancelled && QueuePreferences.mode == .background && !QueueProcessLease.foregroundIsRunning {
                     heartbeat()
                     do { try await Task.sleep(for: .seconds(1)) } catch { break }
                 }

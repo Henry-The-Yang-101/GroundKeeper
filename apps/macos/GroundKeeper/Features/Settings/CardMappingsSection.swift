@@ -2,7 +2,7 @@ import SwiftUI
 import GroundKeeperCore
 
 struct CardMappingsSection: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
 
@@ -32,6 +32,6 @@ struct CardMappingsSection: View {
         } footer: {
             Text("Remember a card when choosing an account in Sync. Wallet and bank descriptions are mapped separately. Changes apply to future imports, including delayed captures; saved transactions and other reviews keep their existing choices.")
         }
-        .disabled(!workspace.ready || workspace.saving)
+        .disabled(!session.ready || session.saving)
     }
 }

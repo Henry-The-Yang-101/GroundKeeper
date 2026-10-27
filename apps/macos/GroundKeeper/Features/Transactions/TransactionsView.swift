@@ -2,7 +2,6 @@ import SwiftUI
 import GroundKeeperCore
 
 struct TransactionsView: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(TransactionWorkspace.self) private var transactionState
     @State private var search = ""
     @FocusState private var searchFocused: Bool

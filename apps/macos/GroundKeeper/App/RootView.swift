@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
 
@@ -21,10 +22,10 @@ struct RootView: View {
                     .navigationTitle(workspace.selectedTab?.title ?? "Home")
                     .toolbar {
                         ToolbarItem(placement: .automatic) {
-                            Label(workspace.ready ? "Local vault" : "Opening vault", systemImage: "internaldrive")
+                            Label(session.ready ? "Local vault" : "Opening vault", systemImage: "internaldrive")
                                 .font(.caption).foregroundStyle(AppStyle.muted)
                                 .padding(.horizontal, 10)
-                                .help(workspace.status)
+                                .help(session.status)
                         }
                         ToolbarItem(placement: .primaryAction) {
                             Button {
@@ -33,7 +34,7 @@ struct RootView: View {
                                 Label("Add transaction", systemImage: "plus")
                             }
                             .help("Add a transaction (⌘N)")
-                            .disabled(!workspace.ready)
+                            .disabled(!session.ready)
                         }
                     }
             }
@@ -49,9 +50,9 @@ struct RootView: View {
         .sheet(isPresented: $transactionState.showingImportPreview) {
             ImportPreviewView().vaultSheet()
         }
-        .alert("GroundKeeper needs attention", isPresented: Binding(get: { workspace.errorMessage != nil }, set: { if !$0 { workspace.errorMessage = nil } })) {
-            Button("OK") { workspace.errorMessage = nil }
-        } message: { Text(workspace.errorMessage ?? "") }
+        .alert("GroundKeeper needs attention", isPresented: Binding(get: { session.errorMessage != nil }, set: { if !$0 { session.errorMessage = nil } })) {
+            Button("OK") { session.errorMessage = nil }
+        } message: { Text(session.errorMessage ?? "") }
     }
 
     @ViewBuilder private var selectedPage: some View {

@@ -2,7 +2,6 @@ import SwiftUI
 import GroundKeeperCore
 
 struct CouncilEvidenceView: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(ClassifierWorkspace.self) private var classifier
     let transactionID: String
     @State private var report: CouncilReport?

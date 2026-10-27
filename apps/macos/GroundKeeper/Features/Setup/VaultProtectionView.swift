@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct VaultProtectionView: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(VaultWorkspace.self) private var vault
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -36,7 +36,7 @@ struct VaultProtectionView: View {
                 .font(.callout).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             if let error { Text(error).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             HStack {
-                Button(workspace.saving ? "Saving…" : encrypt ? (vault.encrypted ? "Change passphrase" : "Encrypt my vault") : "Use unencrypted SQLite") {
+                Button(session.saving ? "Saving…" : encrypt ? (vault.encrypted ? "Change passphrase" : "Encrypt my vault") : "Use unencrypted SQLite") {
                     error = nil
                     Task {
                         do {
@@ -47,7 +47,7 @@ struct VaultProtectionView: View {
                         } catch { self.error = error.localizedDescription }
                     }
                 }.buttonStyle(.brass)
-                    .disabled(!workspace.ready || workspace.saving || captureState.processing || (vault.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
+                    .disabled(!session.ready || session.saving || captureState.processing || (vault.encrypted && currentPassphrase.isEmpty) || (encrypt && (passphrase.count < 12 || passphrase != confirmation || passphrase.utf8.count > 1024 || passphrase.contains("\0"))))
                 if applied {
                     Label("Saved", systemImage: "checkmark.circle.fill").foregroundStyle(AppStyle.accent)
                         .transition(.opacity)
@@ -62,9 +62,8 @@ struct VaultProtectionView: View {
 }
 
 struct VaultUnlockView: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(VaultWorkspace.self) private var vault
-    @Environment(CaptureWorkspace.self) private var captureState
     @State private var passphrase = ""
     var body: some View {
         VStack(spacing: 24) {
@@ -81,7 +80,7 @@ struct VaultUnlockView: View {
                         .disabled(vault.unlocking)
                 }
             }
-            if let error = workspace.errorMessage { Text(error).foregroundStyle(.red).frame(maxWidth: 440) }
+            if let error = session.errorMessage { Text(error).foregroundStyle(.red).frame(maxWidth: 440) }
             Text("Your vault stays on this Mac. Use the passphrase you chose during setup.")
                 .font(.callout).foregroundStyle(AppStyle.muted)
         }.padding(50).frame(maxWidth: .infinity, maxHeight: .infinity).frame(minWidth: 760, minHeight: 600)

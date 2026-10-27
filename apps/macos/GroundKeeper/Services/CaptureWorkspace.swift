@@ -38,10 +38,10 @@ import Observation
     var lastSync: Date?
     @ObservationIgnored private let folder = CaptureFolder()
     @ObservationIgnored var folderBookmark: Data?
-    @ObservationIgnored var loop: Task<Void, Never>?
-    @ObservationIgnored var processingTask: Task<Void, Never>?
-    @ObservationIgnored var automaticProcessingRequested = false
-    @ObservationIgnored var automaticResumeTask: Task<Void, Never>?
+    @ObservationIgnored private var loop: Task<Void, Never>?
+    @ObservationIgnored private var processingTask: Task<Void, Never>?
+    @ObservationIgnored private var automaticProcessingRequested = false
+    @ObservationIgnored private var automaticResumeTask: Task<Void, Never>?
     @ObservationIgnored var stopping = false
     var captureFolderNeedsReconnect: Bool { hasCaptureFolder && !AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderWritable) }
     var queueCount: Int { pendingCaptures + pendingFileWork + (classifier.classifierProvider == "manual" ? 0 : pendingJobs + unqueuedJobs) }
@@ -86,6 +86,25 @@ import Observation
         loop = nil; automaticResumeTask = nil; processingTask = nil
     }
     func finishShutdown() { stopping = false }
+
+    func applySnapshot(_ result: LedgerWorkspaceSnapshot) {
+        reviews = result.ledger.reviews; queue = result.ledger.queue
+        cardMappings = result.ledger.cardMappings
+        unqueuedJobs = result.unqueuedJobs
+        pendingJobs = result.ledger.pendingJobs; failedJobs = result.ledger.failedJobs
+    }
+
+    func clearLockedState() {
+        cardMappings = []; reviews = []; queue = []; captureFeedback = nil
+        pendingCaptures = 0; waitingCaptures = 0; unqueuedJobs = 0
+        pendingJobs = 0; failedJobs = 0; pendingFileWork = 0
+        countError = nil; countUpdatedAt = nil; cleanupMessage = nil; lastSync = nil
+    }
+
+    func restoreFolder() {
+        folderBookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.captureFolderBookmark)
+        if folderBookmark != nil { folderName = "Saved capture folder" }
+    }
 
     func assignAccount(_ review: ReviewRecord, accountID: String, remember: Bool) {
         perform {

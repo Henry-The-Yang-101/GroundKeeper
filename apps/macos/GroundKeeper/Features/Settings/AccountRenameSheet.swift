@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct AccountRenameSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let account: Account
@@ -53,7 +54,7 @@ struct AccountRenameSheet: View {
                     }
                 }
                 .buttonStyle(.brass).keyboardShortcut(.defaultAction)
-                .disabled(saving || workspace.saving || trimmedName.isEmpty || trimmedName.count > 100 || trimmedName == account.name || duplicateName)
+                .disabled(saving || session.saving || trimmedName.isEmpty || trimmedName.count > 100 || trimmedName == account.name || duplicateName)
             }
         }
         .frame(width: 500, height: 320)

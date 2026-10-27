@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import GroundKeeperCore
 
 struct ImportPreviewView: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     @State private var document: CSVDocument?
@@ -137,7 +137,7 @@ struct ImportPreviewView: View {
                                 defer { busy = false }
                                 do {
                                     rows = await Task.detached { document.preview(selectedMapping) }.value
-                                    history = try await workspace.store?.csvImportHistory(hash: document.hash, accountID: selectedMapping.accountID)
+                                    history = try await session.store?.csvImportHistory(hash: document.hash, accountID: selectedMapping.accountID)
                                     skipped = []; updateExisting = false; reviewPage = 0; reviewing = true; error = nil
                                 } catch { self.error = error.localizedDescription }
                             }
@@ -161,7 +161,7 @@ struct ImportPreviewView: View {
             guard let document, !mapping.accountID.isEmpty, !reviewing else { return }
             let accountID = mapping.accountID
             do {
-                let saved = try await workspace.store?.csvImportHistory(hash: document.hash, accountID: accountID)
+                let saved = try await session.store?.csvImportHistory(hash: document.hash, accountID: accountID)
                 try Task.checkCancellation()
                 guard mapping.accountID == accountID, !busy, !reviewing else { return }
                 history = saved

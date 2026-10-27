@@ -2,12 +2,12 @@ import SwiftUI
 
 /// Only this small subtree animates when a successful operation completes.
 struct WorkspaceFeedbackView: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
-            if let feedback = workspace.feedback {
+            if let feedback = session.feedback {
                 Label(feedback.message, systemImage: "checkmark.circle.fill")
                     .font(.callout.weight(.medium))
                     .foregroundStyle(AppStyle.text)
@@ -21,11 +21,11 @@ struct WorkspaceFeedbackView: View {
             }
         }
         .allowsHitTesting(false)
-        .animation(reduceMotion ? nil : VaultMotion.settle, value: workspace.feedback?.id)
-        .task(id: workspace.feedback?.id) {
-            guard workspace.feedback != nil else { return }
+        .animation(reduceMotion ? nil : VaultMotion.settle, value: session.feedback?.id)
+        .task(id: session.feedback?.id) {
+            guard session.feedback != nil else { return }
             do { try await Task.sleep(for: .seconds(3)) } catch { return }
-            workspace.feedback = nil
+            session.feedback = nil
         }
     }
 }

@@ -4,6 +4,7 @@ import GroundKeeperCore
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
@@ -158,19 +159,19 @@ struct TransactionEditor: View {
                 CouncilEvidenceView(transactionID: original.id.uuidString)
             }
             .formStyle(.grouped).scrollContentBackground(.hidden)
-            .disabled(workspace.saving)
+            .disabled(session.saving)
             SheetFooter {
-                Button("Cancel", action: cancel).keyboardShortcut(.cancelAction).disabled(workspace.saving)
+                Button("Cancel", action: cancel).keyboardShortcut(.cancelAction).disabled(session.saving)
                 Spacer()
-                if workspace.saving { ProgressView("Saving…").controlSize(.small) }
+                if session.saving { ProgressView("Saving…").controlSize(.small) }
                 Button("Save transaction") { save() }
                     .buttonStyle(.brass)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!valid || workspace.saving || suggesting || receiptsLoading)
+                    .disabled(!valid || session.saving || suggesting || receiptsLoading)
             }
         }
         .frame(width: 580, height: 700)
-        .interactiveDismissDisabled(isChanged || workspace.saving)
+        .interactiveDismissDisabled(isChanged || session.saving)
         .onAppear { merchantFocused = true }
         .onDisappear { suggestionTask?.cancel() }
         .onChange(of: suggestionInput) { _, _ in

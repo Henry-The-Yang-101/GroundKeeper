@@ -4,6 +4,7 @@ import GroundKeeperCore
 
 struct TransactionDetailView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
@@ -83,7 +84,7 @@ struct TransactionDetailView: View {
             Text("Keep this entry’s description, date, and category. Combine notes, receipts, and source evidence; count the purchase once. The other record stays in the vault’s history.")
         }
         .disabled(mergingBusy)
-        .onChange(of: workspace.ready) { if !workspace.ready { dismiss() } }
+        .onChange(of: session.ready) { if !session.ready { dismiss() } }
         .sheet(item: $editor, onDismiss: { Task { await load() } }) { current in
             TransactionEditor(transaction: current) { draft in
                 Task {
@@ -178,7 +179,7 @@ struct TransactionDetailView: View {
                                 merging = other
                             } catch { self.error = error.localizedDescription }
                         }
-                    }.disabled(loading || workspace.saving)
+                    }.disabled(loading || session.saving)
                 }
             }
         }
@@ -203,7 +204,7 @@ struct TransactionDetailView: View {
                 throw LedgerError.invalid("This transaction is no longer available.")
             }
             transaction = current
-            guard let store = workspace.store else { throw CancellationError() }
+            guard let store = session.store else { throw CancellationError() }
             evidence = try await store.transactionEvidence(id: current.id.uuidString)
             statementMatches = try await store.savedStatementMatches(transactionID: current.id.uuidString)
             receipts = try await receiptState.receiptRecords(transactionID: current.id.uuidString)

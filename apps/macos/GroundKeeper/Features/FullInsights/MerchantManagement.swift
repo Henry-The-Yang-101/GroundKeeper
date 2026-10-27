@@ -2,7 +2,7 @@ import SwiftUI
 import GroundKeeperCore
 
 struct MerchantManagementSheet: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(MerchantWorkspace.self) private var merchantState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
@@ -64,14 +64,12 @@ struct MerchantManagementSheet: View {
         .onChange(of: visibleNames.map(\.key)) {
             if !visibleNames.contains(where: { $0.key == selection }) { selection = nil }
         }
-        .onChange(of: workspace.ready) { if !workspace.ready { names = []; merchants = []; dismiss() } }
+        .onChange(of: session.ready) { if !session.ready { names = []; merchants = []; dismiss() } }
     }
 }
 
 private struct MerchantGroupingEditor: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(MerchantWorkspace.self) private var merchantState
-    @Environment(TransactionWorkspace.self) private var transactionState
     let name: MerchantName
     let merchants: [Merchant]
     let changed: () -> Void
@@ -128,9 +126,8 @@ private struct MerchantGroupingEditor: View {
 }
 
 struct TransactionMerchantSheet: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(MerchantWorkspace.self) private var merchantState
-    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let entry: SpendingEntry
     @State private var transaction: TransactionMerchant?
@@ -173,6 +170,6 @@ struct TransactionMerchantSheet: View {
                 merchants = directory.merchants; transaction = result; selection = result.merchantID ?? ""; automatic = !result.overridden
             } catch { self.error = error.localizedDescription }
         }
-        .onChange(of: workspace.ready) { if !workspace.ready { dismiss() } }
+        .onChange(of: session.ready) { if !session.ready { dismiss() } }
     }
 }

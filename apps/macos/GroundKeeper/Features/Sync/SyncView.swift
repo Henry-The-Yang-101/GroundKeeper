@@ -2,7 +2,7 @@ import SwiftUI
 import GroundKeeperCore
 
 struct SyncView: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @State private var viewedTransaction: Transaction?
@@ -13,12 +13,12 @@ struct SyncView: View {
                 SectionHeading(title: "iCloud capture folder", detail: captureState.captureFolderPath)
                     .textSelection(.enabled)
                     .help(captureState.captureFolderPath)
-                Text(workspace.status).foregroundStyle(AppStyle.muted)
+                Text(session.status).foregroundStyle(AppStyle.muted)
                 if let last = captureState.lastSync { Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
                 HStack {
                     Button("Connect folder…", action: captureState.selectFolder)
                     Button("Retry failed work", action: captureState.retryFailures)
-                }.disabled(!workspace.ready || workspace.saving)
+                }.disabled(!session.ready || session.saving)
                 QueueControls(showsReviewGuidance: false)
                 CaptureFolderInfoButton()
             }
@@ -42,11 +42,11 @@ struct SyncView: View {
                                     Task {
                                         do {
                                             guard let transaction = try await transactionState.transaction(id: id) else {
-                                                workspace.errorMessage = "This transaction is no longer available."
+                                                session.errorMessage = "This transaction is no longer available."
                                                 return
                                             }
                                             viewedTransaction = transaction
-                                        } catch { workspace.errorMessage = error.localizedDescription }
+                                        } catch { session.errorMessage = error.localizedDescription }
                                     }
                                 }
                             }
@@ -84,9 +84,7 @@ struct SyncView: View {
     }
 }
 private struct CaptureFolderInfoButton: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(CaptureWorkspace.self) private var captureState
-    @Environment(TransactionWorkspace.self) private var transactionState
     @State private var showingInfo = false
 
     var body: some View {
@@ -118,7 +116,7 @@ private struct CaptureFolderInfoButton: View {
 }
 
 private struct CaptureReviewRow: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     let review: ReviewRecord
@@ -196,11 +194,11 @@ private struct CaptureReviewRow: View {
                 Button("Correct capture details…") { correcting = true }
             }
             Button("Dismiss review") { captureState.dismiss(review) }.font(.caption)
-        }.disabled(workspace.saving)
+        }.disabled(session.saving)
         .sheet(isPresented: $correcting) { CaptureCorrection(review: review).vaultSheet() }
         .task(id: "\(review.id)|\(transactionState.reportingRevision)") {
             do {
-                guard let store = workspace.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
+                guard let store = session.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
                 context = try await store.captureReviewContext(eventID: review.eventID)
                 candidates = try await store.reviewCandidates(reviewID: review.id)
             } catch { contextError = error.localizedDescription }
@@ -217,7 +215,7 @@ private struct CaptureCorrection: View {
         let isDebit: Bool?
         let rememberCard: Bool
     }
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
@@ -283,7 +281,7 @@ private struct CaptureCorrection: View {
                         catch { self.error = error.localizedDescription }
                     }
                 }.keyboardShortcut(.defaultAction)
-                    .disabled(context == nil || isDebit == nil || saving || workspace.saving || accountID.isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || TransactionInput.positiveAmount(amount) == nil)
+                    .disabled(context == nil || isDebit == nil || saving || session.saving || accountID.isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || TransactionInput.positiveAmount(amount) == nil)
                     .buttonStyle(.brass)
             }
         }.frame(width: 570).interactiveDismissDisabled(saving || hasChanges)
@@ -294,7 +292,7 @@ private struct CaptureCorrection: View {
             .task(id: review.eventID) {
                 guard context == nil else { return }
                 do {
-                    guard let store = workspace.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
+                    guard let store = session.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
                     let source = try await store.captureReviewContext(eventID: review.eventID)
                     let formatter = DateFormatter()
                     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -317,8 +315,6 @@ private struct CaptureCorrection: View {
 }
 
 private struct CaptureSourceEvidence: View {
-    @Environment(AppWorkspace.self) private var workspace
-    @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     let context: CaptureReviewContext
     var body: some View {

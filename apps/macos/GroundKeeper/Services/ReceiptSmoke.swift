@@ -17,7 +17,7 @@ import GroundKeeperCore
             _ = try await store.importCSV(document, mapping: mapping)
             let workspace = AppWorkspace()
             workspace.configureQueueSmoke(store: store, bookmark: Data(), mode: .manual)
-            try await workspace.refresh()
+            try await workspace.session.refresh()
             guard let transaction = workspace.transactionState.transactions.first else { throw LedgerError.invalid("Missing receipt fixture.") }
             let id = transaction.id.uuidString
             let note = try await workspace.receiptState.transactionNote(transactionID: id)
@@ -32,8 +32,8 @@ import GroundKeeperCore
             try await workspace.receiptState.setReceiptRemoved(id: receipt.id, transactionID: id, removed: false)
             guard try await workspace.receiptState.receiptRecords(transactionID: id).count == 1 else { throw LedgerError.invalid("Receipt restoration failed.") }
             workspace.receiptState.setReceiptSharing(false)
-            for _ in 0..<100 where workspace.saving { try await Task.sleep(for: .milliseconds(10)) }
-            guard !workspace.saving, try await !store.receiptCloudConsent(), !workspace.receiptState.shareReceiptContextWithApple else { throw LedgerError.invalid("Receipt sharing preference did not persist.") }
+            for _ in 0..<100 where workspace.session.saving { try await Task.sleep(for: .milliseconds(10)) }
+            guard !workspace.session.saving, try await !store.receiptCloudConsent(), !workspace.receiptState.shareReceiptContextWithApple else { throw LedgerError.invalid("Receipt sharing preference did not persist.") }
             guard try await store.integrityCheck() else { throw LedgerError.invalid("Receipt fixture integrity failed.") }
             await workspace.vault.stop()
             print("receipt_workspace_smoke_passed: notes, image attachment, removal/restoration, sharing")

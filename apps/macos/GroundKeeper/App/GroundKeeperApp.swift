@@ -8,6 +8,8 @@ struct GroundKeeperApp: App {
 
     private var vault: VaultWorkspace { workspace.vault }
 
+    private var session: WorkspaceSession { workspace.session }
+
     init() {
         VaultTypography.register()
     }
@@ -15,7 +17,7 @@ struct GroundKeeperApp: App {
     var body: some Scene {
         Window("GroundKeeper", id: "main") {
             Group {
-                if vault.encrypted && !workspace.ready { VaultUnlockView() }
+                if vault.encrypted && !session.ready { VaultUnlockView() }
                 else if vault.showingSetup { SetupView(reviewMode: vault.reviewingSetup) }
                 else { RootView() }
             }
@@ -47,23 +49,23 @@ struct GroundKeeperApp: App {
                 Button("New Transaction…", systemImage: "plus") {
                     transactionState.editor = Transaction()
                 }
-                .keyboardShortcut("n").disabled(!workspace.ready || vault.showingSetup)
+                .keyboardShortcut("n").disabled(!session.ready || vault.showingSetup)
             }
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") { workspace.selectedTab = .settings }
-                    .keyboardShortcut(",").disabled(!workspace.ready || vault.showingSetup)
+                    .keyboardShortcut(",").disabled(!session.ready || vault.showingSetup)
             }
             CommandGroup(after: .textEditing) {
                 Button("Find Transactions…") {
                     workspace.showTransactions()
                     transactionState.focusTransactionSearch = true
                 }
-                .keyboardShortcut("f").disabled(!workspace.ready || vault.showingSetup)
+                .keyboardShortcut("f").disabled(!session.ready || vault.showingSetup)
             }
             CommandMenu("Navigate") {
                 ForEach(AppTab.allCases) { tab in
                     Button(tab.title) { workspace.selectedTab = tab }
-                        .keyboardShortcut(KeyEquivalent(tab.shortcut)).disabled(!workspace.ready || vault.showingSetup)
+                        .keyboardShortcut(KeyEquivalent(tab.shortcut)).disabled(!session.ready || vault.showingSetup)
                 }
             }
         }

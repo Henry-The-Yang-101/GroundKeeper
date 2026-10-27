@@ -3,6 +3,7 @@ import AppKit
 
 struct SetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(VaultWorkspace.self) private var vault
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
@@ -20,7 +21,7 @@ struct SetupView: View {
     @State private var changingProtection = false
     private let titles = ["Welcome", "Privacy", "Intelligence", "iCloud Drive", "iPhone", "Account", "Ready"]
     private var step: Int { min(max(reviewMode ? reviewStep : savedStep, 0), titles.count - 1) }
-    private var canContinue: Bool { workspace.ready && !workspace.saving && !installer.busy && (reviewMode || step != 1 || protectionChosen) }
+    private var canContinue: Bool { session.ready && !session.saving && !installer.busy && (reviewMode || step != 1 || protectionChosen) }
     private var duplicateAccountName: Bool { transactionState.accountNameExists(name: accountName, currency: currency) }
 
     var body: some View {
@@ -31,7 +32,7 @@ struct SetupView: View {
                 Text("\(titles[step]) · \(step + 1) of \(titles.count)").foregroundStyle(AppStyle.muted)
                 if reviewMode {
                     Button("Return to app") { vault.showingSetup = false }
-                        .disabled(workspace.saving || installer.busy)
+                        .disabled(session.saving || installer.busy)
                         .keyboardShortcut(.cancelAction)
                 }
             }.padding(.horizontal, 36).padding(.vertical, 24)
@@ -46,7 +47,7 @@ struct SetupView: View {
             }.animation(reduceMotion ? nil : VaultMotion.feedback, value: step)
             Divider()
             HStack {
-                Button("Back") { move(to: step - 1) }.disabled(step == 0 || workspace.saving || installer.busy)
+                Button("Back") { move(to: step - 1) }.disabled(step == 0 || session.saving || installer.busy)
                 Spacer()
                 if step > 1 && step < 6 { Text("You can revisit this in Settings.").font(.callout).foregroundStyle(AppStyle.muted) }
                 Button(step == 6 ? "Open GroundKeeper" : "Continue") {
@@ -58,9 +59,9 @@ struct SetupView: View {
         }
         .background(AppStyle.pageBackground)
         .frame(minWidth: 820, minHeight: 680)
-        .alert("Setup needs attention", isPresented: Binding(get: { workspace.errorMessage != nil }, set: { if !$0 { workspace.errorMessage = nil } })) {
-            Button("OK") { workspace.errorMessage = nil }
-        } message: { Text(workspace.errorMessage ?? "") }
+        .alert("Setup needs attention", isPresented: Binding(get: { session.errorMessage != nil }, set: { if !$0 { session.errorMessage = nil } })) {
+            Button("OK") { session.errorMessage = nil }
+        } message: { Text(session.errorMessage ?? "") }
     }
     @ViewBuilder private var page: some View {
         switch step {
@@ -70,19 +71,19 @@ struct SetupView: View {
             feature("sparkles", "Get a useful first pass", "Qwen, Laya, or Apple Intelligence suggest categories. You review the result.")
             feature("externaldrive", "Keep the full record", "Import CSVs, reconcile repeated captures, and edit transactions in a local vault.")
             Text("Setup takes a few minutes. Model downloads and iPhone setup can be completed later. Spending reports run locally; budgeting and planning are coming later.").font(.callout).foregroundStyle(AppStyle.muted)
-            if !workspace.ready { Text(workspace.status).foregroundStyle(AppStyle.muted); Button("Retry opening vault") { Task { await vault.start() } } }
+            if !session.ready { Text(session.status).foregroundStyle(AppStyle.muted); Button("Retry opening vault") { Task { await vault.start() } } }
         case 1:
             header("lock.shield.fill", "Your records.\nYour choice of protection.", reviewMode
                    ? "Review how your vault is protected on this Mac. You can continue without changing or reapplying protection."
                    : "Choose how GroundKeeper stores the transaction database on this Mac. Your existing records are preserved when you change protection.")
             if reviewMode {
-                LabeledContent("Current protection", value: workspace.ready
-                               ? (vault.encrypted ? "Encrypted vault" : "Unencrypted vault") : workspace.status)
+                LabeledContent("Current protection", value: session.ready
+                               ? (vault.encrypted ? "Encrypted vault" : "Unencrypted vault") : session.status)
                 if changingProtection {
                     VaultProtectionView(onApplied: { changingProtection = false })
-                    Button("Cancel protection change") { changingProtection = false }.disabled(workspace.saving)
+                    Button("Cancel protection change") { changingProtection = false }.disabled(session.saving)
                 } else {
-                    Button("Change vault protection…") { changingProtection = true }.disabled(!workspace.ready || workspace.saving)
+                    Button("Change vault protection…") { changingProtection = true }.disabled(!session.ready || session.saving)
                 }
             } else {
                 VaultProtectionView(onboarding: true)
@@ -129,7 +130,7 @@ struct SetupView: View {
                     .font(.caption).foregroundStyle(.red)
             }
             Button("Add account") { transactionState.addAccount(name: accountName, currency: currency, kind: accountKind); accountName = "" }
-                .disabled(workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
+                .disabled(session.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
             Text("No bank login is needed. CSV imports and captured transactions are matched to accounts you create.").foregroundStyle(AppStyle.muted)
         default:
             header("checkmark.seal.fill", "Make yourself at home.", "Your workspace is ready. Here is how GroundKeeper is configured.")

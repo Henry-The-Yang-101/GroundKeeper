@@ -18,8 +18,8 @@ import GroundKeeperCore
             // separate write keeps editor controls busy. Use this temporary vault only.
             let workspace = AppWorkspace()
             workspace.configureQueueSmoke(store: store, bookmark: Data(), mode: .manual)
-            try await workspace.refresh()
-            workspace.saving = true
+            try await workspace.session.refresh()
+            workspace.session.saving = true
             var query = LedgerTransactionQuery(); query.search = "FICTIONAL"
             workspace.transactionState.queryTransactions(query)
             workspace.transactionState.changePage(1)
@@ -32,7 +32,7 @@ import GroundKeeperCore
             guard workspace.transactionState.matchingTransactions == 0, workspace.transactionState.transactions.isEmpty, workspace.transactionState.page == 0,
                   workspace.transactionState.totalTransactions == 1, workspace.transactionState.recentTransactions.count == 1,
                   workspace.transactionState.transactionReviewCount == 1 else { throw LedgerError.invalid("Rapid ledger query refresh failed.") }
-            workspace.saving = false
+            workspace.session.saving = false
             print("ledger_query_refresh_passed")
             try await store.addAccount(name: "Fictional USD account", currency: "USD")
             guard let usd = try await store.snapshot().accounts.first(where: { $0.currency == "USD" }) else { throw LedgerError.invalid("Missing currency fixture.") }

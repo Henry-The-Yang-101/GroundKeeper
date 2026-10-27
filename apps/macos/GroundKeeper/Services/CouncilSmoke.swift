@@ -16,7 +16,7 @@ import GroundKeeperCore
                 print("council_error_mapping_passed"); exit(0)
             }
             await workspace.vault.start()
-            guard let store = workspace.store else { throw LedgerError.unavailable("Disposable vault did not open.") }
+            guard let store = workspace.session.store else { throw LedgerError.unavailable("Disposable vault did not open.") }
             workspace.vault.showingSetup = false; workspace.captureState.processingMode = .manual
             for (backend, title) in [("qwen_mlx", "Qwen"), ("laya_mps", "Laya")] {
                 let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true
@@ -29,9 +29,9 @@ import GroundKeeperCore
             }
             guard workspace.classifier.councilReadyToConfigure else { throw LedgerError.invalid("Smoke packages not selected.") }
             workspace.classifier.useCouncil()
-            while workspace.saving { try await Task.sleep(for: .milliseconds(100)) }
+            while workspace.session.saving { try await Task.sleep(for: .milliseconds(100)) }
             guard workspace.classifier.classifierProvider == "council", let configuration = workspace.classifier.councilConfiguration else {
-                throw LedgerError.invalid(workspace.errorMessage ?? "Council setup failed.")
+                throw LedgerError.invalid(workspace.session.errorMessage ?? "Council setup failed.")
             }
             try await store.addAccount(name: "Fictional council account", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
@@ -43,7 +43,7 @@ import GroundKeeperCore
             guard let report = try await store.councilReport(transactionID: transaction.id), report.result.votes.count == 3,
                   report.result.votes.filter({ $0.member.backend != "apple_shortcut" }).allSatisfy({ $0.disposition == "valid" }),
                   try await store.integrityCheck() else {
-                throw LedgerError.invalid(workspace.errorMessage ?? "Council pipeline did not complete.")
+                throw LedgerError.invalid(workspace.session.errorMessage ?? "Council pipeline did not complete.")
             }
             guard try await store.selectedCouncil()?.id == configuration.id else { throw LedgerError.invalid("Council selection changed during inference.") }
             for vote in report.result.votes { print("council_member: \(vote.member.title), \(vote.disposition), \(vote.errorCode ?? "none")") }

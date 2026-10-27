@@ -2,7 +2,6 @@ import SwiftUI
 import GroundKeeperCore
 
 struct TransactionReceiptEditor: View {
-    @Environment(AppWorkspace.self) private var workspace
     @Environment(ReceiptWorkspace.self) private var receiptState
     @Binding var transaction: Transaction
     @Binding var loading: Bool

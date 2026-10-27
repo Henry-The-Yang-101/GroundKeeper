@@ -19,7 +19,7 @@ import Observation
     var encrypted = VaultAccess.isEncrypted
     var unlocking = false
     var vaultPath = ""
-    @ObservationIgnored var started = false
+    @ObservationIgnored private var started = false
 
     init(session: WorkspaceSession, captureState: CaptureWorkspace, isBackgroundAgent: Bool) {
         self.session = session; self.captureState = captureState; self.isBackgroundAgent = isBackgroundAgent
@@ -45,9 +45,9 @@ import Observation
                 }
             }
             guard let opened else { return }
-            store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
+            session.store = opened.0; vaultPath = opened.1.path; status = "Local database ready"
             try await didOpen(opened.0)
-        } catch is CancellationError { await store?.close(); store = nil; started = false } catch { await store?.close(); store = nil; status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
+        } catch is CancellationError { await store?.close(); session.store = nil; started = false } catch { await store?.close(); session.store = nil; status = "Vault unavailable"; errorMessage = error.localizedDescription; started = false }
     }
 
     func unlock(passphrase: String? = nil, usingKeychain: Bool = false) async {
@@ -103,6 +103,6 @@ import Observation
         await captureState.beginShutdown()
         defer { captureState.finishShutdown() }
         await willClose()
-        await store?.close(); store = nil; started = false
+        await store?.close(); session.store = nil; started = false
     }
 }

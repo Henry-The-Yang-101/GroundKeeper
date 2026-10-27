@@ -29,6 +29,7 @@ struct ReportDrilldown: Identifiable {
 
 struct SpendingReportsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(MerchantWorkspace.self) private var merchantState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -59,7 +60,7 @@ struct SpendingReportsView: View {
         [period.rawValue, comparison, currency, timezone, String(weekStart), sensitivity.rawValue,
          accountID, category, tagID, merchantID ?? "all", String(customStart.timeIntervalSince1970), String(customEnd.timeIntervalSince1970)].joined(separator: "|")
     }
-    private var loadKey: String { selectionKey + "|\(transactionState.reportingRevision)|\(workspace.ready)|\(refresh)" }
+    private var loadKey: String { selectionKey + "|\(transactionState.reportingRevision)|\(session.ready)|\(refresh)" }
     var body: some View {
         ScrollViewReader { scroll in
             reportPage(scroll: scroll)
@@ -68,7 +69,7 @@ struct SpendingReportsView: View {
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in refresh += 1 }
         .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().workspaceEnvironment(workspace).vaultSheet() }
         .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).workspaceEnvironment(workspace).vaultSheet() }
-        .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
+        .onChange(of: session.ready) { if !session.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
     }
 
     private func reportPage(scroll: ScrollViewProxy) -> some View {

@@ -153,11 +153,11 @@ import GroundKeeperCore
         let workspace = AppWorkspace()
         await workspace.vault.start()
         workspace.captureState.processingMode = .manual
-        guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
+        guard let store = workspace.session.store else { throw LedgerError.unavailable("Preview vault did not open.") }
         workspace.classifier.useInstalledModel(package)
-        while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
-        guard workspace.errorMessage == nil, workspace.classifier.classifierProvider == "local" else {
-            throw LedgerError.invalid(workspace.errorMessage ?? "Local provider setup failed.")
+        while workspace.session.saving { try await Task.sleep(for: .milliseconds(50)) }
+        guard workspace.session.errorMessage == nil, workspace.classifier.classifierProvider == "local" else {
+            throw LedgerError.invalid(workspace.session.errorMessage ?? "Local provider setup failed.")
         }
         try await store.addAccount(name: "Fictional draft test", currency: "CAD")
         let account = try await store.snapshot().accounts[0].id

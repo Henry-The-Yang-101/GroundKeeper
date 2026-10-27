@@ -22,6 +22,13 @@ import Observation
 
     init(session: WorkspaceSession) { self.session = session }
 
+    func clearLockedState() {
+        refreshRequest += 1
+        transactions = []; recentTransactions = []; accounts = []
+        matchingTransactions = 0; totalTransactions = 0; transactionReviewCount = 0
+        reportingRevision = 0; editor = nil; showingImportPreview = false
+    }
+
     func refreshSnapshot() async throws -> LedgerWorkspaceSnapshot? {
         guard let store else { return nil }
         refreshRequest += 1

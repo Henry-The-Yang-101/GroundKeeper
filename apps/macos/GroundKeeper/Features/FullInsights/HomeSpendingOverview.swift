@@ -4,6 +4,7 @@ import Charts
 
 struct HomeSpendingOverview: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(TransactionWorkspace.self) private var transactionState
     @AppStorage(AppPreferences.Key.reportCurrency, store: AppPreferences.defaults) private var currency = "CAD"
     @AppStorage(AppPreferences.Key.reportTimezone, store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
@@ -38,7 +39,7 @@ struct HomeSpendingOverview: View {
                 Button("Try again") { refresh += 1 }
             } else { ProgressView("Loading spending…") }
         }
-        .task(id: "\(transactionState.reportingRevision)|\(workspace.ready)|\(currency)|\(timezone)|\(weekStart)|\(sensitivity)|\(refresh)") {
+        .task(id: "\(transactionState.reportingRevision)|\(session.ready)|\(currency)|\(timezone)|\(weekStart)|\(sensitivity)|\(refresh)") {
             report = nil; error = nil
             do {
                 let calendar = try ReportCalendar(timezone: timezone, weekStart: weekStart)
@@ -51,7 +52,7 @@ struct HomeSpendingOverview: View {
             catch { if !Task.isCancelled { self.error = error.localizedDescription } }
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in refresh += 1 }
-        .onChange(of: workspace.ready) { if !workspace.ready { report = nil } }
+        .onChange(of: session.ready) { if !session.ready { report = nil } }
     }
     private var calendar: ReportCalendar { (try? ReportCalendar(timezone: timezone)) ?? (try! ReportCalendar(timezone: "UTC")) }
 }

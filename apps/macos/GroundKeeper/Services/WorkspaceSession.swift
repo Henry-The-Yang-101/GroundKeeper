@@ -7,6 +7,7 @@ import Observation
 @MainActor @Observable final class WorkspaceSession {
     var status = "Opening local vault…"
     var store: LedgerStore?
+    var ready: Bool { store != nil }
     var saving = false
     var errorMessage: String?
     var feedback: WorkspaceFeedback?
@@ -40,10 +41,7 @@ import Observation
 }
 
 extension WorkspaceComponent {
-    var store: LedgerStore? {
-        get { session.store }
-        set { session.store = newValue }
-    }
+    var store: LedgerStore? { session.store }
     var ready: Bool { store != nil }
     var saving: Bool {
         get { session.saving }

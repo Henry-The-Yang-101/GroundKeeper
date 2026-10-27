@@ -4,6 +4,7 @@ struct QueueControls: View {
     static let reviewGuidance = "Capture reviews are resolved in Sync. A complete capture is saved immediately after your decision; category suggestions happen separately. In manual mode, Retry failed work requeues failures, then Import captures or Suggest categories runs the relevant work."
     var showsReviewGuidance = true
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @State private var showingProviders = false
@@ -17,7 +18,7 @@ struct QueueControls: View {
                     Button(captureState.suggestionButtonTitle) { Task { await captureState.sync(scope: .suggestions) } }
                         .disabled(controlsDisabled || captureState.suggestionCount == 0)
                 }
-                Button("Refresh count") { Task { await captureState.updateQueueCount() } }.disabled(!workspace.ready || captureState.processing)
+                Button("Refresh count") { Task { await captureState.updateQueueCount() } }.disabled(!session.ready || captureState.processing)
             }
             if let error = captureState.countError {
                 Text("Queue count unavailable: \(error)").font(.caption).foregroundStyle(AppStyle.muted)
@@ -32,9 +33,9 @@ struct QueueControls: View {
                         .font(.caption).foregroundStyle(AppStyle.muted)
                     HStack {
                         Button("Review transactions") { workspace.showTransactions(needingReview: true) }
-                            .disabled(!workspace.ready || workspace.saving)
+                            .disabled(!session.ready || session.saving)
                         Button("Choose provider…") { showingProviders = true }
-                            .disabled(!workspace.ready || captureState.processing || workspace.saving)
+                            .disabled(!session.ready || captureState.processing || session.saving)
                     }
                 }
                 if captureState.waitingCaptures > 0 {
@@ -52,12 +53,12 @@ struct QueueControls: View {
             VStack(spacing: 0) {
                 SheetHeading(title: "Categorization")
                 ScrollView { ModelSetupView(installer: installer).padding(.horizontal, 24).padding(.bottom, 24) }
-                SheetFooter { Spacer(); SheetDoneButton(disabled: installer.busy || workspace.saving) }
+                SheetFooter { Spacer(); SheetDoneButton(disabled: installer.busy || session.saving) }
             }.frame(width: 720, height: 730).vaultSheet()
-                .interactiveDismissDisabled(installer.busy || workspace.saving)
+                .interactiveDismissDisabled(installer.busy || session.saving)
         }
     }
     private var controlsDisabled: Bool {
-        !workspace.ready || captureState.processing || captureState.changingProcessingMode || workspace.saving
+        !session.ready || captureState.processing || captureState.changingProcessingMode || session.saving
     }
 }

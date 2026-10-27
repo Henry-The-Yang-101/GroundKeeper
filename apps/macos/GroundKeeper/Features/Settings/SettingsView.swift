@@ -3,7 +3,7 @@ import GroundKeeperCore
 import ServiceManagement
 
 struct SettingsView: View {
-    @Environment(AppWorkspace.self) private var workspace
+    @Environment(WorkspaceSession.self) private var session
     @Environment(VaultWorkspace.self) private var vault
     @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(CaptureWorkspace.self) private var captureState
@@ -29,7 +29,7 @@ struct SettingsView: View {
             VaultFormSection("Queue processing") {
                 Picker("Import and suggest categories", selection: Binding(get: { captureState.processingMode }, set: captureState.changeProcessingMode)) {
                     ForEach(QueueProcessingMode.allCases.filter { $0 != .background || (QueueBackgroundService.isSupported && !vault.encrypted) }) { Text($0.title).tag($0) }
-                }.disabled(captureState.changingProcessingMode || workspace.saving)
+                }.disabled(captureState.changingProcessingMode || session.saving)
                 Text(captureState.processingDescription).font(.caption).foregroundStyle(AppStyle.muted)
                 if !QueueBackgroundService.isSupported {
                     Text(QueueBackgroundService.unsupportedMessage).font(.caption).foregroundStyle(AppStyle.muted)
@@ -45,33 +45,33 @@ struct SettingsView: View {
                 QueueControls()
             }
             Section {
-                LabeledContent("Storage", value: workspace.ready ? (vault.encrypted ? "SQLCipher · encrypted · local Mac" : "SQLite · unencrypted · local Mac") : "Unavailable")
+                LabeledContent("Storage", value: session.ready ? (vault.encrypted ? "SQLCipher · encrypted · local Mac" : "SQLite · unencrypted · local Mac") : "Unavailable")
                 Text(vault.vaultPath).font(.caption).textSelection(.enabled)
                 Text("The database is stored locally in Application Support, outside iCloud Drive. Original capture files keep their existing iCloud protection.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 HStack {
-                    Button("Change vault protection…") { showingProtection = true }.disabled(!workspace.ready || captureState.processing || workspace.saving)
-                    if vault.encrypted { Button("Lock vault") { Task { await vault.lockVault() } }.disabled(workspace.saving || captureState.changingProcessingMode) }
+                    Button("Change vault protection…") { showingProtection = true }.disabled(!session.ready || captureState.processing || session.saving)
+                    if vault.encrypted { Button("Lock vault") { Task { await vault.lockVault() } }.disabled(session.saving || captureState.changingProcessingMode) }
                 }
                 if vault.encrypted { Text("Encrypted vaults process while the app is open and unlocked, or manually.").font(.caption).foregroundStyle(AppStyle.muted) }
-                if !workspace.ready { Button("Retry opening vault") { Task { await vault.start() } } }
+                if !session.ready { Button("Retry opening vault") { Task { await vault.start() } } }
             } header: { Text("Local vault").font(VaultTypography.section) }
             Section {
                 LabeledContent("Model", value: classifier.classifierStatus)
-                Button("Install models or choose a provider…") { showingModels = true }.disabled(!workspace.ready || captureState.processing || workspace.saving)
-                Button("Choose local model package…", action: classifier.selectModel).disabled(!workspace.ready || captureState.processing || workspace.saving)
+                Button("Install models or choose a provider…") { showingModels = true }.disabled(!session.ready || captureState.processing || session.saving)
+                Button("Choose local model package…", action: classifier.selectModel).disabled(!session.ready || captureState.processing || session.saving)
                 TextField("Apple Intelligence Shortcut", text: Binding(get: { classifier.shortcutName }, set: { classifier.shortcutName = $0 }))
-                    .disabled(captureState.processing || workspace.saving)
+                    .disabled(captureState.processing || session.saving)
                 Text("Using this provider sends description, direction and currency to the selected Shortcut. Its Use Model action controls whether Apple Intelligence runs on device or in the cloud. Check that action in Shortcuts before enabling.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Toggle("Include receipt text with Apple Intelligence", isOn: Binding(get: { receiptState.shareReceiptContextWithApple }, set: receiptState.setReceiptSharing))
-                    .disabled(!workspace.ready || captureState.processing || workspace.saving)
+                    .disabled(!session.ready || captureState.processing || session.saving)
                 Text("On by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
                 Button("Use Apple Intelligence Shortcut", action: classifier.useShortcut)
-                    .disabled(!workspace.ready || captureState.processing || workspace.saving)
+                    .disabled(!session.ready || captureState.processing || session.saving)
                 LabeledContent("Queue", value: "\(captureState.pendingJobs) pending · \(captureState.failedJobs) failed")
-                MerchantSearchSettingsView(workspace: workspace)
+                MerchantSearchSettingsView()
                 Text("Choose Qwen or Laya, Apple Intelligence, or Model council in provider setup. Council consults all three with equal votes. Every result requires review. Confirmed choices are preserved. Providers never fall back to one another.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Categorization").font(VaultTypography.section) }
@@ -80,7 +80,7 @@ struct SettingsView: View {
                     HStack {
                         LabeledContent(account.displayName(in: transactionState.accounts), value: account.currency)
                         Button("Rename…") { renamingAccount = account }
-                            .disabled(!workspace.ready || workspace.saving)
+                            .disabled(!session.ready || session.saving)
                             .accessibilityLabel("Rename \(account.displayName(in: transactionState.accounts))")
                     }
                 }
@@ -95,13 +95,13 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.red)
                 }
                 Button("Add account") { transactionState.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
-                    .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
+                    .disabled(!session.ready || session.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
                 Text("Choose an account for Wallet and bank captures in Sync, with the option to remember each card description.").font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Accounts").font(VaultTypography.section) }
             CardMappingsSection()
             VaultFormSection("Setup and iPhone") {
                 Button("Review setup assistant…") { vault.reviewingSetup = true; vault.showingSetup = true }
-                    .disabled(captureState.processing || workspace.saving)
+                    .disabled(captureState.processing || session.saving)
                 Button("iPhone Shortcuts and automation guide…") { showingPhoneGuide = true }
                 Button("Create standard iCloud inbox…", action: captureState.createDefaultCaptureFolder)
                 Button("Choose capture folder…", action: captureState.selectFolder)
@@ -127,15 +127,15 @@ struct SettingsView: View {
                     ContentSizedScrollView(maximumHeight: 520) {
                         VaultProtectionView().padding(.horizontal, 24).padding(.bottom, 24)
                     }
-                    SheetFooter { Spacer(); SheetDoneButton(disabled: workspace.saving) }
-                }.frame(width: 580).vaultSheet().interactiveDismissDisabled(workspace.saving)
+                    SheetFooter { Spacer(); SheetDoneButton(disabled: session.saving) }
+                }.frame(width: 580).vaultSheet().interactiveDismissDisabled(session.saving)
             }
             .sheet(isPresented: $showingModels) {
                 VStack(spacing: 0) {
                     SheetHeading(title: "Categorization")
                     ScrollView { ModelSetupView(installer: installer).padding(.horizontal, 24).padding(.bottom, 24) }
-                    SheetFooter { Spacer(); SheetDoneButton(disabled: installer.busy || workspace.saving) }
-                }.frame(width: 720, height: 730).vaultSheet().interactiveDismissDisabled(installer.busy || workspace.saving)
+                    SheetFooter { Spacer(); SheetDoneButton(disabled: installer.busy || session.saving) }
+                }.frame(width: 720, height: 730).vaultSheet().interactiveDismissDisabled(installer.busy || session.saving)
             }
             .sheet(isPresented: $showingPhoneGuide) {
                 VStack(spacing: 0) {
