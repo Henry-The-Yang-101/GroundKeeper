@@ -123,7 +123,7 @@ Test the Swift core separately from the app:
 swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
 ```
 
-After installing the Python dependencies on Apple silicon:
+After installing the Python dependencies:
 
 ```sh
 .venv/bin/python -m pytest -q -m "not gpu"
