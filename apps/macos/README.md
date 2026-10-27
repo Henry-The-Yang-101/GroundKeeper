@@ -384,6 +384,16 @@ against the actual shipped executable. The noninteractive receipt-workspace
 check covers notes, images, reversible removal, and the Apple sharing preference;
 `--receipt-smoke` remains the interactive model/XPC receipt check.
 
+Visual walkthrough on 2026-10-27 used a separate fictional preview app, vault,
+and preferences. Home, Transactions, Spending, Sync, Settings, provider setup,
+and merchant grouping rendered correctly in the checked light/dark states.
+Search/clear filters, saving and reopening a note edit, receipt image/text,
+capture-count refresh/help, appearance switching, and the New Transaction
+shortcut worked. Cancelling a blank draft preserved the three-entry ledger;
+Home and Spending both showed $112.50 purchases minus $18.00 refunds = $94.50.
+No layout or state-propagation regressions were observed in these flows. Model
+inference and physical capture are separate integration checks.
+
 ```sh
 swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
 .venv/bin/python -m pytest -q -m "not gpu"
