@@ -136,6 +136,10 @@ MLX and PyTorch tests skip when their libraries or accelerators are unavailable;
 mocked backend and policy tests run on CPU. Check the generated schema reference
 with `.venv/bin/python -m scripts.database_schema --check`.
 
+CI also enforces `.venv/bin/ruff check groundkeeper scripts tests` and
+`.venv/bin/ruff format --check groundkeeper scripts tests`. Use
+`.venv/bin/ruff format groundkeeper scripts tests` to apply formatting locally.
+
 The Python distribution is named `groundkeeper`; its import package remains
 `groundkeeper`. Module shipping boundaries are listed in
 [`groundkeeper/README.md`](groundkeeper/README.md), and the

@@ -37,6 +37,8 @@ jobs:
           uv pip install --python .local/merchant-search-ddgs/venv/bin/python -r experiments/merchant-search/requirements.txt
       - name: Test Python and Swift core
         run: |
+          .venv/bin/ruff check groundkeeper scripts tests
+          .venv/bin/ruff format --check groundkeeper scripts tests
           .venv/bin/python -m scripts.database_schema --check
           .venv/bin/python -m pytest -q -m "not gpu"
           swift test --package-path apps/macos/GroundKeeperCore --scratch-path .local/macos/CoreBuild
