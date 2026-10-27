@@ -119,6 +119,48 @@ def test_native_replace_and_match_use_text_token_fields():
                 assert params["WFInput"]["WFSerializationType"] == "WFTextTokenString"
             if action["WFWorkflowActionIdentifier"].endswith(".text.match"):
                 assert params["text"]["WFSerializationType"] == "WFTextTokenString"
+            if action["WFWorkflowActionIdentifier"].endswith(".text.changecase"):
+                # The native action silently returns blank for WFInput.
+                assert "WFInput" not in params
+                assert params["text"]["WFSerializationType"] == "WFTextTokenString"
+            if action["WFWorkflowActionIdentifier"].endswith(".calculateexpression"):
+                assert "WFExpression" not in params
+                assert params["Input"]["WFSerializationType"] == "WFTextTokenString"
+
+
+def test_wallet_priority_stops_matching_bank_runs_before_location_or_prompts():
+    actions = plistlib.loads((ROOT / "GroundKeeper Capture Transaction.plist").read_bytes())["WFWorkflowActions"]
+    store = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".setstoredcontent"))
+    lookup = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".getstoredcontent"))
+    delay = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".delay"))
+    gps = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".getcurrentlocation"))
+    prompt = next(i for i, a in enumerate(actions) if a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    assert store < delay < lookup < gps < prompt
+    assert actions[delay]["WFWorkflowActionParameters"]["WFDelayTime"] == 15.0
+    # The Wallet branch writes immediately. Only bank notifications wait/read.
+    wallet = next(a["WFWorkflowActionParameters"] for a in reversed(actions[:store])
+                  if a["WFWorkflowActionParameters"].get("WFConditionalActionString") == "wallet_transaction")
+    bank = actions[delay - 1]["WFWorkflowActionParameters"]
+    assert bank["WFConditionalActionString"] == "bank_notification"
+    assert any(a["WFWorkflowActionParameters"].get("GroupingIdentifier") == wallet["GroupingIdentifier"]
+               and a["WFWorkflowActionParameters"].get("WFControlFlowMode") == 1 for a in actions[store:delay])
+    keys = [a["WFWorkflowActionParameters"].get("WFDictionaryKey") for a in actions[lookup:gps]]
+    assert "fingerprint" in keys and "captured_seconds" in keys
+    # Full identity comparison protects against the bounded storage slot's collisions.
+    match = next(a["WFWorkflowActionParameters"] for a in actions[lookup:gps]
+                 if isinstance(a["WFWorkflowActionParameters"].get("WFConditionalActionString"), dict))
+    assert match["WFCondition"] == 4
+    exit_index = next(i for i in range(lookup, gps) if actions[i]["WFWorkflowActionIdentifier"].endswith(".exit"))
+    assert actions[exit_index - 1]["WFWorkflowActionIdentifier"].endswith(".nothing")
+    assert not any(a["WFWorkflowActionIdentifier"].endswith((".notification", ".documentpicker.save"))
+                   for a in actions[store:gps])
+    # Receipt attachments keep their existing independent path.
+    receipt_branch = next(i for i, a in enumerate(actions)
+                          if a["WFWorkflowActionParameters"].get("WFConditionalActionString") == "receipt_attachment")
+    receipt_group = actions[receipt_branch]["WFWorkflowActionParameters"]["GroupingIdentifier"]
+    receipt_else = next(i for i in range(receipt_branch + 1, store)
+                        if actions[i]["WFWorkflowActionParameters"].get("GroupingIdentifier") == receipt_group)
+    assert actions[receipt_else]["WFWorkflowActionParameters"]["WFControlFlowMode"] == 1
 
 
 def test_success_notification_requires_saved_result_and_description():

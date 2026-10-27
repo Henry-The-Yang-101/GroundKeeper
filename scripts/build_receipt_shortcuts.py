@@ -266,6 +266,124 @@ def location_capture(workflow):
     actions[first_menu:first_menu] = w.actions
 
 
+def wallet_priority(workflow, *, captured_date=None, captured_seconds=None):
+    """Reserve a matching payment for Wallet before GPS or interactive menus.
+
+    Storage is scoped to this shared writer, so simultaneous adapter runs see
+    the same marker. Keep at most 256 slots, storing the full hash as well so a
+    slot collision can only miss a duplicate, never suppress a different one.
+    Missing/unrecognized evidence falls through to the ordinary capture flow.
+    """
+    w = Workflow("GroundKeeper Wallet Priority", workflow)
+    if captured_seconds is None:
+        captured_date = captured_date or w.add("date")
+        # Keep the original native Date. Coercing two ISO 8601 strings through
+        # Get Time Between Dates can silently drop their times and return zero.
+        captured_seconds = w.add("gettimebetweendates", WFInput=text(captured_date),
+                                 WFTimeUntilFromDate="January 1, 2001", WFTimeUntilUnit="Seconds")
+    w.setvar("Priority Captured Seconds", captured_seconds)
+    saved = variable("Saved Event")
+    source = w.get(saved, "source")
+    wallet = condition(w, source, 4, "wallet_transaction")
+    w.setvar("Priority Merchant", w.get(saved, "merchant"))
+    w.setvar("Priority Amount", w.get(saved, "amount"))
+    w.add("conditional", GroupingIdentifier=wallet, WFControlFlowMode=1)
+    w.setvar("Priority Merchant", w.get(saved, "subtitle"))
+    w.setvar("Priority Amount", w.get(saved, "body"))
+    endif(w, wallet)
+
+    # Currency and group are matching hints only; never rewrite capture fields.
+    currency = w.setvar("Priority Currency", w.get(saved, "wallet_priority_currency"))
+    missing = condition(w, currency, 101)
+    w.setvar("Priority Currency", w.add("gettext", WFTextActionText=text("CAD")))
+    endif(w, missing)
+    group = w.setvar("Priority Group", w.get(saved, "wallet_priority_group"))
+    missing = condition(w, group, 101)
+    w.setvar("Priority Group", w.add("gettext", WFTextActionText=text("default")))
+    endif(w, missing)
+
+    # Accept only a complete positive purchase amount, like the Mac parser.
+    # A narrative, refund, decline or card suffix must never become an amount.
+    amount = replace(w, variable("Priority Amount"), r"^\s+|\s+$", "")
+    money = w.add("text.match", text=text(amount), WFMatchTextPattern=
+                  r"(?i)^(?:(?:CAD|USD|EUR|GBP)\s*|[$€£]\s*)?"
+                  r"(?:[0-9]{1,13}|[0-9]{1,3}(?:,[0-9]{3}){1,4})"
+                  r"(?:\.[0-9]{1,2})?(?:\s*(?:CAD|USD|EUR|GBP))?$")
+    valid_money = condition(w, money)
+    explicit = w.add("text.match", text=text(amount), WFMatchTextPattern=r"(?i)CAD|USD|EUR|GBP")
+    has_code = condition(w, explicit)
+    w.setvar("Priority Currency", explicit)
+    w.add("conditional", GroupingIdentifier=has_code, WFControlFlowMode=1)
+    for symbol, code in (("€", "EUR"), ("£", "GBP")):
+        found = w.add("text.match", text=text(amount), WFMatchTextPattern=symbol)
+        has_symbol = condition(w, found)
+        w.setvar("Priority Currency", w.add("gettext", WFTextActionText=text(code)))
+        endif(w, has_symbol)
+    endif(w, has_code)
+    currency = replace(w, variable("Priority Currency"), r"^\s+|\s+$", "")
+    currency = w.add("text.changecase", text=text(currency), WFCaseType="UPPERCASE")
+    valid_currency = w.add("text.match", text=text(currency), WFMatchTextPattern=r"^(?:CAD|USD|EUR|GBP)$")
+    # A dollar sign cannot safely stand for EUR/GBP, even with a manual hint.
+    dollar = w.add("text.match", text=text(amount), WFMatchTextPattern=r"\$")
+    has_dollar = condition(w, dollar)
+    dollar_currency = w.add("text.match", text=text(currency), WFMatchTextPattern=r"^(?:CAD|USD)$")
+    w.setvar("Priority Currency Valid", dollar_currency)
+    w.add("conditional", GroupingIdentifier=has_dollar, WFControlFlowMode=1)
+    w.setvar("Priority Currency Valid", valid_currency)
+    endif(w, has_dollar)
+    valid_currency = condition(w, variable("Priority Currency Valid"))
+
+    minor = replace(w, amount, r"[A-Za-z$€£,\s]", "")
+    minor = replace(w, minor, r"^([0-9]+)$", "$1.00")
+    minor = replace(w, minor, r"(?<=\.[0-9])$", "0")
+    minor = replace(w, minor, r"\.", "")
+    minor = replace(w, minor, r"^0+(?=[0-9])", "")
+    positive = w.add("text.match", text=text(minor), WFMatchTextPattern=r"^[1-9][0-9]*$")
+    positive = condition(w, positive)
+    merchant = replace(w, variable("Priority Merchant"), r"^\s+|\s+$", "")
+    merchant = replace(w, merchant, r"\s+", " ")
+    merchant = w.add("text.changecase", text=text(merchant), WFCaseType="UPPERCASE")
+    merchant = w.setvar("Priority Normalized Merchant", merchant)
+    has_merchant = condition(w, merchant)
+    # Fixed-order fields with no embedded newlines make a stable identity.
+    # Dictionary-to-JSON key order is not stable across native shortcut runs.
+    group = replace(w, variable("Priority Group"), r"^\s+|\s+$", "")
+    group = replace(w, group, r"\s+", " ")
+    identity = w.add("gettext", WFTextActionText=formatted(
+        group, "\n", currency, "\n", minor, "\n", merchant))
+    fingerprint = w.add("hash", WFInput=token(identity), WFHashType="SHA256")
+    slot = replace(w, fingerprint, r"^.*(.{2})$", "$1")
+    key = w.add("gettext", WFTextActionText=formatted("groundkeeper-wallet-priority-v2-", slot))
+    wallet = condition(w, source, 4, "wallet_transaction")
+    marker = w.dictionary({"fingerprint": fingerprint, "captured_seconds": captured_seconds})
+    w.add("setstoredcontent", WFStoredContentKey=text(key), WFInput=text(marker))
+    w.add("conditional", GroupingIdentifier=wallet, WFControlFlowMode=1)
+    bank = condition(w, source, 4, "bank_notification")
+    w.add("delay", WFDelayTime=15.0)
+    marker = w.add("getstoredcontent", WFStoredContentKey=text(key))
+    has_marker = condition(w, marker)
+    matches = condition(w, w.get(marker, "fingerprint"), 4, text(fingerprint))
+    marker_seconds = w.get(marker, "captured_seconds")
+    timestamp = w.add("text.match", text=text(marker_seconds),
+                      WFMatchTextPattern=r"^[0-9]{1,12}(?:\.[0-9]{1,6})?$")
+    has_date = condition(w, timestamp)
+    age = w.add("calculateexpression", Input=formatted(captured_seconds, " - ", marker_seconds))
+    # Both trigger orders count. Use their original times, before the delay.
+    recent = w.add("text.match", text=text(age),
+                   WFMatchTextPattern=r"^-?(?:[0-9]|[1-8][0-9])(?:\.[0-9]+)?$")
+    recent = condition(w, recent)
+    w.add("nothing")
+    w.add("exit")
+    for branch in (recent, has_date, matches, has_marker, bank, wallet,
+                   has_merchant, positive, valid_currency, valid_money):
+        endif(w, branch)
+
+    actions = workflow["WFWorkflowActions"]
+    first_menu = next(i for i, action in enumerate(actions)
+                      if action["WFWorkflowActionIdentifier"].endswith(".choosefrommenu"))
+    actions[first_menu:first_menu] = w.actions
+
+
 def save_image(w):
     group = condition(w, variable("Receipt JPEG"))
     image = w.add("setitemname", WFInput=token(variable("Receipt JPEG")), WFName=text(variable("Receipt Filename")))
@@ -341,6 +459,7 @@ def main():
     w.add("exit")
     endif(w, missing_file)
     w.add("output", WFOutput=text(saved))
+    wallet_priority(w.data, captured_date=output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date"))
     location_capture(w.data)
     transaction_context(w.data)
     w.save()
@@ -353,6 +472,9 @@ def main():
         fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
         if not any(field["WFKey"]["Value"]["string"] == "capture_location" for field in fields):
             fields.append({"WFItemType": 0, "WFKey": text("capture_location"), "WFValue": text("on")})
+        for key, value in (("wallet_priority_currency", "CAD"), ("wallet_priority_group", "default")):
+            if not any(field["WFKey"]["Value"]["string"] == key for field in fields):
+                fields.append({"WFItemType": 0, "WFKey": text(key), "WFValue": text(value)})
         if name == "GroundKeeper Wallet Automation":
             fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"]["WFDictionaryFieldValueItems"]
             if not any(field["WFKey"]["Value"]["string"] == "wallet_category_raw" for field in fields):
