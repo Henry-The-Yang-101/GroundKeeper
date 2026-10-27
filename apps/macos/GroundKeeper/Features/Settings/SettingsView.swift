@@ -4,6 +4,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
@@ -62,7 +63,7 @@ struct SettingsView: View {
                     .disabled(captureState.processing || workspace.saving)
                 Text("Using this provider sends description, direction and currency to the selected Shortcut. Its Use Model action controls whether Apple Intelligence runs on device or in the cloud. Check that action in Shortcuts before enabling.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
-                Toggle("Include receipt text with Apple Intelligence", isOn: Binding(get: { workspace.shareReceiptContextWithApple }, set: workspace.setReceiptSharing))
+                Toggle("Include receipt text with Apple Intelligence", isOn: Binding(get: { receiptState.shareReceiptContextWithApple }, set: receiptState.setReceiptSharing))
                     .disabled(!workspace.ready || captureState.processing || workspace.saving)
                 Text("On by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
                     .font(.caption).foregroundStyle(AppStyle.muted)

@@ -3,6 +3,44 @@ import GroundKeeperCore
 
 /// Exercises the actual signed app, receipt queue and XPC worker with fictional evidence.
 @MainActor enum ReceiptSmoke {
+    /// App receipt operations without a model picker, model weights, or network.
+    static func runWorkspace() async {
+        DispatchQueue.global().asyncAfter(deadline: .now() + 60) { exit(124) }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("receipt-workspace-\(UUID().uuidString)")
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let store = try LedgerStore(url: directory.appendingPathComponent("fixture.sqlite"))
+            try await store.addAccount(name: "Fictional receipt account", currency: "CAD")
+            var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
+            let document = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-20,FICTIONAL RETAILER,-12.50\n".utf8), filename: "fictional.csv")
+            _ = try await store.importCSV(document, mapping: mapping)
+            let workspace = AppWorkspace()
+            workspace.configureQueueSmoke(store: store, bookmark: Data(), mode: .manual)
+            try await workspace.refresh()
+            guard let transaction = workspace.transactionState.transactions.first else { throw LedgerError.invalid("Missing receipt fixture.") }
+            let id = transaction.id.uuidString
+            let note = try await workspace.receiptState.transactionNote(transactionID: id)
+            try await workspace.receiptState.saveTransactionNote(transactionID: id, text: "Fictional receipt note", revision: note.revision)
+            guard try await workspace.receiptState.transactionNote(transactionID: id).text == "Fictional receipt note" else { throw LedgerError.invalid("Note did not persist.") }
+            let png = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=")!
+            try await workspace.receiptState.addReceiptImage(transactionID: id, data: png)
+            guard let receipt = try await workspace.receiptState.receiptRecords(transactionID: id).first,
+                  try await workspace.receiptState.receiptImage(id: receipt.id) != nil else { throw LedgerError.invalid("Receipt image did not persist.") }
+            try await workspace.receiptState.setReceiptRemoved(id: receipt.id, transactionID: id, removed: true)
+            guard try await workspace.receiptState.receiptRecords(transactionID: id).isEmpty else { throw LedgerError.invalid("Removed receipt remained visible.") }
+            try await workspace.receiptState.setReceiptRemoved(id: receipt.id, transactionID: id, removed: false)
+            guard try await workspace.receiptState.receiptRecords(transactionID: id).count == 1 else { throw LedgerError.invalid("Receipt restoration failed.") }
+            workspace.receiptState.setReceiptSharing(false)
+            for _ in 0..<100 where workspace.saving { try await Task.sleep(for: .milliseconds(10)) }
+            guard !workspace.saving, try await !store.receiptCloudConsent(), !workspace.receiptState.shareReceiptContextWithApple else { throw LedgerError.invalid("Receipt sharing preference did not persist.") }
+            guard try await store.integrityCheck() else { throw LedgerError.invalid("Receipt fixture integrity failed.") }
+            await workspace.stop()
+            print("receipt_workspace_smoke_passed: notes, image attachment, removal/restoration, sharing")
+            exit(0)
+        } catch { print("receipt_workspace_smoke_failed: \(error.localizedDescription)"); exit(1) }
+    }
+
     static func run() async {
         DispatchQueue.global().asyncAfter(deadline: .now() + 180) { exit(124) }
         do {

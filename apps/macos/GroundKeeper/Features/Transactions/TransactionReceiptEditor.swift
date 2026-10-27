@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct TransactionReceiptEditor: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ReceiptWorkspace.self) private var receiptState
     @Binding var transaction: Transaction
     @Binding var loading: Bool
     @State private var records: [ReceiptRecord] = []
@@ -61,10 +62,10 @@ struct TransactionReceiptEditor: View {
         defer { loading = false }
         guard transaction.revision > 0 else { return }
         do {
-            records = try await workspace.receiptRecords(transactionID: transaction.id.uuidString)
+            records = try await receiptState.receiptRecords(transactionID: transaction.id.uuidString)
             images = [:]
             for receipt in records where receipt.imageState == "stored" {
-                if let data = try await workspace.receiptImage(id: receipt.id) { images[receipt.id] = NSImage(data: data) }
+                if let data = try await receiptState.receiptImage(id: receipt.id) { images[receipt.id] = NSImage(data: data) }
             }
         } catch { self.error = error.localizedDescription }
     }

@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct ReceiptEvidenceView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(\.dismiss) private var dismiss
     let transactionID: String
     let title: String
@@ -40,7 +41,7 @@ struct ReceiptEvidenceView: View {
                     Divider()
                     Text("Receipts").font(.headline)
                     ReceiptImportControls { data in
-                        Task { await perform { try await workspace.addReceiptImage(transactionID: transactionID, data: data) } }
+                        Task { await perform { try await receiptState.addReceiptImage(transactionID: transactionID, data: data) } }
                     }.disabled(busy || loading)
                     if loading { ProgressView("Loading notes and receipts…").controlSize(.small) }
                     else if busy { ProgressView("Updating transaction…").controlSize(.small) }
@@ -60,14 +61,14 @@ struct ReceiptEvidenceView: View {
                             HStack {
                                 if receipt.imageState == "stored" {
                                     Button("Read image again") {
-                                        Task { await perform { try await workspace.reprocessReceipt(id: receipt.id) } }
+                                        Task { await perform { try await receiptState.reprocessReceipt(id: receipt.id) } }
                                     }
                                 }
                                 Spacer()
                                 Button("Remove receipt", role: .destructive) {
                                     Task {
                                         await perform {
-                                            try await workspace.setReceiptRemoved(id: receipt.id, transactionID: transactionID, removed: true)
+                                            try await receiptState.setReceiptRemoved(id: receipt.id, transactionID: transactionID, removed: true)
                                             lastRemovedID = receipt.id
                                         }
                                     }
@@ -82,7 +83,7 @@ struct ReceiptEvidenceView: View {
                             Button("Undo") {
                                 Task {
                                     await perform {
-                                        try await workspace.setReceiptRemoved(id: id, transactionID: transactionID, removed: false)
+                                        try await receiptState.setReceiptRemoved(id: id, transactionID: transactionID, removed: false)
                                         lastRemovedID = nil
                                     }
                                 }
@@ -115,7 +116,7 @@ struct ReceiptEvidenceView: View {
         busy = true; error = nil
         defer { busy = false }
         do {
-            try await workspace.saveTransactionNote(transactionID: transactionID, text: note, revision: revision)
+            try await receiptState.saveTransactionNote(transactionID: transactionID, text: note, revision: revision)
             savedNote = note
             await load(replaceNote: true)
             return true
@@ -134,13 +135,13 @@ struct ReceiptEvidenceView: View {
         error = nil
         defer { loading = false }
         do {
-            let current = try await workspace.transactionNote(transactionID: transactionID)
+            let current = try await receiptState.transactionNote(transactionID: transactionID)
             revision = current.revision
             if replaceNote { note = current.text; savedNote = current.text }
-            records = try await workspace.receiptRecords(transactionID: transactionID)
+            records = try await receiptState.receiptRecords(transactionID: transactionID)
             images = [:]
             for receipt in records where receipt.imageState == "stored" {
-                if let data = try await workspace.receiptImage(id: receipt.id), let image = NSImage(data: data) { images[receipt.id] = image }
+                if let data = try await receiptState.receiptImage(id: receipt.id), let image = NSImage(data: data) { images[receipt.id] = image }
             }
         } catch { self.error = error.localizedDescription }
     }

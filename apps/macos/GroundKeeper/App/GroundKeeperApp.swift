@@ -29,6 +29,7 @@ struct GroundKeeperApp: App {
                 .task {
                     lifecycle.workspace = workspace
                     if AppPreferences.isReceiptSmoke { await ReceiptSmoke.run() }
+                    else if CommandLine.arguments.contains("--receipt-workspace-smoke") { await ReceiptSmoke.runWorkspace() }
                     else if CommandLine.arguments.contains("--council-smoke") { await CouncilSmoke.run() }
                     else if CommandLine.arguments.contains("--ollama-smoke") { await OllamaSmoke.run() }
                     else if CommandLine.arguments.contains("--setup-smoke") { await SetupSmoke.run() }

@@ -9,6 +9,7 @@ import GroundKeeperCore
     let classifier: ClassifierWorkspace
     let captureState: CaptureWorkspace
     let merchantState: MerchantWorkspace
+    let receiptState: ReceiptWorkspace
     var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: AppPreferences.Key.setupCompleted) || CommandLine.arguments.contains("--setup-preview"))
     var reviewingSetup = false
     var encrypted = VaultAccess.isEncrypted
@@ -44,7 +45,7 @@ import GroundKeeperCore
     var processingDescription: String { captureState.processingDescription }
     var pendingJobs: Int { get { captureState.pendingJobs } set { captureState.pendingJobs = newValue } }
     var failedJobs: Int { get { captureState.failedJobs } set { captureState.failedJobs = newValue } }
-    var shareReceiptContextWithApple = true
+    var shareReceiptContextWithApple: Bool { get { receiptState.shareReceiptContextWithApple } set { receiptState.shareReceiptContextWithApple = newValue } }
     var merchantSearchEnabled: Bool { get { merchantState.merchantSearchEnabled } set { merchantState.merchantSearchEnabled = newValue } }
     var merchantSearchLocality: String { get { merchantState.merchantSearchLocality } set { merchantState.merchantSearchLocality = newValue } }
     var merchantSearchStatus: String { get { merchantState.merchantSearchStatus } set { merchantState.merchantSearchStatus = newValue } }
@@ -77,6 +78,7 @@ import GroundKeeperCore
         transactionState = TransactionWorkspace(session: session)
         classifier = ClassifierWorkspace(session: session)
         merchantState = MerchantWorkspace(session: session)
+        receiptState = ReceiptWorkspace(session: session)
         captureState = CaptureWorkspace(session: session, transactions: transactionState, classifier: classifier)
         self.isBackgroundAgent = isBackgroundAgent
         captureState.isSetup = { [weak self] in self?.showingSetup ?? true }
@@ -214,43 +216,6 @@ import GroundKeeperCore
 
     var hasCaptureFolder: Bool { captureState.hasCaptureFolder }
     var captureFolderPath: String { captureState.captureFolderPath }
-    func setReceiptSharing(_ enabled: Bool) {
-        perform {
-            try await self.store?.setReceiptCloudConsent(enabled)
-            self.shareReceiptContextWithApple = enabled
-            try await self.refresh()
-        }
-    }
-    func transactionNote(transactionID: String) async throws -> TransactionNote {
-        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
-        return try await store.transactionNote(transactionID: transactionID)
-    }
-    func saveTransactionNote(transactionID: String, text: String, revision: Int) async throws {
-        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
-        try await store.saveTransactionNote(transactionID: transactionID, text: text, revision: revision)
-        try await refresh()
-    }
-    func addReceiptImage(transactionID: String, data: Data) async throws {
-        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
-        // A readable image is useful even when OCR finds no text.
-        let ocr = try? await ReceiptOCR.recognizeText(data)
-        try await store.addReceiptImage(transactionID: transactionID, data: data, ocrText: ocr?.text ?? "", producer: ocr?.producer ?? "apple_vision_documents")
-        try await refresh()
-    }
-    func setReceiptRemoved(id: String, transactionID: String, removed: Bool) async throws {
-        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
-        try await store.setReceiptRemoved(id: id, transactionID: transactionID, removed: removed)
-        try await refresh()
-    }
-    func captureNotes(transactionID: String) async throws -> [CaptureNote] { try await store?.captureNotes(transactionID: transactionID) ?? [] }
-    func receiptRecords(transactionID: String) async throws -> [ReceiptRecord] { try await store?.receipts(transactionID: transactionID) ?? [] }
-    func receiptImage(id: String) async throws -> Data? { try await store?.receiptImage(id: id) }
-    func reprocessReceipt(id: String) async throws {
-        guard let store, let image = try await store.receiptImage(id: id) else { throw LedgerError.invalid("The receipt image is not available yet.") }
-        let result = try await ReceiptOCR.recognize(image)
-        try await store.addReceiptOCR(id: id, text: result.text, producer: result.producer)
-        try await refresh()
-    }
 
     func stop() async {
         guard !captureState.stopping else { return }

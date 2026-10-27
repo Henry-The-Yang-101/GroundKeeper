@@ -4,6 +4,7 @@ import GroundKeeperCore
 
 struct TransactionDetailView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ReceiptWorkspace.self) private var receiptState
     @Environment(CaptureWorkspace.self) private var captureState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
@@ -205,10 +206,10 @@ struct TransactionDetailView: View {
             guard let store = workspace.store else { throw CancellationError() }
             evidence = try await store.transactionEvidence(id: current.id.uuidString)
             statementMatches = try await store.savedStatementMatches(transactionID: current.id.uuidString)
-            receipts = try await workspace.receiptRecords(transactionID: current.id.uuidString)
+            receipts = try await receiptState.receiptRecords(transactionID: current.id.uuidString)
             images = [:]
             for receipt in receipts where receipt.imageState == "stored" {
-                if let data = try await workspace.receiptImage(id: receipt.id) { images[receipt.id] = NSImage(data: data) }
+                if let data = try await receiptState.receiptImage(id: receipt.id) { images[receipt.id] = NSImage(data: data) }
             }
         } catch { self.error = error.localizedDescription }
     }
