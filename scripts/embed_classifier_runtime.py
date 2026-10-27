@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 
 from scripts.prepare_classifier_runtime import DEST, ROOT
+from scripts.service_modules import service_files
 
 
 def main():
@@ -20,7 +21,8 @@ def main():
     marker.unlink(missing_ok=True)
     worker = bundle / "Resources/Worker/groundkeeper"
     worker.mkdir(parents=True, exist_ok=True)
-    names = ("__init__.py", "merchant_search.py", "merchant_context.py") if os.environ.get("TARGET_NAME") == "GroundKeeperMerchantSearch" else ("__init__.py", "worker.py", "policy.py", "policy_v2.py", "receipts.py", "constraints.py", "laya_runtime.py", "apple_shortcuts.py", "merchant_context.py")
+    service = "merchant_search" if os.environ.get("TARGET_NAME") == "GroundKeeperMerchantSearch" else "classifier"
+    names = service_files(service)
     for existing in worker.glob("*.py"):
         if existing.name not in names:
             existing.unlink()

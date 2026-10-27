@@ -1,0 +1,8 @@
+{
+  "classifier": [
+    "__init__", "worker", "policy", "policy_v2", "receipts", "constraints",
+    "laya_runtime", "apple_shortcuts", "merchant_context"
+  ],
+  "merchant_search": ["__init__", "merchant_search", "merchant_context"],
+  "experiment": ["runtime", "runtime_v2", "metrics", "merchant"]
+}
