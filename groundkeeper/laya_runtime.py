@@ -3,6 +3,7 @@
 The three distributions are decoded jointly over schema-valid objects. This is
 a grammar constraint, not calibrated confidence or permission to auto-accept.
 """
+
 import itertools
 import math
 from pathlib import Path
@@ -61,7 +62,10 @@ QUESTIONS = {
     "review": {
         "type": "choice",
         "instructions": "Does this decision need review under the labeling policy? Review means decision uncertainty, not merely an unfamiliar payer. Require review for conflicting or insufficient evidence, unknown type, uncertain spending, mixed retailers, unsplit mortgage/installment, or refund with unknown original purpose.",
-        "criteria": {"false": "sufficient unambiguous evidence", "true": "uncertain or policy requires review"},
+        "criteria": {
+            "false": "sufficient unambiguous evidence",
+            "true": "uncertain or policy requires review",
+        },
     },
 }
 
@@ -84,9 +88,16 @@ DECISIONS = valid_decisions()
 def training_row(row):
     validate_input(row["input"])
     answer = validate_answer(row["answer"])
-    return {"id": row["id"], "state": row["input"], "questions": QUESTIONS,
-            "expected": {"type": answer["type"], "category": answer["category"] or NULL,
-                         "review": str(answer["review"]).lower()}}
+    return {
+        "id": row["id"],
+        "state": row["input"],
+        "questions": QUESTIONS,
+        "expected": {
+            "type": answer["type"],
+            "category": answer["category"] or NULL,
+            "review": str(answer["review"]).lower(),
+        },
+    }
 
 
 def decode(answers):
@@ -98,36 +109,59 @@ def decode(answers):
             if set(distribution) != set(question["criteria"]):
                 raise ValueError("Incomplete or unexpected probability keys")
             values = {key: float(value) for key, value in distribution.items()}
-            if any(not math.isfinite(v) or v < 0 or v > 1 for v in values.values()) or sum(values.values()) <= 0:
+            if (
+                any(not math.isfinite(v) or v < 0 or v > 1 for v in values.values())
+                or sum(values.values()) <= 0
+            ):
                 raise ValueError("Invalid probabilities")
             probabilities[field] = values
-        raw = {"type": answers["type"]["choice"],
-               "category": None if answers["category"]["choice"] == NULL else answers["category"]["choice"],
-               "review": {"true": True, "false": False}[answers["review"]["choice"]]}
+        raw = {
+            "type": answers["type"]["choice"],
+            "category": None
+            if answers["category"]["choice"] == NULL
+            else answers["category"]["choice"],
+            "review": {"true": True, "false": False}[answers["review"]["choice"]],
+        }
         for field in QUESTIONS:
             if answers[field]["choice"] not in probabilities[field]:
                 raise ValueError("Unexpected choice")
+
         def score(answer):
-            keys = {"type": answer["type"], "category": answer["category"] or NULL,
-                    "review": str(answer["review"]).lower()}
-            return sum(math.log(max(probabilities[field][key], 1e-30)) for field, key in keys.items())
+            keys = {
+                "type": answer["type"],
+                "category": answer["category"] or NULL,
+                "review": str(answer["review"]).lower(),
+            }
+            return sum(
+                math.log(max(probabilities[field][key], 1e-30)) for field, key in keys.items()
+            )
+
         selected = dict(max(DECISIONS, key=score))
         try:
             validate_answer(raw)
             raw_valid = True
         except ValueError:
             raw_valid = False
-        return selected, {"raw_prediction": raw, "raw_valid_schema": raw_valid,
-                          "constraint_changed": raw != selected, "valid_schema": True}
+        return selected, {
+            "raw_prediction": raw,
+            "raw_valid_schema": raw_valid,
+            "constraint_changed": raw != selected,
+            "valid_schema": True,
+        }
     except (KeyError, ValueError, TypeError, OverflowError):
-        return dict(FALLBACK), {"raw_prediction": None, "raw_valid_schema": False,
-                               "constraint_changed": False, "valid_schema": False}
+        return dict(FALLBACK), {
+            "raw_prediction": None,
+            "raw_valid_schema": False,
+            "constraint_changed": False,
+            "valid_schema": False,
+        }
 
 
 def configure_agent(agent):
     """Use identical uncalibrated fp32 inference settings before/after training."""
     import numpy as np
     import torch
+
     agent.temperature = np.ones(3, dtype=np.float32)
     agent.temperature_by_options = {}
     agent.amp_enabled = False
@@ -138,12 +172,14 @@ def configure_agent(agent):
 class LocalLayaCategorizer:
     def __init__(self, model_path, device="mps"):
         import os
+
         path = Path(model_path)
         if not path.is_dir() or not (path / "model.safetensors").is_file():
             raise ValueError("Expected complete local Laya checkpoint")
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
         import laya
+
         try:
             self.agent = configure_agent(laya.load(str(path), device=device, backend="eager"))
         finally:
@@ -151,39 +187,52 @@ class LocalLayaCategorizer:
             # agent already owns its tokenizer; remove this package's cache
             # entries so release (and failed loading) can reclaim them.
             from laya import agent as laya_agent
+
             tokenizer_directory = os.path.abspath(path / "tokenizer")
             with laya_agent._TOKENIZERS_LOCK:
                 for key in list(laya_agent._TOKENIZERS):
                     if key[0] == tokenizer_directory:
                         del laya_agent._TOKENIZERS[key]
-        if self.agent.device.type != device or next(self.agent.model.parameters()).device.type != device:
+        if (
+            self.agent.device.type != device
+            or next(self.agent.model.parameters()).device.type != device
+        ):
             raise RuntimeError("Laya did not remain on the requested device")
 
     def predict(self, inputs):
         validate_input(inputs)
-        from .receipts import laya_receipt_state, RECEIPT_INSTRUCTIONS
+        from .receipts import RECEIPT_INSTRUCTIONS, laya_receipt_state
+
         questions = QUESTIONS
         instructions = []
         if "merchant_context" in inputs:
             from .merchant_context import INSTRUCTIONS
+
             instructions.append(INSTRUCTIONS)
         if "transaction_notes" in inputs:
             from .policy import NOTE_INSTRUCTIONS
+
             instructions.append(NOTE_INSTRUCTIONS)
         if "receipt_context" in inputs:
             instructions.append(RECEIPT_INSTRUCTIONS)
         if "wallet_category_raw" in inputs:
             instructions.append(WALLET_CATEGORY_INSTRUCTIONS)
         if instructions:
-            questions = {key: {**value, "instructions": value["instructions"] + " " + " ".join(instructions)} for key, value in QUESTIONS.items()}
+            questions = {
+                key: {**value, "instructions": value["instructions"] + " " + " ".join(instructions)}
+                for key, value in QUESTIONS.items()
+            }
         state = laya_receipt_state(inputs)
         max_len, head_max_len = (1024, 768) if instructions else (MAX_LEN, HEAD_MAX_LEN)
         if "merchant_context" in inputs or "transaction_notes" in inputs:
             from .merchant_context import shrink_web_evidence
+
             max_len, head_max_len = 2048, 1024
             internal = {key: self.agent._to_internal(value) for key, value in questions.items()}
             while True:
-                items = self.agent._encode_state(state, list(questions), internal, max_len=max_len, head_max_len=head_max_len)
+                items = self.agent._encode_state(
+                    state, list(questions), internal, max_len=max_len, head_max_len=head_max_len
+                )
                 if not any(item["state_stats"]["truncated"] for item in items):
                     break
                 if "merchant_context" not in state:

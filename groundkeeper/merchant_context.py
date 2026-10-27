@@ -1,6 +1,7 @@
 """Bounded, untrusted search evidence shared by every classifier provider."""
-import json
+
 import copy
+import json
 from urllib.parse import urlsplit
 
 VERSION = "merchant-search-v1"
@@ -21,7 +22,12 @@ def validate_context(value):
             raise ValueError("Invalid merchant result")
         for key, limit in (("title", 120), ("body", 360), ("url", 320)):
             text = result[key]
-            if not isinstance(text, str) or not text.strip() or len(text.encode()) > limit or any(ord(c) < 32 or ord(c) == 127 for c in text):
+            if (
+                not isinstance(text, str)
+                or not text.strip()
+                or len(text.encode()) > limit
+                or any(ord(c) < 32 or ord(c) == 127 for c in text)
+            ):
                 raise ValueError("Invalid merchant text")
         url = urlsplit(result["url"])
         if url.scheme not in ("https", "http") or not url.hostname or url.username or url.password:
@@ -39,7 +45,9 @@ def shrink_web_evidence(inputs):
         return result
     last = context["results"][-1]
     if len(last["body"].encode()) > 80:
-        last["body"] = last["body"].encode()[:len(last["body"].encode()) // 2].decode("utf-8", "ignore")
+        last["body"] = (
+            last["body"].encode()[: len(last["body"].encode()) // 2].decode("utf-8", "ignore")
+        )
     else:
         context["results"].pop()
         if not context["results"]:
