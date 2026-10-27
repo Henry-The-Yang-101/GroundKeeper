@@ -5,6 +5,17 @@ from .policy import messages, parse_answer
 from .policy_v2 import messages_v2
 
 
+def _generate_draft(model, tokenizer, inputs, message_builder):
+    """Keep optional MLX imports at the backend boundary."""
+    import mlx.core as mx
+    from mlx_lm import generate
+    from mlx_lm.sample_utils import make_sampler
+    prompt = tokenizer.apply_chat_template(message_builder(inputs), tokenize=True,
+        add_generation_prompt=True, enable_thinking=False, return_dict=False)
+    return generate(model, tokenizer, prompt=mx.array(prompt), max_tokens=96,
+                    sampler=make_sampler(0))
+
+
 def generate_decision(model, tokenizer, inputs, grammar=None, mode='constrained',
                       message_builder=messages_v2):
     """Return validated JSON; a failed constrained completion raises explicitly.
@@ -19,13 +30,7 @@ def generate_decision(model, tokenizer, inputs, grammar=None, mode='constrained'
         return answer, {**detail, 'mode':mode, 'draft_invalid':False, 'constrained_retry':False}
     if mode != 'validated_retry':
         raise ValueError('Unsupported generation mode')
-    import mlx.core as mx
-    from mlx_lm import generate
-    from mlx_lm.sample_utils import make_sampler
-    prompt = tokenizer.apply_chat_template(message_builder(inputs), tokenize=True,
-        add_generation_prompt=True, enable_thinking=False, return_dict=False)
-    draft = generate(model, tokenizer, prompt=mx.array(prompt), max_tokens=96,
-                     sampler=make_sampler(0))
+    draft = _generate_draft(model, tokenizer, inputs, message_builder)
     try:
         answer = parse_answer(draft)
         return answer, {'raw':draft, 'valid_schema':True,

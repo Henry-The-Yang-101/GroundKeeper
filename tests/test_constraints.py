@@ -48,8 +48,9 @@ def test_field_order_can_match_existing_training_without_changing_decisions():
         allowed_answers(('type','type','review'))
 
 
-def test_logits_outside_the_current_branch_are_masked():
-    import mlx.core as mx
+@pytest.mark.gpu
+def test_logits_outside_the_current_branch_are_masked(mlx_gpu):
+    mx = mlx_gpu
     grammar = DecisionGrammar(CharacterTokenizer())
     logits = mx.arange(128, dtype=mx.float32)[None, :]
     masked = grammar.processor(2)(mx.array([1, 2]), logits)

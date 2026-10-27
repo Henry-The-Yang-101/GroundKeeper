@@ -46,6 +46,18 @@ def test_missing_option_fails_closed():
     assert not detail["valid_schema"]
 
 
+@pytest.mark.gpu
+def test_agent_precision_supports_an_mps_forward_pass(torch_mps):
+    from types import SimpleNamespace
+    from groundkeeper.laya_runtime import configure_agent
+
+    agent = configure_agent(SimpleNamespace())
+    weights = torch_mps.eye(3, device="mps", dtype=agent.dtype)
+    temperatures = torch_mps.as_tensor(agent.temperature, device="mps")
+    assert torch_mps.equal((weights @ temperatures).cpu(), torch_mps.ones(3))
+    assert not agent.amp_enabled
+
+
 @pytest.mark.parametrize("fails", [False, True])
 def test_package_tokenizer_cache_evicted_after_load(monkeypatch, tmp_path, fails):
     import sys

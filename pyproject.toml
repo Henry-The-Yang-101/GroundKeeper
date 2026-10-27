@@ -9,8 +9,12 @@ dependencies = [
   "rapidfuzz>=3.14",
   "scikit-learn>=1.7",
   "psutil>=7",
-  "pytest>=8",
 ]
+[dependency-groups]
+dev = ["pytest>=8"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = ["gpu: requires an available Metal GPU (MLX or PyTorch MPS)"]

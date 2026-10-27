@@ -19,24 +19,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
         with:
-          python-version: '3.12'
-      - name: Install test runner
-        run: python -m pip install pytest==8.4.2
+          version: '0.6.12'
+      - name: Install Python and development dependencies
+        run: uv sync --locked --python 3.12.9 --group dev
       - name: Check generated database reference
-        run: python -m scripts.database_schema --check
-      - name: Test schema and classifier contracts without model dependencies
-        # The fourth constraints test uses MLX and stays in the local macOS suite.
-        run: >-
-          python -m pytest -q
-          tests/test_database_schema.py
-          tests/test_worker.py
-          tests/test_constraints.py::test_every_complete_path_is_legal_and_all_legal_answers_are_reachable
-          tests/test_constraints.py::test_invalid_prefix_and_content_after_eos_fail_closed
-          tests/test_constraints.py::test_field_order_can_match_existing_training_without_changing_decisions
-          tests/test_laya_runtime.py
-          tests/test_release_models.py
+        run: .venv/bin/python -m scripts.database_schema --check
+      - name: Run all CPU tests
+        run: .venv/bin/python -m pytest -q -m "not gpu"
 
   swift-core:
     runs-on: macos-15

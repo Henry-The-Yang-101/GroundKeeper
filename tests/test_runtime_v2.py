@@ -1,4 +1,3 @@
-import mlx_lm
 from groundkeeper import runtime_v2
 
 
@@ -11,7 +10,7 @@ INPUT = {'description':'CAFE MEAL','direction':'debit','currency':'CAD'}
 
 
 def test_valid_draft_is_preserved_without_retry(monkeypatch):
-    monkeypatch.setattr(mlx_lm,'generate',lambda *a,**k:'{"type":"expense","category":"dining","review":false}')
+    monkeypatch.setattr(runtime_v2,'_generate_draft',lambda *a,**k:'{"type":"expense","category":"dining","review":false}')
     def forbidden(*args,**kwargs):
         raise AssertionError('A valid draft must not be regenerated')
     monkeypatch.setattr(runtime_v2,'generate_constrained',forbidden)
@@ -21,7 +20,7 @@ def test_valid_draft_is_preserved_without_retry(monkeypatch):
 
 def test_invalid_field_combination_uses_constrained_retry(monkeypatch):
     draft='{"type":"income","category":"income","review":false}'
-    monkeypatch.setattr(mlx_lm,'generate',lambda *a,**k:draft)
+    monkeypatch.setattr(runtime_v2,'_generate_draft',lambda *a,**k:draft)
     monkeypatch.setattr(runtime_v2,'generate_constrained',lambda *a,**k:(
         {'type':'income','category':None,'review':False},
         {'raw':'{"type":"income","category":null,"review":false}','valid_schema':True}))
