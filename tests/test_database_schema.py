@@ -1,18 +1,17 @@
-"""Design-contract checks with fictional SQLite data; no app or model invocation."""
-from pathlib import Path
+"""Installed-schema checks using the app's migrations and fictional SQLite data."""
 import json
 import sqlite3
 
 import pytest
 
 
-SCHEMA = Path(__file__).resolve().parents[1] / 'contracts/database/schema.sql'
+from scripts.database_schema import apply_migrations
 
 
 @pytest.fixture
 def db():
     connection = sqlite3.connect(':memory:')
-    connection.executescript(SCHEMA.read_text())
+    apply_migrations(connection)
     put(connection, 'sources', id='wallet', kind='apple_wallet', name='Test wallet', created_at_ms=0)
     put(connection, 'sources', id='bank', kind='bank_notification', name='Test bank', created_at_ms=0)
     put(connection, 'accounts', id='card', name='Test card', kind='credit_card', currency='CAD', created_at_ms=0)
@@ -174,12 +173,19 @@ def test_type_category_and_review_rules(db, kind, category, review):
         assignment(db, 'bad', 't1p', category=category, kind=kind, needs_review=review)
 
 
-def test_refunds_reduce_spending_transfers_do_not_count_and_pending_separate(db):
+def test_refunds_reduce_spending_and_transfers_do_not_count(db):
     transaction(db)
     transaction(db, 'refund', amount=250, kind='refund')
     transaction(db, 'transfer', amount=2000, kind='transfer', category=None)
-    transaction(db, 'pending', lifecycle='pending')
     assert db.execute('SELECT sum(net_spending_minor) FROM spending_entries').fetchone() == (1000,)
+
+
+def test_retired_pending_status_is_rejected_on_insert_and_update(db):
+    with pytest.raises(sqlite3.IntegrityError, match='recorded immediately'):
+        transaction(db, 'pending', lifecycle='pending')
+    transaction(db)
+    with pytest.raises(sqlite3.IntegrityError, match='recorded immediately'):
+        db.execute("UPDATE transactions SET lifecycle='pending' WHERE id='t1'")
 
 
 def test_same_part_assignment_and_append_only_history(db):

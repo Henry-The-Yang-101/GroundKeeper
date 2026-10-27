@@ -24,6 +24,8 @@ jobs:
           python-version: '3.12'
       - name: Install test runner
         run: python -m pip install pytest==8.4.2
+      - name: Check generated database reference
+        run: python -m scripts.database_schema --check
       - name: Test schema and classifier contracts without model dependencies
         # The fourth constraints test uses MLX and stays in the local macOS suite.
         run: >-

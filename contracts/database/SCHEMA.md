@@ -1,10 +1,11 @@
 # GroundKeeper database design
 
-Design date: 2026-10-17. Companion DDL: [schema.sql](schema.sql).
+Design date: 2026-10-17. Current generated DDL: [schema.sql](schema.sql).
 
-**Implementation update:** The Swift application now installs this schema with
-numbered migrations and a processing extension. Per the user's 2026-10-17
-decision, it uses ordinary local SQLite; encryption/SQLCipher are deferred.
+**Implementation update:** Immutable numbered SQL migrations in the core package
+are authoritative; `migrations.json` defines their order. The companion SQL is
+generated from their combined result with `python -m scripts.database_schema`.
+The Swift application uses SQLCipher with optional vault encryption.
 See [current implementation and audit](IMPLEMENTATION.md) for working behavior,
 setup, validation and remaining boundaries. The original design below includes
 future features and should not be read as the current implementation status.

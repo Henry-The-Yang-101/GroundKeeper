@@ -1,18 +1,16 @@
 """Upgrade legacy category history without relabeling past AI decisions."""
 import json
-from pathlib import Path
 import sqlite3
 
 import pytest
 
 from test_database_schema import put, transaction, assignment, setup_models, model_run
-
-RESOURCES = Path(__file__).resolve().parents[1] / "apps/macos/GroundKeeperCore/Sources/GroundKeeperCore/Resources"
+from scripts.database_schema import apply_migrations
 
 
 def test_legacy_category_upgrade_retains_history_and_original_model_output():
     db = sqlite3.connect(":memory:")
-    db.executescript((RESOURCES / "001-schema.sql").read_text())
+    apply_migrations(db, through=9)
     put(db, "accounts", id="card", name="Fictional card", kind="credit_card", currency="CAD", created_at_ms=0)
     transaction(db, category="uncategorized", kind="unknown", origin="system")
     setup_models(db)
@@ -23,7 +21,8 @@ def test_legacy_category_upgrade_retains_history_and_original_model_output():
     db.execute("UPDATE transaction_parts SET current_assignment_id='confirmed'")
     put(db, "user_rules", id="rule", name="Legacy", version=1, priority=1, predicate_json="{}", type_code="unknown", category_id="uncategorized", confirmed_at_ms=0)
     put(db, "model_categories", model_version_id="qwen", output_label="uncategorized", category_id="uncategorized")
-    db.executescript("BEGIN;\n" + (RESOURCES / "010-null-categories.sql").read_text() + "\nCOMMIT;")
+    db.commit()
+    apply_migrations(db, through=10)
     assert db.execute("SELECT count(*) FROM categories").fetchone() == (19,)
     assert db.execute("SELECT count(*) FROM category_assignments WHERE category_id IS NULL").fetchone() == (3,)
     assert db.execute("SELECT supersedes_id,origin,confirmed_by FROM category_assignments WHERE id='confirmed'").fetchone() == ("ai", "user", "local_user")
@@ -41,4 +40,9 @@ def test_legacy_category_upgrade_retains_history_and_original_model_output():
         model_run(db, key="bad", type_code="expense", category_id=None)
     model_run(db, key="current", type_code="unknown", category_id="other")
     assignment(db, "current-ai", "t1p", kind="unknown", category="other", origin="model", run_id="current", needs_review=1)
+    db.commit()
+    apply_migrations(db)
+    assert db.execute("SELECT current_assignment_id FROM transaction_parts").fetchone() == ("unassigned-v11:confirmed",)
+    assert db.execute("SELECT origin,supersedes_id,needs_review FROM category_assignments WHERE id='unassigned-v11:confirmed'").fetchone() == ("system", "confirmed", 1)
+    assert db.execute("SELECT origin,confirmed_by FROM category_assignments WHERE id='confirmed'").fetchone() == ("user", "local_user")
     db.close()

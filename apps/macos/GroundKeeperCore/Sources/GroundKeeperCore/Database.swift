@@ -182,14 +182,16 @@ final class Database {
         guard result == SQLITE_OK else { throw LedgerError.storage(result) }
     }
     private func migrate() throws {
+        let migrations = try DatabaseMigrations.names()
         let exists = try query("SELECT name FROM sqlite_master WHERE name='schema_migrations'").count == 1
         if !exists, !(try query("SELECT name FROM sqlite_master WHERE type='table'")).isEmpty {
             throw LedgerError.unavailable("This is not a GroundKeeper vault. It was not changed.")
         }
-        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > 12 {
+        if exists, try query("SELECT max(version) AS version FROM schema_migrations").first?.number("version") ?? 0 > Int64(migrations.count) {
             throw LedgerError.unavailable("This vault requires a newer GroundKeeper version.")
         }
-        for (version, name) in [(1, "001-schema"), (2, "002-processing"), (3, "003-receipts"), (4, "004-capture-details"), (5, "005-spending-reports"), (6, "006-merchant-search"), (7, "007-council"), (8, "008-merchants"), (9, "009-receipt-management"), (10, "010-null-categories"), (11, "011-unassigned-review"), (12, "012-record-captures-immediately")] {
+        for (index, name) in migrations.enumerated() {
+            let version = index + 1
             guard let url = Bundle.module.url(forResource: name, withExtension: "sql") else { throw LedgerError.unavailable("Missing bundled migration.") }
             let data = try Data(contentsOf: url), checksum = contentHash(data)
             if exists, let applied = try query("SELECT checksum FROM schema_migrations WHERE version=?", [.integer(Int64(version))]).first {

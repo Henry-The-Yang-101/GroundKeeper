@@ -95,13 +95,22 @@ Only these additions were necessary, in migration 002:
   count, next-attempt time, state and reference to each current run. The original
   file queue and run history did not represent durable pending inference work.
 
-The original `schema.sql` is frozen as migration 001 in the core package.
+The immutable numbered SQL resources in `GroundKeeperCore/Resources/` are the
+schema source of truth. `migrations.json` lists their installation order and is
+shared by the Swift runner, Python contract tests, and reference generator.
 Later schema changes must be new numbered resources, never edits to an applied
-migration. Both migrations record checksums inside the same transaction as their
-DDL. The runner refuses unknown databases, newer migration versions and changed
+migration. Each migration records its checksum inside the same transaction as
+its DDL. The runner refuses unknown databases, newer migration versions and changed
 checksums. Every connection enables foreign keys, a three-second busy timeout,
 WAL, full synchronous writes and in-memory temporary tables. A process lock
 prevents a second app instance from recovering jobs owned by a live first one.
+
+`contracts/database/schema.sql` is a generated reference of the latest schema
+and initial reference data, not an installation script or historical migration.
+Regenerate it with `python -m scripts.database_schema`; CI runs the same command
+with `--check`. Applied-migration rows are excluded from the reference. Python
+schema tests replay the real migrations using fictional SQLite databases;
+Swift core tests exercise the production SQLCipher runner and vault lifecycle.
 
 ## Local files and ownership
 
