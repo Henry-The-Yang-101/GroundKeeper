@@ -226,8 +226,13 @@ class MerchantSearch:
             ):
                 raise ValueError()
             if request.get("operation") == "search_handshake":
+                from importlib import import_module
                 from importlib.metadata import version
 
+                # Probe native imports too: package metadata alone cannot show
+                # whether the embedded service can load its transport/parser.
+                import_module("primp")
+                import_module("lxml.html")
                 result = {"version": VERSION, "ddgs_version": version("ddgs")}
             elif request.get("operation") == "merchant_search":
                 merchant, locality = request["merchant"], request["locality"]

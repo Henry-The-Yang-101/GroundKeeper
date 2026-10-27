@@ -16,6 +16,23 @@ from groundkeeper.receipts import context_from_text, laya_receipt_state
 from groundkeeper.laya_runtime import LocalLayaCategorizer
 from groundkeeper.apple_shortcuts import run_shortcut
 
+
+@pytest.mark.parametrize("missing", [None, "primp", "lxml.html"])
+def test_handshake_probes_native_dependencies_not_only_package_metadata(monkeypatch, missing):
+    import importlib
+    import importlib.metadata
+
+    probes = []
+    def probe(name):
+        probes.append(name)
+        if name == missing:
+            raise ImportError("dependency unavailable")
+    monkeypatch.setattr(importlib, "import_module", probe)
+    monkeypatch.setattr(importlib.metadata, "version", lambda _: "9.16.0")
+    result = MerchantSearch().handle({"protocol_version": 1, "request_id": "probe", "operation": "search_handshake"})
+    assert result["status"] == ("failed" if missing else "succeeded")
+    assert probes == (["primp"] if missing == "primp" else ["primp", "lxml.html"])
+
 BASE = {"description": "Fictional Cafe", "direction": "debit", "currency": "CAD"}
 RAW = [{"title": "Fictional Cafe Waterloo", "body": "Fictional Cafe in Waterloo is a neighbourhood cafe.", "href": "https://example.org/cafe?tracking=1"}]
 
