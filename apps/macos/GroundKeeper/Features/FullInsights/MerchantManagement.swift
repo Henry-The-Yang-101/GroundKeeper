@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct MerchantManagementSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(MerchantWorkspace.self) private var merchantState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     @State private var merchants: [Merchant] = []
@@ -55,7 +56,7 @@ struct MerchantManagementSheet: View {
         .frame(minWidth: 660, idealWidth: 800, minHeight: 540, idealHeight: 660)
         .task(id: "\(refresh)|\(transactionState.reportingRevision)") {
             do {
-                let directory = try await workspace.merchantDirectory(); try Task.checkCancellation()
+                let directory = try await merchantState.merchantDirectory(); try Task.checkCancellation()
                 merchants = directory.merchants; names = directory.names; error = nil
             } catch is CancellationError { return }
             catch { self.error = error.localizedDescription }
@@ -69,6 +70,7 @@ struct MerchantManagementSheet: View {
 
 private struct MerchantGroupingEditor: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(MerchantWorkspace.self) private var merchantState
     @Environment(TransactionWorkspace.self) private var transactionState
     let name: MerchantName
     let merchants: [Merchant]
@@ -94,7 +96,7 @@ private struct MerchantGroupingEditor: View {
                         busy = true
                         Task {
                             do {
-                                let id = try await workspace.createMerchant(name: newName)
+                                let id = try await merchantState.createMerchant(name: newName)
                                 created = Merchant(id: id, name: newName.trimmingCharacters(in: .whitespacesAndNewlines)); target = id
                             } catch { self.error = error.localizedDescription }
                             busy = false
@@ -118,7 +120,7 @@ private struct MerchantGroupingEditor: View {
     private func save(_ id: String?) {
         busy = true
         Task {
-            do { try await workspace.groupMerchant(name, into: id); changed() }
+            do { try await merchantState.groupMerchant(name, into: id); changed() }
             catch { self.error = error.localizedDescription }
             busy = false
         }
@@ -127,6 +129,7 @@ private struct MerchantGroupingEditor: View {
 
 struct TransactionMerchantSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(MerchantWorkspace.self) private var merchantState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let entry: SpendingEntry
@@ -157,7 +160,7 @@ struct TransactionMerchantSheet: View {
                 Button("Save") {
                     guard let transaction else { return }; busy = true
                     Task {
-                        do { try await workspace.setMerchant(transaction, merchantID: selection.isEmpty ? nil : selection, automatic: automatic); dismiss() }
+                        do { try await merchantState.setMerchant(transaction, merchantID: selection.isEmpty ? nil : selection, automatic: automatic); dismiss() }
                         catch { self.error = error.localizedDescription; busy = false }
                     }
                 }.disabled(transaction == nil || busy).keyboardShortcut(.defaultAction)
@@ -165,7 +168,7 @@ struct TransactionMerchantSheet: View {
         }.frame(width: 520).disabled(busy)
         .task {
             do {
-                let directory = try await workspace.merchantDirectory(), result = try await workspace.transactionMerchant(id: entry.id)
+                let directory = try await merchantState.merchantDirectory(), result = try await merchantState.transactionMerchant(id: entry.id)
                 try Task.checkCancellation()
                 merchants = directory.merchants; transaction = result; selection = result.merchantID ?? ""; automatic = !result.overridden
             } catch { self.error = error.localizedDescription }

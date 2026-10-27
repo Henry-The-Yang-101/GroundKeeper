@@ -29,6 +29,7 @@ struct ReportDrilldown: Identifiable {
 
 struct SpendingReportsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(MerchantWorkspace.self) private var merchantState
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage(AppPreferences.Key.reportCurrency, store: AppPreferences.defaults) private var currency = "CAD"
@@ -215,7 +216,7 @@ struct SpendingReportsView: View {
                                         accountID: accountID.isEmpty ? nil : accountID, category: category.isEmpty ? nil : category,
                                         tagID: tagID.isEmpty ? nil : tagID, timezone: timezone, weekStart: weekStart)
             filter.sensitivity = sensitivity; filter.merchantID = merchantID
-            let directory = try await workspace.merchantDirectory()
+            let directory = try await merchantState.merchantDirectory()
             let result = try await transactionState.spendingReport(filter)
             try Task.checkCancellation()
             tags = context.tags; merchantChoices = directory.merchants; report = result; lastSelectionKey = selectionKey; loading = false
