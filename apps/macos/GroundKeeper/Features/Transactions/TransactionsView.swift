@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct TransactionsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @State private var search = ""
     @FocusState private var searchFocused: Bool
     @State private var category: SpendingCategory?
@@ -13,14 +14,14 @@ struct TransactionsView: View {
     @State private var receiptTransaction: Transaction?
     @State private var viewedTransaction: Transaction?
 
-    private var filteredTransactions: [Transaction] { workspace.transactions }
+    private var filteredTransactions: [Transaction] { transactionState.transactions }
 
     private var selectedTransaction: Transaction? {
         filteredTransactions.first { $0.id == selectedID }
     }
 
     var body: some View {
-        @Bindable var workspace = workspace
+        @Bindable var transactionState = transactionState
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
                 PageHeading(title: "Transactions")
@@ -29,7 +30,7 @@ struct TransactionsView: View {
                         .textFieldStyle(.roundedBorder)
                         .focused($searchFocused)
                         .accessibilityLabel("Search transactions")
-                    Toggle("Needs review", isOn: $workspace.reviewOnly)
+                    Toggle("Needs review", isOn: $transactionState.reviewOnly)
                         .toggleStyle(.button)
                         .help("Show only transactions that need your input")
                 }
@@ -40,8 +41,8 @@ struct TransactionsView: View {
                     }.frame(maxWidth: 290)
                     Picker("Account", selection: $accountID) {
                         Text("All accounts").tag(nil as String?)
-                        ForEach(workspace.accounts) { account in
-                            Text("\(account.displayName(in: workspace.accounts)) · \(account.currency)").tag(Optional(account.id))
+                        ForEach(transactionState.accounts) { account in
+                            Text("\(account.displayName(in: transactionState.accounts)) · \(account.currency)").tag(Optional(account.id))
                         }
                     }.frame(maxWidth: 240)
                     Spacer(minLength: 0)
@@ -71,7 +72,7 @@ struct TransactionsView: View {
                         cell(transaction) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(transaction.merchant).fontWeight(.medium).lineLimit(1).help(transaction.merchant)
-                                Text(workspace.accountLabel(id: transaction.accountID, fallback: transaction.account))
+                                Text(transactionState.accountLabel(id: transaction.accountID, fallback: transaction.account))
                                     .font(.caption).foregroundStyle(AppStyle.muted).lineLimit(1)
                             }
                         }
@@ -111,14 +112,14 @@ struct TransactionsView: View {
                 .alternatingRowBackgrounds(.disabled)
                 .background(AppStyle.surface)
                 .contextMenu(forSelectionType: Transaction.ID.self) { ids in
-                    if let id = ids.first, let transaction = workspace.transactions.first(where: { $0.id == id }) {
+                    if let id = ids.first, let transaction = transactionState.transactions.first(where: { $0.id == id }) {
                         Button("View transaction…") { viewedTransaction = transaction }
-                        Button("Edit transaction…") { workspace.editor = transaction }
+                        Button("Edit transaction…") { transactionState.editor = transaction }
                         Button("Notes & receipts…") { receiptTransaction = transaction }
                         Button("Delete transaction…", role: .destructive) { deletionCandidate = transaction }
                     }
                 } primaryAction: { ids in
-                    if let id = ids.first { viewedTransaction = workspace.transactions.first { $0.id == id } }
+                    if let id = ids.first { viewedTransaction = transactionState.transactions.first { $0.id == id } }
                 }
                 .overlay {
                     if filteredTransactions.isEmpty {
@@ -134,7 +135,7 @@ struct TransactionsView: View {
                             if hasFilters {
                                 Button("Clear filters", action: clearFilters)
                             } else {
-                                Button("Add transaction") { workspace.editor = Transaction() }
+                                Button("Add transaction") { transactionState.editor = Transaction() }
                             }
                         }
                     }
@@ -157,13 +158,13 @@ struct TransactionsView: View {
         .onChange(of: search) { updateQuery() }
         .onChange(of: category) { updateQuery() }
         .onChange(of: accountID) { updateQuery() }
-        .onChange(of: workspace.reviewOnly) { updateQuery() }
+        .onChange(of: transactionState.reviewOnly) { updateQuery() }
         .onChange(of: sortOrder) { updateQuery() }
-        .onChange(of: workspace.transactions.map(\.id)) {
-            if !workspace.transactions.contains(where: { $0.id == selectedID }) { selectedID = nil }
+        .onChange(of: transactionState.transactions.map(\.id)) {
+            if !transactionState.transactions.contains(where: { $0.id == selectedID }) { selectedID = nil }
         }
-        .task(id: workspace.focusTransactionSearch) {
-            guard workspace.focusTransactionSearch else { return }
+        .task(id: transactionState.focusTransactionSearch) {
+            guard transactionState.focusTransactionSearch else { return }
             // Let the split-view navigation install its focus scope first.
             do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
             focusSearchIfRequested()
@@ -174,7 +175,7 @@ struct TransactionsView: View {
         ), titleVisibility: .visible) {
             Button("Delete transaction", role: .destructive) {
                 guard let id = deletionCandidate?.id else { return }
-                if let transaction = workspace.transactions.first(where: { $0.id == id }) { workspace.delete(transaction) }
+                if let transaction = transactionState.transactions.first(where: { $0.id == id }) { transactionState.delete(transaction) }
                 selectedID = nil
                 deletionCandidate = nil
             }
@@ -208,15 +209,15 @@ struct TransactionsView: View {
 
     private var pagination: some View {
         HStack(spacing: 10) {
-            Text(workspace.matchingTransactions == 0 ? "0 transactions" : "\(workspace.page * 500 + 1)–\(workspace.page * 500 + filteredTransactions.count) of \(workspace.matchingTransactions) \(workspace.matchingTransactions == 1 ? "transaction" : "transactions")")
+            Text(transactionState.matchingTransactions == 0 ? "0 transactions" : "\(transactionState.page * 500 + 1)–\(transactionState.page * 500 + filteredTransactions.count) of \(transactionState.matchingTransactions) \(transactionState.matchingTransactions == 1 ? "transaction" : "transactions")")
                 .font(.caption).foregroundStyle(AppStyle.muted)
-            Button { workspace.changePage(workspace.page - 1) } label: {
+            Button { transactionState.changePage(transactionState.page - 1) } label: {
                 Image(systemName: "chevron.left")
-            }.disabled(workspace.page == 0).accessibilityLabel("Previous page")
-            Text("Page \(workspace.page + 1)").font(.caption).monospacedDigit()
-            Button { workspace.changePage(workspace.page + 1) } label: {
+            }.disabled(transactionState.page == 0).accessibilityLabel("Previous page")
+            Text("Page \(transactionState.page + 1)").font(.caption).monospacedDigit()
+            Button { transactionState.changePage(transactionState.page + 1) } label: {
                 Image(systemName: "chevron.right")
-            }.disabled((workspace.page + 1) * 500 >= workspace.matchingTransactions).accessibilityLabel("Next page")
+            }.disabled((transactionState.page + 1) * 500 >= transactionState.matchingTransactions).accessibilityLabel("Next page")
         }.fixedSize()
     }
 
@@ -224,14 +225,14 @@ struct TransactionsView: View {
         HStack(spacing: 10) {
             Button("Delete…", role: .destructive) { deletionCandidate = selectedTransaction }
             Button("View…") { viewedTransaction = selectedTransaction }.keyboardShortcut(.return, modifiers: [])
-            Button("Edit…") { workspace.editor = selectedTransaction }.keyboardShortcut("e", modifiers: .command)
+            Button("Edit…") { transactionState.editor = selectedTransaction }.keyboardShortcut("e", modifiers: .command)
         }.disabled(selectedTransaction == nil).fixedSize()
     }
 
     private func focusSearchIfRequested() {
-        if workspace.focusTransactionSearch {
+        if transactionState.focusTransactionSearch {
             searchFocused = true
-            workspace.focusTransactionSearch = false
+            transactionState.focusTransactionSearch = false
         }
     }
 
@@ -242,7 +243,7 @@ struct TransactionsView: View {
         query.typeNames = Dictionary(uniqueKeysWithValues: TransactionKind.allCases.map { ($0.code, $0.rawValue) })
         query.category = category?.code
         query.accountID = accountID
-        query.reviewOnly = workspace.reviewOnly
+        query.reviewOnly = transactionState.reviewOnly
         query.sort = sortOrder.compactMap { comparator in
             let column: LedgerTransactionSort.Column
             switch comparator.keyPath {
@@ -253,15 +254,15 @@ struct TransactionsView: View {
             }
             return LedgerTransactionSort(column, descending: comparator.order == .reverse)
         }
-        workspace.queryTransactions(query)
+        transactionState.queryTransactions(query)
         selectedID = nil
     }
 
-    private var hasFilters: Bool { !search.isEmpty || category != nil || accountID != nil || workspace.reviewOnly }
+    private var hasFilters: Bool { !search.isEmpty || category != nil || accountID != nil || transactionState.reviewOnly }
     private func clearFilters() {
         search = ""
         category = nil
         accountID = nil
-        workspace.reviewOnly = false
+        transactionState.reviewOnly = false
     }
 }

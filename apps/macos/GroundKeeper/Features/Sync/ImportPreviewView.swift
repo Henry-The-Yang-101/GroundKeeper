@@ -5,6 +5,7 @@ import GroundKeeperCore
 
 struct ImportPreviewView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     @State private var document: CSVDocument?
     @State private var mapping = CSVMapping()
@@ -42,7 +43,7 @@ struct ImportPreviewView: View {
                             optionalColumn("Bank record ID (optional)", selection: $mapping.externalIDColumn, document: document)
                             Picker("Account", selection: $mapping.accountID) {
                                 Text("Choose account").tag("")
-                                ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag($0.id) }
+                                ForEach(transactionState.accounts) { Text("\($0.displayName(in: transactionState.accounts)) · \($0.currency)").tag($0.id) }
                             }
                             Picker("Date format", selection: $mapping.dateFormat) {
                                 ForEach(["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"], id: \.self) { Text($0) }
@@ -58,7 +59,7 @@ struct ImportPreviewView: View {
                     } else {
                         GroupBox("Import summary") {
                             VStack(alignment: .leading, spacing: 6) {
-                                LabeledContent("Destination account", value: workspace.accountLabel(id: mapping.accountID, fallback: "Unavailable account"))
+                                LabeledContent("Destination account", value: transactionState.accountLabel(id: mapping.accountID, fallback: "Unavailable account"))
                                 LabeledContent("Currency", value: mapping.currency)
                                 Text("\(summary.selectedCount) selected · \(summary.validCount) valid · \(summary.invalidCount) invalid selected · \(summary.skippedCount) skipped")
                                     .font(.caption)
@@ -129,7 +130,7 @@ struct ImportPreviewView: View {
                     Button(reviewing ? (mappingChanged ? "Review mapping corrections" : "Import selected rows") : "Validate rows") {
                         guard let document else { return }
                         if !reviewing {
-                            mapping.currency = workspace.accounts.first { $0.id == mapping.accountID }?.currency ?? "CAD"
+                            mapping.currency = transactionState.accounts.first { $0.id == mapping.accountID }?.currency ?? "CAD"
                             busy = true
                             let selectedMapping = mapping
                             Task {
@@ -145,7 +146,7 @@ struct ImportPreviewView: View {
                             Task {
                                 defer { busy = false }
                                 do {
-                                    let count = try await workspace.importCSV(document, mapping: mapping, skipped: skipped, updateExisting: updateExisting)
+                                    let count = try await transactionState.importCSV(document, mapping: mapping, skipped: skipped, updateExisting: updateExisting)
                                     result = count == 0 ? "No new rows to import. Previously imported rows were kept." : "Processed \(count) source records."
                                     if mappingChanged { result = "Processed \(count) records. Review mapping corrections in Sync before they change saved entries." }
                                 } catch { self.error = error.localizedDescription }

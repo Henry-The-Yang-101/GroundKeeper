@@ -4,6 +4,7 @@ import GroundKeeperCore
 
 struct TransactionDetailView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     // Seed the sheet once; reload from persistence after editing.
     @State private var transaction: Transaction
@@ -84,7 +85,7 @@ struct TransactionDetailView: View {
         .sheet(item: $editor, onDismiss: { Task { await load() } }) { current in
             TransactionEditor(transaction: current) { draft in
                 Task {
-                    do { try await workspace.saveTransaction(draft); editor = nil }
+                    do { try await transactionState.saveTransaction(draft); editor = nil }
                     catch { saveError = error.localizedDescription }
                 }
             }
@@ -120,7 +121,7 @@ struct TransactionDetailView: View {
     private var details: some View {
         Grid(alignment: .leading, horizontalSpacing: 36, verticalSpacing: 16) {
             GridRow {
-                detail("Account", workspace.accountLabel(id: transaction.accountID, fallback: transaction.account))
+                detail("Account", transactionState.accountLabel(id: transaction.accountID, fallback: transaction.account))
                 detail("Type", transaction.kind.rawValue)
             }
             GridRow {
@@ -171,7 +172,7 @@ struct TransactionDetailView: View {
                     Button("Combine…") {
                         Task {
                             do {
-                                guard let other = try await workspace.transaction(id: match.id) else { throw LedgerError.conflict }
+                                guard let other = try await transactionState.transaction(id: match.id) else { throw LedgerError.conflict }
                                 merging = other
                             } catch { self.error = error.localizedDescription }
                         }
@@ -196,7 +197,7 @@ struct TransactionDetailView: View {
         loading = true; error = nil
         defer { loading = false }
         do {
-            guard let current = try await workspace.transaction(id: transaction.id.uuidString) else {
+            guard let current = try await transactionState.transaction(id: transaction.id.uuidString) else {
                 throw LedgerError.invalid("This transaction is no longer available.")
             }
             transaction = current

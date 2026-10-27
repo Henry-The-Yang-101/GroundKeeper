@@ -15,7 +15,7 @@ import GroundKeeperCore
             try await workspace.setEncryption(passphrase: first, remember: false)
             guard workspace.encrypted else { throw LedgerError.invalid("Vault was not encrypted.") }
             await workspace.lockVault()
-            guard !workspace.ready, workspace.transactions.isEmpty else { throw LedgerError.invalid("Lock did not close the workspace.") }
+            guard !workspace.ready, workspace.transactionState.transactions.isEmpty else { throw LedgerError.invalid("Lock did not close the workspace.") }
             await workspace.unlock(passphrase: "deliberately incorrect")
             guard !workspace.ready else { throw LedgerError.invalid("Incorrect passphrase was accepted.") }
             await workspace.unlock(passphrase: first)

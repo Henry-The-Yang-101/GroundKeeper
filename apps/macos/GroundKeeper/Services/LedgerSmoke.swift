@@ -21,17 +21,17 @@ import GroundKeeperCore
             try await workspace.refresh()
             workspace.saving = true
             var query = LedgerTransactionQuery(); query.search = "FICTIONAL"
-            workspace.queryTransactions(query)
-            workspace.changePage(1)
+            workspace.transactionState.queryTransactions(query)
+            workspace.transactionState.changePage(1)
             query.search = "No matching fictional merchant"
-            workspace.queryTransactions(query)
+            workspace.transactionState.queryTransactions(query)
             for _ in 0..<200 {
-                if workspace.matchingTransactions == 0 { break }
+                if workspace.transactionState.matchingTransactions == 0 { break }
                 try await Task.sleep(for: .milliseconds(10))
             }
-            guard workspace.matchingTransactions == 0, workspace.transactions.isEmpty, workspace.page == 0,
-                  workspace.totalTransactions == 1, workspace.recentTransactions.count == 1,
-                  workspace.transactionReviewCount == 1 else { throw LedgerError.invalid("Rapid ledger query refresh failed.") }
+            guard workspace.transactionState.matchingTransactions == 0, workspace.transactionState.transactions.isEmpty, workspace.transactionState.page == 0,
+                  workspace.transactionState.totalTransactions == 1, workspace.transactionState.recentTransactions.count == 1,
+                  workspace.transactionState.transactionReviewCount == 1 else { throw LedgerError.invalid("Rapid ledger query refresh failed.") }
             workspace.saving = false
             print("ledger_query_refresh_passed")
             try await store.addAccount(name: "Fictional USD account", currency: "USD")

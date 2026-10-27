@@ -4,6 +4,7 @@ import GroundKeeperCore
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     // A sheet owns an edit session. Parent refreshes must not overwrite unsaved input.
     @State private var draft: Transaction
     @State private var amountText: String
@@ -29,14 +30,14 @@ struct TransactionEditor: View {
 
     private var amount: Decimal? { TransactionInput.positiveAmount(amountText) }
     private var selectedAccount: Account? {
-        workspace.accounts.first { $0.id == draft.accountID }
+        transactionState.accounts.first { $0.id == draft.accountID }
     }
     private var currencyMismatch: Bool {
         selectedAccount.map { $0.currency != draft.currency } ?? false
     }
     private var valid: Bool {
         !draft.merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && validAmount && validDirection && draft.accountID != nil && workspace.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
+            && validAmount && validDirection && draft.accountID != nil && transactionState.accounts.contains { $0.id == draft.accountID && $0.currency == draft.currency }
     }
     private var validAmount: Bool { amount != nil }
     private var validDirection: Bool { draft.kind.requiredDebit.map { $0 == draft.isDebit } ?? true }
@@ -94,7 +95,7 @@ struct TransactionEditor: View {
                     TransactionDatePicker(date: $draft.date)
                     Picker("Account", selection: $draft.accountID) {
                         Text("Choose account").tag(nil as String?)
-                        ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag(Optional($0.id)) }
+                        ForEach(transactionState.accounts) { Text("\($0.displayName(in: transactionState.accounts)) · \($0.currency)").tag(Optional($0.id)) }
                     }
                     if currencyMismatch, let account = selectedAccount {
                         Text("This account uses \(account.currency), but the entered amount is \(draft.currency). Changing its currency keeps the number unchanged; it does not convert the amount.")
@@ -175,7 +176,7 @@ struct TransactionEditor: View {
             suggestion = nil; suggestionError = nil
         }
         .onChange(of: draft.accountID) { _, id in
-            if let account = workspace.accounts.first(where: { $0.id == id }) {
+            if let account = transactionState.accounts.first(where: { $0.id == id }) {
                 draft.selectAccount(account, amountEntered: !amountText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }

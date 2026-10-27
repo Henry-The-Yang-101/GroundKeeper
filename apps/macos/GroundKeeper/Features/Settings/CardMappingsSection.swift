@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct CardMappingsSection: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
 
     var body: some View {
         Section {
@@ -18,8 +19,8 @@ struct CardMappingsSection: View {
                         get: { mapping.accountID },
                         set: { workspace.updateCardMapping(mapping, accountID: $0) }
                     )) {
-                        ForEach(workspace.accounts) { account in
-                            Text("\(account.displayName(in: workspace.accounts)) · \(account.currency)").tag(account.id)
+                        ForEach(transactionState.accounts) { account in
+                            Text("\(account.displayName(in: transactionState.accounts)) · \(account.currency)").tag(account.id)
                         }
                     }
                     Button("Remove mapping", role: .destructive) { workspace.removeCardMapping(mapping) }

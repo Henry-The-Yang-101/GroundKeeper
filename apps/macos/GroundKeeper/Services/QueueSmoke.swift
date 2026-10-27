@@ -79,7 +79,7 @@ import Synchronization
             try await store.addAccount(name: "Fictional account", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
             let document = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n".utf8), filename: "fixture.csv")
-            _ = try await workspace.importCSV(document, mapping: mapping, skipped: [])
+            _ = try await workspace.transactionState.importCSV(document, mapping: mapping, skipped: [])
             await workspace.processIfAutomatic()
             try check(workspace.pendingJobs == 0 && workspace.unqueuedJobs == 1 && workspace.model == nil, "CSV import bypassed manual classification mode")
             workspace.classifierProvider = "manual"
@@ -115,13 +115,13 @@ import Synchronization
         workspace.classifierProvider = "council"
         try writeCapture("first", to: inbox)
         await workspace.sync(scope: .captures)
-        try check(workspace.reviews.count == 1 && workspace.totalTransactions == 0, "Import did not request an account")
+        try check(workspace.reviews.count == 1 && workspace.transactionState.totalTransactions == 0, "Import did not request an account")
         try check(workspace.errorMessage == nil, "Import unexpectedly attempted classification")
         let first = workspace.reviews[0]
         workspace.assignAccount(first, accountID: accountID, remember: false)
         try await waitUntil { !workspace.saving }
-        try check(workspace.totalTransactions == 1 && workspace.transactions.count == 1, "Account choice did not immediately refresh Transactions")
-        try check(workspace.captureFeedback?.transactionID == workspace.transactions[0].id.uuidString, "Account choice did not expose the saved transaction")
+        try check(workspace.transactionState.totalTransactions == 1 && workspace.transactionState.transactions.count == 1, "Account choice did not immediately refresh Transactions")
+        try check(workspace.captureFeedback?.transactionID == workspace.transactionState.transactions[0].id.uuidString, "Account choice did not expose the saved transaction")
         try check(workspace.captureFeedback?.needsAttention == false && workspace.reviews.isEmpty, "Saved capture remained unresolved")
         try check(workspace.errorMessage == nil && workspace.unqueuedJobs == 1, "Manual account choice attempted classification")
 
@@ -130,7 +130,7 @@ import Synchronization
         try check(workspace.errorMessage?.contains("Set up Council") == true, "Explicit suggestions did not reach the selected provider")
         try check(workspace.pendingCaptures == 1 && workspace.reviews.isEmpty, "Suggest categories imported a capture")
         try check(FileManager.default.fileExists(atPath: inbox.appendingPathComponent("second.json").path), "Suggest categories consumed a capture file")
-        try check(workspace.totalTransactions == 1, "Suggestion failure removed a saved transaction")
+        try check(workspace.transactionState.totalTransactions == 1, "Suggestion failure removed a saved transaction")
 
         workspace.errorMessage = nil
         await workspace.sync(scope: .captures)
@@ -140,7 +140,7 @@ import Synchronization
         // There is no timer in this workspace: only the post-save wakeup can run.
         try await waitUntil { !workspace.saving && !workspace.processing && workspace.errorMessage != nil }
         try check(workspace.errorMessage?.contains("Set up Council") == true, "Automatic processing was lost during account confirmation")
-        try check(workspace.totalTransactions == 2 && workspace.reviews.isEmpty, "Classifier failure blocked account confirmation")
+        try check(workspace.transactionState.totalTransactions == 2 && workspace.reviews.isEmpty, "Classifier failure blocked account confirmation")
 
         // A queued automatic wakeup must honor a switch back to manual processing.
         workspace.errorMessage = nil
@@ -151,7 +151,7 @@ import Synchronization
         }
         try await waitUntil { !workspace.saving }
         await Task.yield()
-        try check(workspace.errorMessage == nil && workspace.totalTransactions == 2, "Deferred work bypassed manual mode")
+        try check(workspace.errorMessage == nil && workspace.transactionState.totalTransactions == 2, "Deferred work bypassed manual mode")
         try check(FileManager.default.fileExists(atPath: inbox.appendingPathComponent("third.json").path), "Manual mode consumed a deferred capture")
         try check(try await store.integrityCheck(), "Review flow damaged the vault")
         workspace.processingMode = .whileOpen

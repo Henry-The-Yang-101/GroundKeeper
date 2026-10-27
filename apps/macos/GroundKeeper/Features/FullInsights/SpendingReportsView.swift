@@ -29,6 +29,7 @@ struct ReportDrilldown: Identifiable {
 
 struct SpendingReportsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage(AppPreferences.Key.reportCurrency, store: AppPreferences.defaults) private var currency = "CAD"
     @AppStorage(AppPreferences.Key.reportTimezone, store: AppPreferences.defaults) private var timezone = TimeZone.current.identifier
@@ -57,15 +58,15 @@ struct SpendingReportsView: View {
         [period.rawValue, comparison, currency, timezone, String(weekStart), sensitivity.rawValue,
          accountID, category, tagID, merchantID ?? "all", String(customStart.timeIntervalSince1970), String(customEnd.timeIntervalSince1970)].joined(separator: "|")
     }
-    private var loadKey: String { selectionKey + "|\(workspace.reportingRevision)|\(workspace.ready)|\(refresh)" }
+    private var loadKey: String { selectionKey + "|\(transactionState.reportingRevision)|\(workspace.ready)|\(refresh)" }
     var body: some View {
         ScrollViewReader { scroll in
             reportPage(scroll: scroll)
         }
         .task(id: loadKey) { await load() }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in refresh += 1 }
-        .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().environment(workspace).vaultSheet() }
-        .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).environment(workspace).vaultSheet() }
+        .sheet(isPresented: $manageMerchants) { MerchantManagementSheet().workspaceEnvironment(workspace).vaultSheet() }
+        .sheet(item: $drilldown) { ReportTransactionsSheet(drilldown: $0).workspaceEnvironment(workspace).vaultSheet() }
         .onChange(of: workspace.ready) { if !workspace.ready { report = nil; drilldown = nil; tags = []; merchantChoices = []; manageMerchants = false; merchantID = nil } }
     }
 
@@ -135,7 +136,7 @@ struct SpendingReportsView: View {
                         AlignedFormField(title: "Account") {
                             Picker("Account", selection: $accountID) {
                                 Text("All accounts").tag("")
-                                ForEach(workspace.accounts.filter { $0.currency == currency }) { Text($0.displayName(in: workspace.accounts)).tag($0.id) }
+                                ForEach(transactionState.accounts.filter { $0.currency == currency }) { Text($0.displayName(in: transactionState.accounts)).tag($0.id) }
                             }
                         }
                         AlignedFormField(title: "Category") {
@@ -178,14 +179,14 @@ struct SpendingReportsView: View {
                             .disabled(accountID.isEmpty && category.isEmpty && tagID.isEmpty && merchantID == nil)
                         Button("Merchant names & groups") { manageMerchants = true }
                         Button("Restore hidden findings") {
-                            Task { do { try await workspace.restoreFindings(); refresh += 1 } catch { self.error = error.localizedDescription } }
+                            Task { do { try await transactionState.restoreFindings(); refresh += 1 } catch { self.error = error.localizedDescription } }
                         }
                     }.buttonStyle(.borderless)
                 }.padding(.top, 12)
             }.foregroundStyle(AppStyle.text)
             if !accountID.isEmpty || !category.isEmpty || !tagID.isEmpty || merchantID != nil {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    Text([workspace.accounts.first { $0.id == accountID }?.displayName(in: workspace.accounts), category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
+                    Text([transactionState.accounts.first { $0.id == accountID }?.displayName(in: transactionState.accounts), category.isEmpty ? nil : ReportFormat.category(category), tags.first { $0.id == tagID }?.name, merchantID.map { id in id.isEmpty ? "Unassigned merchant" : merchantChoices.first { $0.id == id }?.name ?? "Merchant" }].compactMap { $0 }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(AppStyle.muted)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Clear filters", action: clearFilters).buttonStyle(.borderless).fixedSize()
@@ -206,7 +207,7 @@ struct SpendingReportsView: View {
         error = nil; loading = report == nil
         do {
             let calendar = try ReportCalendar(timezone: timezone, weekStart: weekStart)
-            let context = try await workspace.spendingContext(timezone: timezone)
+            let context = try await transactionState.spendingContext(timezone: timezone)
             let custom = period == .custom ? try ReportRange(start: calendar.day(customStart), end: calendar.adding(1, to: calendar.day(customEnd))) : nil
             let ranges = try calendar.ranges(period, firstDay: context.firstDay, custom: custom)
             let baseline = comparison == "None" || period == .all ? nil : comparison == "Year earlier" ? try calendar.yearEarlier(ranges.0) : ranges.1
@@ -215,7 +216,7 @@ struct SpendingReportsView: View {
                                         tagID: tagID.isEmpty ? nil : tagID, timezone: timezone, weekStart: weekStart)
             filter.sensitivity = sensitivity; filter.merchantID = merchantID
             let directory = try await workspace.merchantDirectory()
-            let result = try await workspace.spendingReport(filter)
+            let result = try await transactionState.spendingReport(filter)
             try Task.checkCancellation()
             tags = context.tags; merchantChoices = directory.merchants; report = result; lastSelectionKey = selectionKey; loading = false
         } catch is CancellationError { return }
@@ -240,7 +241,7 @@ struct SpendingReportsView: View {
                     drilldown = ReportDrilldown(title: title, filter: filter)
                 }, hide: { snooze in
                     Task {
-                        do { try await workspace.hideFinding(finding.id, snooze: snooze); self.report?.findings.removeAll { $0.id == finding.id } }
+                        do { try await transactionState.hideFinding(finding.id, snooze: snooze); self.report?.findings.removeAll { $0.id == finding.id } }
                         catch { self.error = error.localizedDescription }
                     }
                 })

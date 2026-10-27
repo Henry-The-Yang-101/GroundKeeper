@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct MerchantManagementSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     @State private var merchants: [Merchant] = []
     @State private var names: [MerchantName] = []
@@ -52,7 +53,7 @@ struct MerchantManagementSheet: View {
             SheetFooter { Spacer(); SheetDoneButton() }
         }
         .frame(minWidth: 660, idealWidth: 800, minHeight: 540, idealHeight: 660)
-        .task(id: "\(refresh)|\(workspace.reportingRevision)") {
+        .task(id: "\(refresh)|\(transactionState.reportingRevision)") {
             do {
                 let directory = try await workspace.merchantDirectory(); try Task.checkCancellation()
                 merchants = directory.merchants; names = directory.names; error = nil
@@ -68,6 +69,7 @@ struct MerchantManagementSheet: View {
 
 private struct MerchantGroupingEditor: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     let name: MerchantName
     let merchants: [Merchant]
     let changed: () -> Void
@@ -125,6 +127,7 @@ private struct MerchantGroupingEditor: View {
 
 struct TransactionMerchantSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let entry: SpendingEntry
     @State private var transaction: TransactionMerchant?

@@ -3,25 +3,26 @@ import Observation
 import SwiftUI
 import GroundKeeperCore
 
-@MainActor @Observable final class AppWorkspace {
+@MainActor @Observable final class AppWorkspace: WorkspaceComponent {
+    let session = WorkspaceSession()
+    let transactionState: TransactionWorkspace
     var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: AppPreferences.Key.setupCompleted) || CommandLine.arguments.contains("--setup-preview"))
     var reviewingSetup = false
     var encrypted = VaultAccess.isEncrypted
     var unlocking = false
     var selectedTab: AppTab? = .home
     var insightsSection: InsightsSection = .transactions
-    var transactions: [Transaction] = []
-    var recentTransactions: [Transaction] = []
-    var matchingTransactions = 0
-    var transactionQuery = LedgerTransactionQuery()
-    var transactionReviewCount = 0
-    @ObservationIgnored private var refreshRequest = 0
-    var accounts: [Account] = []
+    var transactions: [Transaction] { get { transactionState.transactions } set { transactionState.transactions = newValue } }
+    var recentTransactions: [Transaction] { get { transactionState.recentTransactions } set { transactionState.recentTransactions = newValue } }
+    var matchingTransactions: Int { get { transactionState.matchingTransactions } set { transactionState.matchingTransactions = newValue } }
+    var transactionQuery: LedgerTransactionQuery { get { transactionState.transactionQuery } set { transactionState.transactionQuery = newValue } }
+    var transactionReviewCount: Int { get { transactionState.transactionReviewCount } set { transactionState.transactionReviewCount = newValue } }
+    var accounts: [Account] { get { transactionState.accounts } set { transactionState.accounts = newValue } }
     var cardMappings: [CardAccountMapping] = []
     var reviews: [ReviewRecord] = []
     var queue: [QueueRecord] = []
-    var totalTransactions = 0
-    var reportingRevision: Int64 = 0
+    var totalTransactions: Int { get { transactionState.totalTransactions } set { transactionState.totalTransactions = newValue } }
+    var reportingRevision: Int64 { get { transactionState.reportingRevision } set { transactionState.reportingRevision = newValue } }
     var processingMode = QueuePreferences.mode
     var backgroundStatus = QueueBackgroundService.status
     var changingProcessingMode = false
@@ -55,13 +56,11 @@ import GroundKeeperCore
     var merchantSearchEnabled = true
     var merchantSearchLocality = ""
     var merchantSearchStatus = ""
-    var page = 0
-    var reviewOnly = false
-    var focusTransactionSearch = false
-    var editor: Transaction?
-    var showingImportPreview = false
-    var errorMessage: String?
-    var feedback: WorkspaceFeedback?
+    var page: Int { get { transactionState.page } set { transactionState.page = newValue } }
+    var reviewOnly: Bool { get { transactionState.reviewOnly } set { transactionState.reviewOnly = newValue } }
+    var focusTransactionSearch: Bool { get { transactionState.focusTransactionSearch } set { transactionState.focusTransactionSearch = newValue } }
+    var editor: Transaction? { get { transactionState.editor } set { transactionState.editor = newValue } }
+    var showingImportPreview: Bool { get { transactionState.showingImportPreview } set { transactionState.showingImportPreview = newValue } }
     var captureFeedback: WorkspaceFeedback?
     var status = "Opening local vault…"
     var vaultPath = ""
@@ -72,14 +71,12 @@ import GroundKeeperCore
     var ollamaModelName = AppPreferences.defaults.string(forKey: AppPreferences.Key.ollamaModelName) ?? ""
     var processing = false
     var processingScope: QueueProcessingScope?
-    var saving = false
     var councilConfiguration: CouncilConfiguration?
     var councilQwenURL: URL?
     var councilLayaURL: URL?
     var model: ClassifierModel?
     var lastSync: Date?
     // Views observe readiness through this reference, including setup resumed on a later page.
-    private(set) var store: LedgerStore?
     @ObservationIgnored let client = ClassifierClient()
     @ObservationIgnored let ollama = OllamaClassifier()
     @ObservationIgnored private var ollamaModel: OllamaModel?
@@ -95,13 +92,18 @@ import GroundKeeperCore
     @ObservationIgnored private var stopping = false
     @ObservationIgnored private let isBackgroundAgent: Bool
     init(isBackgroundAgent: Bool = false) {
+        transactionState = TransactionWorkspace(session: session)
         self.isBackgroundAgent = isBackgroundAgent
+        session.refresh = { [weak self] in try await self?.refresh() }
+        session.processAutomatically = { [weak self] in await self?.processIfAutomatic() }
+        session.didFinishSaving = { [weak self] in self?.resumeAutomaticProcessingIfNeeded() }
+        session.canReleaseResources = { [weak self] in self.map { !$0.processing && !$0.classifying } ?? true }
+        session.releaseResources = { [weak self] in await self?.releaseClassifierResources() }
         if !QueueBackgroundService.isSupported && processingMode == .background { processingMode = .whileOpen }
     }
     @ObservationIgnored var classifying = false
     @ObservationIgnored private var started = false
     var reviewCount: Int { transactionReviewCount + reviews.count }
-    var ready: Bool { store != nil }
 
     func configureQueueSmoke(store: LedgerStore, bookmark: Data, mode: QueueProcessingMode) {
         self.store = store; folderBookmark = bookmark; processingMode = mode; showingSetup = false
@@ -221,43 +223,15 @@ import GroundKeeperCore
         showingSetup = false
         Task { await processIfAutomatic() }
     }
+
     func refresh() async throws {
-        guard let store else { return }
-        refreshRequest += 1
-        let request = refreshRequest
-        let query = transactionQuery, offset = page * 500
-        let result = try await store.workspaceSnapshot(query, offset: offset)
-        guard self.store === store, request == refreshRequest, transactionQuery == query, page * 500 == offset else { return }
+        guard let result = try await transactionState.refreshSnapshot() else { return }
         let snapshot = result.ledger
-        transactions = result.page.transactions.map(Transaction.init)
-        matchingTransactions = result.page.totalMatches; page = result.page.offset / 500
-        recentTransactions = snapshot.transactions.map(Transaction.init)
-        transactionReviewCount = result.reviewCount
-        accounts = snapshot.accounts; reviews = snapshot.reviews; queue = snapshot.queue
-        cardMappings = snapshot.cardMappings
+        reviews = snapshot.reviews; queue = snapshot.queue; cardMappings = snapshot.cardMappings
         unqueuedJobs = result.unqueuedJobs
-        totalTransactions = snapshot.totalTransactions; pendingJobs = snapshot.pendingJobs; failedJobs = snapshot.failedJobs
-        reportingRevision = result.reportingRevision
+        pendingJobs = snapshot.pendingJobs; failedJobs = snapshot.failedJobs
     }
 
-    func spendingContext(timezone: String) async throws -> SpendingContext {
-        guard let store else { throw LedgerError.unavailable("Unlock your vault to view spending.") }
-        let result = try await store.spendingContext(timezone: timezone)
-        guard self.store === store else { throw CancellationError() }
-        return result
-    }
-    func spendingReport(_ filter: SpendingFilter) async throws -> SpendingReport {
-        guard let store else { throw LedgerError.unavailable("Unlock your vault to view spending.") }
-        let result = try await store.spendingReport(filter)
-        guard self.store === store else { throw CancellationError() }
-        return result
-    }
-    func spendingEntries(_ filter: SpendingFilter, offset: Int) async throws -> [SpendingEntry] {
-        guard let store else { throw LedgerError.unavailable("Unlock your vault to view spending.") }
-        let result = try await store.spendingEntries(filter, offset: offset, limit: 101)
-        guard self.store === store else { throw CancellationError() }
-        return result
-    }
     func merchantDirectory() async throws -> (merchants: [Merchant], names: [MerchantName]) {
         guard let store else { throw LedgerError.unavailable("Unlock your vault to manage merchants.") }
         let merchants = try await store.merchants(), names = try await store.merchantNames()
@@ -289,82 +263,10 @@ import GroundKeeperCore
         guard self.store === store else { throw CancellationError() }
         try await refresh()
     }
-    func hideFinding(_ id: String, snooze: Bool) async throws {
-        guard let store else { return }
-        try await store.setFindingPreference(id: id, dismissed: !snooze, snoozedUntil: snooze ? Date().addingTimeInterval(7 * 86400) : nil)
-    }
-    func restoreFindings() async throws { try await store?.restoreSpendingFindings() }
     func showTransactions(needingReview: Bool = false) {
         reviewOnly = needingReview; insightsSection = .transactions; selectedTab = .fullInsights
     }
-    func transaction(id: String) async throws -> Transaction? {
-        guard let store else { throw LedgerError.unavailable("Unlock your vault to view this transaction.") }
-        let record = try await store.transaction(id: id)
-        guard self.store === store else { throw CancellationError() }
-        return record.map(Transaction.init)
-    }
-    func saveTransaction(_ transaction: Transaction) async throws {
-        guard let store else { throw LedgerError.unavailable("Unlock your vault to save this transaction.") }
-        guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then save again.") }
-        saving = true
-        defer { finishSaving() }
-        let edit = try await self.prepareTransactionEdit(transaction)
-        guard self.store === store else { throw CancellationError() }
-        try await store.save(edit)
-        guard self.store === store else { throw CancellationError() }
-        try await refresh()
-        feedback = WorkspaceFeedback(message: "Transaction saved")
-    }
-    func save(_ transaction: Transaction) {
-        perform {
-            guard let store = self.store else { return }
-            let edit = try await self.prepareTransactionEdit(transaction)
-            guard self.store === store else { throw CancellationError() }
-            try await store.save(edit)
-            self.editor = nil
-            try await self.refresh()
-            self.feedback = WorkspaceFeedback(message: "Transaction saved")
-        }
-    }
-    private func prepareTransactionEdit(_ transaction: Transaction) async throws -> TransactionEdit {
-        var edit = try transaction.edit
-        edit.receiptAdditions = []
-        for receipt in transaction.newReceiptImages {
-            let data = receipt.data
-            // The import flow already produced the bounded JPEG; OCR never blocks
-            // saving a readable receipt if recognition is unavailable.
-            let ocr = try? await ReceiptOCR.recognizeText(data)
-            edit.receiptAdditions.append(ReceiptAddition(image: data, text: ocr?.text ?? "", producer: ocr?.producer ?? "apple_vision_documents"))
-        }
-        return edit
-    }
 
-    func delete(_ transaction: Transaction) {
-        perform { try await self.store?.delete(id: transaction.id.uuidString, revision: transaction.revision); try await self.refresh() }
-    }
-    func accountLabel(id: String?, fallback: String) -> String {
-        accounts.first { $0.id == id }?.displayName(in: accounts) ?? fallback
-    }
-    func accountNameExists(name: String, currency: String, excludingID: String? = nil) -> Bool {
-        accounts.contains { $0.id != excludingID && $0.currency == currency && Account.normalizedName($0.name) == Account.normalizedName(name) }
-    }
-    func renameAccount(id: String, name: String) async throws {
-        guard let store else { throw LedgerError.unavailable("Unlock your vault to rename an account.") }
-        guard !saving else { throw LedgerError.unavailable("Wait for the current change to finish, then try again.") }
-        saving = true
-        defer { finishSaving() }
-        try await store.renameAccount(id: id, name: name)
-        guard self.store === store else { throw CancellationError() }
-        try await refresh()
-        feedback = WorkspaceFeedback(message: "Account renamed")
-    }
-    func addAccount(name: String, currency: String, kind: String) {
-        perform {
-            try await self.store?.addAccount(name: name, currency: currency, kind: kind)
-            try await self.refresh()
-            self.feedback = WorkspaceFeedback(message: "Account added")
-        }
-    }
     func assignAccount(_ review: ReviewRecord, accountID: String, remember: Bool) {
         perform {
             guard let store = self.store else { throw LedgerError.unavailable("Unlock your vault first.") }
@@ -427,8 +329,8 @@ import GroundKeeperCore
         let suffix = remembered ? " Card remembered for future captures." : ""
         switch result {
         case let .created(id), let .linked(id):
-            guard let transaction = try await transaction(id: id) else { throw LedgerError.invalid("The saved transaction is no longer available.") }
-            let account = accountLabel(id: transaction.accountID, fallback: transaction.account)
+            guard let transaction = try await transactionState.transaction(id: id) else { throw LedgerError.invalid("The saved transaction is no longer available.") }
+            let account = transactionState.accountLabel(id: transaction.accountID, fallback: transaction.account)
             let action: String
             if case .created = result { action = "Added to \(account)" }
             else { action = "Linked to an existing transaction in \(account)" }
@@ -515,10 +417,6 @@ import GroundKeeperCore
         await withTaskCancellationHandler { await task.value } onCancel: { task.cancel() }
         processingTask = nil; processing = false; processingScope = nil
         if !stopping && scope == .captures && processingMode.automaticallyProcesses { automaticProcessingRequested = true }
-        resumeAutomaticProcessingIfNeeded()
-    }
-    private func finishSaving() {
-        saving = false
         resumeAutomaticProcessingIfNeeded()
     }
     private func resumeAutomaticProcessingIfNeeded() {
@@ -883,31 +781,6 @@ import GroundKeeperCore
             }
             try await refresh()
         } catch is CancellationError {} catch { errorMessage = error.localizedDescription }
-    }
-    func importCSV(_ document: CSVDocument, mapping: CSVMapping, skipped: Set<Int>, updateExisting: Bool = false) async throws -> Int {
-        guard let store else { throw LedgerError.unavailable("Open the vault first.") }
-        let count = try await store.importCSV(document, mapping: mapping, skipped: skipped, updateExisting: updateExisting)
-        page = 0; try await refresh(); Task { await processIfAutomatic() }; return count
-    }
-    func queryTransactions(_ query: LedgerTransactionQuery) {
-        guard query != transactionQuery else { return }
-        transactionQuery = query; page = 0
-        refreshTransactionQuery()
-    }
-    func changePage(_ value: Int) { page = max(0, value); refreshTransactionQuery() }
-    private func refreshTransactionQuery() {
-        // Invalidate older results before scheduling the read. Reads must not take
-        // the write lock: rapid filter changes must each request their final state.
-        refreshRequest += 1
-        Task { do { try await refresh() } catch { if ready { errorMessage = error.localizedDescription } } }
-    }
-    func perform(_ operation: @escaping @MainActor () async throws -> Void) {
-        guard !saving else { return }; saving = true
-        Task {
-            defer { finishSaving() }
-            do { try await operation() } catch { errorMessage = error.localizedDescription }
-            if !processing && !classifying { await releaseClassifierResources() }
-        }
     }
 
     func releaseClassifierResources() async {

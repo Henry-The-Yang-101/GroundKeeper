@@ -18,7 +18,7 @@ import GroundKeeperCore
             try await store.addAccount(name: "Fictional Ollama smoke card", currency: "CAD")
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
             let first = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-20,FICTIONAL CAFE,-12.50\n".utf8), filename: "ollama-first.csv")
-            _ = try await workspace.importCSV(first, mapping: mapping, skipped: [])
+            _ = try await workspace.transactionState.importCSV(first, mapping: mapping, skipped: [])
             guard let selected = try await workspace.ollama.models().first(where: { $0.name == name }) else { throw OllamaError.modelUnavailable }
             workspace.useOllama(selected)
             while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
@@ -48,7 +48,7 @@ import GroundKeeperCore
             reopened.processingMode = .manual
             guard reopened.classifierProvider == "ollama", reopened.model == nil else { throw LedgerError.invalid("Saved provider did not restore lazily.") }
             let second = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-21,FICTIONAL BOOK SHOP,-9.25\n".utf8), filename: "ollama-second.csv")
-            _ = try await reopened.importCSV(second, mapping: mapping, skipped: [])
+            _ = try await reopened.transactionState.importCSV(second, mapping: mapping, skipped: [])
             await reopened.sync()
             guard reopened.errorMessage == nil, reopened.model == nil, reopened.pendingJobs == 0,
                   reopened.failedJobs == 0 else { throw LedgerError.invalid(reopened.errorMessage ?? "Restored Ollama provider did not process the queue.") }

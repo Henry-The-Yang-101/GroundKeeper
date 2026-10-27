@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct AccountRenameSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let account: Account
     // Each sheet owns one rename draft; workspace refreshes must not replace it.
@@ -17,7 +18,7 @@ struct AccountRenameSheet: View {
 
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var duplicateName: Bool {
-        workspace.accountNameExists(name: name, currency: account.currency, excludingID: account.id)
+        transactionState.accountNameExists(name: name, currency: account.currency, excludingID: account.id)
     }
 
     var body: some View {
@@ -45,7 +46,7 @@ struct AccountRenameSheet: View {
                     error = nil
                     Task {
                         do {
-                            try await workspace.renameAccount(id: account.id, name: trimmedName)
+                            try await transactionState.renameAccount(id: account.id, name: trimmedName)
                             dismiss()
                         } catch { self.error = error.localizedDescription }
                         saving = false

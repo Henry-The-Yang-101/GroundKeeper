@@ -3,6 +3,7 @@ import SwiftUI
 struct GroundKeeperApp: App {
     @NSApplicationDelegateAdaptor(GroundKeeperLifecycle.self) private var lifecycle
     @State private var workspace = AppWorkspace()
+    private var transactionState: TransactionWorkspace { workspace.transactionState }
     @AppStorage(AppPreferences.Key.appearance, store: AppPreferences.defaults) private var appearance = AppAppearance.system
 
     init() {
@@ -16,7 +17,7 @@ struct GroundKeeperApp: App {
                 else if workspace.showingSetup { SetupView(reviewMode: workspace.reviewingSetup) }
                 else { RootView() }
             }
-                .environment(workspace)
+                .workspaceEnvironment(workspace)
                 .defaultAppStorage(AppPreferences.defaults)
                 .onChange(of: appearance, initial: true) {
                     // Removing a SwiftUI preferredColorScheme can leave the hosting
@@ -41,7 +42,7 @@ struct GroundKeeperApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Transaction…", systemImage: "plus") {
-                    workspace.editor = Transaction()
+                    transactionState.editor = Transaction()
                 }
                 .keyboardShortcut("n").disabled(!workspace.ready || workspace.showingSetup)
             }
@@ -52,7 +53,7 @@ struct GroundKeeperApp: App {
             CommandGroup(after: .textEditing) {
                 Button("Find Transactions…") {
                     workspace.showTransactions()
-                    workspace.focusTransactionSearch = true
+                    transactionState.focusTransactionSearch = true
                 }
                 .keyboardShortcut("f").disabled(!workspace.ready || workspace.showingSetup)
             }

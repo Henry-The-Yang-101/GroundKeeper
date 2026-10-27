@@ -3,10 +3,11 @@ import GroundKeeperCore
 
 struct ReportEntryRow: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     let entry: SpendingEntry
     let currency: String
     private var accountName: String {
-        workspace.accounts.first { $0.id == entry.accountID }?.displayName(in: workspace.accounts) ?? entry.accountName
+        transactionState.accounts.first { $0.id == entry.accountID }?.displayName(in: transactionState.accounts) ?? entry.accountName
     }
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 16) {
@@ -24,6 +25,7 @@ struct ReportEntryRow: View {
 
 struct ReportTransactionsSheet: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let drilldown: ReportDrilldown
     @State private var rows: [SpendingEntry] = []
@@ -91,10 +93,10 @@ struct ReportTransactionsSheet: View {
             }
         }
         .frame(minWidth: 540, idealWidth: 680, minHeight: 450, idealHeight: 620)
-        .task(id: "\(page)|\(previous)|\(workspace.reportingRevision)|\(workspace.ready)") {
+        .task(id: "\(page)|\(previous)|\(transactionState.reportingRevision)|\(workspace.ready)") {
             rows = []; error = nil; loading = true
             do {
-                let fetched = try await workspace.spendingEntries(filter, offset: page * 100)
+                let fetched = try await transactionState.spendingEntries(filter, offset: page * 100)
                 try Task.checkCancellation()
                 hasMore = fetched.count > 100; rows = Array(fetched.prefix(100)); loading = false
             } catch is CancellationError { return }
@@ -107,7 +109,7 @@ struct ReportTransactionsSheet: View {
                 case .editor(let transaction): ReportEvidenceEditor(transaction: transaction)
                 case .receipts(let transaction): ReportEvidenceReceipts(transaction: transaction)
                 }
-            }.environment(workspace).vaultSheet()
+            }.workspaceEnvironment(workspace).vaultSheet()
         }
         .onChange(of: workspace.ready) { if !workspace.ready { rows = []; presentation = nil; dismiss() } }
     }
@@ -118,7 +120,7 @@ struct ReportTransactionsSheet: View {
         Task {
             defer { openingEntryID = nil }
             do {
-                guard let transaction = try await workspace.transaction(id: entry.id) else {
+                guard let transaction = try await transactionState.transaction(id: entry.id) else {
                     entryError = "This transaction is no longer available. Refresh the report to update its entries."
                     return
                 }
@@ -146,6 +148,7 @@ private enum ReportEntryPresentation: Identifiable {
 
 private struct ReportEvidenceEditor: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let transaction: Transaction
     @State private var saveError: String?
@@ -153,7 +156,7 @@ private struct ReportEvidenceEditor: View {
     var body: some View {
         TransactionEditor(transaction: transaction) { draft in
             Task {
-                do { try await workspace.saveTransaction(draft); dismiss() }
+                do { try await transactionState.saveTransaction(draft); dismiss() }
                 catch { saveError = error.localizedDescription }
             }
         }

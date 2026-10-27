@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct SyncView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @State private var viewedTransaction: Transaction?
     var body: some View {
         PageContent {
@@ -23,9 +24,9 @@ struct SyncView: View {
             Surface {
                 HStack {
                     SectionHeading(title: "Bank statements", detail: "Map columns, validate exact amounts, and import your history.")
-                    Button("Import CSV…") { workspace.showingImportPreview = true }.disabled(workspace.accounts.isEmpty)
+                    Button("Import CSV…") { transactionState.showingImportPreview = true }.disabled(transactionState.accounts.isEmpty)
                 }
-                if workspace.accounts.isEmpty { Text("Add an account in Settings before importing.").font(.caption) }
+                if transactionState.accounts.isEmpty { Text("Add an account in Settings before importing.").font(.caption) }
             }
             Surface {
                 SectionHeading(title: "Review captures", detail: "\(workspace.reviews.count) open items shown")
@@ -39,7 +40,7 @@ struct SyncView: View {
                                 Button("View transaction") {
                                     Task {
                                         do {
-                                            guard let transaction = try await workspace.transaction(id: id) else {
+                                            guard let transaction = try await transactionState.transaction(id: id) else {
                                                 workspace.errorMessage = "This transaction is no longer available."
                                                 return
                                             }
@@ -83,6 +84,7 @@ struct SyncView: View {
 }
 private struct CaptureFolderInfoButton: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @State private var showingInfo = false
 
     var body: some View {
@@ -115,6 +117,7 @@ private struct CaptureFolderInfoButton: View {
 
 private struct CaptureReviewRow: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     let review: ReviewRecord
     @State private var accountID = ""
     @State private var rememberCard = false
@@ -138,14 +141,14 @@ private struct CaptureReviewRow: View {
                 HStack {
                     Picker("Account", selection: $accountID) {
                         Text("Choose account").tag("")
-                        ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag($0.id) }
+                        ForEach(transactionState.accounts) { Text("\($0.displayName(in: transactionState.accounts)) · \($0.currency)").tag($0.id) }
                     }
                 }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
                 Button("Continue import") {
                     workspace.assignAccount(review, accountID: accountID, remember: rememberCard)
                 }.disabled(accountID.isEmpty)
-                if workspace.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }
+                if transactionState.accounts.isEmpty { Text("Add an account in Settings first.").font(.caption).foregroundStyle(AppStyle.muted) }
             }
             if ["possible_duplicate", "statement_match"].contains(review.reason) {
                 Text("Compare with existing transactions").font(.headline)
@@ -158,10 +161,10 @@ private struct CaptureReviewRow: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(candidate.description).fontWeight(.medium)
                             Text("\((Decimal(candidate.amountMinor) / 100).formatted(.currency(code: candidate.currency))) \(candidate.currency) · \(candidate.day)")
-                            Text("Account: \(workspace.accountLabel(id: candidate.accountID, fallback: candidate.accountName))").font(.caption)
+                            Text("Account: \(transactionState.accountLabel(id: candidate.accountID, fallback: candidate.accountName))").font(.caption)
                             Button("Link to this transaction") { workspace.resolve(review, transactionID: candidate.id, expectedRevision: candidate.revision) }
                                 .disabled(context == nil)
-                                .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(workspace.accountLabel(id: candidate.accountID, fallback: candidate.accountName))")
+                                .accessibilityLabel("Link capture to \(candidate.description), \(candidate.day), \(transactionState.accountLabel(id: candidate.accountID, fallback: candidate.accountName))")
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -192,7 +195,7 @@ private struct CaptureReviewRow: View {
             Button("Dismiss review") { workspace.dismiss(review) }.font(.caption)
         }.disabled(workspace.saving)
         .sheet(isPresented: $correcting) { CaptureCorrection(review: review).vaultSheet() }
-        .task(id: "\(review.id)|\(workspace.reportingRevision)") {
+        .task(id: "\(review.id)|\(transactionState.reportingRevision)") {
             do {
                 guard let store = workspace.store else { throw LedgerError.unavailable("Open the vault to review this capture.") }
                 context = try await store.captureReviewContext(eventID: review.eventID)
@@ -212,6 +215,7 @@ private struct CaptureCorrection: View {
         let rememberCard: Bool
     }
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.dismiss) private var dismiss
     let review: ReviewRecord
     @State private var description = ""
@@ -253,7 +257,7 @@ private struct CaptureCorrection: View {
                 TransactionDatePicker(date: $date)
                 Picker("Account", selection: $accountID) {
                     Text("Choose account").tag("")
-                    ForEach(workspace.accounts) { Text("\($0.displayName(in: workspace.accounts)) · \($0.currency)").tag($0.id) }
+                    ForEach(transactionState.accounts) { Text("\($0.displayName(in: transactionState.accounts)) · \($0.currency)").tag($0.id) }
                 }
                 if !review.label.isEmpty { Text("Card: \(review.label)").font(.caption).textSelection(.enabled) }
                 RememberCardChoice(label: review.label, remember: $rememberCard)
@@ -310,6 +314,7 @@ private struct CaptureCorrection: View {
 
 private struct CaptureSourceEvidence: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     let context: CaptureReviewContext
     var body: some View {
         Section(context.sourceKind == "csv" ? "Statement source" : "Original capture") {
@@ -319,7 +324,7 @@ private struct CaptureSourceEvidence: View {
             } else {
                 LabeledContent("Amount", value: "Could not be parsed — check source below")
             }
-            LabeledContent("Account", value: workspace.accountLabel(id: context.accountID, fallback: context.accountName ?? "Not assigned"))
+            LabeledContent("Account", value: transactionState.accountLabel(id: context.accountID, fallback: context.accountName ?? "Not assigned"))
             DisclosureGroup("Preserved source evidence") {
                 Text(context.payload).font(.caption.monospaced()).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)

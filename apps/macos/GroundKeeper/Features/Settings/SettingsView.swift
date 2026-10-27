@@ -4,6 +4,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(TransactionWorkspace.self) private var transactionState
     @AppStorage(AppPreferences.Key.appearance) private var appearance = AppAppearance.system
     @State private var accountName = ""
     @State private var currency = "CAD"
@@ -13,7 +14,7 @@ struct SettingsView: View {
     @State private var installer = ModelInstaller()
     @State private var kind = "credit_card"
     @State private var renamingAccount: Account?
-    private var duplicateAccountName: Bool { workspace.accountNameExists(name: accountName, currency: currency) }
+    private var duplicateAccountName: Bool { transactionState.accountNameExists(name: accountName, currency: currency) }
     var body: some View {
         Form {
             VaultFormSection("Appearance") {
@@ -71,12 +72,12 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Categorization").font(VaultTypography.section) }
             Section {
-                ForEach(workspace.accounts) { account in
+                ForEach(transactionState.accounts) { account in
                     HStack {
-                        LabeledContent(account.displayName(in: workspace.accounts), value: account.currency)
+                        LabeledContent(account.displayName(in: transactionState.accounts), value: account.currency)
                         Button("Rename…") { renamingAccount = account }
                             .disabled(!workspace.ready || workspace.saving)
-                            .accessibilityLabel("Rename \(account.displayName(in: workspace.accounts))")
+                            .accessibilityLabel("Rename \(account.displayName(in: transactionState.accounts))")
                     }
                 }
                 TextField("New account name", text: $accountName)
@@ -89,7 +90,7 @@ struct SettingsView: View {
                     Text("An account with this name already uses \(currency). Choose a different name, or rename the existing account above.")
                         .font(.caption).foregroundStyle(.red)
                 }
-                Button("Add account") { workspace.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
+                Button("Add account") { transactionState.addAccount(name: accountName, currency: currency, kind: kind); accountName = "" }
                     .disabled(!workspace.ready || workspace.saving || accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || duplicateAccountName)
                 Text("Choose an account for Wallet and bank captures in Sync, with the option to remember each card description.").font(.caption).foregroundStyle(AppStyle.muted)
             } header: { Text("Accounts").font(VaultTypography.section) }
