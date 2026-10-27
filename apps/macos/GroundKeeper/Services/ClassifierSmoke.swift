@@ -154,9 +154,9 @@ import GroundKeeperCore
         await workspace.start()
         workspace.processingMode = .manual
         guard let store = workspace.store else { throw LedgerError.unavailable("Preview vault did not open.") }
-        workspace.useInstalledModel(package)
+        workspace.classifier.useInstalledModel(package)
         while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
-        guard workspace.errorMessage == nil, workspace.classifierProvider == "local" else {
+        guard workspace.errorMessage == nil, workspace.classifier.classifierProvider == "local" else {
             throw LedgerError.invalid(workspace.errorMessage ?? "Local provider setup failed.")
         }
         try await store.addAccount(name: "Fictional draft test", currency: "CAD")
@@ -171,12 +171,12 @@ import GroundKeeperCore
         var newDraft = Transaction()
         newDraft.merchant = "FICTIONAL CAFE coffee and sandwich"
         for draft in [newDraft, Transaction(before)] {
-            let suggestion = try await workspace.suggestCategory(for: draft)
+            let suggestion = try await workspace.classifier.suggestCategory(for: draft)
             try suggestion.decision.validateSuggestion()
             let after = try await store.snapshot()
             guard after.transactions.count == 1, after.transactions[0].revision == before.revision,
                   after.transactions[0].category == before.category,
-                  !workspace.processing, workspace.model == nil else {
+                  !workspace.processing, workspace.classifier.model == nil else {
                 throw LedgerError.invalid("Suggestion changed the ledger or retained classifier resources.")
             }
             write(["event": "draft_suggestion_verified", "draft_revision": draft.revision, "type": suggestion.decision.type,

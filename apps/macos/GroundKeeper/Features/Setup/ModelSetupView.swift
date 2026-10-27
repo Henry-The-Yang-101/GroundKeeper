@@ -3,6 +3,7 @@ import AppKit
 
 struct ModelSetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     @Bindable var installer: ModelInstaller
     private var models: [ModelCatalog.Model] { (try? ModelCatalog.bundled().models) ?? [] }
     var body: some View {
@@ -16,7 +17,7 @@ struct ModelSetupView: View {
                             .foregroundStyle(AppStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
                         Text(ByteCountFormatter.string(fromByteCount: model.downloadBytes, countStyle: .file) + " download").font(.caption)
                         if let url = installer.installed[model.id] {
-                            Button("Use \(model.title)") { workspace.useInstalledModel(url) }.disabled(workspace.saving || !workspace.ready)
+                            Button("Use \(model.title)") { classifier.useInstalledModel(url) }.disabled(workspace.saving || !workspace.ready)
                         } else {
                             Button("Install \(model.title)") { installer.install([model]) }.disabled(installer.busy)
                         }
@@ -28,7 +29,7 @@ struct ModelSetupView: View {
             HStack {
                 Button("Install both models") { installer.install(models.filter { installer.installed[$0.id] == nil }) }
                     .disabled(installer.busy || models.allSatisfy { installer.installed[$0.id] != nil })
-                Button("Choose existing package…", action: workspace.selectModel).disabled(workspace.saving || !workspace.ready || installer.busy)
+                Button("Choose existing package…", action: classifier.selectModel).disabled(workspace.saving || !workspace.ready || installer.busy)
             }
             if let notices = Bundle.main.resourceURL?.appendingPathComponent("Setup/MODEL-NOTICES.txt") {
                 Button("Model licenses and notices") { NSWorkspace.shared.open(notices) }.font(.caption)
@@ -44,17 +45,17 @@ struct ModelSetupView: View {
                 .foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button("Install Cloud Shortcut") { SetupResources.openShortcut("GK Categorize Cloud") }
-                Button("Use Apple Intelligence Cloud", action: workspace.useShortcut).disabled(workspace.saving || !workspace.ready)
+                Button("Use Apple Intelligence Cloud", action: classifier.useShortcut).disabled(workspace.saving || !workspace.ready)
             }
-            TextField("Installed Shortcut name", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
+            TextField("Installed Shortcut name", text: Binding(get: { classifier.shortcutName }, set: { classifier.shortcutName = $0 }))
                 .textFieldStyle(.roundedBorder).disabled(workspace.saving)
             Text("In Shortcuts, check Use Model → Cloud, Broad World Knowledge on, Text output, and Follow Up off. Your installed Shortcut controls where inference runs.")
                 .font(.callout).foregroundStyle(AppStyle.muted)
             Divider()
             CouncilSetupView(installed: installer.installed).disabled(installer.busy)
             Divider()
-            HStack { Button("Use manual categorization", action: workspace.useManualCategorization).disabled(workspace.saving || workspace.processing)
-                Spacer(); Text(workspace.classifierStatus).font(.caption).foregroundStyle(AppStyle.muted) }
+            HStack { Button("Use manual categorization", action: classifier.useManualCategorization).disabled(workspace.saving || workspace.processing)
+                Spacer(); Text(classifier.classifierStatus).font(.caption).foregroundStyle(AppStyle.muted) }
             Text("Every model suggestion needs your review. You can change providers in Settings; GroundKeeper never switches to cloud automatically.")
                 .font(.callout).foregroundStyle(AppStyle.muted)
         }.onAppear { installer.discover() }

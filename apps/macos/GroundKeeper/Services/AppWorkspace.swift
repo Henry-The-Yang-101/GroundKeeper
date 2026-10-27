@@ -6,6 +6,7 @@ import GroundKeeperCore
 @MainActor @Observable final class AppWorkspace: WorkspaceComponent {
     let session = WorkspaceSession()
     let transactionState: TransactionWorkspace
+    let classifier: ClassifierWorkspace
     var showingSetup = !InterfacePreview.isEnabled && (!AppPreferences.defaults.bool(forKey: AppPreferences.Key.setupCompleted) || CommandLine.arguments.contains("--setup-preview"))
     var reviewingSetup = false
     var encrypted = VaultAccess.isEncrypted
@@ -65,26 +66,23 @@ import GroundKeeperCore
     var status = "Opening local vault…"
     var vaultPath = ""
     var folderName = "Not connected"
-    var shortcutName = AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierShortcutName) ?? "GK Categorize Cloud"
-    var classifierProvider = AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierProvider) ?? (AppPreferences.defaults.data(forKey: AppPreferences.Key.classifierModelBookmark) == nil ? "manual" : "local")
-    var classifierStatus = "Manual categorization until you choose a provider"
-    var ollamaModelName = AppPreferences.defaults.string(forKey: AppPreferences.Key.ollamaModelName) ?? ""
+    var shortcutName: String { get { classifier.shortcutName } set { classifier.shortcutName = newValue } }
+    var classifierProvider: String { get { classifier.classifierProvider } set { classifier.classifierProvider = newValue } }
+    var classifierStatus: String { get { classifier.classifierStatus } set { classifier.classifierStatus = newValue } }
+    var ollama: OllamaClassifier { classifier.ollama }
     var processing = false
     var processingScope: QueueProcessingScope?
-    var councilConfiguration: CouncilConfiguration?
-    var councilQwenURL: URL?
-    var councilLayaURL: URL?
-    var model: ClassifierModel?
+    var councilConfiguration: CouncilConfiguration? { get { classifier.councilConfiguration } set { classifier.councilConfiguration = newValue } }
+    var councilQwenURL: URL? { get { classifier.councilQwenURL } set { classifier.councilQwenURL = newValue } }
+    var councilLayaURL: URL? { get { classifier.councilLayaURL } set { classifier.councilLayaURL = newValue } }
+    var model: ClassifierModel? { get { classifier.model } set { classifier.model = newValue } }
     var lastSync: Date?
     // Views observe readiness through this reference, including setup resumed on a later page.
-    @ObservationIgnored let client = ClassifierClient()
-    @ObservationIgnored let ollama = OllamaClassifier()
-    @ObservationIgnored private var ollamaModel: OllamaModel?
+    var client: ClassifierClient { classifier.client }
     @ObservationIgnored private let merchantSearch = MerchantSearchClient()
     @ObservationIgnored private var merchantSearchTask: Task<MerchantSearchEvidence, any Error>?
     @ObservationIgnored private let folder = CaptureFolder()
     @ObservationIgnored private var folderBookmark: Data?
-    @ObservationIgnored private var modelURL: URL?
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var processingTask: Task<Void, Never>?
     @ObservationIgnored private var automaticProcessingRequested = false
@@ -93,15 +91,20 @@ import GroundKeeperCore
     @ObservationIgnored private let isBackgroundAgent: Bool
     init(isBackgroundAgent: Bool = false) {
         transactionState = TransactionWorkspace(session: session)
+        classifier = ClassifierWorkspace(session: session)
         self.isBackgroundAgent = isBackgroundAgent
+        classifier.isProcessing = { [weak self] in self?.processing ?? false }
+        classifier.setProcessing = { [weak self] in self?.processing = $0 }
+        classifier.pendingSuggestionCount = { [weak self] in self?.suggestionCount ?? 0 }
+        classifier.contextForJob = { [weak self] job, store in try await self?.merchantContext(for: job, store: store) }
         session.refresh = { [weak self] in try await self?.refresh() }
         session.processAutomatically = { [weak self] in await self?.processIfAutomatic() }
         session.didFinishSaving = { [weak self] in self?.resumeAutomaticProcessingIfNeeded() }
         session.canReleaseResources = { [weak self] in self.map { !$0.processing && !$0.classifying } ?? true }
-        session.releaseResources = { [weak self] in await self?.releaseClassifierResources() }
+        session.releaseResources = { [weak self] in await self?.classifier.releaseClassifierResources() }
         if !QueueBackgroundService.isSupported && processingMode == .background { processingMode = .whileOpen }
     }
-    @ObservationIgnored var classifying = false
+    var classifying: Bool { get { classifier.classifying } set { classifier.classifying = newValue } }
     @ObservationIgnored private var started = false
     var reviewCount: Int { transactionReviewCount + reviews.count }
 
@@ -160,15 +163,7 @@ import GroundKeeperCore
             }
             folderBookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.captureFolderBookmark)
             if folderBookmark != nil { folderName = "Saved capture folder" }
-            restoreCouncilPackages()
-            if classifierProvider == "council" {
-                councilConfiguration = try await store?.selectedCouncil()
-                classifierStatus = councilConfiguration == nil ? "Council needs setup" : "Council · Qwen, Laya and Apple Intelligence · equal votes"
-            }
-            else if classifierProvider == "manual" { classifierStatus = "Manual categorization" }
-            else if classifierProvider == "ollama" { classifierStatus = "Ollama · \(ollamaModelName) · connects when processing needs it" }
-            else if classifierProvider == "shortcut" { classifierStatus = "Saved Shortcut · runs when processing needs it" }
-            else if AppPreferences.defaults.data(forKey: AppPreferences.Key.classifierModelBookmark) != nil { classifierStatus = "Saved model · loads when processing needs it" }
+            try await classifier.restoreSelection()
             try await refresh()
             loop = Task { [weak self] in
                 while !Task.isCancelled {
@@ -438,12 +433,12 @@ import GroundKeeperCore
         // A folder problem must not prevent suggestions for transactions already saved.
         if scope.suggestsCategories && !Task.isCancelled {
             processingScope = .suggestions
-            do { try await suggestPendingCategories(store: store) }
+            do { try await classifier.suggestPendingCategories(store: store) }
             catch is CancellationError {}
             catch { classifierStatus = "Category suggestions need attention"; errorMessage = error.localizedDescription }
         }
         await updateQueueCount()
-        await releaseClassifierResources()
+        await classifier.releaseClassifierResources()
     }
     private func importCaptureFiles(store: LedgerStore) async throws {
         if let folderBookmark {
@@ -464,18 +459,6 @@ import GroundKeeperCore
             try await folder.importReceiptImages(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderIsExact))
             let failed = try await folder.cleanStoredFiles(bookmark: folderBookmark, store: store, exactFolder: AppPreferences.defaults.bool(forKey: AppPreferences.Key.captureFolderIsExact))
             cleanupMessage = failed == 0 ? nil : "Saved safely in the vault. Reconnect the capture folder to remove \(failed) queued files."
-        }
-    }
-    private func suggestPendingCategories(store: LedgerStore) async throws {
-        try Task.checkCancellation()
-        try await refresh()
-        guard classifierProvider != "manual", suggestionCount > 0 else { return }
-        if classifierProvider == "council" { try await classifyCouncilPending() }
-        else if try await store.prepareSelectedClassifications() {
-            if model == nil { try await restoreModel() }
-            guard model != nil else { throw LedgerError.unavailable("Choose a category provider in Settings before requesting suggestions.") }
-            try Task.checkCancellation()
-            await classifyPending()
         }
     }
     func setReceiptSharing(_ enabled: Bool) {
@@ -590,22 +573,6 @@ import GroundKeeperCore
         try await store.addReceiptOCR(id: id, text: result.text, producer: result.producer)
         try await refresh()
     }
-    private func restoreModel() async throws {
-        if classifierProvider == "manual" || classifierProvider == "council" { return }
-        if classifierProvider == "ollama" {
-            guard let data = AppPreferences.defaults.data(forKey: AppPreferences.Key.ollamaSelectedModel),
-                  let selected = try? JSONDecoder().decode(OllamaModel.self, from: data) else {
-                throw LedgerError.unavailable("Choose an installed Ollama model in Settings.")
-            }
-            try await loadOllama(selected); return
-        }
-        if classifierProvider == "shortcut" { try await loadShortcut(name: AppPreferences.defaults.string(forKey: AppPreferences.Key.classifierShortcutName) ?? "GK Categorize Cloud"); return }
-        guard let bookmark = AppPreferences.defaults.data(forKey: AppPreferences.Key.classifierModelBookmark) else { return }
-        var stale = false
-        let url = try URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
-        guard !stale else { throw LedgerError.unavailable("Select the model package again.") }
-        try await loadModel(url)
-    }
     func changeProcessingMode(_ mode: QueueProcessingMode) {
         guard !(encrypted && mode == .background) else { errorMessage = "Encrypted vaults process while GroundKeeper is open and unlocked, or manually."; return }
         guard !changingProcessingMode, !saving else { return }
@@ -648,144 +615,5 @@ import GroundKeeperCore
     func retryFailures() {
         perform { try await self.store?.retryQueue(); try await self.store?.retryClassificationFailures(); await self.folder.reset(); await self.updateQueueCount(); await self.processIfAutomatic() }
     }
-    func selectModel() {
-        guard !classifying, !processing, !saving else { return }
-        let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
-        panel.message = "Choose a verified GroundKeeper model package. Pending transactions will be classified locally."
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        perform {
-            let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            try await self.loadModel(url)
-            self.classifierProvider = "local"
-            AppPreferences.defaults.set("local", forKey: AppPreferences.Key.classifierProvider)
-            AppPreferences.defaults.set(bookmark, forKey: AppPreferences.Key.classifierModelBookmark)
-            await self.processIfAutomatic()
-        }
-    }
-    func useOllama(_ selected: OllamaModel) {
-        guard !processing, !saving else { return }
-        perform {
-            try await self.loadOllama(selected)
-            AppPreferences.defaults.set(try JSONEncoder().encode(selected), forKey: AppPreferences.Key.ollamaSelectedModel)
-            AppPreferences.defaults.set(selected.name, forKey: AppPreferences.Key.ollamaModelName)
-            AppPreferences.defaults.set("ollama", forKey: AppPreferences.Key.classifierProvider)
-            self.ollamaModelName = selected.name
-            self.classifierProvider = "ollama"
-            await self.processIfAutomatic()
-        }
-    }
-    private func loadOllama(_ selected: OllamaModel) async throws {
-        try await ollama.verify(selected)
-        // Release the bundled worker's GPU weights before using Ollama.
-        if let model, model.backend != "ollama" { try? await client.releaseModel() }
-        await client.shutdown()
-        model = nil; modelURL = nil; ollamaModel = nil
-        let loaded = ClassifierModel(modelID: selected.name, backend: "ollama", manifestSHA256: selected.identity,
-                                     policyVersion: ClassifierClient.policyVersion, device: "Ollama · local")
-        try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend,
-            policy: loaded.policyVersion, configuration: String(decoding: JSONEncoder().encode(selected), as: UTF8.self))
-        modelURL = nil; ollamaModel = selected; model = loaded
-        classifierStatus = "Ollama · \(selected.name) · local"
-    }
-    func useShortcut() {
-        guard !processing, !saving else { return }
-        perform {
-            let name = self.shortcutName.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else { throw LedgerError.invalid("Enter a Shortcut name.") }
-            self.shortcutName = name
-            try await self.loadShortcut(name: name)
-            self.classifierProvider = "shortcut"
-            AppPreferences.defaults.set(name, forKey: AppPreferences.Key.classifierShortcutName)
-            AppPreferences.defaults.set("shortcut", forKey: AppPreferences.Key.classifierProvider)
-            await self.processIfAutomatic()
-        }
-    }
-    private func loadShortcut(name: String) async throws {
-        model = nil; modelURL = nil
-        let loaded = try await client.prepareShortcut(name: name)
-        try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend,
-            policy: loaded.policyVersion, configuration: String(decoding: JSONEncoder().encode(loaded), as: UTF8.self))
-        model = loaded; classifierStatus = "\(loaded.modelID) · Apple Shortcuts (may use cloud)"
-    }
-    func useInstalledModel(_ url: URL) {
-        guard !processing, !saving else { return }
-        perform {
-            try await self.loadModel(url)
-            let bookmark = try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
-            AppPreferences.defaults.set(bookmark, forKey: AppPreferences.Key.classifierModelBookmark)
-            AppPreferences.defaults.set("local", forKey: AppPreferences.Key.classifierProvider)
-            self.classifierProvider = "local"
-            await self.processIfAutomatic()
-        }
-    }
-    func useManualCategorization() {
-        guard !processing, !saving else { return }
-        classifierProvider = "manual"; model = nil; modelURL = nil
-        AppPreferences.defaults.set("manual", forKey: AppPreferences.Key.classifierProvider)
-        AppPreferences.defaults.removeObject(forKey: AppPreferences.Key.classifierModelBookmark)
-        classifierStatus = "Manual categorization"
-        Task { await client.shutdown() }
-    }
-    private func loadModel(_ url: URL) async throws {
-        classifierStatus = "Verifying and loading model…"
-        let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }
-        model = nil; modelURL = nil
-        let loaded = try await client.prepareModel(at: url)
-        let encoder = JSONEncoder(); encoder.outputFormatting = .sortedKeys
-        try await store?.registerModel(id: loaded.manifestSHA256, name: loaded.modelID, backend: loaded.backend, policy: loaded.policyVersion,
-            configuration: String(decoding: encoder.encode(loaded), as: UTF8.self))
-        modelURL = url; model = loaded; classifierStatus = "\(loaded.modelID) · \(loaded.device)"
-    }
-    private func classifyPending() async {
-        guard !classifying, let store, let selectedModel = model else { return }
-        classifying = true; defer { classifying = false }
-        do {
-            try await store.enqueueClassifications(modelID: selectedModel.manifestSHA256)
-            // Process the existing backlog; do not chase newly arriving work forever.
-            let limit = (try await store.snapshot(limit: 1)).pendingJobs
-            for _ in 0..<limit {
-                try Task.checkCancellation()
-                guard let job = try await store.claimClassification(modelID: selectedModel.manifestSHA256) else { break }
-                do {
-                    let context = try await merchantContext(for: job, store: store)
-                    let input = ClassifierInput(description: job.description, direction: job.direction, currency: job.currency,
-                                                transactionNotes: job.transactionNotes, receiptContext: job.receiptContext, walletCategoryRaw: job.walletCategoryRaw, merchantContext: context)
-                    let decision: ClassificationDecision
-                    if selectedModel.backend == "ollama" {
-                        guard let selected = ollamaModel, selected.identity == selectedModel.manifestSHA256 else { throw OllamaError.modelChanged }
-                        decision = try await ollama.classify(inputJSON: JSONEncoder().encode(input), model: selected)
-                    } else {
-                        let result = try await client.classify(input, model: selectedModel, partID: job.partID, revision: job.revision, jobID: job.id)
-                        guard let value = result.decision else { throw ClassifierBridgeError.invalidResponse }
-                        decision = ClassificationDecision(type: value.type, category: value.category, review: value.review)
-                    }
-                    try await store.completeClassification(job, decision: decision)
-                } catch is CancellationError {
-                    try await store.releaseClassification(job)
-                    throw CancellationError()
-                } catch {
-                    var code = "worker_unavailable", retryable = true
-                    if case ClassifierBridgeError.worker(let workerCode, _) = error {
-                        code = workerCode
-                        retryable = ["busy", "deadline_exceeded", "model_not_ready", "runtime_failed", "inference_failed"].contains(code)
-                    }
-                    if let ollamaError = error as? OllamaError {
-                        code = ollamaError.code; retryable = ollamaError.retryable
-                    }
-                    try await store.failClassification(job, code: code, retryable: retryable)
-                    classifierStatus = error.localizedDescription
-                    errorMessage = error.localizedDescription
-                    if selectedModel.backend == "apple_shortcut" { model = nil }
-                    break
-                }
-            }
-            try await refresh()
-        } catch is CancellationError {} catch { errorMessage = error.localizedDescription }
-    }
 
-    func releaseClassifierResources() async {
-        // Disconnecting lets the service exit, freeing Python and GPU allocator caches too.
-        await client.shutdown()
-        model = nil; modelURL = nil; ollamaModel = nil
-    }
 }

@@ -9,7 +9,7 @@ struct DraftCategorySuggestion {
     var category: SpendingCategory { SpendingCategory.allCases.first { $0.code == decision.category } ?? .none }
 }
 
-extension AppWorkspace {
+extension ClassifierWorkspace {
     /// A draft is never inserted into the ledger just to obtain a suggestion.
     func suggestCategory(for draft: Transaction) async throws -> DraftCategorySuggestion {
         guard !processing, !saving, !classifying else { throw LedgerError.unavailable("Wait for the current processing to finish.") }

@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct CouncilEvidenceView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     let transactionID: String
     @State private var report: CouncilReport?
     @State private var error: String?
@@ -55,7 +56,7 @@ struct CouncilEvidenceView: View {
             } else if let error { Section("Model council") { Text(error).font(.caption).foregroundStyle(.red) } }
         }.task(id: transactionID) {
             defer { loading = false }
-            do { report = try await workspace.councilReport(transactionID: transactionID) }
+            do { report = try await classifier.councilReport(transactionID: transactionID) }
             catch { self.error = "Council details could not be loaded. Reopen this transaction to retry." }
         }
     }

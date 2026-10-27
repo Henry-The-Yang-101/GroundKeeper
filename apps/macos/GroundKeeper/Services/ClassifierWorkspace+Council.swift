@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 import GroundKeeperCore
 
-extension AppWorkspace {
+extension ClassifierWorkspace {
     var councilReadyToConfigure: Bool { councilQwenURL != nil && councilLayaURL != nil && !shortcutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     func restoreCouncilPackages() {
         councilQwenURL = Self.councilPackage("qwen_mlx")

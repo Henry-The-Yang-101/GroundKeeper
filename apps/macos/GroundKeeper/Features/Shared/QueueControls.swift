@@ -4,6 +4,7 @@ struct QueueControls: View {
     static let reviewGuidance = "Capture reviews are resolved in Sync. A complete capture is saved immediately after your decision; category suggestions happen separately. In manual mode, Retry failed work requeues failures, then Import captures or Suggest categories runs the relevant work."
     var showsReviewGuidance = true
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     @State private var showingProviders = false
     @State private var installer = ModelInstaller()
     var body: some View {
@@ -11,7 +12,7 @@ struct QueueControls: View {
             HStack {
                 Button(workspace.importButtonTitle) { Task { await workspace.sync(scope: .captures) } }
                     .disabled(!workspace.hasCaptureFolder || controlsDisabled)
-                if workspace.classifierProvider != "manual" {
+                if classifier.classifierProvider != "manual" {
                     Button(workspace.suggestionButtonTitle) { Task { await workspace.sync(scope: .suggestions) } }
                         .disabled(controlsDisabled || workspace.suggestionCount == 0)
                 }
@@ -25,7 +26,7 @@ struct QueueControls: View {
                 if workspace.pendingFileWork > 0 {
                     Text("\(workspace.pendingFileWork) receipt or file cleanup tasks run with Import captures.").font(.caption).foregroundStyle(AppStyle.muted)
                 }
-                if workspace.classifierProvider == "manual" {
+                if classifier.classifierProvider == "manual" {
                     Text("Manual categorization is selected. Review saved transactions yourself or choose a provider for suggestions.")
                         .font(.caption).foregroundStyle(AppStyle.muted)
                     HStack {

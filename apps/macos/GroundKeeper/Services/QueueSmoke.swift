@@ -81,8 +81,8 @@ import Synchronization
             let document = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-17,FICTIONAL CAFE,-12.50\n".utf8), filename: "fixture.csv")
             _ = try await workspace.transactionState.importCSV(document, mapping: mapping, skipped: [])
             await workspace.processIfAutomatic()
-            try check(workspace.pendingJobs == 0 && workspace.unqueuedJobs == 1 && workspace.model == nil, "CSV import bypassed manual classification mode")
-            workspace.classifierProvider = "manual"
+            try check(workspace.pendingJobs == 0 && workspace.unqueuedJobs == 1 && workspace.classifier.model == nil, "CSV import bypassed manual classification mode")
+            workspace.classifier.classifierProvider = "manual"
             workspace.processingMode = .whileOpen
             let manualProcessingChanged = Mutex(false)
             withObservationTracking { _ = workspace.processing } onChange: { manualProcessingChanged.withLock { $0 = true } }
@@ -112,7 +112,7 @@ import Synchronization
         workspace.configureQueueSmoke(store: store, bookmark: bookmark, mode: .manual)
         // An unconfigured Council fails before loading any model or using a network.
         // That failure makes an attempted suggestion pass observable in this fixture.
-        workspace.classifierProvider = "council"
+        workspace.classifier.classifierProvider = "council"
         try writeCapture("first", to: inbox)
         await workspace.sync(scope: .captures)
         try check(workspace.reviews.count == 1 && workspace.transactionState.totalTransactions == 0, "Import did not request an account")

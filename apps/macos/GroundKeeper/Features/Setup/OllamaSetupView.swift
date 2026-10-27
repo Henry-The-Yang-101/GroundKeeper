@@ -3,6 +3,7 @@ import GroundKeeperCore
 
 struct OllamaSetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     @State private var models: [OllamaModel] = []
     @State private var selectedName = ""
     @State private var refreshing = false
@@ -37,13 +38,13 @@ struct OllamaSetupView: View {
                 }
                 .disabled(workspace.saving || workspace.processing || refreshing)
                 Button("Use Ollama model") {
-                    if let selected = models.first(where: { $0.name == selectedName }) { workspace.useOllama(selected) }
+                    if let selected = models.first(where: { $0.name == selectedName }) { classifier.useOllama(selected) }
                 }
                 .disabled(workspace.saving || workspace.processing || !workspace.ready || refreshing || !models.contains(where: { $0.name == selectedName }))
             }
             if !status.isEmpty { Text(status).font(.callout).foregroundStyle(AppStyle.muted) }
-            if workspace.classifierProvider == "ollama" {
-                Label("Selected: \(workspace.ollamaModelName)", systemImage: "checkmark.circle").font(.callout)
+            if classifier.classifierProvider == "ollama" {
+                Label("Selected: \(classifier.ollamaModelName)", systemImage: "checkmark.circle").font(.callout)
             }
             Text("Transaction text and any attached classification evidence go to Ollama on this Mac. Suggestions always need review. Ollama must stay running; model quality and speed vary.")
                 .font(.callout).foregroundStyle(AppStyle.muted).fixedSize(horizontal: false, vertical: true)
@@ -56,11 +57,11 @@ struct OllamaSetupView: View {
         refreshing = true
         defer { refreshing = false }
         do {
-            let available = try await workspace.ollama.models()
+            let available = try await classifier.ollama.models()
             try Task.checkCancellation()
             models = available
             if !models.contains(where: { $0.name == selectedName }) {
-                selectedName = models.first(where: { $0.name == workspace.ollamaModelName })?.name ?? models.first?.name ?? ""
+                selectedName = models.first(where: { $0.name == classifier.ollamaModelName })?.name ?? models.first?.name ?? ""
             }
             status = models.isEmpty ? "No local text-generation models found. Install a chat or instruction model in Ollama, then refresh." : "Found \(models.count) installed local models."
         } catch is CancellationError {} catch {

@@ -25,12 +25,12 @@ import GroundKeeperCore
                     panel.directoryURL = URL(fileURLWithPath: CommandLine.arguments[index + 1])
                 }
                 guard await panel.begin() == .OK, let url = panel.url else { throw CancellationError() }
-                workspace.setCouncilPackage(url, backend: backend)
+                workspace.classifier.setCouncilPackage(url, backend: backend)
             }
-            guard workspace.councilReadyToConfigure else { throw LedgerError.invalid("Smoke packages not selected.") }
-            workspace.useCouncil()
+            guard workspace.classifier.councilReadyToConfigure else { throw LedgerError.invalid("Smoke packages not selected.") }
+            workspace.classifier.useCouncil()
             while workspace.saving { try await Task.sleep(for: .milliseconds(100)) }
-            guard workspace.classifierProvider == "council", let configuration = workspace.councilConfiguration else {
+            guard workspace.classifier.classifierProvider == "council", let configuration = workspace.classifier.councilConfiguration else {
                 throw LedgerError.invalid(workspace.errorMessage ?? "Council setup failed.")
             }
             try await store.addAccount(name: "Fictional council account", currency: "CAD")

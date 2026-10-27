@@ -3,6 +3,7 @@ import AppKit
 
 struct SetupView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(AppPreferences.Key.setupStep) private var savedStep = 0
@@ -131,7 +132,7 @@ struct SetupView: View {
         default:
             header("checkmark.seal.fill", "Make yourself at home.", "Your workspace is ready. Here is how GroundKeeper is configured.")
             feature("lock.shield", "Local vault", workspace.encrypted ? "Encrypted with SQLCipher. Unlock with your passphrase" + (VaultKeychain.isEnabled ? " or this Mac’s protected Keychain." : ".") : "Standard, unencrypted SQLite on this Mac.")
-            feature("sparkles", "Categorization", workspace.classifierStatus)
+            feature("sparkles", "Categorization", classifier.classifierStatus)
             feature("icloud", "Capture inbox", workspace.hasCaptureFolder ? workspace.captureFolderPath : "Not connected. Start with a CSV or a manual transaction.")
             feature("iphone", "iPhone automation", phoneReady ? "Marked configured by you. Review the first real capture in Sync." : "Still to set up. Return to this guide from Settings.")
             Text("Start with a fictional transaction. Review suggestions, confirm account mappings, and check Sync for anything that needs attention.").foregroundStyle(AppStyle.muted)

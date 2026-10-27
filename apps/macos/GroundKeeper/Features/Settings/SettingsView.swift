@@ -4,6 +4,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
     @AppStorage(AppPreferences.Key.appearance) private var appearance = AppAppearance.system
     @State private var accountName = ""
@@ -53,10 +54,10 @@ struct SettingsView: View {
                 if !workspace.ready { Button("Retry opening vault") { Task { await workspace.start() } } }
             } header: { Text("Local vault").font(VaultTypography.section) }
             Section {
-                LabeledContent("Model", value: workspace.classifierStatus)
+                LabeledContent("Model", value: classifier.classifierStatus)
                 Button("Install models or choose a provider…") { showingModels = true }.disabled(!workspace.ready || workspace.processing || workspace.saving)
-                Button("Choose local model package…", action: workspace.selectModel).disabled(!workspace.ready || workspace.processing || workspace.saving)
-                TextField("Apple Intelligence Shortcut", text: Binding(get: { workspace.shortcutName }, set: { workspace.shortcutName = $0 }))
+                Button("Choose local model package…", action: classifier.selectModel).disabled(!workspace.ready || workspace.processing || workspace.saving)
+                TextField("Apple Intelligence Shortcut", text: Binding(get: { classifier.shortcutName }, set: { classifier.shortcutName = $0 }))
                     .disabled(workspace.processing || workspace.saving)
                 Text("Using this provider sends description, direction and currency to the selected Shortcut. Its Use Model action controls whether Apple Intelligence runs on device or in the cloud. Check that action in Shortcuts before enabling.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
@@ -64,7 +65,7 @@ struct SettingsView: View {
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 Text("On by default. When enabled, selected receipt excerpts also go to your Apple Intelligence Shortcut and may be processed in the cloud. Qwen and Laya use receipt context locally. Original images stay out of classifier requests.")
                     .font(.caption).foregroundStyle(AppStyle.muted)
-                Button("Use Apple Intelligence Shortcut", action: workspace.useShortcut)
+                Button("Use Apple Intelligence Shortcut", action: classifier.useShortcut)
                     .disabled(!workspace.ready || workspace.processing || workspace.saving)
                 LabeledContent("Queue", value: "\(workspace.pendingJobs) pending · \(workspace.failedJobs) failed")
                 MerchantSearchSettingsView(workspace: workspace)

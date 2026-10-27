@@ -4,6 +4,7 @@ import GroundKeeperCore
 struct TransactionEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppWorkspace.self) private var workspace
+    @Environment(ClassifierWorkspace.self) private var classifier
     @Environment(TransactionWorkspace.self) private var transactionState
     // A sheet owns an edit session. Parent refreshes must not overwrite unsaved input.
     @State private var draft: Transaction
@@ -148,7 +149,7 @@ struct TransactionEditor: View {
                 } footer: {
                     Text(draft.kind.usesCategory && draft.category == .other
                          ? "Other includes spending whose purpose is uncertain. You can add details in Notes."
-                         : workspace.classifierProvider == "manual"
+                         : classifier.classifierProvider == "manual"
                             ? "Changes apply to this transaction only. Uncategorized purchases stay in review until you choose a category or enable a classifier."
                             : "Changes apply to this transaction only. Uncategorized purchases receive suggestions when the queue processes.")
                 }
@@ -209,7 +210,7 @@ struct TransactionEditor: View {
         suggestionTask = Task {
             defer { suggesting = false }
             do {
-                let result = try await workspace.suggestCategory(for: snapshot)
+                let result = try await classifier.suggestCategory(for: snapshot)
                 try Task.checkCancellation()
                 guard suggestionInput == input else { return }
                 suggestion = result

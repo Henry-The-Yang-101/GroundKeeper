@@ -19,21 +19,21 @@ import GroundKeeperCore
             var mapping = CSVMapping(); mapping.accountID = try await store.snapshot().accounts[0].id
             let first = try CSVDocument(data: Data("Date,Description,Amount\n2026-10-20,FICTIONAL CAFE,-12.50\n".utf8), filename: "ollama-first.csv")
             _ = try await workspace.transactionState.importCSV(first, mapping: mapping, skipped: [])
-            guard let selected = try await workspace.ollama.models().first(where: { $0.name == name }) else { throw OllamaError.modelUnavailable }
-            workspace.useOllama(selected)
+            guard let selected = try await workspace.classifier.ollama.models().first(where: { $0.name == name }) else { throw OllamaError.modelUnavailable }
+            workspace.classifier.useOllama(selected)
             while workspace.saving { try await Task.sleep(for: .milliseconds(50)) }
-            guard workspace.classifierProvider == "ollama", workspace.errorMessage == nil else { throw LedgerError.invalid(workspace.errorMessage ?? "Provider selection failed.") }
+            guard workspace.classifier.classifierProvider == "ollama", workspace.errorMessage == nil else { throw LedgerError.invalid(workspace.errorMessage ?? "Provider selection failed.") }
             let beforeSuggestion = try await store.snapshot()
             var draft = Transaction()
             draft.merchant = "FICTIONAL CAFE"
-            let suggested = try await workspace.suggestCategory(for: draft)
+            let suggested = try await workspace.classifier.suggestCategory(for: draft)
             try suggested.decision.validateSuggestion()
             let afterSuggestion = try await store.snapshot()
             guard beforeSuggestion.transactions.count == afterSuggestion.transactions.count,
                   !workspace.processing else { throw LedgerError.invalid("Draft suggestion changed the ledger or left processing locked.") }
             draft.merchant = "   "
             do {
-                _ = try await workspace.suggestCategory(for: draft)
+                _ = try await workspace.classifier.suggestCategory(for: draft)
                 throw ClassifierBridgeError.invalidResponse
             } catch is LedgerError { }
             await workspace.sync()
