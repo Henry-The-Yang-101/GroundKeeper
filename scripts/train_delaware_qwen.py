@@ -15,7 +15,7 @@ from types import SimpleNamespace
 
 os.environ.update(HF_HUB_OFFLINE='1', HF_HUB_DISABLE_TELEMETRY='1', TOKENIZERS_PARALLELISM='false')
 
-from scripts.full_common import read_rows, sha256, write_json
+from scripts.common_io import read_rows, sha256, write_json
 
 DATA = Path('.local/delaware-labeling-v1/prepared')
 RUN = Path('.local/finetune/delaware-v1')

@@ -4,7 +4,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from scripts.full_common import read_rows, write_json
+from scripts.common_io import read_rows, write_json
 from scripts.prepare_v2_training import OUT, PUBLIC, write_rows
 
 

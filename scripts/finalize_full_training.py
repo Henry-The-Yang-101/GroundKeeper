@@ -5,7 +5,8 @@ import time
 from pathlib import Path
 
 from groundkeeper.runtime import LocalCategorizer
-from scripts.full_common import ROOT, RUN, evaluate_rows, read_rows, sha256, write_json
+from scripts.full_common import ROOT, RUN, evaluate_rows
+from scripts.common_io import read_rows, sha256, write_json
 
 
 def main():

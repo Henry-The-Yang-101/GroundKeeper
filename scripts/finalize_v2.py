@@ -10,7 +10,7 @@ from pathlib import Path
 os.environ['HF_HUB_OFFLINE']='1'
 os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
 
-from scripts.full_common import read_rows,sha256,write_json
+from scripts.common_io import read_rows, sha256, write_json
 from scripts.v2_common import ROOT,OUT,RUN,PUBLIC,CONFIG,load_config,evaluate_rows
 
 

@@ -17,7 +17,7 @@ from mlx_lm.tuner.callbacks import TrainingCallback
 from mlx_lm.tuner.datasets import ChatDataset
 
 from groundkeeper.policy_v2 import messages_v2
-from scripts.full_common import read_rows,sha256,write_json
+from scripts.common_io import read_rows, sha256, write_json
 from scripts.v2_common import ROOT,OUT,RUN,CONFIG,load_config,evaluate_rows
 
 

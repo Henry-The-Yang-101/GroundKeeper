@@ -18,7 +18,8 @@ from mlx.utils import tree_flatten
 from types import SimpleNamespace
 
 from groundkeeper.policy import messages
-from scripts.full_common import ROOT, RUN, choose_checkpoint, evaluate_rows, read_rows, sha256, write_json
+from scripts.full_common import ROOT, RUN, choose_checkpoint, evaluate_rows
+from scripts.common_io import read_rows, sha256, write_json
 
 
 def main():

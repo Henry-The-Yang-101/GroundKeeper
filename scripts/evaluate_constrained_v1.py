@@ -13,7 +13,7 @@ from groundkeeper.constraints import DecisionGrammar, generate_constrained
 from groundkeeper.runtime_v2 import generate_decision
 from groundkeeper.policy import messages
 from groundkeeper.metrics import evaluate
-from scripts.full_common import read_rows, write_json, sha256
+from scripts.common_io import read_rows, write_json, sha256
 
 
 def main():

@@ -6,7 +6,7 @@ os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
 
 import mlx.core as mx
 from mlx_lm import load
-from scripts.full_common import read_rows,write_json,sha256
+from scripts.common_io import read_rows, write_json, sha256
 from scripts.v2_common import ROOT,OUT,RUN,load_config,evaluate_rows
 
 

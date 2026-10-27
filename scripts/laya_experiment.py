@@ -19,7 +19,7 @@ os.environ.update(HF_HUB_OFFLINE="1", HF_HUB_DISABLE_TELEMETRY="1", TOKENIZERS_P
 from groundkeeper.laya_runtime import HEAD_MAX_LEN, MAX_LEN, QUESTIONS, LocalLayaCategorizer, configure_agent, decode, training_row
 from groundkeeper.metrics import evaluate
 from groundkeeper.policy import validate_answer
-from scripts.full_common import read_rows, sha256, write_json
+from scripts.common_io import read_rows, sha256, write_json
 
 ROOT = Path(".local/laya")
 PUBLIC = Path("experiments/laya")

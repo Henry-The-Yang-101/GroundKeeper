@@ -12,7 +12,7 @@ from pathlib import Path
 
 from groundkeeper.policy import CATEGORIES, TYPES, validate_answer, validate_input
 from groundkeeper.policy_v2 import messages_v2
-from scripts.full_common import read_rows, sha256, write_json
+from scripts.common_io import read_rows, sha256, write_json
 from scripts.prepare_training import canonical_group, key
 from scripts.prepare_v2_candidates import BANKS
 

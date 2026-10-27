@@ -9,7 +9,7 @@ from groundkeeper.metrics import evaluate
 from groundkeeper.policy import TYPES, messages
 from groundkeeper.policy_v2 import messages_v2
 from groundkeeper.runtime_v2 import generate_decision
-from scripts.full_common import read_rows, sha256, write_json
+from scripts.common_io import read_rows, sha256, write_json
 
 ROOT=Path('.local/finetune')
 OUT=ROOT/'v2'

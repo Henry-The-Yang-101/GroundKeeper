@@ -1,31 +1,14 @@
 """Evaluation and immutable checkpoint selection for the approved full run."""
-import hashlib
 import json
 import time
 from pathlib import Path
 
 from groundkeeper.metrics import evaluate
 from groundkeeper.runtime import generate_answer
+from scripts.common_io import write_json
 
 ROOT = Path('.local/finetune')
 RUN = ROOT / 'full-v1'
-
-
-def sha256(path):
-    with Path(path).open('rb') as stream:
-        return hashlib.file_digest(stream, 'sha256').hexdigest()
-
-
-def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + '.tmp')
-    temporary.write_text(json.dumps(value, indent=2) + '\n')
-    temporary.replace(path)
-
-
-def read_rows(path):
-    return [json.loads(line) for line in Path(path).read_text().splitlines()]
 
 
 def evaluate_rows(model, tokenizer, rows, output_prefix, seconds=180):

@@ -6,7 +6,7 @@ import sys
 import time
 from pathlib import Path
 
-from scripts.full_common import write_json
+from scripts.common_io import write_json
 
 ROOT = Path(".local/laya")
 PUBLIC = Path("experiments/laya")

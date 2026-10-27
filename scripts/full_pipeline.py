@@ -4,7 +4,8 @@ import subprocess
 import sys
 import time
 
-from scripts.full_common import RUN, write_json
+from scripts.full_common import RUN
+from scripts.common_io import write_json
 
 
 def main():

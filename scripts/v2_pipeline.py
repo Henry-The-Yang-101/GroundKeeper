@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-from scripts.full_common import sha256,write_json
+from scripts.common_io import sha256, write_json
 from scripts.v2_common import RUN,CONFIG,load_config,choose
 
 

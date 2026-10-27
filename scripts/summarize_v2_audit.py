@@ -2,7 +2,7 @@
 import json
 
 from groundkeeper.policy import validate_answer
-from scripts.full_common import read_rows,write_json
+from scripts.common_io import read_rows, write_json
 from scripts.prepare_v2_training import OUT,PUBLIC,FIELDS
 
 

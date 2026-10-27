@@ -7,7 +7,7 @@ from mlx_lm.utils import load_tokenizer
 from mlx_lm.tuner.datasets import ChatDataset
 
 from groundkeeper.policy_v2 import messages_v2
-from scripts.full_common import read_rows,sha256,write_json
+from scripts.common_io import read_rows, sha256, write_json
 from scripts.v2_common import ROOT,OUT,PUBLIC,CONFIG,checkpoint_steps
 
 
