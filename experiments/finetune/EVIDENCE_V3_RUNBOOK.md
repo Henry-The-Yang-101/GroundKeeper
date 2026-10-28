@@ -60,19 +60,22 @@ cache or network access. This is a documented training privacy guard above the
 production sanitizer, not a different search provider or fabricated context.
 Its version, source hash and effective query candidates are frozen alongside
 the private collection. Version 2 also rejects the all-letter references used
-by two mobile-transit descriptor forms. It rejects 103 frozen private candidates.
-Ten historical network attempts now fall under this rejection: eight preceded
-version 1, and two all-letter references were sent under version 1. Those records
-remain unchanged; the additional uncollected all-letter reference is blocked
-before dispatch. New packets hide these unsafe queries from labelers; immutable
+by two mobile-transit descriptor forms. Version 3 additionally withholds private
+PAYPAL descriptors and DR/DR./DOCTOR prefixes. A local inspection of all 470
+distinct nonempty frozen queries confirmed that these rules cover 105 rows to
+withhold, including two possible personal-name queries. Twelve historical network
+attempts now fall under rejection; those records remain unchanged. The additional
+uncollected all-letter reference is blocked before dispatch. New packets hide
+these unsafe queries from labelers; immutable
 older packets retain truthful provenance and reviewers withhold unsafe queries.
 Privacy-blocked research is recorded as attempted=false rather than pretending
 that an internet lookup occurred.
 
 The explicit `migrate-private-guard --output-dir PRIVATE_CONTEXT_DIRECTORY`
-command archives the version-1 guard, effective candidates and record byte hashes
-before activating version 2. An immutable journal permits recovery after an
-interrupted migration. Run it while collection is stopped, using the collector's
+command archives each predecessor guard, effective candidates and record byte
+hashes before activating the next version. Separate immutable journals retain
+the version-1 to version-2 to version-3 chain and permit interrupted-migration
+recovery. Run it while private collection is stopped, using the collector's
 exclusive lock; never rewrite historical records or bypass a source-hash failure.
 
 Operational progress lives in `.local/finetune/evidence-v3/RUN_STATE.json` and
