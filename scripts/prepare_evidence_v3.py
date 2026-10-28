@@ -96,18 +96,19 @@ def freeze_public():
     return manifest
 
 
-def freeze_private():
-    destination = ROOT / ".private/qwen-evidence-v3/source"
+def freeze_private(exact=False):
+    destination = ROOT / (".private/qwen-evidence-v3/source-exact" if exact else ".private/qwen-evidence-v3/source")
     if destination.exists():
         raise FileExistsError("Frozen private source directory already exists")
-    snapshot = ROOT / ".private/qwen-evidence-v3/snapshot/classifier_inputs.jsonl"
+    snapshot = ROOT / (".private/qwen-evidence-v3/snapshot/classifier_inputs.exact.jsonl" if exact
+                       else ".private/qwen-evidence-v3/snapshot/classifier_inputs.jsonl")
     registry = {r["merchant_family"]: r["split"] for r in read(RUN / "source/historical_families.jsonl")}
     conflicts = {r["merchant_family"] for r in read(RUN / "source/family_conflicts.jsonl")}
     from scripts.prepare_delaware_labels import family
     rows = []
     for row in read(snapshot):
         validate_input(row["input"])
-        group = family(row["input"]["description"], set(registry))
+        group = family(row.get("search_merchant") or row["input"]["description"], set(registry))
         if group in conflicts:
             split = "quarantine"
         elif group in registry:
@@ -124,6 +125,7 @@ def freeze_private():
                 "splits_provisional": dict(Counter(r["split"] for r in rows)),
                 "merchant_families_provisional": len({r["merchant_family"] for r in rows}),
                 "family_audit_required": True, "human_confirmations": 0,
+                "exact_app_inputs": exact,
                 "existing_labels_visible_to_reviewers": False}
     write_new(destination / "manifest.json", [manifest])
     return manifest
@@ -204,11 +206,47 @@ def validate_packet(path):
     return {"packet": str(path), "validated": len(labels), "human_confirmations": 0}
 
 
+def status():
+    result = {}
+    exact = (ROOT / ".private/qwen-evidence-v3/source-exact/personal.jsonl").exists()
+    locations = {
+        "delaware": (RUN / "source/delaware.jsonl", RUN / "context/public", RUN / "labeling/public"),
+        "personal": (ROOT / (".private/qwen-evidence-v3/source-exact/personal.jsonl" if exact else ".private/qwen-evidence-v3/source/personal.jsonl"),
+                     ROOT / (".private/qwen-evidence-v3/context/personal-exact" if exact else ".private/qwen-evidence-v3/context/personal"),
+                     ROOT / ".private/qwen-evidence-v3/labeling/personal"),
+    }
+    for name, (source, context, labeling) in locations.items():
+        summary = {"source_rows": len(read(source)) if source.exists() else 0,
+                   "context_rows": 0, "context_outcomes": Counter(), "packet_rows": 0,
+                   "validated_label_rows": 0, "pending_packets": [], "invalid_packets": []}
+        for path in (context / "records").glob("*.json"):
+            record = json.loads(path.read_text())
+            summary["context_rows"] += 1
+            summary["context_outcomes"][record["outcome"]] += 1
+        for path in sorted(labeling.glob("*/inputs.jsonl")):
+            count = len(read(path))
+            summary["packet_rows"] += count
+            if not (path.parent / "labels.jsonl").exists():
+                summary["pending_packets"].append({"packet": str(path.parent), "count": count})
+            else:
+                try:
+                    summary["validated_label_rows"] += validate_packet(path.parent)["validated"]
+                except (ValueError, KeyError, json.JSONDecodeError) as error:
+                    summary["invalid_packets"].append({"packet": str(path.parent), "error": type(error).__name__})
+        result[name] = summary
+    result["new_model_trained"] = (RUN / "training/selection.json").exists()
+    result["final_test_report_exists"] = (RUN / "final/report.json").exists()
+    result["note"] = "Counts validate structure, not source truth or achieved model quality."
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("freeze-public")
-    sub.add_parser("freeze-private")
+    private = sub.add_parser("freeze-private")
+    private.add_argument("--exact", action="store_true")
+    sub.add_parser("status")
     packet = sub.add_parser("packets")
     packet.add_argument("--source", type=Path, default=RUN / "source/delaware.jsonl")
     packet.add_argument("--context-dir", type=Path, default=RUN / "context/public")
@@ -219,7 +257,9 @@ def main():
     if args.command == "freeze-public":
         result = freeze_public()
     elif args.command == "freeze-private":
-        result = freeze_private()
+        result = freeze_private(args.exact)
+    elif args.command == "status":
+        result = status()
     elif args.command == "packets":
         result = packets(args.source, args.context_dir, args.packet_dir)
     else:
