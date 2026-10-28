@@ -68,3 +68,18 @@ def test_wrong_context_source_hash_rejected(tmp_path):
     path.write_text(json.dumps(row))
     with pytest.raises(ValueError, match="Context does not match"):
         packets(source, directory, tmp_path / "other_packets")
+
+
+def test_private_legacy_reference_query_is_hidden_from_new_label_packet(tmp_path):
+    source, directory, _, _ = fixture(tmp_path)
+    path = directory / "records/row.json"
+    context = json.loads(path.read_text())
+    context["query"] = {"merchant": "MARKETPLACE AB12CD34", "locality": ""}
+    path.write_text(json.dumps(context))
+    out = tmp_path / "privacy_packets"
+    result = packets(source, directory, out)
+    packet = out / result["created"][0]["packet"].split("/")[-1]
+    row = json.loads((packet / "inputs.jsonl").read_text())
+    assert row["safe_query"] is None
+    assert row["search_privacy_rejection"] == "mixed_alphanumeric_reference"
+    assert json.loads(path.read_text())["query"]["merchant"] == "MARKETPLACE AB12CD34"

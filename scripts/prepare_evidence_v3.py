@@ -148,10 +148,17 @@ def packets(source, context_dir, packet_dir, size=20):
         if context["merchant_context"] is not None:
             inputs["merchant_context"] = context["merchant_context"]
         validate_input(inputs)
+        safe_query, privacy_reason = context.get("query"), None
+        if row.get("source") == "personal":
+            from scripts.collect_training_context import private_query_rejection
+
+            privacy_reason = private_query_rejection(safe_query)
+            if privacy_reason:
+                safe_query = None
         ready.append({**row, "input": inputs, "input_sha256": digest(inputs),
                       "without_context_sha256": digest(row["input"]),
                       "context_outcome": context["outcome"],
-                      "safe_query": context.get("query"),
+                      "safe_query": safe_query, "search_privacy_rejection": privacy_reason,
                       "context_record_sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     created = []
     # Keep test packets separate to avoid reference authors also reviewing train
