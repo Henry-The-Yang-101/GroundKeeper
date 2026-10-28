@@ -22,19 +22,19 @@ def row(identifier, description="Fictional Cafe"):
 @pytest.fixture
 def snapshot(tmp_path, monkeypatch):
     monkeypatch.setattr(collector, "ROOT", tmp_path)
-    monkeypatch.setattr(collector, "source_hashes", lambda: {"production": "fixed"})
-    monkeypatch.setattr(collector, "project", lambda rows: [
+    monkeypatch.setattr(collector, "source_hashes", lambda paths=None: {"production": "fixed"})
+    monkeypatch.setattr(collector, "project", lambda rows, ledger_query=False: [
         {"id": item["id"], "query": None if item["input"]["description"] == "unsafe" else {
             "merchant": item["input"]["description"], "locality": ""}}
         for item in rows
     ])
 
-    def create(rows, private=False):
+    def create(rows, private=False, ledger_query=False):
         source = tmp_path / "source.jsonl"
         source.write_text("".join(collector.canonical(item) + "\n" for item in rows))
         directory = tmp_path / (".private" if private else ".local") / "context"
         directory.mkdir(parents=True)
-        collector.prepare(directory, source, private)
+        collector.prepare(directory, source, private, ledger_query)
         return directory, source
 
     return create
@@ -120,7 +120,7 @@ def test_frozen_files_cannot_be_changed(snapshot, filename):
 
 def test_source_drift_stops_before_network(snapshot, monkeypatch):
     directory, _ = snapshot([row("opaque")])
-    monkeypatch.setattr(collector, "source_hashes", lambda: {"production": "changed"})
+    monkeypatch.setattr(collector, "source_hashes", lambda paths=None: {"production": "changed"})
     clock = Clock()
     search = Search(clock)
     with pytest.raises(ValueError, match="Production retrieval/sanitizer source changed"):
@@ -233,3 +233,95 @@ def test_private_inputs_require_private_output(snapshot, tmp_path):
     other.mkdir()
     with pytest.raises(ValueError, match="Private inputs must"):
         collector.prepare(other, source, private=True)
+
+
+def test_actual_ledger_query_uses_stored_merchant_and_locality_with_description_fallback():
+    rows = [
+        {**row("stored", "POS Fallback Cafe 1234 AUTH private-value"),
+         "search_merchant": "Named Shop", "search_locality": " Waterloo ON "},
+        {**row("fallback", "POS Fallback Cafe 1234 AUTH private-value"),
+         "search_merchant": None, "search_locality": None},
+        {**row("unsafe", "Fictional Cafe"),
+         "search_merchant": "e-transfer to Private Person", "search_locality": "Waterloo"},
+    ]
+    assert collector.project(rows, ledger_query=True) == [
+        {"id": "stored", "query": {"merchant": "Named Shop", "locality": "Waterloo ON"}},
+        {"id": "fallback", "query": {"merchant": "Fallback Cafe", "locality": ""}},
+        {"id": "unsafe", "query": None},
+    ]
+
+
+def test_ledger_projection_subprocess_receives_only_exact_make_arguments(tmp_path, monkeypatch):
+    monkeypatch.setattr(collector, "ROOT", tmp_path)
+    original = {**row("opaque"), "search_merchant": "Named Shop", "search_locality": "Waterloo"}
+    original["input"]["amount"] = "123.45"
+
+    def run(command, **kwargs):
+        assert "MerchantTrainingQueryPilot" in command
+        source = Path(command[-1])
+        assert source.is_relative_to(tmp_path / ".private")
+        assert collector.read_rows(source) == [{
+            "id": "opaque", "input": {"description": "Fictional Cafe"},
+            "search_merchant": "Named Shop", "search_locality": "Waterloo",
+        }]
+        return SimpleNamespace(stdout='{"id":"opaque","query":{"merchant":"Named Shop","locality":"Waterloo"}}\n')
+
+    monkeypatch.setattr(collector.subprocess, "run", run)
+    assert collector.project([original], ledger_query=True)[0]["query"] == {
+        "merchant": "Named Shop", "locality": "Waterloo"}
+
+
+def test_ledger_projection_rejects_nontext_snapshot_fields_before_swift(tmp_path, monkeypatch):
+    monkeypatch.setattr(collector, "ROOT", tmp_path)
+    with pytest.raises(ValueError, match="merchant/locality must be strings"):
+        collector.project([{**row("opaque"), "search_merchant": {"name": "Cafe"}}], ledger_query=True)
+
+
+def test_ledger_mode_is_frozen_and_cannot_reuse_legacy_projection(snapshot):
+    rows = [{**row("opaque"), "search_merchant": "Named Shop", "search_locality": "Waterloo"}]
+    directory, source = snapshot(rows, private=True, ledger_query=True)
+    manifest, _, _ = collector.load(directory)
+    assert manifest["ledger_query"] is True
+    assert "MerchantTrainingQueryPilot" in manifest["query_projection"]
+    assert collector.prepare(directory, source, private=True, ledger_query=True)["pending"] == 1
+    with pytest.raises(ValueError, match="Frozen inputs changed"):
+        collector.prepare(directory, source, private=True)
+
+
+def test_legacy_load_checks_manifest_source_keys_after_new_target_is_added(snapshot, monkeypatch):
+    directory, source = snapshot([row("opaque")])
+    manifest = json.loads((directory / "manifest.json").read_text())
+    del manifest["ledger_query"]
+    collector.write_json(directory / "manifest.json", manifest)
+    observed = []
+
+    def source_hashes(paths=None):
+        observed.append(paths)
+        assert set(paths) == {"production"}
+        return {"production": "fixed"}
+
+    monkeypatch.setattr(collector, "source_hashes", source_hashes)
+    assert collector.prepare(directory, source)["pending"] == 1
+    assert observed
+
+
+def test_ledger_network_handle_receives_only_sanitized_query(snapshot, monkeypatch):
+    rows = [{**row("opaque"), "search_merchant": "Named Shop", "search_locality": "Waterloo"}]
+    monkeypatch.setattr(collector, "project", lambda values, ledger_query=False: [
+        {"id": values[0]["id"], "query": {"merchant": "Named Shop", "locality": "Waterloo"}}])
+    directory, _ = snapshot(rows, private=True, ledger_query=True)
+    clock = Clock()
+    search = Search(clock)
+    requests = []
+    handle = search.handle
+
+    def inspect(request, **kwargs):
+        requests.append(request)
+        return handle(request, **kwargs)
+
+    monkeypatch.setattr(search, "handle", inspect)
+    assert collector.collect(directory, 1, 60, search, clock)["completed"] == 1
+    assert requests == [{
+        "protocol_version": 1, "request_id": "training-context", "operation": "merchant_search",
+        "merchant": "Named Shop", "locality": "Waterloo",
+    }]

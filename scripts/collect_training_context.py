@@ -1,7 +1,8 @@
 """Freeze and resume real production DuckDuckGo evidence for training inputs.
 
 No labels or classifier predictions are produced. ``prepare`` runs the actual
-Swift MerchantQueryPilot (description fallback, empty locality); only its public
+Swift MerchantQueryPilot (description fallback, empty locality), or the distinct
+MerchantTrainingQueryPilot with --ledger-query for frozen merchant/locality; only its public
 merchant/locality projection can reach MerchantSearch.handle. Source input is
 never sent to a search engine. Results are immutable per-row files; records.jsonl
 and summary.json are replaceable exports. Use an ignored .private directory for
@@ -33,6 +34,11 @@ SOURCES = (
     "apps/macos/GroundKeeper/Services/MerchantWorkspace.swift",
     "groundkeeper/merchant_search.py",
     "groundkeeper/merchant_context.py",
+)
+LEDGER_SOURCES = (
+    "apps/macos/GroundKeeperCore/Sources/MerchantTrainingQueryPilot/main.swift",
+    "apps/macos/GroundKeeperCore/Package.swift",
+    *SOURCES[1:],
 )
 TTL_MS = {"matched": 2_592_000_000, "no_match": 86_400_000}
 DELAY_MS = {"blocked": 900_000, "unavailable": 60_000}
@@ -127,17 +133,28 @@ def validate_rows(rows):
             raise ValueError("Freeze baseline inputs without existing merchant_context")
 
 
-def project(rows):
+def project(rows, ledger_query=False):
     """Compile current Swift source; never accept unverified external projections."""
-    # The subprocess sees only description and an opaque ID. Amounts, notes,
-    # receipts and account fields do not enter even the query-building process.
-    with tempfile.TemporaryDirectory(prefix="gk-query-", dir=ROOT / ".local") as directory:
+    # The subprocess sees only an opaque ID and the actual make() arguments.
+    # Amounts, notes, receipts and account fields never enter query construction.
+    projection_inputs = []
+    for row in rows:
+        item = {"id": row["id"], "input": {"description": row["input"]["description"]}}
+        if ledger_query:
+            for field in ("search_merchant", "search_locality"):
+                value = row.get(field)
+                if value is not None and not isinstance(value, str):
+                    raise ValueError("Frozen merchant/locality must be strings or null")
+                item[field] = value
+        projection_inputs.append(item)
+    pilot = "MerchantTrainingQueryPilot" if ledger_query else "MerchantQueryPilot"
+    temporary_root = ROOT / (".private" if ledger_query else ".local")
+    temporary_root.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="gk-query-", dir=temporary_root) as directory:
         source = Path(directory) / "input.jsonl"
-        source.write_text("".join(canonical({"id": row["id"], "input": {
-            "description": row["input"]["description"]
-        }}) + "\n" for row in rows))
+        source.write_text("".join(canonical(item) + "\n" for item in projection_inputs))
         result = subprocess.run(
-            ["swift", "run", "--package-path", str(PACKAGE), "MerchantQueryPilot", str(source)],
+            ["swift", "run", "--package-path", str(PACKAGE), pilot, str(source)],
             cwd=ROOT, capture_output=True, text=True, check=True, timeout=300,
         )
     projected = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
@@ -151,24 +168,28 @@ def project(rows):
     return projected
 
 
-def source_hashes():
-    return {path: sha256((ROOT / path).read_bytes()) for path in SOURCES}
+def source_hashes(paths=None):
+    paths = SOURCES if paths is None else paths
+    for path in paths:
+        (ROOT / path).resolve().relative_to(ROOT.resolve())
+    return {path: sha256((ROOT / path).read_bytes()) for path in paths}
 
 
-def prepare(directory, source, private=False):
+def prepare(directory, source, private=False, ledger_query=False):
     rows = read_rows(source)
     validate_rows(rows)
     if private and directory.relative_to(ROOT).parts[0] != ".private":
         raise ValueError("Private inputs must use an ignored .private/ output directory")
     if (directory / "manifest.json").exists():
         manifest, existing, _ = load(directory)
-        if canonical(existing) != canonical(rows) or manifest["private"] != private:
+        if (canonical(existing) != canonical(rows) or manifest["private"] != private
+                or manifest.get("ledger_query", False) != ledger_query):
             raise ValueError("Frozen inputs changed; use a new collection directory")
         return status(directory)
     if list(directory.glob("*.json*")) or (directory / "records").exists():
         raise ValueError("Incomplete preparation: use a new empty collection directory")
     (ROOT / ".local").mkdir(exist_ok=True)
-    projected = project(rows)
+    projected = project(rows, ledger_query=ledger_query)
     # Preserve source/split/family metadata too: it is part of the frozen source,
     # but never part of the subprocess or network projection.
     inputs = "".join(canonical(row) + "\n" for row in rows)
@@ -181,9 +202,14 @@ def prepare(directory, source, private=False):
     manifest = {
         "schema_version": 1, "created_at": timestamp(), "private": private,
         "row_count": len(rows), "input_sha256": sha256(inputs.encode()),
-        "queries_sha256": sha256(queries.encode()), "source_sha256": source_hashes(),
+        "queries_sha256": sha256(queries.encode()),
+        "source_sha256": source_hashes(LEDGER_SOURCES if ledger_query else SOURCES),
+        "ledger_query": ledger_query,
         "query_builder": "GroundKeeperCore.MerchantSearchQuery.make",
-        "query_projection": "MerchantQueryPilot: description fallback, merchant=nil, locality=empty",
+        "query_projection": (
+            "MerchantTrainingQueryPilot: frozen search_merchant/search_locality, exact description fallback"
+            if ledger_query else "MerchantQueryPilot: description fallback, merchant=nil, locality=empty"
+        ),
         "retrieval": "groundkeeper.merchant_search.MerchantSearch.handle",
         "engine": "duckduckgo", "region": "ca-en", "max_results": 5,
         "max_context_results": 2, "max_context_bytes": 1500,
@@ -206,7 +232,9 @@ def load(directory):
     for filename, key in (("input.jsonl", "input_sha256"), ("queries.jsonl", "queries_sha256")):
         if sha256((directory / filename).read_bytes()) != manifest[key]:
             raise ValueError("Frozen input/query file changed")
-    if manifest["source_sha256"] != source_hashes():
+    # Each frozen collection owns its source list. Adding a distinct projection
+    # target must not invalidate a live legacy public collection.
+    if manifest["source_sha256"] != source_hashes(manifest["source_sha256"]):
         raise ValueError("Production retrieval/sanitizer source changed; use a new collection")
     rows, queries = read_rows(directory / "input.jsonl"), read_rows(directory / "queries.jsonl")
     validate_rows(rows)
@@ -419,6 +447,8 @@ def main():
     prepare_parser = subparsers.add_parser("prepare", help="freeze inputs and actual Swift query projections; no network")
     prepare_parser.add_argument("--input", type=Path, required=True)
     prepare_parser.add_argument("--private", action="store_true")
+    prepare_parser.add_argument("--ledger-query", action="store_true",
+                                help="use frozen search_merchant/search_locality with exact description fallback")
     for command in (prepare_parser, subparsers.add_parser("status"), subparsers.add_parser("collect")):
         command.add_argument("--output-dir", type=Path, required=True)
         if command.prog.endswith("collect"):
@@ -429,7 +459,7 @@ def main():
     directory = ignored_output(args.output_dir)
     with exclusive(directory):
         if args.command == "prepare":
-            result = prepare(directory, args.input, args.private)
+            result = prepare(directory, args.input, args.private, args.ledger_query)
         elif args.command == "status":
             result = status(directory)
         else:
