@@ -10,6 +10,7 @@ Run from the repository root with ``python -m scripts.export_training_snapshot``
 
 import argparse
 from collections import Counter
+from contextlib import closing
 from datetime import datetime, timezone
 import hashlib
 import hmac
@@ -23,6 +24,7 @@ import sys
 from groundkeeper.policy import validate_input
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_SOURCE_ROOT = ROOT / "apps/macos/GroundKeeperCore/Sources/GroundKeeperCore"
 DEFAULT_SOURCE = (
     Path.home()
     / "Library/Containers/com.groundkeeper.macos/Data/Library/Application Support/GroundKeeper/vault.sqlite"
@@ -55,8 +57,8 @@ def sanitize(text):
     return text
 
 
-def receipt_context(texts):
-    """Mirror ReceiptContext.select's bounded line selection, then minimize."""
+def receipt_context(texts, *, minimize=True):
+    """Mirror ReceiptContext.select; optionally apply extra private minimization."""
     full = "\n\n".join(text for text in texts if text.strip())
     if not full:
         return None
@@ -79,7 +81,7 @@ def receipt_context(texts):
         selected = candidate
     if not selected:
         return None
-    minimized = sanitize(selected)
+    minimized = sanitize(selected) if minimize else selected
     truncated = truncated or len(minimized.encode()) > 1600
     return {"version": "receipt-context-v1", "text": bounded(minimized), "truncated": truncated,
             "evidence_sha256": hashlib.sha256(full.encode()).hexdigest()}
@@ -115,6 +117,125 @@ def write_json(path, value):
         json.dump(value, stream, indent=2, sort_keys=True)
         stream.write("\n")
     path.chmod(0o600)
+
+
+def classifier_input(db, row, *, minimize):
+    """Reproduce the local app's pre-search inference fields from saved evidence.
+
+    Extra text minimization is useful for inspection, but changes inference
+    values. Benchmarking uses minimize=False and keeps the entire result private.
+    Network queries must independently pass the production Swift sanitizer.
+    """
+    project = sanitize if minimize else lambda value: value
+    value = {"description": project(row["description"]),
+             "direction": "debit" if row["amount_minor"] < 0 else "credit",
+             "currency": row["currency"]}
+    notes = bounded(row["notes"].strip())
+    if notes:
+        value["transaction_notes"] = bounded(project(notes))
+    texts = [entry[0] for entry in db.execute("""
+        SELECT o.text FROM receipt_captures r JOIN receipt_ocr_runs o ON o.id=(
+          SELECT id FROM receipt_ocr_runs WHERE receipt_id=r.id ORDER BY created_at_ms DESC,rowid DESC LIMIT 1)
+        WHERE r.transaction_id=? AND r.removed_at_ms IS NULL ORDER BY r.captured_at_ms,r.id
+    """, (row["id"],))]
+    receipt = receipt_context(texts, minimize=minimize)
+    if receipt:
+        value["receipt_context"] = receipt
+    hint = wallet_hint(db, row["id"])
+    if hint:
+        value["wallet_category_raw"] = bounded(project(hint), 128)
+    validate_input(value)
+    return value
+
+
+def export_exact_inputs(directory):
+    """Derive unmodified app inference values from a previously frozen snapshot.
+
+    This never opens the live vault or overwrites any minimized/frozen artifact.
+    The output contains private descriptions and must never be used as a web
+    query directly. Only production Swift query projections may leave the device.
+    """
+    directory = Path(directory).resolve()
+    if not directory.is_relative_to((ROOT / ".private").resolve()):
+        raise SnapshotBlocked("Snapshot directory must be inside ignored .private.")
+    output = directory / "classifier_inputs.exact.jsonl"
+    manifest_path = directory / "classifier_inputs.exact.manifest.private.json"
+    if output.exists() or manifest_path.exists():
+        raise SnapshotBlocked("Exact input output already exists; frozen files are never overwritten.")
+    source = directory / "source.snapshot.sqlite"
+    try:
+        previous_manifest = json.loads((directory / "manifest.private.json").read_text())
+        source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
+        if source_sha != previous_manifest["snapshot_sha256"]:
+            raise SnapshotBlocked("Frozen snapshot checksum mismatch.")
+        original_path = directory / "classifier_inputs.jsonl"
+        mapping_path = directory / "private_source_id_map.jsonl"
+        originals = [json.loads(line) for line in original_path.read_text().splitlines()]
+        mapping = [json.loads(line) for line in mapping_path.read_text().splitlines()]
+        original_by_id = {entry["id"]: entry for entry in originals}
+        source_to_id = {entry["source_transaction_id"]: entry["id"] for entry in mapping}
+        if (len(original_by_id) != len(originals) or len(source_to_id) != len(mapping)
+                or set(original_by_id) != {entry["id"] for entry in mapping}):
+            raise SnapshotBlocked("Frozen row mapping is inconsistent.")
+        secret = (directory / ".opaque-id-key").read_bytes()
+        def opaque(kind, value):
+            return kind + "_" + hmac.new(secret, (kind + "|" + value).encode(), hashlib.sha256).hexdigest()[:24]
+        counts = Counter(active_transactions=0, changed_descriptions=0, changed_inputs=0)
+        with closing(sqlite3.connect(source.as_uri() + "?mode=ro&immutable=1", uri=True)) as db:
+            db.row_factory = sqlite3.Row
+            settings = db.execute("SELECT value_json FROM app_settings WHERE key='merchant_search'").fetchone()
+            locality = json.loads(settings[0])["locality"] if settings else ""
+            if not isinstance(locality, str):
+                raise SnapshotBlocked("Frozen merchant-search locality is invalid.")
+            rows = db.execute("""SELECT t.id,t.description,t.amount_minor,t.currency,t.notes,t.merchant_id,t.revision,
+                m.name AS search_merchant FROM transactions t LEFT JOIN merchants m ON m.id=t.merchant_id
+                WHERE t.state='active' ORDER BY t.id""").fetchall()
+            if {row["id"] for row in rows} != set(source_to_id):
+                raise SnapshotBlocked("Frozen snapshot and row mapping do not match.")
+            with private_file(output) as stream:
+                for row in rows:
+                    record_id = source_to_id[row["id"]]
+                    if record_id != opaque("transaction", row["id"]):
+                        raise SnapshotBlocked("Frozen opaque row identity mismatch.")
+                    value = classifier_input(db, row, minimize=False)
+                    old_input = original_by_id[record_id]["input"]
+                    counts["changed_descriptions"] += value["description"] != old_input["description"]
+                    counts["changed_inputs"] += value != old_input
+                    counts["active_transactions"] += 1
+                    for field in ("transaction_notes", "receipt_context", "wallet_category_raw"):
+                        if field in value:
+                            counts["with_" + field] += 1
+                    normalized = " ".join(value["description"].casefold().split())
+                    merchant = row["merchant_id"] or re.sub(r"\d+", "#", normalized)
+                    search_merchant = row["search_merchant"]
+                    if search_merchant is None:
+                        names = {entry[0] for entry in db.execute("""
+                            SELECT json_extract(r.payload_json,'$.merchant') FROM transaction_event_links l
+                            JOIN raw_event_payloads r ON r.event_id=l.event_id
+                            WHERE l.transaction_id=? AND l.unlinked_at_ms IS NULL
+                              AND json_type(r.payload_json,'$.merchant')='text'
+                            """, (row["id"],)) if entry[0] != ""}
+                        search_merchant = next(iter(names)) if len(names) == 1 else None
+                    record = {"id": record_id, "input": value, "source_revision": row["revision"],
+                              "search_merchant": search_merchant, "search_locality": locality,
+                              "split_groups": {"transaction": record_id,
+                                  "description": opaque("description", normalized),
+                                  "merchant": opaque("merchant", merchant)}}
+                    stream.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+        app_sources = ["ClassificationJobs.swift", "TransactionNotes.swift", "Receipts.swift", "MerchantSearch.swift"]
+        manifest = {"format": "groundkeeper-private-exact-app-inputs-v1", "created_at_utc": datetime.now(timezone.utc).isoformat(),
+                    "snapshot_sha256": source_sha,
+                    "minimized_inputs_sha256": hashlib.sha256(original_path.read_bytes()).hexdigest(),
+                    "private_id_map_sha256": hashlib.sha256(mapping_path.read_bytes()).hexdigest(),
+                    "exact_inputs_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+                    "app_construction_source_sha256": {name: hashlib.sha256((APP_SOURCE_ROOT / name).read_bytes()).hexdigest() for name in app_sources},
+                    "counts": dict(counts), "semantics": "Local classifier fields before merchant enrichment: raw description, sign-derived direction, currency, app-bounded notes/OCR and nonconflicting linked Wallet hint. No monetary/account/date/location fields or saved labels.",
+                    "network_boundary": "Private model input is never a search query. search_merchant reproduces production merchant-name preference then sole linked payload merchant; search_locality is the frozen app setting. Pass these candidates and exact description through actual Swift MerchantSearchQuery.make. Only accepted sanitized merchant/locality may reach the network; never reconstruct rejected identifiers.",
+                    "preserved": "Original minimized inputs, source snapshot, existing labels, identity map and prior manifest remain unchanged."}
+        write_json(manifest_path, manifest)
+    except (sqlite3.Error, OSError, ValueError, KeyError, TypeError) as error:
+        raise SnapshotBlocked("Exact input derivation failed; any partial output remains private.") from error
+    return dict(counts)
 
 
 def export_snapshot(source, destination):
@@ -226,10 +347,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--destination", type=Path, default=ROOT / ".private/qwen-evidence-v3/snapshot")
+    parser.add_argument("--exact-from-snapshot", type=Path, help="Derive private unmodified app inputs from an existing frozen snapshot; never opens the live vault")
     args = parser.parse_args()
     os.umask(0o077)
     try:
-        counts = export_snapshot(args.source, args.destination)
+        counts = export_exact_inputs(args.exact_from_snapshot) if args.exact_from_snapshot else export_snapshot(args.source, args.destination)
     except SnapshotBlocked as error:
         print(f"Blocked: {error}", file=sys.stderr)
         return 2

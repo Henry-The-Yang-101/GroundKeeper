@@ -171,3 +171,79 @@ def test_privacy_denial_does_not_create_output_or_request_keys(vault, monkeypatc
     with pytest.raises(snapshot.SnapshotBlocked, match="macOS denied"):
         snapshot.export_snapshot(source, destination)
     assert not destination.exists()
+
+
+def test_exact_app_inputs_preserve_raw_values_without_changing_original_export(vault):
+    db, source, destination = vault
+    raw_description = "Fictional Cafe https://example.test 1234567890"
+    raw_notes = "Dinner CAD 25.00 fake@example.test"
+    transaction(db, "debit", description=raw_description, notes=raw_notes)
+    transaction(db, "credit", amount=1000, kind="refund", description="Fictional Refund")
+    add_receipt(db, "receipt")
+    add_ocr(db, "ocr", "receipt", "MILK 3.99\nVISA 1234\n123456789012")
+    add_hint(db, "hint", "Food & Drink")
+    db.commit()
+    snapshot.export_snapshot(source, destination)
+    before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in destination.iterdir()}
+    counts = snapshot.export_exact_inputs(destination)
+    assert counts == {"active_transactions": 2, "changed_descriptions": 1, "changed_inputs": 1,
+                      "with_transaction_notes": 1, "with_receipt_context": 1, "with_wallet_category_raw": 1}
+    rows = jsonl(destination / "classifier_inputs.exact.jsonl")
+    original = jsonl(destination / "classifier_inputs.jsonl")
+    assert [r["id"] for r in rows] == [r["id"] for r in original]
+    assert rows[0]["input"]["direction"] == "credit"
+    assert rows[1]["input"]["description"] == raw_description
+    assert rows[1]["input"]["transaction_notes"] == raw_notes
+    assert rows[1]["input"]["receipt_context"]["text"] == "MILK 3.99"
+    assert rows[1]["input"]["wallet_category_raw"] == "Food & Drink"
+    assert rows[1]["split_groups"]["description"] != original[1]["split_groups"]["description"]
+    assert set(rows[1]["input"]) == {"description", "direction", "currency", "transaction_notes", "receipt_context", "wallet_category_raw"}
+    assert all(validate_input(row["input"]) for row in rows)
+    assert before == {name: hashlib.sha256((destination / name).read_bytes()).hexdigest() for name in before}
+    manifest = json.loads((destination / "classifier_inputs.exact.manifest.private.json").read_text())
+    assert manifest["counts"] == counts
+    assert len(manifest["app_construction_source_sha256"]) == 4
+    assert manifest["exact_inputs_sha256"] == hashlib.sha256((destination / "classifier_inputs.exact.jsonl").read_bytes()).hexdigest()
+    assert stat.S_IMODE((destination / "classifier_inputs.exact.jsonl").stat().st_mode) == 0o600
+    with pytest.raises(snapshot.SnapshotBlocked, match="already exists"):
+        snapshot.export_exact_inputs(destination)
+
+
+def test_exact_input_derivation_refuses_changed_snapshot(vault):
+    _, source, destination = vault
+    snapshot.export_snapshot(source, destination)
+    frozen = destination / "source.snapshot.sqlite"
+    frozen.chmod(0o600)
+    with frozen.open("ab") as stream:
+        stream.write(b"changed-fictional-snapshot")
+    with pytest.raises(snapshot.SnapshotBlocked, match="checksum mismatch"):
+        snapshot.export_exact_inputs(destination)
+    assert not (destination / "classifier_inputs.exact.jsonl").exists()
+
+
+@pytest.mark.parametrize("merchant_name,payload_merchants,expected", [
+    ("Fictional named merchant", ["Payload merchant"], "Fictional named merchant"),
+    (None, ["Payload merchant", "Payload merchant", ""], "Payload merchant"),
+    (None, ["Payload merchant", "Other merchant"], None),
+    ("", ["Payload merchant"], ""),
+])
+def test_exact_search_candidates_follow_production_name_preference(vault, merchant_name, payload_merchants, expected):
+    db, source, destination = vault
+    overrides = {}
+    if merchant_name is not None:
+        put(db, "merchants", id="merchant", name=merchant_name, created_at_ms=0)
+        overrides["merchant_id"] = "merchant"
+    transaction(db, "debit", **overrides)
+    put(db, "app_settings", key="merchant_search", value_json=json.dumps({"enabled": True, "locality": "Fictional City"}), updated_at_ms=0)
+    for index, name in enumerate(payload_merchants):
+        key = "merchant-event" + str(index)
+        event(db, key)
+        put(db, "raw_event_payloads", event_id=key, payload_json=json.dumps({"merchant": name}))
+        link(db, key + "link", key, "debit")
+    db.commit()
+    snapshot.export_snapshot(source, destination)
+    snapshot.export_exact_inputs(destination)
+    record = jsonl(destination / "classifier_inputs.exact.jsonl")[0]
+    assert record["search_merchant"] == expected
+    assert record["search_locality"] == "Fictional City"
+    assert set(record["input"]) == {"description", "direction", "currency"}
