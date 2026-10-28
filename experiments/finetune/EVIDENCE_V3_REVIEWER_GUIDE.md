@@ -70,6 +70,11 @@ about earlier production requests: preserve their true outcomes and inputs.
 Never use this exception merely because a merchant is unfamiliar or research
 is difficult. Private queries continue to use the established privacy guard
 and privacy_blocked protocol.
+A public business name may include a person's name or a possessive form. When
+the supplied visible evidence clearly identifies a public business, research its
+business name or domain without requesting separate inspection solely for that
+naming style. Evaluate the actual business match and avoid personal-profile
+research. This does not permit reconstructing null or private-guarded queries.
 Do not print private descriptions or labels in the
 final response. A private bank transaction's details never belong in Git.
 
