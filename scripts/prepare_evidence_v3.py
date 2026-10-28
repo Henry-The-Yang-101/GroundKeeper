@@ -199,7 +199,12 @@ def validate_packet(path):
             raise ValueError("Every row needs actual internet research provenance")
         for search in label["searches"]:
             if search.get("status") == "privacy_blocked":
-                if (row.get("source") != "personal" or row.get("safe_query") is not None
+                blocked = row.get("safe_query") is None
+                if not blocked and row.get("source") == "personal":
+                    from scripts.collect_training_context import private_query_rejection
+
+                    blocked = bool(private_query_rejection(row["safe_query"]))
+                if (row.get("source") != "personal" or not blocked
                         or search.get("query") is not None or search.get("attempted") is not False
                         or search.get("urls") != [] or not search.get("reason")):
                     raise ValueError("Privacy-blocked research must be explicit and have no attempted query")

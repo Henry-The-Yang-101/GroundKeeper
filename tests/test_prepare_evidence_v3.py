@@ -95,6 +95,15 @@ def test_privacy_blocked_is_explicit_not_fake_search(tmp_path):
                           "urls": [], "reason": "No permitted merchant query"}]
     write_new(packet / "labels.jsonl", [label])
     assert validate_packet(packet)["validated"] == 1
+    row["safe_query"] = {"merchant": "MARKETPLACE AB12CD34", "locality": ""}
+    path.write_text(json.dumps(row))
+    assert validate_packet(packet)["validated"] == 1
+    row["safe_query"] = {"merchant": "Fictional Cafe", "locality": ""}
+    path.write_text(json.dumps(row))
+    with pytest.raises(ValueError, match="Privacy-blocked"):
+        validate_packet(packet)
+    row["safe_query"] = None
+    path.write_text(json.dumps(row))
     label["searches"][0]["attempted"] = True
     (packet / "labels.jsonl").write_text(json.dumps(label))
     with pytest.raises(ValueError, match="Privacy-blocked"):
