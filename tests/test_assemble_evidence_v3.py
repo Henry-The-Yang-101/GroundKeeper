@@ -200,6 +200,7 @@ def test_valid_complete_assembly_is_consumed_by_training_freeze(corpus, monkeypa
     summary = a.assemble(triage, verdicts, output, corpus)
     assert summary["retained_count"] == 5 and summary["quarantined_count"] == 0
     assert len(a.read(output / "all-records.jsonl")) == 5
+    assert a.one(output / "acceptance.json")["family_policy_sha256"] == a.sha(a.FAMILY_POLICY)
     monkeypatch.setattr(pipeline, "PRIVATE", corpus.private)
     frozen = pipeline.freeze(
         output / "canonical.jsonl",
@@ -319,6 +320,20 @@ def test_changes_after_triage_invalidate_family_review_binding(corpus):
 def test_output_never_escapes_private_storage(corpus):
     with pytest.raises(ValueError, match="Private evidence output"):
         a.triage(corpus.run / "unsafe-output", corpus)
+
+
+def test_changed_family_policy_invalidates_prior_adjudication(corpus, monkeypatch):
+    policy = corpus.root / "family-policy.md"
+    policy.write_text("Fictional original family policy\n")
+    monkeypatch.setattr(a, "FAMILY_POLICY", policy)
+    triage = corpus.private / "triage"
+    a.triage(triage, corpus)
+    policy.write_text("Fictional revised grouping rule\n")
+    verdicts = corpus.private / "verdicts"
+    put(verdicts, [])
+    with pytest.raises(ValueError, match="changed since triage"):
+        a.assemble(triage, verdicts, corpus.private / "assembled", corpus)
+    assert not (corpus.private / "assembled/acceptance.json").exists()
 
 
 def test_historical_test_alias_cannot_leak_into_train(corpus):

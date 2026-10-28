@@ -24,6 +24,7 @@ from scripts.prepare_evidence_v3 import POLICY, ROOT, digest, read, validate_pac
 EXPECTED_COUNTS = {"delaware": 5000, "personal": 1205}
 REVIEWER = {"model": "gpt-6.1-sol", "reasoning_effort": "high"}
 VALID_SPLITS = {"train", "valid", "test"}
+FAMILY_POLICY = ROOT / "experiments/finetune/EVIDENCE_V3_FAMILY_POLICY.md"
 
 
 def sha(path):
@@ -342,6 +343,7 @@ def inspect(layout=Layout()):
         Path(__file__),
         Path(family_plan.__code__.co_filename),
         Path(validate_packet.__code__.co_filename),
+        FAMILY_POLICY,
     ):
         bindings[str(code.resolve())] = sha(code)
     historical, owners, expanded_history = historical_registry(layout, bindings)
@@ -722,6 +724,7 @@ def assemble(triage_path, adjudications, destination, layout=Layout()):
         "policy_version": POLICY,
         "reviewer": REVIEWER,
         "all_expected_primary_labels_present": True,
+        "family_policy_sha256": result["bindings"][str(FAMILY_POLICY.resolve())],
         "primary_label_count": len(all_records),
         "source_counts": dict(Counter(r["source"] for r in result["records"])),
         "audit_binding_sha256": result["audit_binding_sha256"],

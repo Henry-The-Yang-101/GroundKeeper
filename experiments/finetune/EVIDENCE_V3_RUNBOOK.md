@@ -95,6 +95,12 @@ No final-test predictions were used in that diagnostic.
 
 ## Reference acceptance
 
+Apply the adopted [family acceptance policy](EVIDENCE_V3_FAMILY_POLICY.md) before
+final assembly. It distinguishes operating identities from split constraints,
+retains useful uncertain examples, and requires a complete historical check.
+The policy is an adjudication requirement, not evidence that current partial
+family research or automatic alias grouping has already satisfied it.
+
 `python -m scripts.assemble_evidence_v3 triage --destination PRIVATE_AUDIT_PATH`
 checks immutable source, context, packet and label bindings and produces a
 merchant-family plan. Partial triage is useful during collection, but it does
