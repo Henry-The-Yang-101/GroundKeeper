@@ -234,6 +234,22 @@ def context_index(layout, name, expected, bindings):
     return result
 
 
+def packet_privacy_binding_matches(row, context, name):
+    if (row.get("safe_query") == context["safe_query"]
+            and row.get("search_privacy_rejection") == context["search_privacy_rejection"]):
+        return True
+    # Early immutable packets predate the additional private query guard. Preserve
+    # their original query provenance only when it exactly matches the record;
+    # this does not authorize repeating that query or rewriting collected context.
+    return bool(
+        name == "personal"
+        and context["search_privacy_rejection"]
+        and context["safe_query"] is None
+        and row.get("safe_query") == context["record"]["query"]
+        and row.get("search_privacy_rejection") is None
+    )
+
+
 def inspect(layout=Layout()):
     expected, bindings = load_sources(layout)
     for code in (
@@ -283,8 +299,7 @@ def inspect(layout=Layout()):
                     or row.get("without_context_sha256") != digest(source["input"])
                     or row.get("context_record_sha256") != context["sha256"]
                     or row.get("context_outcome") != context["record"]["outcome"]
-                    or row.get("safe_query") != context["safe_query"]
-                    or row.get("search_privacy_rejection") != context["search_privacy_rejection"]
+                    or not packet_privacy_binding_matches(row, context, name)
                 ):
                     raise ValueError("Packet input/context/source binding is stale")
             bindings[str(path)], bindings[str(assignment_path)] = sha(path), sha(assignment_path)

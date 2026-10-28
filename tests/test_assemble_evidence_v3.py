@@ -391,23 +391,24 @@ def test_trivial_rename_without_identity_evidence_needs_adjudication(corpus):
     assert component["adjudication_required"]
 
 
-def test_explicit_private_privacy_blocked_reference_is_preserved(corpus):
+@pytest.mark.parametrize("legacy_query", [None, {"merchant": "Fictional AB123XYZ", "locality": ""}])
+def test_explicit_private_privacy_blocked_reference_is_preserved(corpus, legacy_query):
     context = corpus.context("personal")
     queries = a.read(context / "queries.jsonl")
-    queries[0]["query"] = None
+    queries[0]["query"] = legacy_query
     overwrite(context / "queries.jsonl", queries)
     manifest = a.one(context / "manifest.json")
     manifest["queries_sha256"] = a.sha(context / "queries.jsonl")
     overwrite(context / "manifest.json", [manifest])
     record_path = collector.record_path(context, {"id": "personal-0"})
     record = a.one(record_path)
-    record.update(query=None, outcome="unsafe_query")
+    record.update(query=legacy_query, outcome="unsafe_query")
     record["retrieval_provenance"]["network_attempted"] = False
     overwrite(record_path, [record])
     packet = corpus.packets("personal") / "personal-0"
     inputs = a.read(packet / "inputs.jsonl")[0]
     inputs.update(
-        safe_query=None, context_outcome="unsafe_query", context_record_sha256=a.sha(record_path)
+        safe_query=legacy_query, context_outcome="unsafe_query", context_record_sha256=a.sha(record_path)
     )
     overwrite(packet / "inputs.jsonl", [inputs])
     assignment = a.one(packet / "assignment.json")
@@ -436,6 +437,17 @@ def test_explicit_private_privacy_blocked_reference_is_preserved(corpus):
         "researched": 4,
         "privacy_blocked": 1,
     }
+
+
+def test_legacy_privacy_compatibility_never_accepts_changed_query_or_public_row():
+    query = {"merchant": "Fictional AB123XYZ", "locality": ""}
+    context = {"safe_query": None, "search_privacy_rejection": "reference_token",
+               "record": {"query": query}}
+    row = {"safe_query": query}
+    assert a.packet_privacy_binding_matches(row, context, "personal")
+    assert not a.packet_privacy_binding_matches(row, context, "delaware")
+    assert not a.packet_privacy_binding_matches({"safe_query": {"merchant": "changed"}}, context, "personal")
+    assert not a.packet_privacy_binding_matches(row, {**context, "search_privacy_rejection": None}, "personal")
 
 
 @pytest.mark.parametrize(
