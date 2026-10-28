@@ -59,11 +59,21 @@ Private collection additionally rejects residual reference-like tokens before
 cache or network access. This is a documented training privacy guard above the
 production sanitizer, not a different search provider or fabricated context.
 Its version, source hash and effective query candidates are frozen alongside
-the private collection. Eight of the first 64 completed private records had
-previously sent queries that this stricter guard now rejects; their immutable
-history is retained. Later packets hide these unsafe queries from labelers.
+the private collection. Version 2 also rejects the all-letter references used
+by two mobile-transit descriptor forms. It rejects 103 frozen private candidates.
+Ten historical network attempts now fall under this rejection: eight preceded
+version 1, and two all-letter references were sent under version 1. Those records
+remain unchanged; the additional uncollected all-letter reference is blocked
+before dispatch. New packets hide these unsafe queries from labelers; immutable
+older packets retain truthful provenance and reviewers withhold unsafe queries.
 Privacy-blocked research is recorded as attempted=false rather than pretending
 that an internet lookup occurred.
+
+The explicit `migrate-private-guard --output-dir PRIVATE_CONTEXT_DIRECTORY`
+command archives the version-1 guard, effective candidates and record byte hashes
+before activating version 2. An immutable journal permits recovery after an
+interrupted migration. Run it while collection is stopped, using the collector's
+exclusive lock; never rewrite historical records or bypass a source-hash failure.
 
 Operational progress lives in `.local/finetune/evidence-v3/RUN_STATE.json` and
 `.venv/bin/python -m scripts.prepare_evidence_v3 status`. Revalidate process and
@@ -79,6 +89,25 @@ independent prediction checks and reference adjudications are retained privately
 one reference was revised. The four-row adjudication encountered prediction
 references embedded in prior verdict rationales and is explicitly not blind.
 No final-test predictions were used in that diagnostic.
+
+## Reference acceptance
+
+`python -m scripts.assemble_evidence_v3 triage --destination PRIVATE_AUDIT_PATH`
+checks immutable source, context, packet and label bindings and produces a
+merchant-family plan. Partial triage is useful during collection, but it does
+not accept data. Final assembly requires all 6,205 individually reviewed source
+IDs, plus separate evidence-bound adjudications for risky family merges. A
+cross-split family cannot be accepted into training: correct an erroneous alias
+with evidence or explicitly quarantine the component. Preserve all reviewed rows
+in the audit, including quarantined rows, and protect excluded aliases in the
+complete historical registry.
+
+Audit identical visible inputs for conflicting type/category targets before
+acceptance. Corrections require research adjudication and preserved prior labels;
+do not enforce agreement by majority vote. Later completed labels can introduce
+new conflicts, so repeat this check over the full cohort. Detailed review
+disclosures must distinguish model-prediction exposure from prior-reference
+exposure; a separate reviewer is not automatically a blinded reviewer.
 
 ## Training and assessment
 
