@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-28",
+  "fixture_only": true,
+  "purpose": "Real MLX GPU and Worker API end-to-end smoke, not evidence of classifier quality",
+  "research_review_note": "All three labels and the acceptance file are explicit synthetic schema fixtures; no GPT-6.1 Sol web research or independent label review is claimed",
+  "canonical_counts": {
+    "train": 1,
+    "valid": 1,
+    "test": 1
+  },
+  "expanded_counts": {
+    "train": 1,
+    "valid": 1
+  },
+  "base_sha256": "d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477",
+  "max_seq_length": 3089,
+  "microbatches": 8,
+  "optimizer_updates": 1,
+  "checkpoint_sha256": "2c461a8adbe3860772e84dbd6b2e88aef85654dfa84528f8af81b0dbbade878d",
+  "checkpoint_evaluation_used_actual_worker": true,
+  "checkpoint_invalid_outputs": 0,
+  "package_verified": true,
+  "selection_lock_created": true,
+  "one_shot_final_scoring_completed": true,
+  "baseline_comparisons": [
+    "qwen",
+    "qwen-configured",
+    "qwen-delaware",
+    "qwen-delaware-configured"
+  ],
+  "holdout_marker_blocks_further_fitting": true,
+  "private_smoke_frozen_path": "/Users/henryyang/Documents/Coding/Python/GroudKeeper/.private/qwen-evidence-v3/smoke-20261028/frozen",
+  "local_smoke_run_path": ".local/finetune/evidence-v3/smoke-20261028",
+  "real_corpus_test_accessed": false,
+  "production_model_installed": false,
+  "correction_cycle_validation": "Mocked engine verifies exact parent-weight binding, new optimizer config, TRAIN-only replay and immutable cycle outputs. No real category mistake existed in this tiny smoke, so no research verdict was fabricated to run a real resumed cycle."
+}

@@ -1,4 +1,5 @@
 import copy
+import json
 
 import pytest
 
@@ -201,3 +202,325 @@ def test_base_requires_original_weight_hash(tmp_path):
     (tmp_path / "model.safetensors").write_bytes(b"not the base")
     with pytest.raises(ValueError, match="approved hash"):
         p.verify_base(tmp_path)
+
+
+def test_selection_lock_is_immutable_and_binds_selected_files(tmp_path, monkeypatch):
+    frozen = tmp_path / "frozen"
+    frozen.mkdir()
+    config = tmp_path / "config.json"
+    config.write_text("{}")
+    checkpoint = tmp_path / "checkpoint.safetensors"
+    checkpoint.write_bytes(b"fixture weights")
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text("{}\n")
+    selection = tmp_path / "selection.json"
+    p.write_new(
+        selection,
+        {
+            "selected": {
+                "checkpoint": str(checkpoint),
+                "checkpoint_sha256": p.sha256(checkpoint),
+                "prediction_path": str(predictions),
+                "prediction_sha256": p.sha256(predictions),
+            },
+            "config_sha256": p.sha256(config),
+            "test_accessed": False,
+        },
+    )
+    monkeypatch.setattr(p, "load_config", lambda _: ({"frozen": str(frozen)}, {}))
+    p.lock(config, selection)
+    p.selected_record(config, selection, locked=True)
+    with pytest.raises(FileExistsError):
+        p.lock(config, selection)
+    checkpoint.write_bytes(b"changed")
+    with pytest.raises(ValueError, match="changed"):
+        p.selected_record(config, selection, locked=True)
+
+
+def test_holdout_marker_blocks_fitting_and_new_selection(frozen, tmp_path, monkeypatch):
+    p.write_new(frozen / "test-access.json", {"purpose": "fixture"})
+    with pytest.raises(ValueError, match="further fitting"):
+        p.require_unopened(frozen)
+    monkeypatch.setattr(p, "load_config", lambda _: ({"frozen": str(frozen)}, {}))
+    with pytest.raises(ValueError, match="further fitting"):
+        p.train(tmp_path / "config", tmp_path / "qwen", tmp_path / "delaware")
+
+
+def test_paired_reports_cluster_views_and_surface_source_regressions():
+    from scripts.evidence_training.evaluation import paired_report
+
+    rows = [row("a"), row("b", family="second")]
+    rows[1]["source"] = "personal"
+    gold = []
+    for item in rows:
+        for variant, inputs, answer in p.variants(item):
+            gold.append(
+                {
+                    "id": item["id"],
+                    "variant": variant,
+                    "split": "train",
+                    "input_sha256": p.digest(inputs),
+                    "prediction": answer,
+                    "error": None,
+                }
+            )
+    candidate = copy.deepcopy(gold)
+    candidate[1]["prediction"] = {"type": "expense", "category": "other", "review": True}
+    result = paired_report(rows, candidate, gold, samples=40)
+    assert result["cohorts"]["all"]["n_rows"] == 2
+    assert result["cohorts"]["all"]["type_category_delta"] == -0.5
+    assert result["cohorts"]["source:personal"]["observed_regression"]
+    assert result["cohorts"]["source:personal"]["regression_95ci"]
+    assert result["cohorts"]["source:fictional"]["type_category_delta_95ci"] == [0, 0]
+    bad = copy.deepcopy(candidate)
+    bad[0]["input_sha256"] = "different"
+    with pytest.raises(ValueError, match="not identical"):
+        paired_report(rows, bad, gold, samples=20)
+
+
+def test_primary_type_category_metric_ignores_forced_review(tmp_path):
+    class FakeWorker:
+        identity = {"manifest_sha256": "manifest"}
+
+        def classify(self, request, cancelled):
+            return {"decision": {**ANSWER, "review": True}}
+
+    fixture = row()
+    fixture["answer_with_context"]["review"] = False
+    fixture["answer_without_context"]["review"] = False
+    report = p.predict_rows(FakeWorker(), [fixture], tmp_path / "predictions", "weights")
+    assert report["metrics"]["type_category_accuracy"] == 1
+    assert report["metrics"]["joint_accuracy"] == 0
+    assert report["metrics"]["production_review_accuracy"] == 0
+
+
+def test_final_holdout_failure_consumes_access_before_payload_read(frozen, tmp_path, monkeypatch):
+    config, selection = tmp_path / "config", tmp_path / "selection.json"
+    config.write_text("{}")
+    selection.write_text("{}")
+    p.write_new(tmp_path / "selection-lock.json", {"fixture": True})
+    monkeypatch.setattr(p, "RUN", tmp_path)
+    monkeypatch.setattr(
+        p,
+        "selected_record",
+        lambda *a, **k: ({"frozen": str(frozen)}, {"selected": {"checkpoint_sha256": "selected"}}),
+    )
+    monkeypatch.setattr(
+        p,
+        "verify_package",
+        lambda *a, **k: (
+            {"files": {"adapters/adapters.safetensors": {"sha256": "selected"}}},
+            "package",
+        ),
+    )
+    (frozen / "test.jsonl").write_text("corrupt sealed payload")
+    with pytest.raises(ValueError, match="Sealed held-out payload changed"):
+        p.final_score(
+            config,
+            selection,
+            tmp_path / "package",
+            tmp_path / "old",
+            tmp_path / "delaware",
+            output=tmp_path / "report.json",
+        )
+    marker = json.loads((frozen / "test-access.json").read_text())
+    assert marker["failure_also_consumes_holdout"]
+    assert marker["further_fitting_forbidden"]
+    with pytest.raises(ValueError, match="further fitting"):
+        p.require_unopened(frozen)
+
+
+def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_path, monkeypatch):
+    import sys
+    from types import ModuleType, SimpleNamespace
+
+    monkeypatch.setattr(p, "PRIVATE", tmp_path / "private")
+    monkeypatch.setattr(p, "RUN", tmp_path / "runs")
+    frozen = tmp_path / "private/frozen"
+    frozen.mkdir(parents=True)
+    config = tmp_path / "runs/config.json"
+    config.parent.mkdir()
+    config.write_text("{}")
+    parent = tmp_path / "parent/adapters.safetensors"
+    parent.parent.mkdir()
+    parent.write_bytes(b"parent weights")
+    p.write_new(
+        parent.parent / "adapter_config.json", {"num_layers": 4, "lora_parameters": {"rank": 8}}
+    )
+    prediction, verdict = replay_artifacts()
+    prediction["model_sha256"] = p.sha256(parent)
+    prediction["prediction_sha256"] = p.digest(
+        {k: v for k, v in prediction.items() if k != "prediction_sha256"}
+    )
+    verdict.update(model_sha256=p.sha256(parent), prediction_sha256=prediction["prediction_sha256"])
+    pred_path, verdict_path = tmp_path / "predictions", tmp_path / "verdicts"
+    p.write_new(pred_path, [prediction], rows=True)
+    p.write_new(verdict_path, [verdict], rows=True)
+    selection = tmp_path / "parent/selection.json"
+    selection.write_text("{}")
+    cfg = {
+        "frozen": str(frozen),
+        "model": "fixture-base",
+        "seed": 1,
+        "learning_rate": 1e-5,
+        "batch_size": 1,
+        "grad_accumulation_steps": 8,
+        "num_layers": 4,
+        "lora_parameters": {"rank": 8},
+        "iters": 8,
+        "checkpoint_steps": [8],
+        "expanded_counts": {"train": 1},
+        "answer_room": 17,
+        "max_seq_length": 3089,
+    }
+    monkeypatch.setattr(
+        p, "load_config", lambda _: (cfg, {"train": [row()], "valid": [row("b", "valid", "other")]})
+    )
+    monkeypatch.setattr(
+        p,
+        "selected_record",
+        lambda *a, **k: (
+            cfg,
+            {
+                "selected": {
+                    "checkpoint": str(parent),
+                    "checkpoint_sha256": p.sha256(parent),
+                    "metrics": {
+                        "production": {
+                            "macro_f1_supported_categories": 0.5,
+                            "type_category_accuracy": 0.5,
+                        }
+                    },
+                    "invalid_outputs": 0,
+                    "step": 8,
+                }
+            },
+        ),
+    )
+    monkeypatch.setattr(p, "predict", lambda *a, **k: {"fixture_baseline": True})
+
+    class Model:
+        def trainable_parameters(self):
+            return {"weight": 1}
+
+        def eval(self):
+            pass
+
+        def train(self):
+            pass
+
+    class Dataset:
+        def __init__(self, messages, tokenizer, mask_prompt):
+            assert mask_prompt
+            self._data = messages
+
+        def process(self, item):
+            return [0] * 120, 100
+
+    modules = {
+        name: ModuleType(name)
+        for name in (
+            "mlx",
+            "mlx.core",
+            "mlx.utils",
+            "mlx_lm",
+            "mlx_lm.lora",
+            "mlx_lm.tuner",
+            "mlx_lm.tuner.callbacks",
+            "mlx_lm.tuner.datasets",
+        )
+    }
+    mx = modules["mlx.core"]
+    mx.set_memory_limit = mx.set_cache_limit = lambda _: None
+    mx.random = SimpleNamespace(seed=lambda _: None)
+    mx.save_safetensors = lambda path, weights: (
+        __import__("pathlib").Path(path).write_bytes(b"new checkpoint")
+    )
+    mx.load = lambda _: {"weight": 1}
+    mx.array_equal = lambda a, b: SimpleNamespace(item=lambda: a == b)
+    modules["mlx"].core = mx
+    modules["mlx.utils"].tree_flatten = lambda value: list(value.items())
+    modules["mlx_lm"].load = lambda *a, **k: (Model(), Tokenizer())
+    modules["mlx_lm.tuner.callbacks"].TrainingCallback = object
+    modules["mlx_lm.tuner.datasets"].ChatDataset = Dataset
+    modules["mlx_lm.lora"].CONFIG_DEFAULTS = {}
+    seen = {}
+
+    def fake_train(args, model, training, validation, callback):
+        seen.update(vars(args))
+        seen["train_n"], seen["valid_n"] = len(training._data), len(validation._data)
+        __import__("pathlib").Path(args.adapter_path).mkdir()
+        callback.on_val_loss_report({"iteration": 0})
+        callback.on_train_loss_report({"iteration": 8})
+
+    modules["mlx_lm.lora"].train_model = fake_train
+    for name, module in modules.items():
+        monkeypatch.setitem(sys.modules, name, module)
+    monkeypatch.setattr(p, "worker_for_model", lambda *a: None)
+
+    def fake_predictions(worker, rows, output, model_sha256):
+        p.write_new(output, [], rows=True)
+        return {
+            "metrics": {
+                "production": {"macro_f1_supported_categories": 1, "type_category_accuracy": 1}
+            },
+            "prediction_path": str(output),
+            "prediction_sha256": p.sha256(output),
+            "invalid_outputs": 0,
+        }
+
+    monkeypatch.setattr(p, "predict_rows", fake_predictions)
+    result = p.cycle(
+        config, "old-qwen", "old-delaware", "reviewed-1", selection, pred_path, verdict_path
+    )
+    assert result["step"] == 8
+    assert seen["resume_adapter_file"] == str(parent)
+    assert seen["optimizer"] == "adam" and seen["optimizer_config"] == {}
+    assert seen["train_n"] == 2 and seen["valid_n"] == 1
+    cycle_cfg = json.loads((config.parent / "cycles/reviewed-1/cycle-config.json").read_text())
+    assert cycle_cfg["optimizer_resumed"] is False
+    assert cycle_cfg["parent_checkpoint_sha256"] == p.sha256(parent)
+    assert cycle_cfg["replay_n"] == 1
+
+
+def test_forced_review_difference_is_not_a_category_replay_mistake():
+    fixture = row()
+    fixture["answer_with_context"]["review"] = False
+    fixture["answer_without_context"]["review"] = False
+    prediction, verdict = replay_artifacts()
+    prediction["prediction"] = {**fixture["answer_with_context"], "review": True}
+    prediction["prediction_sha256"] = p.digest(
+        {k: v for k, v in prediction.items() if k != "prediction_sha256"}
+    )
+    verdict["prediction_sha256"] = prediction["prediction_sha256"]
+    verdict["answer_sha256"] = p.digest(fixture["answer_with_context"])
+    with pytest.raises(ValueError, match="TRAIN mistake"):
+        p.validate_replay([fixture], [prediction], [verdict])
+
+
+def test_paired_bootstrap_keeps_repeated_family_rows_together():
+    from scripts.evidence_training.evaluation import paired_report
+
+    rows = [row("a", family="same-family"), row("b", family="same-family")]
+    predictions = []
+    for fixture in rows:
+        predictions.append(
+            {
+                "id": fixture["id"],
+                "variant": "with_context",
+                "split": "train",
+                "input_sha256": p.digest(fixture["input"]),
+                "prediction": ANSWER.copy(),
+                "error": None,
+            }
+        )
+    candidate = copy.deepcopy(predictions)
+    candidate[0]["prediction"]["category"] = "other"
+    report = paired_report(rows, candidate, predictions, samples=30)
+    cohort = report["cohorts"]["variant:with_context"]
+    assert cohort["n_rows"] == 2 and cohort["n_families"] == 1
+    assert cohort["type_category_delta_95ci"] == [-0.5, -0.5]
+    assert report["primary_cohort"] == "variant:with_context"
+    assert "source:fictional/variant:with_context" in report["cohorts"]
+    assert cohort["per_category"]["groceries"]["support"] == 2
+    assert cohort["candidate_specific_suggestion_coverage"] == 0.5

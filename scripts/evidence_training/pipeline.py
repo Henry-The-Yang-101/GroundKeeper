@@ -228,7 +228,7 @@ def verify_frozen(frozen):
 
 
 def code_hashes():
-    paths = [Path(__file__), *Path("groundkeeper").glob("*.py")]
+    paths = [*Path(__file__).parent.glob("*.py"), *Path("groundkeeper").glob("*.py")]
     return {str(p): sha256(p) for p in paths}
 
 
@@ -275,6 +275,7 @@ def preflight(frozen=PRIVATE / "frozen", config=RUN / "config.json", base=BASE):
     if config.exists():
         raise FileExistsError(config)
     manifest, data = verify_frozen(frozen)
+    require_unopened(frozen)
     verify_base(base)
     from mlx_lm.utils import load_tokenizer
 
@@ -331,7 +332,7 @@ def preflight(frozen=PRIVATE / "frozen", config=RUN / "config.json", base=BASE):
         "fresh_base": True,
         "resume_adapter_file": None,
         "test_accessed": False,
-        "selection": "validation macro F1, joint accuracy, fewer invalid outputs, earlier step",
+        "selection": "validation macro F1, type-category accuracy, fewer invalid outputs, earlier step",
     }
     write_new(config, value)
     return value
@@ -353,6 +354,50 @@ def load_config(path):
             raise ValueError(f"Frozen code/base changed: {name}")
     verify_base(cfg["model"])
     return cfg, data
+
+
+def require_unopened(frozen):
+    if (Path(frozen) / "test-access.json").exists():
+        raise ValueError(
+            "Held-out test was accessed; further fitting or selection on this corpus is forbidden"
+        )
+
+
+def selected_record(config, selection, *, locked=False):
+    cfg, _ = load_config(config)
+    selection = Path(selection)
+    report = json.loads(selection.read_text())
+    selected = report["selected"]
+    if (
+        report.get("config_sha256") != sha256(config)
+        or report.get("test_accessed") is not False
+        or sha256(selected["checkpoint"]) != selected["checkpoint_sha256"]
+        or sha256(selected["prediction_path"]) != selected["prediction_sha256"]
+    ):
+        raise ValueError("Selected checkpoint, predictions, or frozen config changed")
+    if locked:
+        lock = json.loads(selection.with_name("selection-lock.json").read_text())
+        if (
+            lock.get("selection_sha256") != sha256(selection)
+            or lock.get("checkpoint_sha256") != selected["checkpoint_sha256"]
+            or lock.get("config_sha256") != sha256(config)
+        ):
+            raise ValueError("Immutable selection lock does not match")
+    return cfg, report
+
+
+def lock(config, selection):
+    cfg, report = selected_record(config, selection)
+    require_unopened(cfg["frozen"])
+    value = {
+        "selection_sha256": sha256(selection),
+        "config_sha256": sha256(config),
+        "checkpoint_sha256": report["selected"]["checkpoint_sha256"],
+        "policy_version": POLICY_VERSION,
+        "test_accessed": False,
+    }
+    write_new(Path(selection).with_name("selection-lock.json"), value)
+    return value
 
 
 def worker_for_model(model, tokenizer):
@@ -382,6 +427,16 @@ def predict_rows(worker, rows, output, model_sha256):
                 "transaction_revision": 1,
                 "input": inputs,
             }
+            raw_answer = []
+            original_qwen = getattr(worker, "qwen", None)
+            if original_qwen:
+
+                def capture_qwen(inputs, cancelled):
+                    raw = original_qwen(inputs, cancelled)
+                    raw_answer.append(dict(raw))
+                    return raw
+
+                worker.qwen = capture_qwen
             try:
                 prediction = worker.classify(request, lambda: False)["decision"]
                 error = None
@@ -389,6 +444,9 @@ def predict_rows(worker, rows, output, model_sha256):
                 prediction = {"type": "unknown", "category": "other", "review": True}
                 error = getattr(exc, "code", type(exc).__name__)
                 invalid += 1
+            finally:
+                if original_qwen:
+                    worker.qwen = original_qwen
             record = {
                 "id": row["id"],
                 "split": row["split"],
@@ -396,6 +454,7 @@ def predict_rows(worker, rows, output, model_sha256):
                 "input_sha256": digest(inputs),
                 "model_sha256": model_sha256,
                 "prediction": prediction,
+                "raw_prediction": raw_answer[0] if raw_answer else prediction,
                 "error": error,
             }
             record["prediction_sha256"] = digest(record)
@@ -404,6 +463,24 @@ def predict_rows(worker, rows, output, model_sha256):
             predictions.append(prediction)
     write_new(output, artifacts, rows=True)
     metrics = evaluate(gold, predictions)
+    metrics["type_category_accuracy"] = sum(
+        (a["type"], a["category"]) == (b["type"], b["category"]) for a, b in zip(gold, predictions)
+    ) / len(gold)
+    metrics["raw_review_accuracy"] = sum(
+        a["review"] == b["raw_prediction"]["review"] for a, b in zip(gold, artifacts)
+    ) / len(gold)
+    metrics["production_review_accuracy"] = metrics["review_accuracy"]
+    production_indices = [i for i, a in enumerate(artifacts) if a["variant"] == "with_context"]
+    production_gold = [gold[i] for i in production_indices]
+    production_predictions = [predictions[i] for i in production_indices]
+    metrics["production"] = evaluate(production_gold, production_predictions)
+    metrics["production"]["type_category_accuracy"] = sum(
+        (a["type"], a["category"]) == (b["type"], b["category"])
+        for a, b in zip(production_gold, production_predictions)
+    ) / len(production_gold)
+    metrics["primary_cohort"] = (
+        "with_context: actual captured input including rows where search found no evidence"
+    )
     # Forced production review is expected; retain semantic review accuracy explicitly.
     return {
         "metrics": metrics,
@@ -442,7 +519,8 @@ def validate_replay(rows, predictions, verdicts):
                 or verdict.get("model_sha256") != prediction["model_sha256"]
                 or verdict.get("answer_sha256") != digest(answer)
                 or verdict.get("reviewer") != {"model": "gpt-6.1-sol", "reasoning_effort": "high"}
-                or prediction["prediction"] == answer
+                or (prediction["prediction"]["type"], prediction["prediction"]["category"])
+                == (answer["type"], answer["category"])
             ):
                 raise ValueError("Replay requires a separately reviewed, hash-bound TRAIN mistake")
             result.append(
@@ -453,14 +531,25 @@ def validate_replay(rows, predictions, verdicts):
     return result
 
 
-def package(base, checkpoint, adapter_config, destination, *, model_id, config=RUN / "config.json"):
+def package(
+    base,
+    checkpoint,
+    adapter_config,
+    destination,
+    *,
+    model_id,
+    config=RUN / "config.json",
+    selection=None,
+):
     """Build a new verified Worker package; does not install or select it."""
     base, checkpoint, adapter_config = Path(base), Path(checkpoint), Path(adapter_config)
     destination = confined(destination, RUN)
     if destination.exists():
         raise FileExistsError(destination)
-    frozen_cfg, _ = load_config(config)
-    selection = json.loads((Path(config).parent / "training/selection.json").read_text())
+    selection_path = (
+        Path(selection) if selection else Path(config).parent / "training/selection.json"
+    )
+    frozen_cfg, selection = selected_record(config, selection_path, locked=True)
     selected = selection["selected"]
     if (
         selection.get("config_sha256") != sha256(config)
@@ -472,12 +561,13 @@ def package(base, checkpoint, adapter_config, destination, *, model_id, config=R
         raise ValueError("Packaging requires the frozen validation-selected checkpoint")
     verify_base(base)
     cfg = json.loads(adapter_config.read_text())
+    if cfg.get("num_layers") != 4 or cfg.get("lora_parameters", {}).get("rank") != 8:
+        raise ValueError("Expected rank-8, last-four-layer adapter")
     if (
-        cfg.get("num_layers") != 4
-        or cfg.get("lora_parameters", {}).get("rank") != 8
-        or cfg.get("resume_adapter_file") is not None
+        adapter_config.resolve()
+        != (Path(selected["checkpoint"]).parent / "adapter_config.json").resolve()
     ):
-        raise ValueError("Expected fresh rank-8, last-four-layer adapter")
+        raise ValueError("Adapter config must belong to the selected run")
     destination.mkdir(parents=True)
     try:
         (destination / "model").mkdir()
@@ -514,6 +604,7 @@ def package(base, checkpoint, adapter_config, destination, *, model_id, config=R
 
 def replay(frozen, predictions, verdicts, output):
     _, data = verify_frozen(frozen)
+    require_unopened(frozen)
     result = validate_replay(data["train"], read_rows(predictions), read_rows(verdicts))
     write_new(confined(output, PRIVATE), result, rows=True)
     return {
@@ -525,38 +616,126 @@ def replay(frozen, predictions, verdicts, output):
     }
 
 
-def predict(config, package_path, output, split="valid"):
-    cfg, data = load_config(config)
-    if split not in ("train", "valid"):
-        raise ValueError("Held-out test is sealed for selection")
+def predict_package_rows(package_path, rows, output, *, prompt_version="v2"):
     output = confined(output, PRIVATE)
     manifest, manifest_sha = verify_package(Path(package_path).resolve(), lambda: False)
     if manifest["backend"] != "qwen_mlx":
         raise ValueError("Qwen package required")
-    # All historical adapters are compared under current production policy + v2 prompt.
-    manifest = {**manifest, "policy_version": POLICY_VERSION, "prompt_version": "v2"}
+    original_prompt = manifest.get("prompt_version", "v1")
+    manifest = {
+        **manifest,
+        "policy_version": POLICY_VERSION,
+        "prompt_version": original_prompt if prompt_version == "package" else prompt_version,
+    }
     worker = Worker()
     worker.prepare(Path(package_path).resolve(), manifest, manifest_sha)
+    model_sha = (
+        manifest["files"].get("adapters/adapters.safetensors", {}).get("sha256", manifest_sha)
+    )
     try:
-        return predict_rows(worker, data[split], output, manifest_sha)
+        report = predict_rows(worker, rows, output, model_sha)
+        report.update(
+            package_manifest_sha256=manifest_sha,
+            configured_prompt_version=original_prompt,
+            evaluated_prompt_version=manifest["prompt_version"],
+            comparison="configured incumbent pipeline"
+            if prompt_version == "package"
+            else "controlled current-v2 prompt; weights comparison",
+        )
+        return report
     finally:
         worker.release()
 
 
-def train(config, qwen_baseline, delaware_baseline):
+def predict(config, package_path, output, split="valid", prompt_version="v2"):
     cfg, data = load_config(config)
-    out = confined(Path(config).parent / "training", RUN)
+    if split not in ("train", "valid"):
+        raise ValueError("Held-out test is sealed for selection")
+    return predict_package_rows(package_path, data[split], output, prompt_version=prompt_version)
+
+
+def train(
+    config,
+    qwen_baseline,
+    delaware_baseline,
+    *,
+    cycle_name=None,
+    parent_selection=None,
+    replay_predictions=None,
+    replay_verdicts=None,
+):
+    cfg, data = load_config(config)
+    require_unopened(cfg["frozen"])
+    replay_rows, parent = [], None
+    if cycle_name is not None:
+        if not cycle_name or not all(c.isalnum() or c in "-_" for c in cycle_name):
+            raise ValueError("Cycle name must be letters, digits, hyphens, or underscores")
+        _, parent = selected_record(config, parent_selection, locked=True)
+        replay_rows = validate_replay(
+            data["train"], read_rows(replay_predictions), read_rows(replay_verdicts)
+        )
+        if not replay_rows:
+            raise ValueError("A correction cycle requires independently reviewed TRAIN mistakes")
+        parent_predictions = read_rows(replay_predictions)
+        if any(
+            r["model_sha256"] != parent["selected"]["checkpoint_sha256"] for r in parent_predictions
+        ):
+            raise ValueError(
+                "Replay predictions must come from the explicitly selected parent checkpoint"
+            )
+        parent_adapter = json.loads(
+            (Path(parent["selected"]["checkpoint"]).parent / "adapter_config.json").read_text()
+        )
+        if (
+            parent_adapter.get("num_layers") != cfg["num_layers"]
+            or parent_adapter.get("lora_parameters") != cfg["lora_parameters"]
+        ):
+            raise ValueError("Parent adapter architecture does not match frozen configuration")
+        cfg = {
+            **cfg,
+            "iters": math.ceil((cfg["expanded_counts"]["train"] + len(replay_rows)) / 8) * 8,
+        }
+        cfg["checkpoint_steps"] = sorted(
+            {max(8, math.ceil(cfg["iters"] * n / 3 / 8) * 8) for n in (1, 2, 3)}
+        )
+    out = confined(
+        Path(config).parent / ("cycles/" + cycle_name if cycle_name else "training"), RUN
+    )
     if out.exists():
         raise FileExistsError("Run exists; automatic restart is forbidden")
     os.environ.update(
         HF_HUB_OFFLINE="1", HF_HUB_DISABLE_TELEMETRY="1", TOKENIZERS_PARALLELISM="false"
     )
     out.mkdir(parents=True)
-    predictions = PRIVATE / "predictions"
+    namespace = digest(
+        {"config_path": str(Path(config).resolve()), "config_sha256": sha256(config)}
+    )[:16]
+    predictions = PRIVATE / "predictions" / namespace / (cycle_name or "initial")
     write_new(out / "started.json", {"config_sha256": sha256(config), "pid": os.getpid()})
+    write_new(
+        out / "cycle-config.json",
+        {
+            "initial_config_sha256": sha256(config),
+            "parent_selection_sha256": sha256(parent_selection) if parent else None,
+            "parent_checkpoint_sha256": parent["selected"]["checkpoint_sha256"] if parent else None,
+            "replay_predictions_sha256": sha256(replay_predictions) if parent else None,
+            "replay_verdicts_sha256": sha256(replay_verdicts) if parent else None,
+            "replay_n": len(replay_rows),
+            "optimizer_resumed": False,
+            "iters": cfg["iters"],
+            "checkpoint_steps": cfg["checkpoint_steps"],
+            "test_accessed": False,
+        },
+    )
     baselines = {}
     for name, path in [("qwen", qwen_baseline), ("qwen-delaware", delaware_baseline)]:
         baselines[name] = predict(config, path, predictions / f"baseline-{name}.valid.jsonl")
+        baselines[name + "-configured"] = predict(
+            config,
+            path,
+            predictions / f"baseline-{name}-configured.valid.jsonl",
+            prompt_version="package",
+        )
     write_new(out / "baselines.json", baselines)
     import mlx.core as mx
     import numpy as np
@@ -569,6 +748,7 @@ def train(config, qwen_baseline, delaware_baseline):
     mx.set_memory_limit(14_000_000_000)
     mx.set_cache_limit(512_000_000)
     np.random.seed(cfg["seed"])
+    mx.random.seed(cfg["seed"])
     model, tokenizer = load(cfg["model"], tokenizer_config={"trust_remote_code": False})
     datasets = []
     for split in ("train", "valid"):
@@ -577,6 +757,8 @@ def train(config, qwen_baseline, delaware_baseline):
             for _, inputs, answer in variants(row):
                 token_check(tokenizer, inputs, answer, cfg["answer_room"])
                 messages.append({"messages": messages_v2(inputs, answer)})
+        if split == "train":
+            messages.extend({"messages": r["messages"]} for r in replay_rows)
         dataset = ChatDataset(messages, tokenizer, mask_prompt=True)
         for item in dataset._data:
             tokens, offset = dataset.process(item)
@@ -593,6 +775,17 @@ def train(config, qwen_baseline, delaware_baseline):
     reports = []
 
     class Callback(TrainingCallback):
+        def on_val_loss_report(self, report):
+            if parent and report.get("iteration") == 0:
+                expected = mx.load(parent["selected"]["checkpoint"])
+                actual = dict(tree_flatten(model.trainable_parameters()))
+                if set(expected) != set(actual) or any(
+                    not bool(mx.array_equal(expected[k], actual[k]).item()) for k in expected
+                ):
+                    raise ValueError(
+                        "Parent adapter did not resume exactly before the first update"
+                    )
+
         def on_train_loss_report(self, report):
             step = report["iteration"]
             if step not in cfg["checkpoint_steps"]:
@@ -643,7 +836,7 @@ def train(config, qwen_baseline, delaware_baseline):
         "steps_per_eval": cfg["iters"],
         "val_batches": 8,
         "save_every": cfg["iters"],
-        "resume_adapter_file": None,
+        "resume_adapter_file": parent["selected"]["checkpoint"] if parent else None,
         "train": True,
         "test": False,
         "report_to": None,
@@ -652,12 +845,14 @@ def train(config, qwen_baseline, delaware_baseline):
     train_model(SimpleNamespace(**native), model, datasets[0], datasets[1], Callback())
     if sorted(r["step"] for r in reports) != cfg["checkpoint_steps"]:
         raise ValueError("Missing saved checkpoint evaluations")
+    eligible = reports + ([{**parent["selected"], "parent_incumbent": True}] if parent else [])
     best = max(
-        reports,
+        eligible,
         key=lambda r: (
-            r["metrics"]["macro_f1_supported_categories"],
-            r["metrics"]["joint_accuracy"],
+            r["metrics"]["production"]["macro_f1_supported_categories"],
+            r["metrics"]["production"]["type_category_accuracy"],
             -r["invalid_outputs"],
+            r.get("parent_incumbent", False),
             -r["step"],
         ),
     )
@@ -670,9 +865,121 @@ def train(config, qwen_baseline, delaware_baseline):
             "test_accessed": False,
             "baselines": baselines,
             "automatic_promotion": False,
+            "cycle_config_sha256": sha256(out / "cycle-config.json"),
+            "parent_selection_sha256": sha256(parent_selection) if parent else None,
         },
     )
     return best
+
+
+def cycle(
+    config,
+    qwen_baseline,
+    delaware_baseline,
+    cycle_name,
+    parent_selection,
+    replay_predictions,
+    replay_verdicts,
+):
+    return train(
+        config,
+        qwen_baseline,
+        delaware_baseline,
+        cycle_name=cycle_name,
+        parent_selection=parent_selection,
+        replay_predictions=replay_predictions,
+        replay_verdicts=replay_verdicts,
+    )
+
+
+def final_score(
+    config,
+    selection,
+    package_path,
+    qwen_baseline,
+    delaware_baseline,
+    output=RUN / "final-report.json",
+):
+    """One final test access after immutable selection. Failure never reopens fitting."""
+    from .evaluation import paired_report
+
+    cfg, selected = selected_record(config, selection, locked=True)
+    frozen = Path(cfg["frozen"])
+    require_unopened(frozen)
+    output = confined(output, RUN)
+    if output.exists():
+        raise FileExistsError(output)
+    package_manifest, _ = verify_package(Path(package_path).resolve(), lambda: False)
+    if (
+        package_manifest["files"].get("adapters/adapters.safetensors", {}).get("sha256")
+        != selected["selected"]["checkpoint_sha256"]
+    ):
+        raise ValueError("Final package does not contain the locked selected checkpoint")
+    # Validate all packages before consuming the one-shot final access.
+    for baseline in (qwen_baseline, delaware_baseline):
+        verify_package(Path(baseline).resolve(), lambda: False)
+    manifest = json.loads((frozen / "manifest.json").read_text())
+    write_new(
+        frozen / "test-access.json",
+        {
+            "selection_lock_sha256": sha256(Path(selection).with_name("selection-lock.json")),
+            "config_sha256": sha256(config),
+            "pid": os.getpid(),
+            "purpose": "one-shot final heldout scoring",
+            "further_fitting_forbidden": True,
+            "failure_also_consumes_holdout": True,
+        },
+    )
+    if sha256(frozen / "test.jsonl") != manifest["split_hashes"]["test"]:
+        raise ValueError("Sealed held-out payload changed")
+    rows = read_rows(frozen / "test.jsonl")
+    registry = validate_registry(read_rows(frozen / "historical-family-registry.jsonl"))
+    validate_rows(rows, registry)
+    ledger = read_rows(frozen / "split-manifest.jsonl")
+    if (
+        len(rows) != manifest["split_counts"]["test"]
+        or any(r["split"] != "test" for r in rows)
+        or {r["id"] for r in rows} != {r["id"] for r in ledger if r["split"] == "test"}
+    ):
+        raise ValueError("Sealed held-out membership mismatch")
+    pred_dir = (
+        PRIVATE
+        / "predictions"
+        / digest({"config_sha256": sha256(config), "selection_sha256": sha256(selection)})[:16]
+        / "final"
+    )
+    candidate = predict_package_rows(package_path, rows, pred_dir / "candidate.test.jsonl")
+    candidate["test_accessed"] = True
+    predictions = read_rows(candidate["prediction_path"])
+    comparisons = {}
+    for name, baseline in [("qwen", qwen_baseline), ("qwen-delaware", delaware_baseline)]:
+        for prompt in ("v2", "package"):
+            label = name if prompt == "v2" else name + "-configured"
+            result = predict_package_rows(
+                baseline, rows, pred_dir / f"{label}.test.jsonl", prompt_version=prompt
+            )
+            result["test_accessed"] = True
+            comparisons[label] = {
+                "baseline": result,
+                "paired_comparison": paired_report(
+                    rows, predictions, read_rows(result["prediction_path"])
+                ),
+            }
+    report = {
+        "config_sha256": sha256(config),
+        "selection_sha256": sha256(selection),
+        "selection_lock_sha256": sha256(Path(selection).with_name("selection-lock.json")),
+        "test_access_marker_sha256": sha256(frozen / "test-access.json"),
+        "candidate": candidate,
+        "comparisons": comparisons,
+        "test_accessed": True,
+        "further_fitting_forbidden": True,
+        "automatic_promotion": False,
+        "target_accuracy_improvement_pp": 10,
+        "target_note": "Reported ambition only; final failure requires a new untouched holdout before further model selection.",
+    }
+    write_new(output, report)
+    return report
 
 
 def main():
@@ -696,6 +1003,7 @@ def main():
     pred.add_argument("--package-path", type=Path, required=True)
     pred.add_argument("--output", type=Path, required=True)
     pred.add_argument("--split", choices=("train", "valid"), default="valid")
+    pred.add_argument("--prompt-version", choices=("v2", "package"), default="v2")
     pack = sub.add_parser("package")
     pack.add_argument("--base", type=Path, default=BASE)
     pack.add_argument("--checkpoint", type=Path, required=True)
@@ -703,14 +1011,33 @@ def main():
     pack.add_argument("--destination", type=Path, default=RUN / "package")
     pack.add_argument("--model-id", default="qwen-evidence-v3")
     pack.add_argument("--config", type=Path, default=RUN / "config.json")
+    pack.add_argument("--selection", type=Path)
     replay_p = sub.add_parser("replay")
     replay_p.add_argument("--frozen", type=Path, default=PRIVATE / "frozen")
     replay_p.add_argument("--predictions", type=Path, required=True)
     replay_p.add_argument("--verdicts", type=Path, required=True)
     replay_p.add_argument("--output", type=Path, required=True)
+    cyc = sub.add_parser("cycle")
+    cyc.add_argument("--config", type=Path, default=RUN / "config.json")
+    cyc.add_argument("--qwen-baseline", type=Path, required=True)
+    cyc.add_argument("--delaware-baseline", type=Path, required=True)
+    cyc.add_argument("--cycle-name", required=True)
+    cyc.add_argument("--parent-selection", type=Path, required=True)
+    cyc.add_argument("--replay-predictions", type=Path, required=True)
+    cyc.add_argument("--replay-verdicts", type=Path, required=True)
+    lock_p = sub.add_parser("lock")
+    lock_p.add_argument("--config", type=Path, default=RUN / "config.json")
+    lock_p.add_argument("--selection", type=Path, required=True)
+    final = sub.add_parser("final-score")
+    final.add_argument("--config", type=Path, default=RUN / "config.json")
+    final.add_argument("--selection", type=Path, required=True)
+    final.add_argument("--package-path", type=Path, required=True)
+    final.add_argument("--qwen-baseline", type=Path, required=True)
+    final.add_argument("--delaware-baseline", type=Path, required=True)
+    final.add_argument("--output", type=Path, default=RUN / "final-report.json")
     args = vars(parser.parse_args())
     command = args.pop("command")
-    result = globals()[command](**args)
+    result = globals()[command.replace("-", "_")](**args)
     print(json.dumps(result, default=str, indent=2))
 
 

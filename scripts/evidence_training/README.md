@@ -44,9 +44,7 @@ verdicts. Keep raw labels, reviews, search evidence, and personal rows private.
 The default frozen destination is `.private/qwen-evidence-v3/frozen`; existing
 destinations are refused. Freezing reads each split once to validate and seal it.
 All later preparation and checkpoint selection read only train and validation
-payloads plus the ID/family split ledger. Test payloads stay sealed. This tool
-does not yet implement final held-out reporting after selection is permanently
-locked.
+payloads plus the ID/family split ledger. Test payloads stay sealed. Final held-out scoring requires the explicit immutable selection lock described below.
 
 Preflight verifies the original local base weight hash
 `d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477`.
@@ -64,8 +62,10 @@ acceptance, dependency versions, and config are then bound by hashes.
   --delaware-baseline PATH_TO_EXISTING_QWEN_DELAWARE_WORKER_PACKAGE
 ```
 
-The two baselines run serially before training under the current policy and v2
-prompt, using their unchanged weights. The new run loads the original base with
+The two baselines run serially before training using their unchanged weights.
+Each has two comparisons: a controlled current-v2-prompt weights comparison, and
+its configured package prompt under the current Worker. Reports identify both
+prompt versions so adapter and prompt changes are distinguishable. The new run loads the original base with
 no resumed adapter or optimizer. Starting settings are rank 8 in the last four
 layers, learning rate `1e-5`, batch size 1, accumulation 8, seed 20261028, and
 assistant-only loss. Each train row contributes its context input and, if web
@@ -74,10 +74,11 @@ expanded examples, rounded up to an accumulation boundary. Rounding may repeat
 up to seven examples through the MLX dataset iterator.
 
 Three saved checkpoints are evaluated serially through the actual production
-`Worker.classify`/`Worker.qwen` path. Worker forces `review=true` on returned
-decisions, so reported review and joint accuracy include that deployed behavior.
-The validation metric comparison is macro F1 on supported categories, then joint
-accuracy, fewer invalid outputs, and earlier step. Baseline metrics are reported;
+`Worker.classify`/`Worker.qwen` path. Worker forces `review=true` on returned decisions. Reports distinguish raw model
+review accuracy from deployed review accuracy. The primary decision metric is
+`type_category_accuracy`, which excludes that forced review flag. Selection uses
+macro F1 on supported categories, then type/category accuracy, fewer invalid
+outputs, and earlier step. Three-field joint accuracy is diagnostic only. Baseline metrics are reported;
 there is no assumed improvement threshold or automatic promotion. Per-example
 predictions remain private; local run reports contain hashes and aggregate
 metrics. Existing run paths are refused, including incomplete runs.
@@ -86,20 +87,23 @@ metrics. Existing run paths are refused, including incomplete runs.
 .venv/bin/python -m scripts.evidence_training predict \
   --package-path PATH_TO_WORKER_PACKAGE --split train \
   --output .private/qwen-evidence-v3/predictions/review-train.jsonl
+.venv/bin/python -m scripts.evidence_training lock \
+  --selection .local/finetune/evidence-v3/training/selection.json
 .venv/bin/python -m scripts.evidence_training package \
   --checkpoint .local/finetune/evidence-v3/training/adapters/SELECTED_STEP_adapters.safetensors \
   --adapter-config .local/finetune/evidence-v3/training/adapters/adapter_config.json
 ```
 
-Packaging requires the checkpoint recorded in the frozen run's validation
-selection, verifies its hash, and builds a new Worker-verified package under
+Packaging requires an immutable lock for the checkpoint recorded in the frozen
+run's validation selection, verifies its hash, and builds a new Worker-verified package under
 `.local/finetune/evidence-v3/package`. It copies base files and the selected
 adapter and never installs them. `predict` supports train and validation only.
 
 ## Prepare reviewed mistake replay
 
-`replay` only emits a separately reviewed TRAIN replay dataset. It does not start
-a later training cycle. Each verdict needs `id`, `variant` (`with_context` or
+`replay` emits a separately reviewed TRAIN replay dataset. `cycle` performs the
+subsequent training pass from a specified locked parent checkpoint, with a fresh
+optimizer and all original base/data/policy bindings preserved. Each verdict needs `id`, `variant` (`with_context` or
 `without_context`), `verdict: "label_confirmed_model_wrong"`, `prediction_sha256`,
 `input_sha256`, `model_sha256`, `answer_sha256`, and
 `reviewer: {"model":"gpt-6.1-sol","reasoning_effort":"high"}`. All hashes must
@@ -115,6 +119,58 @@ alone does not qualify a row.
   --output .private/qwen-evidence-v3/replay/train-reviewed.jsonl
 ```
 
-No replay training command, automatic relabeling, multi-cycle search, source/private
-regression gate, or held-out final scoring is implemented by this initial driver.
-Those steps require separately frozen cycle configuration and evaluation plans.
+To train the next cycle, use TRAIN predictions from the selected packaged parent.
+The model hash in each prediction must match the parent adapter checkpoint hash.
+The correction cycle keeps the full original training set and adds exactly one
+copy of each independently confirmed mistake view. It never trains on validation
+or held-out corrections. Each cycle gets a new output directory and a frozen
+cycle configuration; it saves/evaluates three checkpoints using validation only.
+Automatic cycle scheduling, automatic relabeling, and production promotion are
+not implemented.
+
+```sh
+.venv/bin/python -m scripts.evidence_training cycle \
+  --cycle-name reviewed-1 \
+  --parent-selection .local/finetune/evidence-v3/training/selection.json \
+  --replay-predictions .private/qwen-evidence-v3/predictions/review-train.jsonl \
+  --replay-verdicts .private/qwen-evidence-v3/predictions/review-verdicts.jsonl \
+  --qwen-baseline PATH_TO_EXISTING_QWEN_WORKER_PACKAGE \
+  --delaware-baseline PATH_TO_EXISTING_QWEN_DELAWARE_WORKER_PACKAGE
+```
+
+Lock a later cycle by passing its `cycles/NAME/selection.json` to `lock` and to
+`package --selection`. Locks are created exclusively and cannot be replaced.
+Packaging still needs that cycle's adapter config and selected checkpoint.
+
+## Final held-out comparison
+
+After the final selection is locked and packaged, run:
+
+```sh
+.venv/bin/python -m scripts.evidence_training final-score \
+  --selection .local/finetune/evidence-v3/training/selection.json \
+  --package-path .local/finetune/evidence-v3/package \
+  --qwen-baseline PATH_TO_EXISTING_QWEN_WORKER_PACKAGE \
+  --delaware-baseline PATH_TO_EXISTING_QWEN_DELAWARE_WORKER_PACKAGE
+```
+
+This verifies the selection lock, selected adapter in the package, all baseline
+packages, and frozen data. It creates `frozen/test-access.json` exclusively before
+opening the held-out payload, then evaluates the candidate and both baseline
+prompt variants once. The marker blocks further training, correction cycles,
+preflight, and new selection locks on that corpus. Failed final scoring also
+consumes this access; do not remove the marker to resume optimization. A failed
+final result requires a newly reserved untouched holdout before further model
+selection.
+
+The final aggregate report includes overall, source, and context-view accuracy
+and macro F1 deltas, invalid output counts, observed regressions, and paired 95%
+bootstrap confidence intervals clustered by merchant family so repeated
+transactions and context variants stay together. The actual captured-input
+`with_context` cohort is primary; all-view averages are secondary. Reports also
+include source-by-variant cohorts, matched versus fallback context cohorts,
+per-category support/recall, specific-suggestion coverage/error, and annotated
+Other reasons when supplied in provenance. Each source, including the personal source, gets its own report.
+The report records the 10 percentage point improvement ambition without silently
+changing model selection or claiming success. These intervals quantify sampled
+row uncertainty; independent weak-label quality is a separate limitation.
