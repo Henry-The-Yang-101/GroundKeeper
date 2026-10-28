@@ -184,3 +184,46 @@ def test_privacy_blocked_remains_private_only_for_null_queries(tmp_path):
     write_new(packet / "labels.jsonl", [label])
     with pytest.raises(ValueError, match="Privacy-blocked"):
         validate_packet(packet)
+
+
+@pytest.mark.parametrize("invalid", [None, "hash", "attempt", "urls", "query", "reason", "null", "private"])
+def test_withheld_public_research_preserves_frozen_query_and_honest_counts(tmp_path, invalid):
+    from scripts.assemble_evidence_v3 import primary_research_status
+
+    _, _, packet, label = fixture(tmp_path)
+    path = packet / "inputs.jsonl"
+    row = json.loads(path.read_text())
+    row["source"] = "delaware"
+    search = {
+        "status": "research_withheld", "query": None, "attempted": False, "urls": [],
+        "withheld_query_sha256": digest(row["safe_query"]),
+        "reason": "Fictional reviewer-withheld reference fixture, no external search",
+    }
+    if invalid == "hash":
+        search["withheld_query_sha256"] = "stale-query-hash"
+    elif invalid == "attempt":
+        search["attempted"] = True
+    elif invalid == "urls":
+        search["urls"] = ["https://fixture.example/not-researched"]
+    elif invalid == "query":
+        search["query"] = "A query that was not sent"
+    elif invalid == "reason":
+        search["reason"] = " "
+    elif invalid == "null":
+        row["safe_query"] = None
+    elif invalid == "private":
+        row["source"] = "personal"
+    path.write_text(json.dumps(row))
+    before = path.read_bytes()
+    label["searches"] = [search]
+    write_new(packet / "labels.jsonl", [label])
+    if invalid:
+        with pytest.raises(ValueError, match="Withheld research"):
+            validate_packet(packet)
+    else:
+        assert validate_packet(packet)["validated"] == 1
+        assert primary_research_status(label) == "research_withheld"
+        label["searches"].append({"query": "Actual fictional generic provider lookup",
+                                  "status": "no_reliable_match", "urls": []})
+        assert primary_research_status(label) == "researched"
+    assert path.read_bytes() == before

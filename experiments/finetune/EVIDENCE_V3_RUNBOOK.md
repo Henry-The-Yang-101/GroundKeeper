@@ -55,6 +55,12 @@ rows; resume only after the persisted production backoff. Never use alternate
 engines or fabricated context to fill failures. Context versions and hashes are
 immutable. Manual labeler research is independent from model input context.
 
+A public query withheld during later reviewer inspection uses the explicit
+`research_withheld` provenance exception, bound to the nonnull frozen query hash.
+Count it separately from actual research. Preserve its original production
+query/result; this exception does not retroactively claim a network request was
+blocked. Do not relabel it `no_safe_query` or change immutable packet inputs.
+
 Private collection additionally rejects residual reference-like tokens before
 cache or network access. This is a documented training privacy guard above the
 production sanitizer, not a different search provider or fabricated context.

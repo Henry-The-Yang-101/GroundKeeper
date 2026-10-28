@@ -198,6 +198,23 @@ def validate_packet(path):
         if not isinstance(label.get("searches"), list) or not label["searches"]:
             raise ValueError("Every row needs explicit search or no-search provenance")
         for search in label["searches"]:
+            if search.get("status") == "research_withheld":
+                if (
+                    row.get("source") != "delaware"
+                    or not isinstance(row.get("safe_query"), dict)
+                    or not row["safe_query"].get("merchant")
+                    or search.get("withheld_query_sha256") != digest(row["safe_query"])
+                    or "query" not in search
+                    or search["query"] is not None
+                    or search.get("attempted") is not False
+                    or search.get("urls") != []
+                    or not isinstance(search.get("reason"), str)
+                    or not search["reason"].strip()
+                ):
+                    raise ValueError(
+                        "Withheld research needs the frozen public query hash and no attempted query"
+                    )
+                continue
             if search.get("status") == "no_safe_query":
                 if (
                     "safe_query" not in row

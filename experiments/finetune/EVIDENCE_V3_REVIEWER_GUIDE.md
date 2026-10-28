@@ -57,6 +57,19 @@ normally. Otherwise record `{"query":null,"status":"no_safe_query",
 is null. It records that no search occurred and is counted separately from
 researched rows. If a row also has an actual generic-provider search, that row
 remains counted as researched.
+If a nonnull public query appears to contain a reference or personal identifier,
+report the exact row ID to the coordinator for local inspection. Do not mutate
+the frozen query or pretend it was null. When the query is withheld from the
+reviewer's independent research and no useful generic lookup is supported, use
+`{"query":null,"status":"research_withheld","attempted":false,"urls":[],
+"withheld_query_sha256":"SHA256_OF_FROZEN_SAFE_QUERY","reason":"Specific local inspection finding"}`.
+The hash uses `scripts.prepare_evidence_v3.digest(row["safe_query"])`. This
+exception is public-only and requires a nonnull frozen query. It records no
+reviewer search and is counted separately from researched rows. It says nothing
+about earlier production requests: preserve their true outcomes and inputs.
+Never use this exception merely because a merchant is unfamiliar or research
+is difficult. Private queries continue to use the established privacy guard
+and privacy_blocked protocol.
 Do not print private descriptions or labels in the
 final response. A private bank transaction's details never belong in Git.
 
@@ -136,6 +149,8 @@ The explicit privacy_blocked exception above is allowed only for private rows
 without a permitted safe query and is reported separately from researched rows.
 The `no_safe_query` exception above is available to either source with a frozen
 null safe query; it must never claim an attempted search or contain source URLs.
+The `research_withheld` exception requires the nonnull public frozen-query hash
+and an explicit reason, with no attempted reviewer query or source URLs.
 `other_reason` is null, insufficient_evidence, outside_taxonomy, or
 mixed_or_conflicting (explain variant differences in rationale).
 Merchant family is the actual business/parent, never a category, city or payment

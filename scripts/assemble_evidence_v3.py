@@ -584,6 +584,8 @@ def primary_research_status(label):
     statuses = {search["status"] for search in label["searches"]}
     if statuses & {"results", "no_reliable_match", "unavailable"}:
         return "researched"
+    if "research_withheld" in statuses:
+        return "research_withheld"
     return "no_safe_query" if "no_safe_query" in statuses else "privacy_blocked"
 
 
