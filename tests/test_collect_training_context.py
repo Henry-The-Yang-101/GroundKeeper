@@ -325,3 +325,99 @@ def test_ledger_network_handle_receives_only_sanitized_query(snapshot, monkeypat
         "protocol_version": 1, "request_id": "training-context", "operation": "merchant_search",
         "merchant": "Named Shop", "locality": "Waterloo",
     }]
+
+
+@pytest.mark.parametrize("merchant", [
+    "AMZNMKTPL CA AB12CD34", "DIGITALBILL CA Z9YXW8V7", "Fictional Shop AB12-CD34",
+    "Fictional Shop AB12", "Fictional Shop ab12cd34",
+    "Fictional Shop A123", "Fictional Shop 123A",
+])
+def test_private_query_guard_rejects_identifier_candidates_without_rewriting(merchant):
+    query = {"merchant": merchant, "locality": ""}
+    original = dict(query)
+    assert collector.private_query_rejection(query) == "mixed_alphanumeric_reference"
+    assert query == original
+
+
+@pytest.mark.parametrize("merchant", ["Fictional Cafe", "3M", "7-Eleven", "B2B Cafe", "Studio Cafe"])
+def test_private_query_guard_accepts_nonsensitive_names(merchant):
+    assert collector.private_query_rejection({"merchant": merchant, "locality": ""}) is None
+
+
+def test_private_guard_runs_before_cache_and_network_and_records_actual_candidate(snapshot):
+    directory, _ = snapshot([
+        row("marketplace", "AMZNMKTPL CA AB12CD34"),
+        row("digital", "DIGITALBILL CA Z9YXW8V7"), row("ordinary"),
+    ], private=True)
+    clock = Clock()
+    risky_query = {"merchant": "AMZNMKTPL CA AB12CD34", "locality": ""}
+    collector.write_json(directory / "state.json", {"not_before_ms": 0, "cache": {
+        collector.cache_key(risky_query): {
+            "evidence": {"outcome": "no_match", "context": None},
+            "fetched_at_ms": int(clock.time() * 1000), "source_id": "earlier",
+        }}})
+    search = Search(clock)
+    result = collector.collect(directory, 1, 60, search, clock)
+    assert result["completed"] == 3 and result["lookups_this_run"] == 1
+    assert result["privacy_rejected_rows"] == 2
+    assert len(search.calls) == 1 and search.calls[0][0] == "Fictional Cafe"
+    records = collector.read_rows(directory / "records.jsonl")
+    assert records[0]["query"] == risky_query
+    for record in records[:2]:
+        assert record["effective_query"] is None and record["outcome"] == "unsafe_query"
+        assert record["retrieval_provenance"]["diagnostic"] == "privacy_rejected"
+        assert not record["cached"] and not record["retrieval_provenance"]["network_attempted"]
+        assert record["private_query_guard"]["version"] == "private-training-query-v1"
+    assert collector.collect(directory, 1, 60, search, clock)["lookups_this_run"] == 0
+
+
+def test_private_guard_never_reads_notes_receipts_amount_or_account(snapshot):
+    value = row("ordinary")
+    value["input"].update({"notes": "AB12CD34", "receipt_context": "AB12CD34",
+                           "account": "AB12CD34", "amount": "9999"})
+    directory, _ = snapshot([value], private=True)
+    clock = Clock()
+    search = Search(clock)
+    assert collector.collect(directory, 1, 60, search, clock)["privacy_rejected_rows"] == 0
+    assert search.calls[0][:2] == ("Fictional Cafe", "")
+
+
+def test_public_policy_ignores_private_guard_and_writes_no_guard_sidecars(snapshot):
+    directory, _ = snapshot([row("public", "AMZNMKTPL CA AB12CD34")])
+    manifest_before = (directory / "manifest.json").read_bytes()
+    clock = Clock()
+    search = Search(clock)
+    assert collector.collect(directory, 1, 60, search, clock)["lookups_this_run"] == 1
+    assert search.calls[0][0] == "AMZNMKTPL CA AB12CD34"
+    assert not list(directory.glob("private-*.json*"))
+    assert (directory / "manifest.json").read_bytes() == manifest_before
+
+
+def test_private_guard_preserves_historical_network_audit_and_only_gates_pending(snapshot):
+    directory, _ = snapshot([
+        row("earlier", "AMZNMKTPL CA AB12CD34"), row("pending", "DIGITALBILL CA Z9YXW8V7"),
+    ], private=True)
+    first = collector.read_rows(directory / "queries.jsonl")[0]
+    record = {**first, "outcome": "no_match", "merchant_context": None, "cached": False,
+              "retrieval_provenance": {"network_attempted": True}}
+    path = collector.record_path(directory, first)
+    collector.write_json(path, record, immutable=True)
+    original = path.read_bytes()
+    clock = Clock()
+    search = Search(clock)
+    result = collector.collect(directory, 1, 60, search, clock)
+    assert path.read_bytes() == original
+    assert not search.calls
+    assert result["historical_records_before_privacy_guard"] == 1
+    assert result["historical_network_attempts_now_privacy_rejected"] == 1
+    assert result["completed"] == 2
+
+
+def test_private_guard_source_version_and_effective_candidates_are_frozen(snapshot, monkeypatch):
+    directory, _ = snapshot([row("ordinary")], private=True)
+    clock = Clock()
+    search = Search(clock)
+    monkeypatch.setattr(collector.private_training_query_guard, "VERSION", "changed")
+    with pytest.raises(ValueError, match="Frozen private query guard/candidates changed"):
+        collector.collect(directory, 1, 60, search, clock)
+    assert not search.calls

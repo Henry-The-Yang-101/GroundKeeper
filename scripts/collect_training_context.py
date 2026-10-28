@@ -7,6 +7,9 @@ merchant/locality projection can reach MerchantSearch.handle. Source input is
 never sent to a search engine. Results are immutable per-row files; records.jsonl
 and summary.json are replaceable exports. Use an ignored .private directory for
 private inputs. Collection is deliberately serial and bounded on every run.
+Private collections also reject reference-like residual candidates under a
+separately versioned privacy guard. This additional policy never rewrites a
+query and does not change the production sanitizer or historical records.
 """
 
 import argparse
@@ -25,6 +28,8 @@ from pathlib import Path
 
 from groundkeeper.merchant_context import validate_context
 from groundkeeper.merchant_search import GAP_SECONDS, MerchantSearch
+from scripts import private_training_query_guard
+from scripts.private_training_query_guard import private_query_rejection
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "apps/macos/GroundKeeperCore"
@@ -309,13 +314,76 @@ def prune_cache(state, current):
         del cache[key]
 
 
+def private_candidates(directory, manifest, queries):
+    """Freeze an additional privacy policy without altering production snapshots.
+
+    Historical records remain exactly as written, including any earlier network
+    attempts. The sidecar applies to future dispatch and to downstream label
+    packet candidates; production's sanitizer and matching policy are unchanged.
+    """
+    if not manifest["private"]:
+        return {}, None
+    candidates = {}
+    for row in queries:
+        rejection = private_query_rejection(row["query"])
+        candidates[row["id"]] = {
+            "id": row["id"], "input_sha256": row["input_sha256"],
+            "frozen_query_sha256": input_hash(row["query"]),
+            "effective_query": None if rejection else row["query"],
+            "rejection": rejection,
+        }
+    contents = "".join(canonical(value) + "\n" for value in candidates.values())
+    provenance = {
+        "version": private_training_query_guard.VERSION,
+        "source_sha256": sha256(Path(private_training_query_guard.__file__).read_bytes()),
+        "frozen_queries_sha256": manifest["queries_sha256"],
+        "effective_queries_sha256": sha256(contents.encode()),
+        "policy": "private collection privacy guard; distinct from production sanitizer/matcher",
+    }
+    path = directory / "private-query-guard.json"
+    effective_path = directory / "private-effective-queries.jsonl"
+    if path.exists():
+        if (json.loads(path.read_text()) != provenance or not effective_path.exists()
+                or effective_path.read_text() != contents):
+            raise ValueError("Frozen private query guard/candidates changed; explicit migration required")
+    else:
+        if effective_path.exists() and effective_path.read_text() != contents:
+            raise ValueError("Incomplete private query guard preparation changed")
+        if not effective_path.exists():
+            atomic_text(effective_path, contents, immutable=True)
+        write_json(path, provenance, immutable=True)
+    return candidates, provenance
+
+
+def validate_private_records(done, candidates, guard):
+    if not guard:
+        return
+    for identifier, record in done.items():
+        if "private_query_guard" not in record:
+            continue  # Preserve the truthful audit of collection before this guard.
+        candidate = candidates[identifier]
+        if (record["private_query_guard"] != {**guard, "rejection": candidate["rejection"]}
+                or record.get("effective_query") != candidate["effective_query"]):
+            raise ValueError("Completed private record does not match frozen privacy guard")
+        if candidate["rejection"] and (
+            record["outcome"] != "unsafe_query" or record["cached"]
+            or record["retrieval_provenance"]["network_attempted"]
+            or record["retrieval_provenance"].get("diagnostic") != "privacy_rejected"
+        ):
+            raise ValueError("Privacy-rejected record cannot contain retrieved evidence")
+
+
 def status(directory, stop_reason=None):
     manifest, _, queries = load(directory)
     done = completed(directory, queries)
+    candidates, guard = private_candidates(directory, manifest, queries)
+    validate_private_records(done, candidates, guard)
     state = load_state(directory)
     prune_cache(state, now_ms())
     pending = [row for row in queries if row["id"] not in done]
-    unique = {cache_key(row["query"]) for row in pending if row["query"] is not None}
+    effective = [candidates[row["id"]]["effective_query"] if guard else row["query"]
+                 for row in pending]
+    unique = {cache_key(query) for query in effective if query is not None}
     misses = unique - set(state["cache"])
     result = {
         "rows": manifest["row_count"], "completed": len(done), "pending": len(pending),
@@ -325,6 +393,19 @@ def status(directory, stop_reason=None):
         "minimum_spacing_seconds": max(0, len(misses) - 1) * GAP_SECONDS,
         "not_before_ms": state["not_before_ms"], "stop_reason": stop_reason,
     }
+    if guard:
+        result.update({
+            "private_query_guard_version": guard["version"],
+            "privacy_rejected_rows": sum(bool(value["rejection"]) for value in candidates.values()),
+            "pending_privacy_rejected_rows": sum(bool(candidates[row["id"]]["rejection"])
+                                                 for row in pending),
+            "historical_records_before_privacy_guard": sum("private_query_guard" not in row
+                                                           for row in done.values()),
+            "historical_network_attempts_now_privacy_rejected": sum(
+                bool(candidates[row["id"]]["rejection"])
+                and row["retrieval_provenance"]["network_attempted"]
+                and "private_query_guard" not in row for row in done.values()),
+        })
     # Export in frozen source order, irrespective of crashes or collection batch size.
     atomic_text(directory / "records.jsonl", "".join(canonical(done[row["id"]]) + "\n"
                 for row in queries if row["id"] in done))
@@ -340,6 +421,8 @@ def collect(directory, max_lookups, max_seconds, search=None, clock=None):
     search = search or MerchantSearch()
     manifest, _, queries = load(directory)
     done = completed(directory, queries)
+    candidates, guard = private_candidates(directory, manifest, queries)
+    validate_private_records(done, candidates, guard)
     state = load_state(directory)
     started = clock.monotonic()
     attempts = 0
@@ -353,7 +436,8 @@ def collect(directory, max_lookups, max_seconds, search=None, clock=None):
                 break
             current = int(clock.time() * 1000)
             prune_cache(state, current)
-            query = row["query"]
+            candidate = candidates[row["id"]] if guard else None
+            query = candidate["effective_query"] if candidate else row["query"]
             key = cache_key(query) if query is not None else None
             cached = query is not None and key in state["cache"]
             elapsed = 0.0
@@ -361,6 +445,8 @@ def collect(directory, max_lookups, max_seconds, search=None, clock=None):
             cache_source = None
             if query is None:
                 evidence = {"outcome": "unsafe_query", "context": None}
+                if candidate and candidate["rejection"]:
+                    evidence["diagnostic"] = "privacy_rejected"
             elif cached:
                 item = state["cache"][key]
                 evidence = item["evidence"]
@@ -424,6 +510,9 @@ def collect(directory, max_lookups, max_seconds, search=None, clock=None):
                     "diagnostic": evidence.get("diagnostic"),
                 },
             }
+            if guard:
+                record["effective_query"] = query
+                record["private_query_guard"] = {**guard, "rejection": candidate["rejection"]}
             write_json(record_path(directory, row), record, immutable=True)
             done[row["id"]] = record
             print(canonical({"completed": len(done), "total": len(queries),
