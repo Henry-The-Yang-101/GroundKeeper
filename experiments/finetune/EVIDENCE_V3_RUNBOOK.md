@@ -108,7 +108,11 @@ complete historical registry.
 Audit identical visible inputs for conflicting type/category targets before
 acceptance. Corrections require research adjudication and preserved prior labels;
 do not enforce agreement by majority vote. Later completed labels can introduce
-new conflicts, so repeat this check over the full cohort. Detailed review
+new conflicts, so repeat this check over the full cohort. Triage writes
+`exact-input-conflicts.jsonl` across both context views. Assembly rejects
+conflicting retained targets (including review-only differences) and identical
+retained inputs crossing splits; quarantined rows remain in the full audit.
+Detailed review
 disclosures must distinguish model-prediction exposure from prior-reference
 exposure; a separate reviewer is not automatically a blinded reviewer.
 
