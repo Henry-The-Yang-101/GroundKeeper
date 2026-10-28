@@ -25,6 +25,13 @@ Private snapshot, inputs, labels, combined training data: `.private/qwen-evidenc
 The snapshot uses read-only SQLite online backup. Access/encryption failures must
 be resolved through supported user access, never by dumping secrets.
 
+The actual snapshot contains **1,205 active transactions**. Training uses the
+separate `snapshot/classifier_inputs.exact.jsonl` export and
+`source-exact/personal.jsonl`: descriptions and supplied evidence match app
+inputs. The earlier minimized export is preserved but is not the training source.
+Private query projection uses stored merchant names and configured locality via
+`MerchantTrainingQueryPilot`; public descriptions use the original fallback pilot.
+
 Reviewers follow [EVIDENCE_V3_REVIEWER_GUIDE.md](EVIDENCE_V3_REVIEWER_GUIDE.md).
 Resolved merchant identities must be audited across both sources before the
 final split freeze. Keep related merchant variants/identical evidence within one
@@ -47,6 +54,31 @@ is respected globally. Stop on provider blocks/unavailability and retain pending
 rows; resume only after the persisted production backoff. Never use alternate
 engines or fabricated context to fill failures. Context versions and hashes are
 immutable. Manual labeler research is independent from model input context.
+
+Private collection additionally rejects residual reference-like tokens before
+cache or network access. This is a documented training privacy guard above the
+production sanitizer, not a different search provider or fabricated context.
+Its version, source hash and effective query candidates are frozen alongside
+the private collection. Eight of the first 64 completed private records had
+previously sent queries that this stricter guard now rejects; their immutable
+history is retained. Later packets hide these unsafe queries from labelers.
+Privacy-blocked research is recorded as attempted=false rather than pretending
+that an internet lookup occurred.
+
+Operational progress lives in `.local/finetune/evidence-v3/RUN_STATE.json` and
+`.venv/bin/python -m scripts.prepare_evidence_v3 status`. Revalidate process and
+agent handles; saved state alone does not prove that a job is still running.
+Packet generation is resumable and only creates inputs for collected records.
+
+The training driver is documented in
+[`scripts/evidence_training/README.md`](../../scripts/evidence_training/README.md).
+A real GPU smoke run validated fitting, checkpoint inference, packaging and
+final scoring on three fictional rows. It is not the requested new model.
+The separate 40-row current-Delaware diagnostic uses TRAIN records only. Its
+independent prediction checks and reference adjudications are retained privately;
+one reference was revised. The four-row adjudication encountered prediction
+references embedded in prior verdict rationales and is explicitly not blind.
+No final-test predictions were used in that diagnostic.
 
 ## Training and assessment
 

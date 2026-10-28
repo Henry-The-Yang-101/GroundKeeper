@@ -83,3 +83,19 @@ def test_private_legacy_reference_query_is_hidden_from_new_label_packet(tmp_path
     assert row["safe_query"] is None
     assert row["search_privacy_rejection"] == "mixed_alphanumeric_reference"
     assert json.loads(path.read_text())["query"]["merchant"] == "MARKETPLACE AB12CD34"
+
+
+def test_privacy_blocked_is_explicit_not_fake_search(tmp_path):
+    _, _, packet, label = fixture(tmp_path)
+    path = packet / "inputs.jsonl"
+    row = json.loads(path.read_text())
+    row["safe_query"] = None
+    path.write_text(json.dumps(row))
+    label["searches"] = [{"query": None, "status": "privacy_blocked", "attempted": False,
+                          "urls": [], "reason": "No permitted merchant query"}]
+    write_new(packet / "labels.jsonl", [label])
+    assert validate_packet(packet)["validated"] == 1
+    label["searches"][0]["attempted"] = True
+    (packet / "labels.jsonl").write_text(json.dumps(label))
+    with pytest.raises(ValueError, match="Privacy-blocked"):
+        validate_packet(packet)

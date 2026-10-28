@@ -198,6 +198,12 @@ def validate_packet(path):
         if not isinstance(label.get("searches"), list) or not label["searches"]:
             raise ValueError("Every row needs actual internet research provenance")
         for search in label["searches"]:
+            if search.get("status") == "privacy_blocked":
+                if (row.get("source") != "personal" or row.get("safe_query") is not None
+                        or search.get("query") is not None or search.get("attempted") is not False
+                        or search.get("urls") != [] or not search.get("reason")):
+                    raise ValueError("Privacy-blocked research must be explicit and have no attempted query")
+                continue
             if not search.get("query") or search.get("status") not in ("results", "no_reliable_match", "unavailable"):
                 raise ValueError("Invalid search provenance")
             if not isinstance(search.get("urls"), list):
@@ -242,7 +248,7 @@ def status():
                     summary["invalid_packets"].append({"packet": str(path.parent), "error": type(error).__name__})
         result[name] = summary
     result["new_model_trained"] = (RUN / "training/selection.json").exists()
-    result["final_test_report_exists"] = (RUN / "final/report.json").exists()
+    result["final_test_report_exists"] = (RUN / "final-report.json").exists()
     result["note"] = "Counts validate structure, not source truth or achieved model quality."
     return result
 
