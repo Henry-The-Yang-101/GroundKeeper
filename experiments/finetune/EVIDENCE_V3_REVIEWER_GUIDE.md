@@ -58,8 +58,11 @@ is null. It records that no search occurred and is counted separately from
 researched rows. If a row also has an actual generic-provider search, that row
 remains counted as researched.
 If a nonnull public query appears to contain a reference or personal identifier,
-report the exact row ID to the coordinator for local inspection. Do not mutate
-the frozen query or pretend it was null. When the query is withheld from the
+use a clearly supported generic public-provider lookup when useful, omitting
+the recipient/reference suffix and recording the actual query. This permitted
+alternative does not require separate per-row approval. If no useful permitted
+alternative exists, report the exact row ID to the coordinator for local
+inspection. Do not mutate the frozen query or pretend it was null. When it is withheld from the
 reviewer's independent research and no useful generic lookup is supported, use
 `{"query":null,"status":"research_withheld","attempted":false,"urls":[],
 "withheld_query_sha256":"SHA256_OF_FROZEN_SAFE_QUERY","reason":"Specific local inspection finding"}`.
