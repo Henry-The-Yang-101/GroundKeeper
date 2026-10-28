@@ -183,9 +183,9 @@ def freeze(labels, acceptance, family_registry, destination=PRIVATE / "frozen"):
     return destination
 
 
-def variants(row):
+def variants(row, *, include_without_context=True):
     yield "with_context", row["input"], row["answer_with_context"]
-    if "merchant_context" in row["input"]:
+    if include_without_context and "merchant_context" in row["input"]:
         yield (
             "without_context",
             {k: v for k, v in row["input"].items() if k != "merchant_context"},
@@ -278,7 +278,8 @@ def token_check(tokenizer, inputs, answer, answer_room):
     return len(prompt), len(full)
 
 
-def preflight(frozen=PRIVATE / "frozen", config=RUN / "config.json", base=BASE):
+def preflight(frozen=PRIVATE / "frozen", config=RUN / "config.json", base=BASE,
+              deployment_inputs_only=False):
     config = confined(config, RUN)
     if config.exists():
         raise FileExistsError(config)
@@ -295,7 +296,7 @@ def preflight(frozen=PRIVATE / "frozen", config=RUN / "config.json", base=BASE):
     for split, rows in data.items():
         count = 0
         for row in rows:
-            for _, inputs, answer in variants(row):
+            for _, inputs, answer in variants(row, include_without_context=not deployment_inputs_only):
                 lengths.append(token_check(tokenizer, inputs, answer, answer_room))
                 count += 1
         counts[split] = count
@@ -327,6 +328,8 @@ def preflight(frozen=PRIVATE / "frozen", config=RUN / "config.json", base=BASE):
             ],
         },
         "mask_prompt": True,
+        "deployment_inputs_only": deployment_inputs_only,
+        "recurrent_checkpoint_tokens": 32,
         "max_seq_length": 3072 + answer_room,
         "answer_room": answer_room,
         "max_observed_prompt_tokens": max(p for p, _ in lengths),
@@ -671,7 +674,10 @@ def train(
     parent_selection=None,
     replay_predictions=None,
     replay_verdicts=None,
+    baseline_timing="before",
 ):
+    if baseline_timing not in ("before", "after"):
+        raise ValueError("Baseline timing must be before or after fitting")
     cfg, data = load_config(config)
     require_unopened(cfg["frozen"])
     replay_rows, parent = [], None
@@ -733,18 +739,24 @@ def train(
             "iters": cfg["iters"],
             "checkpoint_steps": cfg["checkpoint_steps"],
             "test_accessed": False,
+            "baseline_timing": baseline_timing,
         },
     )
     baselines = {}
-    for name, path in [("qwen", qwen_baseline), ("qwen-delaware", delaware_baseline)]:
-        baselines[name] = predict(config, path, predictions / f"baseline-{name}.valid.jsonl")
-        baselines[name + "-configured"] = predict(
-            config,
-            path,
-            predictions / f"baseline-{name}-configured.valid.jsonl",
-            prompt_version="package",
-        )
-    write_new(out / "baselines.json", baselines)
+
+    def evaluate_baselines():
+        print(json.dumps({"phase": "baseline_evaluation", "timing": baseline_timing}), flush=True)
+        for name, path in [("qwen", qwen_baseline), ("qwen-delaware", delaware_baseline)]:
+            baselines[name] = predict(config, path, predictions / f"baseline-{name}.valid.jsonl")
+            baselines[name + "-configured"] = predict(
+                config, path, predictions / f"baseline-{name}-configured.valid.jsonl",
+                prompt_version="package",
+            )
+        write_new(out / "baselines.json", baselines)
+
+    if baseline_timing == "before":
+        evaluate_baselines()
+    print(json.dumps({"phase": "fitting", "deployment_inputs_only": cfg.get("deployment_inputs_only", False)}), flush=True)
     import mlx.core as mx
     import numpy as np
     from mlx.utils import tree_flatten
@@ -762,7 +774,7 @@ def train(
     for split in ("train", "valid"):
         messages = []
         for row in data[split]:
-            for _, inputs, answer in variants(row):
+            for _, inputs, answer in variants(row, include_without_context=not cfg.get("deployment_inputs_only", False)):
                 token_check(tokenizer, inputs, answer, cfg["answer_room"])
                 messages.append({"messages": messages_v2(inputs, answer)})
         if split == "train":
@@ -795,6 +807,8 @@ def train(
                     )
 
         def on_train_loss_report(self, report):
+            with (out / "loss-reports.jsonl").open("a") as stream:
+                stream.write(json.dumps(report) + "\n")
             step = report["iteration"]
             if step not in cfg["checkpoint_steps"]:
                 return
@@ -850,9 +864,18 @@ def train(
         "report_to": None,
         "trust_remote_code": False,
     }
-    train_model(SimpleNamespace(**native), model, datasets[0], datasets[1], Callback())
+    from .recurrent_checkpoint import recurrent_checkpoints
+
+    with recurrent_checkpoints(cfg.get("recurrent_checkpoint_tokens", 32)):
+        train_model(SimpleNamespace(**native), model, datasets[0], datasets[1], Callback())
     if sorted(r["step"] for r in reports) != cfg["checkpoint_steps"]:
         raise ValueError("Missing saved checkpoint evaluations")
+    if baseline_timing == "after":
+        del model, tokenizer, datasets
+        import gc
+        gc.collect()
+        mx.clear_cache()
+        evaluate_baselines()
     eligible = reports + ([{**parent["selected"], "parent_incumbent": True}] if parent else [])
     best = max(
         eligible,
@@ -888,6 +911,7 @@ def cycle(
     parent_selection,
     replay_predictions,
     replay_verdicts,
+    baseline_timing="before",
 ):
     return train(
         config,
@@ -897,6 +921,7 @@ def cycle(
         parent_selection=parent_selection,
         replay_predictions=replay_predictions,
         replay_verdicts=replay_verdicts,
+        baseline_timing=baseline_timing,
     )
 
 
@@ -1002,10 +1027,12 @@ def main():
     pre.add_argument("--frozen", type=Path, default=PRIVATE / "frozen")
     pre.add_argument("--config", type=Path, default=RUN / "config.json")
     pre.add_argument("--base", type=Path, default=BASE)
+    pre.add_argument("--deployment-inputs-only", action="store_true")
     tr = sub.add_parser("train")
     tr.add_argument("--config", type=Path, default=RUN / "config.json")
     tr.add_argument("--qwen-baseline", type=Path, required=True)
     tr.add_argument("--delaware-baseline", type=Path, required=True)
+    tr.add_argument("--baseline-timing", choices=("before", "after"), default="before")
     pred = sub.add_parser("predict")
     pred.add_argument("--config", type=Path, default=RUN / "config.json")
     pred.add_argument("--package-path", type=Path, required=True)
@@ -1033,6 +1060,7 @@ def main():
     cyc.add_argument("--parent-selection", type=Path, required=True)
     cyc.add_argument("--replay-predictions", type=Path, required=True)
     cyc.add_argument("--replay-verdicts", type=Path, required=True)
+    cyc.add_argument("--baseline-timing", choices=("before", "after"), default="before")
     lock_p = sub.add_parser("lock")
     lock_p.add_argument("--config", type=Path, default=RUN / "config.json")
     lock_p.add_argument("--selection", type=Path, required=True)

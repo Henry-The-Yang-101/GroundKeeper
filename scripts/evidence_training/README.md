@@ -54,6 +54,11 @@ shrinking. The maximum sequence is 3072 input tokens plus the grammar's maximum
 answer token count and two stop-token slots. The checked base, code, data,
 acceptance, dependency versions, and config are then bound by hashes.
 
+`preflight --deployment-inputs-only` fits each actual production input once,
+including its captured `merchant_context`, and omits the additional context-free
+training view. Genuine no-match or withheld-query inputs remain unchanged.
+Evaluation still reports both views. This mode is recorded in the frozen config.
+
 ## Train and compare
 
 ```sh
@@ -63,6 +68,8 @@ acceptance, dependency versions, and config are then bound by hashes.
 ```
 
 The two baselines run serially before training using their unchanged weights.
+`train --baseline-timing after` (also supported by `cycle`) instead fits first,
+releases training objects, and scores both baselines before selecting a checkpoint.
 Each has two comparisons: a controlled current-v2-prompt weights comparison, and
 its configured package prompt under the current Worker. Reports identify both
 prompt versions so adapter and prompt changes are distinguishable. The new run loads the original base with
@@ -72,6 +79,14 @@ assistant-only loss. Each train row contributes its context input and, if web
 context exists, a second context-free view. The run uses one pass through those
 expanded examples, rounded up to an accumulation boundary. Rounding may repeat
 up to seven examples through the MLX dataset iterator.
+
+Training recomputes the gated-delta recurrence in 32-token chunks to bound
+backpropagation memory. State and its gradients carry across every boundary;
+there is no sequence truncation or detached history. The wrapper is scoped to
+training and restores the installed MLX function afterward. Numerical tests compare
+outputs and gradients with the original recurrence. Reports are appended to
+`training/loss-reports.jsonl` every eight microbatches. Keep the external memory
+watchdog enabled, and preserve failed attempts before a deliberate fresh retry.
 
 Three saved checkpoints are evaluated serially through the actual production
 `Worker.classify`/`Worker.qwen` path. Worker forces `review=true` on returned decisions. Reports distinguish raw model

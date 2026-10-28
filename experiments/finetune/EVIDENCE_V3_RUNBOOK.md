@@ -130,6 +130,31 @@ exposure; a separate reviewer is not automatically a blinded reviewer.
 
 ## Training and assessment
 
+On October 28, the user explicitly requested starting with the reviewed data
+available so far. This permits a provisional partial-cohort run while collection
+and review continue. Its acceptance must state that full-cohort acceptance and
+family reconciliation are incomplete. Preserve the full reviewed audit, original
+split assignments, complete historical registry, and all excluded aliases.
+Temporarily omit components requiring unresolved family adjudication or touching
+known cross-split risks. Recheck new family evidence before expanding or promoting
+the model; restart from the original base if later evidence reveals contamination.
+This does not relax the 6,205-row gate for final full-cohort assembly.
+
+The initial snapshot has 2,180 reviewed rows: 1,593 retained (1,290 train,
+147 validation, 156 sealed test) and 587 temporarily omitted pending family work.
+Use `--deployment-inputs-only` so each fitting example contains exactly its
+production input and actual captured context. Of the 1,290 training rows, 743 have
+DDG context, 507 have no match, and 40 have withheld unsafe queries. Never invent
+search snippets for fallback inputs. Use `--baseline-timing after` to start fitting
+immediately while preserving both baseline comparisons before selection.
+
+The first real launch was stopped by the system-headroom watchdog after initial
+validation, before a train-loss report. Its artifacts remain preserved. The retry
+adds 32-token recurrent gradient recomputation, verified against original forward
+outputs and gradients, and uses a new hash-bound configuration and output path.
+Live state and eventual results belong in the ignored run directory; this entry
+does not establish training completion or improved prediction accuracy.
+
 Freeze current prompt/schema/tokenizer/decoder and use independent context and
 no-context labels. Source base hash is expected to be
 `d58b87def677c7b3235e21cdca85289a162a5ba8949687b9573592e3c74cd477`;

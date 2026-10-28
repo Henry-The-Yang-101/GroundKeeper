@@ -350,7 +350,11 @@ def test_final_holdout_failure_consumes_access_before_payload_read(frozen, tmp_p
         p.require_unopened(frozen)
 
 
-def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_path, monkeypatch):
+@pytest.mark.parametrize("baseline_timing", ["before", "after"])
+def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_path, monkeypatch, baseline_timing):
+    from contextlib import nullcontext
+    from scripts.evidence_training import recurrent_checkpoint
+    monkeypatch.setattr(recurrent_checkpoint, "recurrent_checkpoints", lambda *a: nullcontext())
     import sys
     from types import ModuleType, SimpleNamespace
 
@@ -417,7 +421,11 @@ def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_pat
             },
         ),
     )
-    monkeypatch.setattr(p, "predict", lambda *a, **k: {"fixture_baseline": True})
+    events = []
+    def baseline(*args, **kwargs):
+        events.append("baseline")
+        return {"fixture_baseline": True}
+    monkeypatch.setattr(p, "predict", baseline)
 
     class Model:
         def trainable_parameters(self):
@@ -452,6 +460,7 @@ def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_pat
     }
     mx = modules["mlx.core"]
     mx.set_memory_limit = mx.set_cache_limit = lambda _: None
+    mx.clear_cache = lambda: None
     mx.random = SimpleNamespace(seed=lambda _: None)
     mx.save_safetensors = lambda path, weights: (
         __import__("pathlib").Path(path).write_bytes(b"new checkpoint")
@@ -467,6 +476,7 @@ def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_pat
     seen = {}
 
     def fake_train(args, model, training, validation, callback):
+        events.append("fit")
         seen.update(vars(args))
         seen["train_n"], seen["valid_n"] = len(training._data), len(validation._data)
         __import__("pathlib").Path(args.adapter_path).mkdir()
@@ -491,7 +501,8 @@ def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_pat
 
     monkeypatch.setattr(p, "predict_rows", fake_predictions)
     result = p.cycle(
-        config, "old-qwen", "old-delaware", "reviewed-1", selection, pred_path, verdict_path
+        config, "old-qwen", "old-delaware", "reviewed-1", selection, pred_path, verdict_path,
+        baseline_timing=baseline_timing,
     )
     assert result["step"] == 8
     assert seen["resume_adapter_file"] == str(parent)
@@ -501,6 +512,23 @@ def test_reviewed_cycle_resumes_only_parent_weights_with_fresh_optimizer(tmp_pat
     assert cycle_cfg["optimizer_resumed"] is False
     assert cycle_cfg["parent_checkpoint_sha256"] == p.sha256(parent)
     assert cycle_cfg["replay_n"] == 1
+    assert cycle_cfg["baseline_timing"] == baseline_timing
+    assert events == (["fit"] + ["baseline"] * 4 if baseline_timing == "after" else ["baseline"] * 4 + ["fit"])
+
+
+def test_deployment_input_mode_keeps_real_context_and_honest_fallback():
+    item = row()
+    item["input"]["merchant_context"] = {
+        "version": "merchant-search-v1", "source": "duckduckgo",
+        "results": [{"title": "Fictional business", "body": "Actual frozen fixture snippet", "url": "https://fixture.example/"}],
+    }
+    original = copy.deepcopy(item)
+    deployed = list(p.variants(item, include_without_context=False))
+    assert deployed == [("with_context", original["input"], original["answer_with_context"])]
+    assert item == original
+    assert len(list(p.variants(item))) == 2
+    fallback = row("no-result")
+    assert list(p.variants(fallback, include_without_context=False))[0][1] == fallback["input"]
 
 
 def test_forced_review_difference_is_not_a_category_replay_mistake():
