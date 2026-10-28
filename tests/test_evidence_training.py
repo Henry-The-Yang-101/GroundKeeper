@@ -39,7 +39,10 @@ def frozen(tmp_path, monkeypatch):
         },
     )
     registry = tmp_path / "historical.jsonl"
-    p.write_new(registry, [{"merchant_family": "historical-test", "split": "test"}], rows=True)
+    p.write_new(registry, [
+        {"merchant_family": "historical-test", "split": "test"},
+        {"merchant_family": "protected-alias", "split": "quarantine", "historical_splits": ["train", "test"]},
+    ], rows=True)
     result = p.freeze(labels, acceptance, registry, tmp_path / "frozen")
     return result
 
@@ -98,6 +101,23 @@ def test_registry_rejects_historical_and_current_split_leakage():
         p.validate_rows([row(), row("b", "valid")], {})
     with pytest.raises(ValueError, match="required"):
         p.validate_registry([])
+
+
+def test_quarantined_registry_cannot_reenter_canonical_data():
+    registry = p.validate_registry([{"merchant_family": "market", "split": "quarantine",
+                                     "historical_splits": ["train", "test"]}])
+    for split in p.SPLITS:
+        with pytest.raises(ValueError, match="crosses"):
+            p.validate_rows([row(split=split)], registry)
+    with pytest.raises(ValueError, match="preassigned"):
+        p.validate_rows([row(split="quarantine")], registry)
+
+
+def test_new_quarantined_alias_requires_explicit_protection_reason():
+    base = {"merchant_family": "new-alias", "split": "quarantine", "historical_splits": []}
+    with pytest.raises(ValueError, match="historical splits"):
+        p.validate_registry([base])
+    assert p.validate_registry([{**base, "protected_splits": ["quarantine"], "reason": "Unresolved reviewed alias"}]) == {"new-alias": "quarantine"}
 
 
 def test_preassigned_splits_and_unique_ids_required():

@@ -66,8 +66,15 @@ def validate_registry(rows):
     registry = {}
     for row in rows:
         family, split = row["merchant_family"], row["split"]
-        if not isinstance(family, str) or not family.strip() or split not in SPLITS:
+        if not isinstance(family, str) or not family.strip() or split not in (*SPLITS, "quarantine"):
             raise ValueError("Invalid historical family registry")
+        if split == "quarantine":
+            history = row.get("historical_splits")
+            if (not isinstance(history, list)
+                    or any(value not in SPLITS for value in history)
+                    or (not history and (row.get("protected_splits") != ["quarantine"]
+                                         or not row.get("reason")))):
+                raise ValueError("Quarantined registry families require actual historical splits")
         if family in registry and registry[family] != split:
             raise ValueError("Historical merchant family crosses splits")
         registry[family] = split
@@ -205,10 +212,11 @@ def verify_frozen(frozen):
         or accept["status"] != "accepted"
     ):
         raise ValueError("Acceptance binding changed")
-    registry = validate_registry(read_rows(frozen / "historical-family-registry.jsonl"))
+    registry_rows = read_rows(frozen / "historical-family-registry.jsonl")
+    registry = validate_registry(registry_rows)
     split_rows = read_rows(frozen / "split-manifest.jsonl")
     validate_registry(
-        [*({"merchant_family": k, "split": v} for k, v in registry.items()), *split_rows]
+        [*registry_rows, *split_rows]
     )
     data = {}
     # Test payload is never read during preparation, selection, or packaging.
