@@ -48,6 +48,15 @@ do not reconstruct a rejected private identifier. If there is no useful safe
 generic lookup, explicitly record `{"query":null,"status":"privacy_blocked",
 "attempted":false,"urls":[],"reason":"safe_query unavailable; identifiers were not searched"}`.
 Do not fabricate a query or count privacy-blocked research as an actual search.
+Public rows can also have `safe_query:null`. Never reconstruct a rejected or
+absent query from the raw descriptor. If the visible input independently supports
+a safe generic public-provider documentation lookup, record that actual search
+normally. Otherwise record `{"query":null,"status":"no_safe_query",
+"attempted":false,"urls":[],"reason":"No frozen safe query or independently supported generic lookup"}`.
+`no_safe_query` is allowed for either source only when the frozen `safe_query`
+is null. It records that no search occurred and is counted separately from
+researched rows. If a row also has an actual generic-provider search, that row
+remains counted as researched.
 Do not print private descriptions or labels in the
 final response. A private bank transaction's details never belong in Git.
 
@@ -125,6 +134,8 @@ useful, irrelevant, ambiguous, conflicting, absent. Search status is results,
 no_reliable_match or unavailable; successful results require real source URLs.
 The explicit privacy_blocked exception above is allowed only for private rows
 without a permitted safe query and is reported separately from researched rows.
+The `no_safe_query` exception above is available to either source with a frozen
+null safe query; it must never claim an attempted search or contain source URLs.
 `other_reason` is null, insufficient_evidence, outside_taxonomy, or
 mixed_or_conflicting (explain variant differences in rationale).
 Merchant family is the actual business/parent, never a category, city or payment

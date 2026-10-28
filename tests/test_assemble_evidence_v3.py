@@ -734,3 +734,67 @@ def test_no_context_view_retains_other_visible_evidence():
     ]
     assert a.exact_visible_input_audit(rows)["summary"]["conflict_groups"] == 0
     assert a.exact_visible_input_audit(rows)["summary"]["duplicate_input_groups"] == 0
+
+
+@pytest.mark.parametrize("generic_search", [False, True])
+def test_public_no_safe_query_assembly_roundtrip_tracks_truthful_research_counts(
+    corpus, monkeypatch, generic_search
+):
+    context = corpus.context("delaware")
+    queries = a.read(context / "queries.jsonl")
+    for query in queries:
+        if query["id"] == "delaware-0":
+            query["query"] = None
+    overwrite(context / "queries.jsonl", queries)
+    manifest = a.one(context / "manifest.json")
+    manifest["queries_sha256"] = a.sha(context / "queries.jsonl")
+    overwrite(context / "manifest.json", [manifest])
+    record_path = collector.record_path(context, {"id": "delaware-0"})
+    record = a.one(record_path)
+    record.update(query=None, outcome="unsafe_query")
+    record["retrieval_provenance"]["network_attempted"] = False
+    overwrite(record_path, [record])
+    packet = corpus.packets("delaware") / "delaware-0"
+    inputs = a.read(packet / "inputs.jsonl")[0]
+    inputs.update(
+        safe_query=None, context_outcome="unsafe_query", context_record_sha256=a.sha(record_path)
+    )
+    overwrite(packet / "inputs.jsonl", [inputs])
+    assignment = a.one(packet / "assignment.json")
+    assignment["inputs_sha256"] = a.sha(packet / "inputs.jsonl")
+    overwrite(packet / "assignment.json", [assignment])
+    searches = [
+        {
+            "query": None,
+            "status": "no_safe_query",
+            "attempted": False,
+            "urls": [],
+            "reason": "Fictional public fixture has no frozen safe query",
+        }
+    ]
+    if generic_search:
+        searches.append(
+            {
+                "query": "Fictional generic public-provider documentation fixture",
+                "status": "results",
+                "urls": ["https://fixture.example/public-documentation"],
+            }
+        )
+    change_label(corpus, "delaware", "delaware-0", searches=searches)
+    summary, output = assemble_without_family_verdicts(corpus, "public-null-query")
+    assert summary["retained_count"] == 5
+    counts = a.one(output / "acceptance.json")["primary_research_status_counts"]
+    assert counts == (
+        {"researched": 5} if generic_search else {"researched": 4, "no_safe_query": 1}
+    )
+    canonical = next(r for r in a.read(output / "canonical.jsonl") if r["id"] == "delaware-0")
+    assert canonical["provenance"]["searches"] == searches
+    assert canonical["input"] == inputs["input"]
+    monkeypatch.setattr(pipeline, "PRIVATE", corpus.private)
+    frozen = pipeline.freeze(
+        output / "canonical.jsonl",
+        output / "acceptance.json",
+        output / "historical-family-registry.jsonl",
+        corpus.private / "frozen-public-null-query",
+    )
+    assert pipeline.verify_frozen(frozen)[0]["labels_count"] == 5

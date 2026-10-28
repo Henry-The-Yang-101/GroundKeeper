@@ -578,6 +578,13 @@ def adjudicate(component, verdict, binding):
     return verdict["decision"]
 
 
+def primary_research_status(label):
+    statuses = {search["status"] for search in label["searches"]}
+    if statuses & {"results", "no_reliable_match", "unavailable"}:
+        return "researched"
+    return "no_safe_query" if "no_safe_query" in statuses else "privacy_blocked"
+
+
 def assemble(triage_path, adjudications, destination, layout=Layout()):
     destination = layout.destination(destination)
     if any(
@@ -723,12 +730,7 @@ def assemble(triage_path, adjudications, destination, layout=Layout()):
         "human_confirmations": 0,
         "retained_exact_input_audit": retained_input_audit["summary"],
         "primary_research_status_counts": dict(
-            Counter(
-                "researched"
-                if any(s["status"] != "privacy_blocked" for s in r["label"]["searches"])
-                else "privacy_blocked"
-                for r in result["records"]
-            )
+            Counter(primary_research_status(r["label"]) for r in result["records"])
         ),
     }
     write_new(destination / "acceptance.json", [acceptance])

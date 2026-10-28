@@ -108,3 +108,79 @@ def test_privacy_blocked_is_explicit_not_fake_search(tmp_path):
     (packet / "labels.jsonl").write_text(json.dumps(label))
     with pytest.raises(ValueError, match="Privacy-blocked"):
         validate_packet(packet)
+
+
+def no_safe_query_provenance():
+    return {
+        "query": None,
+        "status": "no_safe_query",
+        "attempted": False,
+        "urls": [],
+        "reason": "Fictional fixture has no frozen safe query",
+    }
+
+
+@pytest.mark.parametrize("source", ["delaware", "personal"])
+def test_no_safe_query_explicitly_records_no_search_for_either_source(tmp_path, source):
+    _, _, packet, label = fixture(tmp_path)
+    path = packet / "inputs.jsonl"
+    row = json.loads(path.read_text())
+    row.update(source=source, safe_query=None, context_outcome="unsafe_query")
+    path.write_text(json.dumps(row))
+    label["searches"] = [no_safe_query_provenance()]
+    write_new(packet / "labels.jsonl", [label])
+    assert validate_packet(packet)["validated"] == 1
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        "safe_query",
+        "legacy_rejected_query",
+        "query",
+        "attempted",
+        "urls",
+        "reason",
+        "missing_query",
+        "missing_frozen_query",
+    ],
+)
+def test_no_safe_query_refuses_false_flags_attempts_and_urls(tmp_path, invalid):
+    _, _, packet, label = fixture(tmp_path)
+    path = packet / "inputs.jsonl"
+    row = json.loads(path.read_text())
+    row["safe_query"] = None
+    search = no_safe_query_provenance()
+    if invalid == "safe_query":
+        row["safe_query"] = {"merchant": "Fictional Cafe", "locality": ""}
+    elif invalid == "legacy_rejected_query":
+        row["safe_query"] = {"merchant": "Fictional Reference AB12CD34", "locality": ""}
+    elif invalid == "query":
+        search["query"] = "Invented query"
+    elif invalid == "attempted":
+        search["attempted"] = True
+    elif invalid == "urls":
+        search["urls"] = ["https://fixture.example/not-a-search"]
+    elif invalid == "reason":
+        search["reason"] = "   "
+    elif invalid == "missing_query":
+        del search["query"]
+    else:
+        del row["safe_query"]
+    path.write_text(json.dumps(row))
+    label["searches"] = [search]
+    write_new(packet / "labels.jsonl", [label])
+    with pytest.raises(ValueError, match="No-safe-query provenance"):
+        validate_packet(packet)
+
+
+def test_privacy_blocked_remains_private_only_for_null_queries(tmp_path):
+    _, _, packet, label = fixture(tmp_path)
+    path = packet / "inputs.jsonl"
+    row = json.loads(path.read_text())
+    row.update(source="delaware", safe_query=None)
+    path.write_text(json.dumps(row))
+    label["searches"] = [{**no_safe_query_provenance(), "status": "privacy_blocked"}]
+    write_new(packet / "labels.jsonl", [label])
+    with pytest.raises(ValueError, match="Privacy-blocked"):
+        validate_packet(packet)

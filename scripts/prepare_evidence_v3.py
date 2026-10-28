@@ -196,8 +196,23 @@ def validate_packet(path):
         if label.get("label_policy_version") != POLICY:
             raise ValueError("Wrong label policy")
         if not isinstance(label.get("searches"), list) or not label["searches"]:
-            raise ValueError("Every row needs actual internet research provenance")
+            raise ValueError("Every row needs explicit search or no-search provenance")
         for search in label["searches"]:
+            if search.get("status") == "no_safe_query":
+                if (
+                    "safe_query" not in row
+                    or row["safe_query"] is not None
+                    or "query" not in search
+                    or search["query"] is not None
+                    or search.get("attempted") is not False
+                    or search.get("urls") != []
+                    or not isinstance(search.get("reason"), str)
+                    or not search["reason"].strip()
+                ):
+                    raise ValueError(
+                        "No-safe-query provenance requires frozen safe_query:null and no attempted query"
+                    )
+                continue
             if search.get("status") == "privacy_blocked":
                 blocked = row.get("safe_query") is None
                 if not blocked and row.get("source") == "personal":
