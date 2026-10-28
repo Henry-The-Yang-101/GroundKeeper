@@ -1,0 +1,70 @@
+import json
+
+import pytest
+
+from scripts.prepare_evidence_v3 import digest, packets, validate_packet, write_new
+
+
+def fixture(tmp_path, *, context=None):
+    original = {"description": "FICTIONAL CAFE", "direction": "debit", "currency": "CAD"}
+    source = tmp_path / "source.jsonl"
+    write_new(source, [{"id": "fictional-1", "split": "train", "source": "personal",
+                        "merchant_family": "fictional-cafe", "input": original}])
+    directory = tmp_path / "context"
+    write_new(directory / "records/row.json", [{"id": "fictional-1", "input_sha256": digest(original),
+                "merchant_context": context, "outcome": "matched" if context else "no_match",
+                "query": {"merchant": "FICTIONAL CAFE", "locality": ""}}])
+    result = packets(source, directory, tmp_path / "packets")
+    packet = tmp_path / "packets" / result["created"][0]["packet"].split("/")[-1]
+    row = json.loads((packet / "inputs.jsonl").read_text())
+    answer = {"type": "expense", "category": "dining", "review": False}
+    label = {"id": row["id"], "input_sha256": row["input_sha256"],
+             "answer_with_context": answer, "answer_without_context": answer,
+             "reviewer": {"model": "gpt-6.1-sol", "reasoning_effort": "high"},
+             "label_policy_version": "groundkeeper-19-v2", "merchant_family_proposed": "fictional-cafe",
+             "context_quality": "useful" if context else "absent", "other_reason": None,
+             "rationale": "Fictional cafe descriptor supports dining.",
+             "searches": [{"query": "FICTIONAL CAFE", "status": "no_reliable_match", "urls": []}]}
+    return source, directory, packet, label
+
+
+def test_packets_resume_and_bind_enriched_context(tmp_path):
+    context = {"version": "merchant-search-v1", "source": "duckduckgo", "results": [
+        {"title": "Fictional Cafe", "body": "Fictional restaurant fixture", "url": "https://example.com/cafe"}]}
+    source, directory, packet, label = fixture(tmp_path, context=context)
+    row = json.loads((packet / "inputs.jsonl").read_text())
+    assert row["input_sha256"] != row["without_context_sha256"]
+    assert row["input"]["merchant_context"] == context
+    assert packets(source, directory, tmp_path / "packets")["new_rows"] == 0
+    write_new(packet / "labels.jsonl", [label])
+    assert validate_packet(packet)["validated"] == 1
+
+
+@pytest.mark.parametrize("mutation", ["no_search", "wrong_hash", "wrong_model", "old_category", "different_no_context", "invented_success"])
+def test_invalid_research_targets_rejected(tmp_path, mutation):
+    _, _, packet, label = fixture(tmp_path)
+    if mutation == "no_search":
+        label["searches"] = []
+    elif mutation == "wrong_hash":
+        label["input_sha256"] = "bad"
+    elif mutation == "wrong_model":
+        label["reviewer"]["model"] = "other"
+    elif mutation == "old_category":
+        label["answer_with_context"]["category"] = "uncategorized"
+    elif mutation == "different_no_context":
+        label["answer_without_context"] = {"type": "unknown", "category": "other", "review": True}
+    else:
+        label["searches"][0]["status"] = "results"
+    write_new(packet / "labels.jsonl", [label])
+    with pytest.raises(ValueError):
+        validate_packet(packet)
+
+
+def test_wrong_context_source_hash_rejected(tmp_path):
+    source, directory, _, _ = fixture(tmp_path)
+    path = directory / "records/row.json"
+    row = json.loads(path.read_text())
+    row["input_sha256"] = "wrong"
+    path.write_text(json.dumps(row))
+    with pytest.raises(ValueError, match="Context does not match"):
+        packets(source, directory, tmp_path / "other_packets")
