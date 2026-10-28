@@ -60,16 +60,22 @@ available. Produce `answer_with_context` for EXACTLY that visible input and
 `answer_without_context` for that input with only `merchant_context` removed.
 If no merchant_context exists, answers MUST be identical.
 
-Research is for verifying identity/policy and evaluating the supplied evidence.
-Do not silently put newly discovered facts into the model's input or require an
-answer that depends solely on evidence the model cannot see. A recognizable
-specialized merchant may support its conventional default; an opaque descriptor
-whose identity requires missing evidence must remain unresolved in the
-without-context target. If independent research establishes the actual business
-but production DDG returns the wrong namesake, flag the bad match and preserve
-the input-supported target. Report the discovery in a short rationale, not as
-fabricated production context. The coordinator can later collect a new genuine
-context version; existing records remain immutable.
+Research verifies merchant identity/policy and the supplied evidence. It may
+establish a conventional business default for a DISTINCTIVE merchant identity
+grounded in the visible name, locality or business phone, even without DDG.
+For example, an exact identifiable law-firm name can support expense/Other;
+it does not need the literal word lawyer in its descriptor. Training can learn
+merchant-to-purpose mappings. Do not reproduce excessive abstention by treating
+every newly learned proper business name as unknowable without context.
+
+However, do not silently add research to model inputs or force a target that
+depends on an unavailable receipt, gift intent, locality or unresolved namesake.
+An opaque ambiguous abbreviation whose identity needs missing information must
+remain unresolved. If research establishes the actual business but production
+DDG returns a wrong namesake, flag the bad match and retain the input-supported
+target. Distinguish facts learned about an identifiable merchant from invented
+facts about this purchase. Record discoveries in a short rationale, never as
+fabricated production context. Later genuine retrieval versions must be separate.
 
 Explicit purchase notes/receipt information outrank merchant business defaults.
 Broad Wallet hints support, but never establish, item-level purpose. Search
