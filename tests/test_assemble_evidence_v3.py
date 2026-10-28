@@ -408,7 +408,9 @@ def test_explicit_private_privacy_blocked_reference_is_preserved(corpus, legacy_
     packet = corpus.packets("personal") / "personal-0"
     inputs = a.read(packet / "inputs.jsonl")[0]
     inputs.update(
-        safe_query=legacy_query, context_outcome="unsafe_query", context_record_sha256=a.sha(record_path)
+        safe_query=legacy_query,
+        context_outcome="unsafe_query",
+        context_record_sha256=a.sha(record_path),
     )
     overwrite(packet / "inputs.jsonl", [inputs])
     assignment = a.one(packet / "assignment.json")
@@ -441,13 +443,20 @@ def test_explicit_private_privacy_blocked_reference_is_preserved(corpus, legacy_
 
 def test_legacy_privacy_compatibility_never_accepts_changed_query_or_public_row():
     query = {"merchant": "Fictional AB123XYZ", "locality": ""}
-    context = {"safe_query": None, "search_privacy_rejection": "reference_token",
-               "record": {"query": query}}
+    context = {
+        "safe_query": None,
+        "search_privacy_rejection": "reference_token",
+        "record": {"query": query},
+    }
     row = {"safe_query": query}
     assert a.packet_privacy_binding_matches(row, context, "personal")
     assert not a.packet_privacy_binding_matches(row, context, "delaware")
-    assert not a.packet_privacy_binding_matches({"safe_query": {"merchant": "changed"}}, context, "personal")
-    assert not a.packet_privacy_binding_matches(row, {**context, "search_privacy_rejection": None}, "personal")
+    assert not a.packet_privacy_binding_matches(
+        {"safe_query": {"merchant": "changed"}}, context, "personal"
+    )
+    assert not a.packet_privacy_binding_matches(
+        row, {**context, "search_privacy_rejection": None}, "personal"
+    )
 
 
 @pytest.mark.parametrize(
@@ -461,3 +470,267 @@ def test_wrong_label_model_or_policy_is_rejected(corpus, changes):
     change_label(corpus, "personal", "personal-0", **changes)
     with pytest.raises(ValueError, match="Wrong reviewer identity|Wrong label policy"):
         a.inspect(corpus)
+
+
+def set_visible_input(layout, name, identifier, inputs):
+    """Update a fictional source and every hash-bound collection/packet layer."""
+    baseline = {k: v for k, v in inputs.items() if k != "merchant_context"}
+    source_path = layout.source(name)
+    rows = a.read(source_path)
+    for item in rows:
+        if item["id"] == identifier:
+            item.update(input=baseline, input_sha256=a.digest(baseline))
+    overwrite(source_path, rows)
+    source_manifest_path = source_path.parent / "manifest.json"
+    source_manifest = a.one(source_manifest_path)
+    source_manifest["input_file_sha256"] = a.sha(source_path)
+    if name == "personal":
+        snapshot = layout.private / "snapshot/classifier_inputs.exact.jsonl"
+        exact = a.read(snapshot)
+        for item in exact:
+            if item["id"] == identifier:
+                item["input"] = baseline
+        overwrite(snapshot, exact)
+        source_manifest["snapshot_input_sha256"] = a.sha(snapshot)
+    overwrite(source_manifest_path, [source_manifest])
+    context = layout.context(name)
+    frozen_rows = a.read(context / "input.jsonl")
+    for item in frozen_rows:
+        if item["id"] == identifier:
+            item.update(input=baseline, input_sha256=a.digest(baseline))
+    overwrite(context / "input.jsonl", frozen_rows)
+    queries = a.read(context / "queries.jsonl")
+    for item in queries:
+        if item["id"] == identifier:
+            item["input_sha256"] = a.digest(baseline)
+    overwrite(context / "queries.jsonl", queries)
+    manifest = a.one(context / "manifest.json")
+    manifest.update(
+        input_sha256=a.sha(context / "input.jsonl"), queries_sha256=a.sha(context / "queries.jsonl")
+    )
+    overwrite(context / "manifest.json", [manifest])
+    record_path = collector.record_path(context, {"id": identifier})
+    record = a.one(record_path)
+    record.update(
+        input_sha256=a.digest(baseline),
+        merchant_context=inputs.get("merchant_context"),
+        outcome="matched" if "merchant_context" in inputs else "no_match",
+    )
+    overwrite(record_path, [record])
+    packet = layout.packets(name) / identifier
+    packet_row = a.read(packet / "inputs.jsonl")[0]
+    packet_row.update(
+        input=inputs,
+        input_sha256=a.digest(inputs),
+        without_context_sha256=a.digest(baseline),
+        context_record_sha256=a.sha(record_path),
+        context_outcome=record["outcome"],
+    )
+    overwrite(packet / "inputs.jsonl", [packet_row])
+    assignment = a.one(packet / "assignment.json")
+    assignment["inputs_sha256"] = a.sha(packet / "inputs.jsonl")
+    overwrite(packet / "assignment.json", [assignment])
+    change_label(layout, name, identifier, input_sha256=a.digest(inputs))
+
+
+def fictional_context(title):
+    return {
+        "version": "merchant-search-v1",
+        "source": "duckduckgo",
+        "results": [
+            {
+                "title": title,
+                "body": "Fictional software-test context, not researched evidence.",
+                "url": "https://fixture.example/context",
+            }
+        ],
+    }
+
+
+def assemble_without_family_verdicts(layout, prefix):
+    triage = layout.private / (prefix + "-triage")
+    a.triage(triage, layout)
+    verdicts = layout.private / (prefix + "-verdicts.jsonl")
+    put(verdicts, [])
+    output = layout.private / (prefix + "-assembled")
+    return a.assemble(triage, verdicts, output, layout), output
+
+
+def test_identical_input_and_target_within_one_split_is_accepted(corpus):
+    shared = {
+        "description": "Fictional repeated visible purchase",
+        "direction": "debit",
+        "currency": "CAD",
+    }
+    set_visible_input(corpus, "delaware", "delaware-0", shared)
+    set_visible_input(corpus, "personal", "personal-0", shared)
+    summary, output = assemble_without_family_verdicts(corpus, "same-target")
+    assert summary["retained_count"] == 5
+    audit = a.one(output / "acceptance.json")["retained_exact_input_audit"]
+    assert audit["duplicate_input_groups"] == 1 and audit["conflict_groups"] == 0
+    assert not a.read(output / "retained-input-conflicts.jsonl")
+
+
+def test_genuinely_different_contexts_allow_different_contextual_targets(corpus):
+    shared = {"description": "Fictional opaque merchant", "direction": "debit", "currency": "CAD"}
+    fallback = {"type": "expense", "category": "other", "review": True}
+    for name, identifier, title, category in [
+        ("delaware", "delaware-0", "Fictional restaurant", "dining"),
+        ("personal", "personal-0", "Fictional grocery", "groceries"),
+    ]:
+        set_visible_input(
+            corpus, name, identifier, {**shared, "merchant_context": fictional_context(title)}
+        )
+        change_label(
+            corpus,
+            name,
+            identifier,
+            answer_with_context={"type": "expense", "category": category, "review": True},
+            answer_without_context=fallback,
+        )
+    summary, output = assemble_without_family_verdicts(corpus, "contextual")
+    assert summary["retained_count"] == 5
+    assert a.one(output / "acceptance.json")["retained_exact_input_audit"]["conflict_groups"] == 0
+
+
+def test_partial_triage_reports_cross_view_type_category_conflicts_deterministically(corpus):
+    shared = {"description": "Fictional shared baseline", "direction": "debit", "currency": "CAD"}
+    set_visible_input(corpus, "delaware", "delaware-0", shared)
+    set_visible_input(
+        corpus,
+        "personal",
+        "personal-0",
+        {**shared, "merchant_context": fictional_context("Fictional provider")},
+    )
+    change_label(
+        corpus,
+        "personal",
+        "personal-0",
+        answer_without_context={"type": "unknown", "category": "other", "review": True},
+    )
+    (corpus.packets("delaware") / "delaware-3/labels.jsonl").unlink()
+    first, second = corpus.private / "partial-1", corpus.private / "partial-2"
+    result = a.triage(first, corpus)
+    a.triage(second, corpus)
+    assert result["complete"] is False
+    assert (first / "exact-input-conflicts.jsonl").read_bytes() == (
+        second / "exact-input-conflicts.jsonl"
+    ).read_bytes()
+    groups = a.read(first / "exact-input-conflicts.jsonl")
+    conflict = next(g for g in groups if g["input_sha256"] == a.digest(shared))
+    assert conflict["type_category_conflict"] and not conflict["review_only_conflict"]
+    assert conflict["ids"] == ["delaware-0", "personal-0"]
+    assert conflict["splits"] == ["train"]
+    assert {(m["id"], m["variant"]) for m in conflict["members"]} == {
+        ("delaware-0", "with_context"),
+        ("delaware-0", "without_context"),
+        ("personal-0", "without_context"),
+    }
+    assert len(conflict["answer_variants"]) == 2
+    assert a.one(first / "manifest.json")["artifact_hashes"][
+        "exact-input-conflicts.jsonl"
+    ] == a.sha(first / "exact-input-conflicts.jsonl")
+
+
+@pytest.mark.parametrize(
+    "answer,classification",
+    [
+        ({"type": "expense", "category": "dining", "review": True}, "type_category_conflict"),
+        ({"type": "expense", "category": "groceries", "review": False}, "review_only_conflict"),
+    ],
+)
+def test_assembly_refuses_retained_target_contradictions(corpus, answer, classification):
+    shared = {
+        "description": "Fictional repeated visible input",
+        "direction": "debit",
+        "currency": "CAD",
+    }
+    set_visible_input(corpus, "delaware", "delaware-0", shared)
+    set_visible_input(corpus, "personal", "personal-0", shared)
+    change_label(
+        corpus, "personal", "personal-0", answer_with_context=answer, answer_without_context=answer
+    )
+    result = a.inspect(corpus)
+    assert result["exact_input_audit"]["groups"][0][classification]
+    with pytest.raises(ValueError, match="conflicting targets"):
+        assemble_without_family_verdicts(corpus, "contradictory")
+    assert not (corpus.private / "contradictory-assembled/acceptance.json").exists()
+
+
+def test_identical_input_across_splits_is_refused_despite_different_families(corpus):
+    shared = {
+        "description": "Fictional cross-split duplicate",
+        "direction": "debit",
+        "currency": "CAD",
+    }
+    set_visible_input(corpus, "delaware", "delaware-0", shared)
+    set_visible_input(corpus, "delaware", "delaware-1", shared)
+    result = a.inspect(corpus)
+    assert all(c["status"] == "consistent" for c in result["components"])
+    conflict = next(
+        g for g in result["exact_input_audit"]["groups"] if g["input_sha256"] == a.digest(shared)
+    )
+    assert conflict["cross_split"] and not conflict["answer_conflict"]
+    assert conflict["splits"] == ["train", "valid"]
+    with pytest.raises(ValueError, match="cross train/valid/test"):
+        assemble_without_family_verdicts(corpus, "cross-split-input")
+
+
+def test_quarantined_contradictions_remain_audited_without_blocking_retained_rows(corpus):
+    shared = {
+        "description": "Fictional inconsistent reference",
+        "direction": "debit",
+        "currency": "CAD",
+    }
+    set_visible_input(corpus, "delaware", "delaware-0", shared)
+    set_visible_input(corpus, "personal", "personal-0", shared)
+    different = {"type": "expense", "category": "dining", "review": True}
+    change_label(
+        corpus,
+        "personal",
+        "personal-0",
+        answer_with_context=different,
+        answer_without_context=different,
+    )
+    triage = corpus.private / "quarantine-input-triage"
+    a.triage(triage, corpus)
+    result = a.inspect(corpus)
+    component = next(c for c in result["components"] if c["ids"] == ["personal-0"])
+    reviewed = decision(component, result["audit_binding_sha256"], "quarantine")
+    reviewed["rationale"] = (
+        "Quarantine the inconsistent fictional reference pending independent repair"
+    )
+    reviewed["source_evidence"][0]["finding"] = (
+        "This component supplies a contradictory target for the exact retained visible input"
+    )
+    verdicts = corpus.private / "input-conflict-verdicts.jsonl"
+    put(verdicts, [reviewed])
+    output = corpus.private / "quarantined-input-assembled"
+    assert a.assemble(triage, verdicts, output, corpus)["retained_count"] == 4
+    assert len(a.read(output / "all-records.jsonl")) == 5
+    assert a.read(output / "all-input-conflicts.jsonl")
+    assert not a.read(output / "retained-input-conflicts.jsonl")
+    assert all(r["id"] != "personal-0" for r in a.read(output / "canonical.jsonl"))
+    assert a.one(output / "manifest.json")["retained_exact_input_audit"]["conflict_groups"] == 0
+
+
+def test_no_context_view_retains_other_visible_evidence():
+    base = {"description": "Fictional merchant", "direction": "debit", "currency": "CAD"}
+    answer = {"type": "expense", "category": "groceries", "review": True}
+    rows = [
+        {
+            "id": str(i),
+            "source": "fictional",
+            "split": "train",
+            "input": {
+                **base,
+                "transaction_notes": note,
+                "merchant_context": fictional_context("Fictional"),
+            },
+            "answer_with_context": answer,
+            "answer_without_context": answer,
+        }
+        for i, note in enumerate(("Fictional grocery purchase", "Fictional other purchase"))
+    ]
+    assert a.exact_visible_input_audit(rows)["summary"]["conflict_groups"] == 0
+    assert a.exact_visible_input_audit(rows)["summary"]["duplicate_input_groups"] == 0

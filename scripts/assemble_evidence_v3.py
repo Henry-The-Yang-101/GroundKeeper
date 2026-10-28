@@ -235,8 +235,10 @@ def context_index(layout, name, expected, bindings):
 
 
 def packet_privacy_binding_matches(row, context, name):
-    if (row.get("safe_query") == context["safe_query"]
-            and row.get("search_privacy_rejection") == context["search_privacy_rejection"]):
+    if (
+        row.get("safe_query") == context["safe_query"]
+        and row.get("search_privacy_rejection") == context["search_privacy_rejection"]
+    ):
         return True
     # Early immutable packets predate the additional private query guard. Preserve
     # their original query provenance only when it exactly matches the record;
@@ -248,6 +250,90 @@ def packet_privacy_binding_matches(row, context, name):
         and row.get("safe_query") == context["record"]["query"]
         and row.get("search_privacy_rejection") is None
     )
+
+
+def exact_visible_input_audit(rows):
+    """Report facts about both input-conditioned views; never choose a target.
+
+    Grouping spans view names, so a context-free row can collide with another
+    row's no-context training view. Other production evidence is kept verbatim.
+    """
+    grouped = defaultdict(list)
+    for row in rows:
+        answers = row.get("label", row)
+        for variant, inputs, answer in (
+            ("with_context", row["input"], answers["answer_with_context"]),
+            (
+                "without_context",
+                {k: v for k, v in row["input"].items() if k != "merchant_context"},
+                answers["answer_without_context"],
+            ),
+        ):
+            grouped[digest(inputs)].append(
+                {
+                    "id": row["id"],
+                    "source": row["source"],
+                    "split": row["split"],
+                    "variant": variant,
+                    "answer": answer,
+                    "answer_sha256": digest(answer),
+                }
+            )
+    conflicts = []
+    duplicate_groups = 0
+    for input_hash, members in sorted(grouped.items()):
+        members.sort(key=lambda m: (m["id"], m["variant"], m["split"], m["answer_sha256"]))
+        answers = {}
+        for member in members:
+            answers.setdefault(
+                member["answer_sha256"], {"answer": member["answer"], "members": []}
+            )["members"].append({k: member[k] for k in ("id", "variant", "split")})
+        splits = sorted({m["split"] for m in members})
+        semantic = {(m["answer"]["type"], m["answer"]["category"]) for m in members}
+        answer_conflict = len(answers) > 1
+        type_category_conflict = len(semantic) > 1
+        cross_split = len(set(splits) & VALID_SPLITS) > 1
+        if len({m["id"] for m in members}) > 1:
+            duplicate_groups += 1
+        if answer_conflict or cross_split:
+            conflicts.append(
+                {
+                    "input_sha256": input_hash,
+                    "ids": sorted({m["id"] for m in members}),
+                    "splits": splits,
+                    "members": members,
+                    "answer_variants": [
+                        {"answer_sha256": key, **answers[key]} for key in sorted(answers)
+                    ],
+                    "answer_conflict": answer_conflict,
+                    "type_category_conflict": type_category_conflict,
+                    "review_only_conflict": answer_conflict and not type_category_conflict,
+                    "cross_split": cross_split,
+                }
+            )
+    return {
+        "groups": conflicts,
+        "summary": {
+            "visible_input_groups": len(grouped),
+            "views_audited": 2 * len(rows),
+            "duplicate_input_groups": duplicate_groups,
+            "conflict_groups": len(conflicts),
+            "type_category_conflict_groups": sum(c["type_category_conflict"] for c in conflicts),
+            "review_only_conflict_groups": sum(c["review_only_conflict"] for c in conflicts),
+            "cross_split_input_groups": sum(c["cross_split"] for c in conflicts),
+        },
+    }
+
+
+def require_consistent_retained_inputs(rows):
+    result = exact_visible_input_audit(rows)
+    if any(c["answer_conflict"] for c in result["groups"]):
+        raise ValueError(
+            "Retained identical visible inputs have conflicting targets, including review-only differences"
+        )
+    if any(c["cross_split"] for c in result["groups"]):
+        raise ValueError("Retained identical visible inputs cross train/valid/test splits")
+    return result
 
 
 def inspect(layout=Layout()):
@@ -374,6 +460,7 @@ def inspect(layout=Layout()):
         "packet_bindings": packet_bindings,
         "historical": historical,
         "historical_owners": dict(owners),
+        "exact_input_audit": exact_visible_input_audit(records),
     }
     value["audit_binding_sha256"] = digest(
         {
@@ -381,6 +468,7 @@ def inspect(layout=Layout()):
             "components": components,
             "expected_ids": sorted(expected),
             "labeled_ids": sorted(labeled),
+            "exact_input_audit": value["exact_input_audit"],
         }
     )
     return value
@@ -391,6 +479,7 @@ def triage(destination, layout=Layout()):
     result = inspect(layout)
     write_new(destination / "components.jsonl", result["components"])
     write_new(destination / "all-records.jsonl", result["records"])
+    write_new(destination / "exact-input-conflicts.jsonl", result["exact_input_audit"]["groups"])
     write_new(destination / "missing-ids.jsonl", ({"id": i} for i in result["missing_ids"]))
     summary = {
         k: result[k]
@@ -408,9 +497,15 @@ def triage(destination, layout=Layout()):
         retained_for_training=False,
         component_count=len(result["components"]),
         family_adjudications_required=sum(c["adjudication_required"] for c in result["components"]),
+        exact_input_audit=result["exact_input_audit"]["summary"],
         artifact_hashes={
             name: sha(destination / name)
-            for name in ("components.jsonl", "all-records.jsonl", "missing-ids.jsonl")
+            for name in (
+                "components.jsonl",
+                "all-records.jsonl",
+                "missing-ids.jsonl",
+                "exact-input-conflicts.jsonl",
+            )
         },
     )
     write_new(destination / "manifest.json", [summary])
@@ -422,6 +517,7 @@ def triage(destination, layout=Layout()):
             "complete",
             "component_count",
             "family_adjudications_required",
+            "exact_input_audit",
         )
     }
 
@@ -602,8 +698,11 @@ def assemble(triage_path, adjudications, destination, layout=Layout()):
         raise ValueError(
             "Retained dataset must still contain train, validation, and heldout splits"
         )
+    retained_input_audit = require_consistent_retained_inputs(canonical)
     write_new(destination / "canonical.jsonl", canonical)
     write_new(destination / "all-records.jsonl", all_records)
+    write_new(destination / "all-input-conflicts.jsonl", result["exact_input_audit"]["groups"])
+    write_new(destination / "retained-input-conflicts.jsonl", retained_input_audit["groups"])
     write_new(destination / "family-decisions.jsonl", decisions)
     write_new(
         destination / "historical-family-registry.jsonl", [registry[k] for k in sorted(registry)]
@@ -622,6 +721,7 @@ def assemble(triage_path, adjudications, destination, layout=Layout()):
         "family_adjudications_sha256": sha(destination / "family-adjudications.jsonl"),
         "reconciled_registry_sha256": sha(destination / "historical-family-registry.jsonl"),
         "human_confirmations": 0,
+        "retained_exact_input_audit": retained_input_audit["summary"],
         "primary_research_status_counts": dict(
             Counter(
                 "researched"
@@ -658,6 +758,8 @@ def assemble(triage_path, adjudications, destination, layout=Layout()):
         "artifacts": {p.name: sha(p) for p in destination.iterdir() if p.is_file()},
         "training_started": False,
         "weak_ai_labels_not_human_gold": True,
+        "all_exact_input_audit": result["exact_input_audit"]["summary"],
+        "retained_exact_input_audit": retained_input_audit["summary"],
     }
     write_new(destination / "manifest.json", [manifest])
     return {
