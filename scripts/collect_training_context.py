@@ -348,8 +348,34 @@ def prune_cache(state, current):
 
 GUARD_POLICY = "private collection privacy guard; distinct from production sanitizer/matcher"
 LEGACY_GUARD = "private-training-query-v1"
-CURRENT_MIGRATION_GUARD = "private-training-query-v2"
+V2_GUARD = "private-training-query-v2"
+CURRENT_MIGRATION_GUARD = "private-training-query-v3"
+GUARD_VERSIONS = (LEGACY_GUARD, V2_GUARD, CURRENT_MIGRATION_GUARD)
+# Keep the existing v1->v2 journal name and contents intact.
 MIGRATION_FILE = "private-query-guard-migration-v1-v2.json"
+
+
+def migration_file(previous, target):
+    if (previous, target) not in tuple(zip(GUARD_VERSIONS, GUARD_VERSIONS[1:])):
+        raise ValueError("Unsupported private guard migration transition")
+    return (
+        "private-query-guard-migration-"
+        + previous.rsplit("-", 1)[1]
+        + "-"
+        + target.rsplit("-", 1)[1]
+        + ".json"
+    )
+
+
+def version_policy(version):
+    policies = {
+        LEGACY_GUARD: private_training_query_guard.legacy_private_query_rejection,
+        V2_GUARD: private_training_query_guard.v2_private_query_rejection,
+        CURRENT_MIGRATION_GUARD: private_training_query_guard.private_query_rejection,
+    }
+    if version not in policies:
+        raise ValueError("Unknown private guard version")
+    return policies[version]
 
 
 def candidate_rows(queries, rejection_policy):
@@ -372,12 +398,20 @@ def candidate_text(candidates):
     return "".join(canonical(value) + "\n" for value in candidates.values())
 
 
-def legacy_bundle(directory, manifest, queries):
-    """Read and reconstruct the archived v1 policy once, never once per row."""
-    guard_path = directory / "private-query-guard.json"
-    candidates_path = directory / "private-effective-queries.jsonl"
-    guard = json.loads(guard_path.read_text())
-    expected = candidate_rows(queries, private_training_query_guard.legacy_private_query_rejection)
+def guard_provenance(version, manifest, contents):
+    return {
+        "version": version,
+        "source_sha256": sha256(Path(private_training_query_guard.__file__).read_bytes()),
+        "frozen_queries_sha256": manifest["queries_sha256"],
+        "effective_queries_sha256": sha256(contents.encode()),
+        "policy": GUARD_POLICY,
+    }
+
+
+def version_bundle(directory, manifest, queries, version):
+    """Reconstruct one immutable policy version once per validation pass."""
+    guard = json.loads((directory / "private-query-guard.json").read_text())
+    expected = candidate_rows(queries, version_policy(version))
     expected_text = candidate_text(expected)
     if (
         set(guard)
@@ -388,81 +422,122 @@ def legacy_bundle(directory, manifest, queries):
             "frozen_queries_sha256",
             "effective_queries_sha256",
         }
-        or guard.get("version") != LEGACY_GUARD
+        or guard.get("version") != version
         or guard.get("policy") != GUARD_POLICY
         or guard.get("frozen_queries_sha256") != manifest["queries_sha256"]
         or not isinstance(guard.get("source_sha256"), str)
         or len(guard["source_sha256"]) != 64
         or any(c not in "0123456789abcdef" for c in guard["source_sha256"])
         or guard.get("effective_queries_sha256") != sha256(expected_text.encode())
-        or candidates_path.read_text() != expected_text
+        or (directory / "private-effective-queries.jsonl").read_text() != expected_text
     ):
         raise ValueError("Historical private guard/candidates are corrupt or widen frozen queries")
     return guard, expected
 
 
-def archived_migration(directory, manifest, queries, provenance, contents):
-    """Verify a committed migration plan and its immutable old-policy audit."""
-    journal_text = (directory / MIGRATION_FILE).read_text()
-    journal = json.loads(journal_text)
-    archive = directory / "private-query-guard-history" / LEGACY_GUARD
-    old_guard, old_candidates = legacy_bundle(archive, manifest, queries)
-    hashes_path = archive / "record-hashes.json"
-    if (
-        journal_text != canonical(journal) + "\n"
-        or journal.get("format_version") != 1
-        or journal.get("from_version") != LEGACY_GUARD
-        or journal.get("to_version") != CURRENT_MIGRATION_GUARD
-        or provenance["version"] != CURRENT_MIGRATION_GUARD
-        or journal.get("frozen_queries_sha256") != manifest["queries_sha256"]
-        or journal.get("old_guard_sha256")
-        != sha256((archive / "private-query-guard.json").read_bytes())
-        or journal.get("old_candidates_sha256")
-        != sha256((archive / "private-effective-queries.jsonl").read_bytes())
-        or journal.get("old_record_hashes_sha256") != sha256(hashes_path.read_bytes())
-        or journal.get("new_guard_sha256") != sha256((canonical(provenance) + "\n").encode())
-        or journal.get("new_candidates_sha256") != sha256(contents.encode())
-    ):
-        raise ValueError("Private guard migration journal/archive changed")
-    record_hashes = json.loads(hashes_path.read_text())
-    expected_names = {record_path(directory, q).name for q in queries}
-    if (
-        not isinstance(record_hashes, dict)
-        or set(record_hashes) - expected_names
-        or any(not isinstance(value, str) or len(value) != 64 for value in record_hashes.values())
-    ):
-        raise ValueError("Invalid immutable historical record hashes")
-    for name, expected in record_hashes.items():
-        path = directory / "records" / name
-        if not path.is_file() or sha256(path.read_bytes()) != expected:
-            raise ValueError("Immutable historical private record changed or disappeared")
-    return journal, old_guard, old_candidates, record_hashes
+def legacy_bundle(directory, manifest, queries):
+    return version_bundle(directory, manifest, queries, LEGACY_GUARD)
 
 
-def migrate_guard(directory, manifest, queries, candidates, provenance, contents):
-    """Archive first, journal second, then replace candidates before metadata.
+def migration_history(directory, manifest, queries, guard, candidates, ignore_archive=None):
+    """Validate the whole chain with one bundle read per archived version.
 
-    The immutable journal recognizes precisely the old/old, old/new, and new/new
-    states produced by these two atomic replacements. Other states fail closed.
-    An interrupted explicit migration requires this command again; collect and
-    status never complete a migration implicitly.
+    Old format-1 v1->v2 journals are verified against the archived v2 successor.
+    New format-2 journals also carry their exact target metadata for recovery.
+    All historical record byte hashes are checked once, even across snapshots.
     """
-    if provenance["version"] != CURRENT_MIGRATION_GUARD:
-        raise ValueError("Only the explicit v1 to v2 private guard migration is supported")
+    versions = {guard["version"]: (guard, candidates)}
+    archives, snapshots = {}, {}
+    history = directory / "private-query-guard-history"
+    for archive in sorted(history.iterdir()) if history.exists() else ():
+        if archive.name == ignore_archive:
+            continue
+        if not archive.is_dir() or archive.name not in GUARD_VERSIONS[:-1]:
+            raise ValueError("Unknown private guard archive")
+        versions[archive.name] = version_bundle(archive, manifest, queries, archive.name)
+        archives[archive.name] = archive
+    expected_journals = {migration_file(a, b) for a, b in zip(GUARD_VERSIONS, GUARD_VERSIONS[1:])}
+    present_journals = {p.name for p in directory.glob("private-query-guard-migration-*.json")}
+    if present_journals - expected_journals:
+        raise ValueError("Unknown private guard migration journal")
+    expected_names = {record_path(directory, q).name for q in queries}
+    checked_hashes = {}
+    for previous, target in zip(GUARD_VERSIONS, GUARD_VERSIONS[1:]):
+        name = migration_file(previous, target)
+        if previous not in archives:
+            if name in present_journals:
+                raise ValueError("Private guard migration journal has no immutable archive")
+            continue
+        archive = archives[previous]
+        path = directory / name
+        if not path.exists() or target not in versions:
+            raise ValueError("Private guard archive exists without a complete migration chain")
+        journal_text = path.read_text()
+        journal = json.loads(journal_text)
+        old_guard, _ = versions[previous]
+        target_guard, target_candidates = versions[target]
+        hashes_path = archive / "record-hashes.json"
+        if (
+            journal_text != canonical(journal) + "\n"
+            or journal.get("format_version") not in (1, 2)
+            or journal.get("from_version") != previous
+            or journal.get("to_version") != target
+            or journal.get("frozen_queries_sha256") != manifest["queries_sha256"]
+            or journal.get("old_guard_sha256")
+            != sha256((archive / "private-query-guard.json").read_bytes())
+            or journal.get("old_candidates_sha256")
+            != sha256((archive / "private-effective-queries.jsonl").read_bytes())
+            or journal.get("old_record_hashes_sha256") != sha256(hashes_path.read_bytes())
+            or journal.get("new_guard_sha256") != sha256((canonical(target_guard) + "\n").encode())
+            or journal.get("new_candidates_sha256")
+            != sha256(candidate_text(target_candidates).encode())
+            or (journal["format_version"] == 2 and journal.get("new_guard") != target_guard)
+        ):
+            raise ValueError("Private guard migration journal/archive changed")
+        record_hashes = json.loads(hashes_path.read_text())
+        if (
+            not isinstance(record_hashes, dict)
+            or set(record_hashes) - expected_names
+            or any(not isinstance(v, str) or len(v) != 64 for v in record_hashes.values())
+        ):
+            raise ValueError("Invalid immutable historical record hashes")
+        for filename, expected in record_hashes.items():
+            record = directory / "records" / filename
+            if filename not in checked_hashes:
+                if not record.is_file():
+                    raise ValueError("Immutable historical private record changed or disappeared")
+                checked_hashes[filename] = sha256(record.read_bytes())
+            if checked_hashes[filename] != expected:
+                raise ValueError("Immutable historical private record changed or disappeared")
+        snapshots[previous] = set(record_hashes)
+    return versions, snapshots
+
+
+def assert_only_restricts(previous, current):
+    if set(previous) != set(current) or any(
+        old["input_sha256"] != current[i]["input_sha256"]
+        or old["frozen_query_sha256"] != current[i]["frozen_query_sha256"]
+        or (old["rejection"] and old != current[i])
+        for i, old in previous.items()
+    ):
+        raise ValueError("Private guard migration may only add rejections")
+
+
+def migrate_step(directory, manifest, queries, previous, target, candidates, provenance):
+    contents = candidate_text(candidates)
     guard_path, effective_path = (
         directory / "private-query-guard.json",
         directory / "private-effective-queries.jsonl",
     )
-    archive = directory / "private-query-guard-history" / LEGACY_GUARD
-    if not (directory / MIGRATION_FILE).exists():
-        old_guard, old_candidates = legacy_bundle(directory, manifest, queries)
-        # New policy can reject a previously allowed candidate but never widen it.
-        for identifier, previous in old_candidates.items():
-            current = candidates[identifier]
-            if previous["rejection"] and previous != current:
-                raise ValueError("Private guard migration may only add rejections")
+    archive = directory / "private-query-guard-history" / previous
+    journal_path = directory / migration_file(previous, target)
+    if not journal_path.exists():
+        old_guard, old_candidates = version_bundle(directory, manifest, queries, previous)
+        assert_only_restricts(old_candidates, candidates)
         done = completed(directory, queries)
-        validate_private_records(done, old_candidates, old_guard, directory)
+        validate_private_records(
+            done, old_candidates, old_guard, directory, ignore_archive=previous
+        )
         snapshot = {
             record_path(directory, record).name: sha256(record_path(directory, record).read_bytes())
             for record in done.values()
@@ -481,18 +556,20 @@ def migrate_guard(directory, manifest, queries, candidates, provenance, contents
         else:
             write_json(hashes_path, snapshot, immutable=True)
         journal = {
-            "format_version": 1,
-            "from_version": LEGACY_GUARD,
-            "to_version": CURRENT_MIGRATION_GUARD,
+            "format_version": 2,
+            "from_version": previous,
+            "to_version": target,
             "frozen_queries_sha256": manifest["queries_sha256"],
             "old_guard_sha256": sha256(guard_path.read_bytes()),
             "old_candidates_sha256": sha256(effective_path.read_bytes()),
             "old_record_hashes_sha256": sha256(hashes_path.read_bytes()),
             "new_guard_sha256": sha256((canonical(provenance) + "\n").encode()),
             "new_candidates_sha256": sha256(contents.encode()),
+            "new_guard": provenance,
         }
-        write_json(directory / MIGRATION_FILE, journal, immutable=True)
-    journal, _, _, _ = archived_migration(directory, manifest, queries, provenance, contents)
+        write_json(journal_path, journal, immutable=True)
+    migration_history(directory, manifest, queries, provenance, candidates)
+    journal = json.loads(journal_path.read_text())
     state = sha256(guard_path.read_bytes()), sha256(effective_path.read_bytes())
     old = journal["old_guard_sha256"], journal["old_candidates_sha256"]
     new = journal["new_guard_sha256"], journal["new_candidates_sha256"]
@@ -504,19 +581,56 @@ def migrate_guard(directory, manifest, queries, candidates, provenance, contents
         write_json(guard_path, provenance)
 
 
+def migrate_guard(directory, manifest, queries, candidates, provenance):
+    """Explicitly advance adjacent versions; never rewrite older chain artifacts."""
+    active_path = directory / "private-query-guard.json"
+    active = json.loads(active_path.read_text())
+    target_version = provenance["version"]
+    if active.get("version") not in GUARD_VERSIONS or target_version not in GUARD_VERSIONS:
+        raise ValueError("Unknown private guard migration version")
+    index, target_index = (
+        GUARD_VERSIONS.index(active["version"]),
+        GUARD_VERSIONS.index(target_version),
+    )
+    if index >= target_index:
+        # The only supported same-version mismatch is a journaled interrupted write.
+        if index == 0:
+            raise ValueError("Private guard source/candidates changed without a new policy version")
+        migrate_step(
+            directory,
+            manifest,
+            queries,
+            GUARD_VERSIONS[index - 1],
+            target_version,
+            candidates,
+            provenance,
+        )
+        return
+    # Fail before changing any state if the final target would relax old rejections.
+    old_candidates = candidate_rows(queries, version_policy(active["version"]))
+    assert_only_restricts(old_candidates, candidates)
+    for target in GUARD_VERSIONS[index + 1 : target_index + 1]:
+        previous = GUARD_VERSIONS[GUARD_VERSIONS.index(target) - 1]
+        next_candidates = (
+            candidates
+            if target == target_version
+            else candidate_rows(queries, version_policy(target))
+        )
+        next_guard = (
+            provenance
+            if target == target_version
+            else guard_provenance(target, manifest, candidate_text(next_candidates))
+        )
+        migrate_step(directory, manifest, queries, previous, target, next_candidates, next_guard)
+
+
 def private_candidates(directory, manifest, queries, migrate=False):
     """Gate future dispatch separately from immutable production snapshots."""
     if not manifest["private"]:
         return {}, None
     candidates = candidate_rows(queries, private_query_rejection)
     contents = candidate_text(candidates)
-    provenance = {
-        "version": private_training_query_guard.VERSION,
-        "source_sha256": sha256(Path(private_training_query_guard.__file__).read_bytes()),
-        "frozen_queries_sha256": manifest["queries_sha256"],
-        "effective_queries_sha256": sha256(contents.encode()),
-        "policy": GUARD_POLICY,
-    }
+    provenance = guard_provenance(private_training_query_guard.VERSION, manifest, contents)
     path, effective_path = (
         directory / "private-query-guard.json",
         directory / "private-effective-queries.jsonl",
@@ -528,18 +642,15 @@ def private_candidates(directory, manifest, queries, migrate=False):
         and effective_path.read_text() == contents
     )
     has_history = (directory / "private-query-guard-history").exists()
-    has_journal = (directory / MIGRATION_FILE).exists()
+    has_journal = bool(list(directory.glob("private-query-guard-migration-*.json")))
     if matches:
-        if has_journal:
-            archived_migration(directory, manifest, queries, provenance, contents)
-        elif has_history:
-            raise ValueError("Private guard archive exists without a committed migration journal")
+        migration_history(directory, manifest, queries, provenance, candidates)
     elif path.exists() or has_history or has_journal:
         if not migrate:
             raise ValueError(
                 "Frozen private query guard/candidates changed; explicit migration required"
             )
-        migrate_guard(directory, manifest, queries, candidates, provenance, contents)
+        migrate_guard(directory, manifest, queries, candidates, provenance)
     else:
         if effective_path.exists() and effective_path.read_text() != contents:
             raise ValueError("Incomplete private query guard preparation changed")
@@ -549,18 +660,14 @@ def private_candidates(directory, manifest, queries, migrate=False):
     return candidates, provenance
 
 
-def validate_private_records(done, candidates, guard, directory):
+def validate_private_records(done, candidates, guard, directory, ignore_archive=None):
     if not guard:
         return
-    versions = {guard["version"]: (guard, candidates)}
-    historical_names = None
-    if (directory / MIGRATION_FILE).exists():
-        manifest, _, queries = load(directory)
-        _, old_guard, old_candidates, record_hashes = archived_migration(
-            directory, manifest, queries, guard, candidate_text(candidates)
-        )
-        versions[LEGACY_GUARD] = old_guard, old_candidates
-        historical_names = set(record_hashes)
+    manifest, _, queries = load(directory)
+    versions, snapshots = migration_history(
+        directory, manifest, queries, guard, candidates, ignore_archive
+    )
+    historical_names = set().union(*snapshots.values()) if snapshots else None
     for identifier, record in done.items():
         name = record_path(directory, record).name
         if "private_query_guard" not in record:
@@ -572,9 +679,7 @@ def validate_private_records(done, candidates, guard, directory):
         record_version = record["private_query_guard"].get("version")
         if record_version not in versions:
             raise ValueError("Unknown/unarchived historical private guard version")
-        if record_version != guard["version"] and (
-            historical_names is None or name not in historical_names
-        ):
+        if record_version != guard["version"] and name not in snapshots.get(record_version, set()):
             raise ValueError("Unregistered historical private guard record")
         record_guard, record_candidates = versions[record_version]
         candidate = record_candidates[identifier]
@@ -624,6 +729,11 @@ def status(directory, stop_reason=None):
                 "privacy_rejected_rows": sum(
                     bool(value["rejection"]) for value in candidates.values()
                 ),
+                "privacy_rejections_by_reason": dict(
+                    Counter(
+                        value["rejection"] for value in candidates.values() if value["rejection"]
+                    )
+                ),
                 "pending_privacy_rejected_rows": sum(
                     bool(candidates[row["id"]]["rejection"]) for row in pending
                 ),
@@ -634,6 +744,14 @@ def status(directory, stop_reason=None):
                     bool(candidates[row["id"]]["rejection"])
                     and row["retrieval_provenance"]["network_attempted"]
                     for row in done.values()
+                ),
+                "historical_network_attempts_now_privacy_rejected_by_guard_version": dict(
+                    Counter(
+                        row.get("private_query_guard", {}).get("version", "before_private_guard")
+                        for row in done.values()
+                        if candidates[row["id"]]["rejection"]
+                        and row["retrieval_provenance"]["network_attempted"]
+                    )
                 ),
             }
         )

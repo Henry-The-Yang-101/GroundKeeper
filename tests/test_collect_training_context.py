@@ -535,7 +535,7 @@ def test_private_guard_source_version_and_effective_candidates_are_frozen(snapsh
     assert not search.calls
 
 
-def make_legacy_collection(snapshot, monkeypatch):
+def make_legacy_collection(snapshot, monkeypatch, extra_rows=()):
     """Offline v1-policy records produced through the real collector/handle."""
     directory, source = snapshot(
         [
@@ -544,7 +544,8 @@ def make_legacy_collection(snapshot, monkeypatch):
             row("old-rejected", "Fictional Shop AB12CD34"),
             row("pending-mobi", "PRESTO MOBI UVWXYZABCD"),
             row("ordinary", "Fictional Cafe"),
-        ],
+        ]
+        + list(extra_rows),
         private=True,
     )
     manifest, _, queries = collector.load(directory)
@@ -739,15 +740,15 @@ def test_historical_archive_is_loaded_once_per_validation_pass(snapshot, monkeyp
     collector.private_candidates(directory, manifest, queries, migrate=True)
     candidates, guard = collector.private_candidates(directory, manifest, queries)
     done = collector.completed(directory, queries)
-    calls, original = [], collector.legacy_bundle
+    calls, original = [], collector.version_bundle
 
     def counted(*args):
-        calls.append(args[0])
+        calls.append(args[3])
         return original(*args)
 
-    monkeypatch.setattr(collector, "legacy_bundle", counted)
+    monkeypatch.setattr(collector, "version_bundle", counted)
     collector.validate_private_records(done, candidates, guard, directory)
-    assert len(calls) == 1
+    assert sorted(calls) == sorted([collector.LEGACY_GUARD, collector.V2_GUARD])
 
 
 def test_migration_cannot_remove_old_rejections(snapshot, monkeypatch):
@@ -778,3 +779,191 @@ def test_new_record_cannot_impersonate_pre_migration_guard_version(snapshot, mon
     collector.write_json(collector.record_path(directory, query), record, immutable=True)
     with pytest.raises(ValueError, match="Unregistered historical private guard record"):
         collector.status(directory)
+
+
+@pytest.mark.parametrize(
+    "merchant,reason",
+    [
+        ("PAYPAL Fictional Placeholder", "private_paypal_descriptor"),
+        ("paypal*FictionalPlaceholder", "private_paypal_descriptor"),
+        ("PAYPAL", "private_paypal_descriptor"),
+        ("DR Fictional Placeholder", "personal_title_descriptor"),
+        ("DR. Fictional Placeholder", "personal_title_descriptor"),
+        ("Dr.Fictional Placeholder", "personal_title_descriptor"),
+        ("DOCTOR Fictional Placeholder", "personal_title_descriptor"),
+    ],
+)
+def test_v3_rejects_private_processor_and_personal_title_prefixes(merchant, reason):
+    query = {"merchant": merchant, "locality": ""}
+    before = dict(query)
+    assert collector.private_training_query_guard.v2_private_query_rejection(query) is None
+    assert collector.private_query_rejection(query) == reason
+    assert query == before
+
+
+@pytest.mark.parametrize(
+    "merchant", ["Fictional PAYPAL Cafe", "DRAGON Cafe", "Doctoral Cafe", "MR Fictional Restaurant"]
+)
+def test_v3_prefix_rules_do_not_expand_to_unrelated_words(merchant):
+    assert collector.private_query_rejection({"merchant": merchant, "locality": ""}) is None
+
+
+@pytest.mark.parametrize("merchant", ["PAYPAL Fictional Placeholder", "DR. Fictional Placeholder"])
+def test_v3_person_like_candidates_are_rejected_before_cache_or_network(snapshot, merchant):
+    directory, _ = snapshot([row("fictional-private", merchant)], private=True)
+    clock = Clock()
+    query = {"merchant": merchant, "locality": ""}
+    collector.write_json(
+        directory / "state.json",
+        {
+            "not_before_ms": 0,
+            "cache": {
+                collector.cache_key(query): {
+                    "evidence": {"outcome": "no_match", "context": None},
+                    "fetched_at_ms": int(clock.time() * 1000),
+                    "source_id": "earlier-fixture",
+                }
+            },
+        },
+    )
+    search = Search(clock)
+    result = collector.collect(directory, 1, 60, search, clock)
+    assert result["completed"] == 1 and result["lookups_this_run"] == 0
+    assert not search.calls
+    record = collector.read_rows(directory / "records.jsonl")[0]
+    assert record["query"] == query and record["effective_query"] is None
+    assert not record["cached"] and not record["retrieval_provenance"]["network_attempted"]
+    assert record["outcome"] == "unsafe_query"
+
+
+def test_v3_private_rules_do_not_change_public_collection(snapshot):
+    directory, _ = snapshot([row("fictional-public", "PAYPAL Fictional Placeholder")])
+    source_bytes = (directory / "manifest.json").read_bytes()
+    clock = Clock()
+    search = Search(clock)
+    assert collector.collect(directory, 1, 60, search, clock)["lookups_this_run"] == 1
+    assert search.calls[0][0] == "PAYPAL Fictional Placeholder"
+    assert not list(directory.glob("private-*.json*"))
+    assert (directory / "manifest.json").read_bytes() == source_bytes
+
+
+def make_v2_chain(snapshot, monkeypatch):
+    directory, source, manifest, queries = make_legacy_collection(
+        snapshot,
+        monkeypatch,
+        [
+            row("old-paypal", "PAYPAL Fictional Earlier Placeholder"),
+            row("old-doctor", "DR Fictional Earlier Placeholder"),
+            row("pending-paypal", "PAYPAL Fictional Pending Placeholder"),
+            row("pending-doctor", "DOCTOR Fictional Pending Placeholder"),
+        ],
+    )
+    with monkeypatch.context() as v2:
+        v2.setattr(collector.private_training_query_guard, "VERSION", collector.V2_GUARD)
+        v2.setattr(
+            collector,
+            "private_query_rejection",
+            collector.private_training_query_guard.v2_private_query_rejection,
+        )
+        collector.private_candidates(directory, manifest, queries, migrate=True)
+        # Recreate the old deployed journal format. V3 must not upgrade/rewrite it.
+        journal_path = directory / collector.MIGRATION_FILE
+        legacy_journal = json.loads(journal_path.read_text())
+        legacy_journal["format_version"] = 1
+        legacy_journal.pop("new_guard")
+        collector.write_json(journal_path, legacy_journal)
+        clock = Clock()
+        search = Search(clock, ("no_match", "no_match", "no_match"))
+        result = collector.collect(directory, 3, 100, search, clock)
+    assert result["completed"] == 7 and len(search.calls) == 3
+    return directory, source, manifest, queries
+
+
+def test_v1_v2_v3_chain_preserves_every_old_record_archive_and_manifest(snapshot, monkeypatch):
+    directory, source, manifest, queries = make_v2_chain(snapshot, monkeypatch)
+    protected_paths = [
+        source,
+        directory / "input.jsonl",
+        directory / "queries.jsonl",
+        directory / "manifest.json",
+        directory / collector.MIGRATION_FILE,
+        *(directory / "private-query-guard-history").rglob("*"),
+        *(directory / "records").glob("*.json"),
+    ]
+    before = {p: p.read_bytes() for p in protected_paths if p.is_file()}
+    old_active_guard = (directory / "private-query-guard.json").read_bytes()
+    old_active_candidates = (directory / "private-effective-queries.jsonl").read_bytes()
+    with pytest.raises(ValueError, match="explicit migration"):
+        collector.status(directory)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    archive = directory / "private-query-guard-history" / collector.V2_GUARD
+    assert (archive / "private-query-guard.json").read_bytes() == old_active_guard
+    assert (archive / "private-effective-queries.jsonl").read_bytes() == old_active_candidates
+    assert (
+        directory / collector.migration_file(collector.V2_GUARD, collector.CURRENT_MIGRATION_GUARD)
+    ).is_file()
+    assert all(path.read_bytes() == value for path, value in before.items())
+    summary = collector.status(directory)
+    assert summary["historical_network_attempts_now_privacy_rejected"] == 4
+    assert summary["historical_network_attempts_now_privacy_rejected_by_guard_version"] == {
+        collector.LEGACY_GUARD: 2,
+        collector.V2_GUARD: 2,
+    }
+    assert summary["privacy_rejections_by_reason"]["private_paypal_descriptor"] == 2
+    assert summary["privacy_rejections_by_reason"]["personal_title_descriptor"] == 2
+    clock = Clock()
+    search = Search(clock)
+    resumed = collector.collect(directory, 1, 100, search, clock)
+    assert resumed["completed"] == 9 and resumed["lookups_this_run"] == 0
+    assert not search.calls
+    assert all(path.read_bytes() == value for path, value in before.items())
+    snapshot_bytes = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert all(p.read_bytes() == value for p, value in snapshot_bytes.items())
+
+
+@pytest.mark.parametrize(
+    "stage",
+    [
+        "archive_guard",
+        "archive_candidates",
+        "record_hashes",
+        "journal",
+        "active_candidates",
+        "active_guard",
+    ],
+)
+def test_v2_v3_interrupted_migration_preserves_prior_chain_and_recovers(
+    snapshot, monkeypatch, stage
+):
+    directory, _, manifest, queries = make_v2_chain(snapshot, monkeypatch)
+    old_journal = (directory / collector.MIGRATION_FILE).read_bytes()
+    archive = directory / "private-query-guard-history" / collector.V2_GUARD
+    target = {
+        "archive_guard": archive / "private-query-guard.json",
+        "archive_candidates": archive / "private-effective-queries.jsonl",
+        "record_hashes": archive / "record-hashes.json",
+        "journal": directory
+        / collector.migration_file(collector.V2_GUARD, collector.CURRENT_MIGRATION_GUARD),
+        "active_candidates": directory / "private-effective-queries.jsonl",
+        "active_guard": directory / "private-query-guard.json",
+    }[stage]
+    original = collector.atomic_text
+    triggered = []
+
+    def interrupt(path, contents, immutable=False):
+        original(path, contents, immutable)
+        if Path(path) == target and not triggered:
+            triggered.append(True)
+            raise RuntimeError("fictional v2-v3 interruption")
+
+    monkeypatch.setattr(collector, "atomic_text", interrupt)
+    with pytest.raises(RuntimeError, match="v2-v3 interruption"):
+        collector.private_candidates(directory, manifest, queries, migrate=True)
+    monkeypatch.setattr(collector, "atomic_text", original)
+    if stage != "active_guard":
+        with pytest.raises(ValueError, match="explicit migration"):
+            collector.status(directory)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert collector.status(directory)["historical_network_attempts_now_privacy_rejected"] == 4
+    assert (directory / collector.MIGRATION_FILE).read_bytes() == old_journal
