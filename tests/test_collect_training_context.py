@@ -13,9 +13,16 @@ from scripts import collect_training_context as collector
 
 def row(identifier, description="Fictional Cafe"):
     return {
-        "id": identifier, "input": {"description": description, "notes": "private note",
-                                    "account": "private account", "receipt_context": "private receipt"},
-        "source": "fictional", "merchant_family": "fictional", "split": "test",
+        "id": identifier,
+        "input": {
+            "description": description,
+            "notes": "private note",
+            "account": "private account",
+            "receipt_context": "private receipt",
+        },
+        "source": "fictional",
+        "merchant_family": "fictional",
+        "split": "test",
     }
 
 
@@ -23,11 +30,19 @@ def row(identifier, description="Fictional Cafe"):
 def snapshot(tmp_path, monkeypatch):
     monkeypatch.setattr(collector, "ROOT", tmp_path)
     monkeypatch.setattr(collector, "source_hashes", lambda paths=None: {"production": "fixed"})
-    monkeypatch.setattr(collector, "project", lambda rows, ledger_query=False: [
-        {"id": item["id"], "query": None if item["input"]["description"] == "unsafe" else {
-            "merchant": item["input"]["description"], "locality": ""}}
-        for item in rows
-    ])
+    monkeypatch.setattr(
+        collector,
+        "project",
+        lambda rows, ledger_query=False: [
+            {
+                "id": item["id"],
+                "query": None
+                if item["input"]["description"] == "unsafe"
+                else {"merchant": item["input"]["description"], "locality": ""},
+            }
+            for item in rows
+        ],
+    )
 
     def create(rows, private=False, ledger_query=False):
         source = tmp_path / "source.jsonl"
@@ -57,6 +72,7 @@ class Clock:
 
 class Search(MerchantSearch):
     """Keep production handle validation; replace only the network operation."""
+
     def __init__(self, clock, outcomes=("no_match",)):
         super().__init__()
         self.clock, self.outcomes, self.calls = clock, iter(outcomes), []
@@ -65,9 +81,21 @@ class Search(MerchantSearch):
         self.calls.append((merchant, locality, self.clock.time()))
         self.clock.sleep(2)
         outcome = next(self.outcomes)
-        context = {"version": "merchant-search-v1", "source": "duckduckgo", "results": [
-            {"title": "Fictional Cafe", "body": "Fictional Cafe serves coffee.",
-             "url": "https://example.org/cafe"}]} if outcome == "matched" else None
+        context = (
+            {
+                "version": "merchant-search-v1",
+                "source": "duckduckgo",
+                "results": [
+                    {
+                        "title": "Fictional Cafe",
+                        "body": "Fictional Cafe serves coffee.",
+                        "url": "https://example.org/cafe",
+                    }
+                ],
+            }
+            if outcome == "matched"
+            else None
+        )
         return {"outcome": outcome, "context": context}
 
 
@@ -92,17 +120,21 @@ def test_project_exposes_only_description_to_actual_swift_command(tmp_path, monk
         payload = collector.read_rows(Path(command[-1]))
         assert payload == [{"id": "opaque", "input": {"description": "Fictional Cafe"}}]
         assert kwargs["capture_output"] and kwargs["check"] and kwargs["timeout"] == 300
-        return SimpleNamespace(stdout='{"id":"opaque","query":{"merchant":"Fictional Cafe","locality":""}}\n')
+        return SimpleNamespace(
+            stdout='{"id":"opaque","query":{"merchant":"Fictional Cafe","locality":""}}\n'
+        )
 
     monkeypatch.setattr(collector.subprocess, "run", run)
     assert collector.project([row("opaque")])[0]["query"]["merchant"] == "Fictional Cafe"
 
 
 def test_actual_swift_sanitizer_rejects_private_transfers_and_strips_descriptors():
-    projected = collector.project([
-        row("safe", "POS Fictional Cafe 1234 AUTH private-value"),
-        row("unsafe", "Interac e-transfer to Private Person"),
-    ])
+    projected = collector.project(
+        [
+            row("safe", "POS Fictional Cafe 1234 AUTH private-value"),
+            row("unsafe", "Interac e-transfer to Private Person"),
+        ]
+    )
     assert projected == [
         {"id": "safe", "query": {"merchant": "Fictional Cafe", "locality": ""}},
         {"id": "unsafe", "query": None},
@@ -150,7 +182,9 @@ def test_lookup_limit_cache_dedup_and_resumption_bind_exact_queries(snapshot, ca
 
 
 @pytest.mark.parametrize("outcome,delay", [("blocked", 900), ("unavailable", 60)])
-def test_provider_failure_stops_and_resume_preserves_pending_during_backoff(snapshot, outcome, delay):
+def test_provider_failure_stops_and_resume_preserves_pending_during_backoff(
+    snapshot, outcome, delay
+):
     directory, _ = snapshot([row("first"), row("other", "Other Shop")])
     clock = Clock()
     search = Search(clock, (outcome, "no_match"))
@@ -183,9 +217,17 @@ def test_cache_expiry_and_capacity_match_production():
     assert len(state["cache"]) == 1000 and "0" not in state["cache"] and "1" not in state["cache"]
     collector.prune_cache(state, 86_400_000 + 1001)
     assert not state["cache"]
-    context = {"version": "merchant-search-v1", "source": "duckduckgo", "results": [
-        {"title": "Cafe", "body": "Cafe serves coffee.", "url": "https://example.org/"}]}
-    state["cache"]["matched"] = {"evidence": {"outcome": "matched", "context": context}, "fetched_at_ms": 0}
+    context = {
+        "version": "merchant-search-v1",
+        "source": "duckduckgo",
+        "results": [
+            {"title": "Cafe", "body": "Cafe serves coffee.", "url": "https://example.org/"}
+        ],
+    }
+    state["cache"]["matched"] = {
+        "evidence": {"outcome": "matched", "context": context},
+        "fetched_at_ms": 0,
+    }
     collector.prune_cache(state, 86_400_000)
     assert "matched" in state["cache"]
     collector.prune_cache(state, 2_592_000_000)
@@ -210,7 +252,9 @@ def test_records_are_never_overwritten_or_accepted_for_another_input(snapshot):
 def test_persisted_reservation_and_exclusive_lock_prevent_duplicate_dispatch(snapshot):
     directory, _ = snapshot([row("first")])
     clock = Clock()
-    collector.write_json(directory / "state.json", {"not_before_ms": int(clock.time() * 1000) + 45_000, "cache": {}})
+    collector.write_json(
+        directory / "state.json", {"not_before_ms": int(clock.time() * 1000) + 45_000, "cache": {}}
+    )
     search = Search(clock)
     assert collector.collect(directory, 1, 60, search, clock)["stop_reason"] == "backoff"
     assert not search.calls
@@ -237,12 +281,21 @@ def test_private_inputs_require_private_output(snapshot, tmp_path):
 
 def test_actual_ledger_query_uses_stored_merchant_and_locality_with_description_fallback():
     rows = [
-        {**row("stored", "POS Fallback Cafe 1234 AUTH private-value"),
-         "search_merchant": "Named Shop", "search_locality": " Waterloo ON "},
-        {**row("fallback", "POS Fallback Cafe 1234 AUTH private-value"),
-         "search_merchant": None, "search_locality": None},
-        {**row("unsafe", "Fictional Cafe"),
-         "search_merchant": "e-transfer to Private Person", "search_locality": "Waterloo"},
+        {
+            **row("stored", "POS Fallback Cafe 1234 AUTH private-value"),
+            "search_merchant": "Named Shop",
+            "search_locality": " Waterloo ON ",
+        },
+        {
+            **row("fallback", "POS Fallback Cafe 1234 AUTH private-value"),
+            "search_merchant": None,
+            "search_locality": None,
+        },
+        {
+            **row("unsafe", "Fictional Cafe"),
+            "search_merchant": "e-transfer to Private Person",
+            "search_locality": "Waterloo",
+        },
     ]
     assert collector.project(rows, ledger_query=True) == [
         {"id": "stored", "query": {"merchant": "Named Shop", "locality": "Waterloo ON"}},
@@ -260,21 +313,31 @@ def test_ledger_projection_subprocess_receives_only_exact_make_arguments(tmp_pat
         assert "MerchantTrainingQueryPilot" in command
         source = Path(command[-1])
         assert source.is_relative_to(tmp_path / ".private")
-        assert collector.read_rows(source) == [{
-            "id": "opaque", "input": {"description": "Fictional Cafe"},
-            "search_merchant": "Named Shop", "search_locality": "Waterloo",
-        }]
-        return SimpleNamespace(stdout='{"id":"opaque","query":{"merchant":"Named Shop","locality":"Waterloo"}}\n')
+        assert collector.read_rows(source) == [
+            {
+                "id": "opaque",
+                "input": {"description": "Fictional Cafe"},
+                "search_merchant": "Named Shop",
+                "search_locality": "Waterloo",
+            }
+        ]
+        return SimpleNamespace(
+            stdout='{"id":"opaque","query":{"merchant":"Named Shop","locality":"Waterloo"}}\n'
+        )
 
     monkeypatch.setattr(collector.subprocess, "run", run)
     assert collector.project([original], ledger_query=True)[0]["query"] == {
-        "merchant": "Named Shop", "locality": "Waterloo"}
+        "merchant": "Named Shop",
+        "locality": "Waterloo",
+    }
 
 
 def test_ledger_projection_rejects_nontext_snapshot_fields_before_swift(tmp_path, monkeypatch):
     monkeypatch.setattr(collector, "ROOT", tmp_path)
     with pytest.raises(ValueError, match="merchant/locality must be strings"):
-        collector.project([{**row("opaque"), "search_merchant": {"name": "Cafe"}}], ledger_query=True)
+        collector.project(
+            [{**row("opaque"), "search_merchant": {"name": "Cafe"}}], ledger_query=True
+        )
 
 
 def test_ledger_mode_is_frozen_and_cannot_reuse_legacy_projection(snapshot):
@@ -307,8 +370,13 @@ def test_legacy_load_checks_manifest_source_keys_after_new_target_is_added(snaps
 
 def test_ledger_network_handle_receives_only_sanitized_query(snapshot, monkeypatch):
     rows = [{**row("opaque"), "search_merchant": "Named Shop", "search_locality": "Waterloo"}]
-    monkeypatch.setattr(collector, "project", lambda values, ledger_query=False: [
-        {"id": values[0]["id"], "query": {"merchant": "Named Shop", "locality": "Waterloo"}}])
+    monkeypatch.setattr(
+        collector,
+        "project",
+        lambda values, ledger_query=False: [
+            {"id": values[0]["id"], "query": {"merchant": "Named Shop", "locality": "Waterloo"}}
+        ],
+    )
     directory, _ = snapshot(rows, private=True, ledger_query=True)
     clock = Clock()
     search = Search(clock)
@@ -321,17 +389,29 @@ def test_ledger_network_handle_receives_only_sanitized_query(snapshot, monkeypat
 
     monkeypatch.setattr(search, "handle", inspect)
     assert collector.collect(directory, 1, 60, search, clock)["completed"] == 1
-    assert requests == [{
-        "protocol_version": 1, "request_id": "training-context", "operation": "merchant_search",
-        "merchant": "Named Shop", "locality": "Waterloo",
-    }]
+    assert requests == [
+        {
+            "protocol_version": 1,
+            "request_id": "training-context",
+            "operation": "merchant_search",
+            "merchant": "Named Shop",
+            "locality": "Waterloo",
+        }
+    ]
 
 
-@pytest.mark.parametrize("merchant", [
-    "AMZNMKTPL CA AB12CD34", "DIGITALBILL CA Z9YXW8V7", "Fictional Shop AB12-CD34",
-    "Fictional Shop AB12", "Fictional Shop ab12cd34",
-    "Fictional Shop A123", "Fictional Shop 123A",
-])
+@pytest.mark.parametrize(
+    "merchant",
+    [
+        "AMZNMKTPL CA AB12CD34",
+        "DIGITALBILL CA Z9YXW8V7",
+        "Fictional Shop AB12-CD34",
+        "Fictional Shop AB12",
+        "Fictional Shop ab12cd34",
+        "Fictional Shop A123",
+        "Fictional Shop 123A",
+    ],
+)
 def test_private_query_guard_rejects_identifier_candidates_without_rewriting(merchant):
     query = {"merchant": merchant, "locality": ""}
     original = dict(query)
@@ -339,23 +419,37 @@ def test_private_query_guard_rejects_identifier_candidates_without_rewriting(mer
     assert query == original
 
 
-@pytest.mark.parametrize("merchant", ["Fictional Cafe", "3M", "7-Eleven", "B2B Cafe", "Studio Cafe"])
+@pytest.mark.parametrize(
+    "merchant", ["Fictional Cafe", "3M", "7-Eleven", "B2B Cafe", "Studio Cafe"]
+)
 def test_private_query_guard_accepts_nonsensitive_names(merchant):
     assert collector.private_query_rejection({"merchant": merchant, "locality": ""}) is None
 
 
 def test_private_guard_runs_before_cache_and_network_and_records_actual_candidate(snapshot):
-    directory, _ = snapshot([
-        row("marketplace", "AMZNMKTPL CA AB12CD34"),
-        row("digital", "DIGITALBILL CA Z9YXW8V7"), row("ordinary"),
-    ], private=True)
+    directory, _ = snapshot(
+        [
+            row("marketplace", "AMZNMKTPL CA AB12CD34"),
+            row("digital", "DIGITALBILL CA Z9YXW8V7"),
+            row("ordinary"),
+        ],
+        private=True,
+    )
     clock = Clock()
     risky_query = {"merchant": "AMZNMKTPL CA AB12CD34", "locality": ""}
-    collector.write_json(directory / "state.json", {"not_before_ms": 0, "cache": {
-        collector.cache_key(risky_query): {
-            "evidence": {"outcome": "no_match", "context": None},
-            "fetched_at_ms": int(clock.time() * 1000), "source_id": "earlier",
-        }}})
+    collector.write_json(
+        directory / "state.json",
+        {
+            "not_before_ms": 0,
+            "cache": {
+                collector.cache_key(risky_query): {
+                    "evidence": {"outcome": "no_match", "context": None},
+                    "fetched_at_ms": int(clock.time() * 1000),
+                    "source_id": "earlier",
+                }
+            },
+        },
+    )
     search = Search(clock)
     result = collector.collect(directory, 1, 60, search, clock)
     assert result["completed"] == 3 and result["lookups_this_run"] == 1
@@ -367,14 +461,23 @@ def test_private_guard_runs_before_cache_and_network_and_records_actual_candidat
         assert record["effective_query"] is None and record["outcome"] == "unsafe_query"
         assert record["retrieval_provenance"]["diagnostic"] == "privacy_rejected"
         assert not record["cached"] and not record["retrieval_provenance"]["network_attempted"]
-        assert record["private_query_guard"]["version"] == "private-training-query-v1"
+        assert (
+            record["private_query_guard"]["version"]
+            == collector.private_training_query_guard.VERSION
+        )
     assert collector.collect(directory, 1, 60, search, clock)["lookups_this_run"] == 0
 
 
 def test_private_guard_never_reads_notes_receipts_amount_or_account(snapshot):
     value = row("ordinary")
-    value["input"].update({"notes": "AB12CD34", "receipt_context": "AB12CD34",
-                           "account": "AB12CD34", "amount": "9999"})
+    value["input"].update(
+        {
+            "notes": "AB12CD34",
+            "receipt_context": "AB12CD34",
+            "account": "AB12CD34",
+            "amount": "9999",
+        }
+    )
     directory, _ = snapshot([value], private=True)
     clock = Clock()
     search = Search(clock)
@@ -394,12 +497,21 @@ def test_public_policy_ignores_private_guard_and_writes_no_guard_sidecars(snapsh
 
 
 def test_private_guard_preserves_historical_network_audit_and_only_gates_pending(snapshot):
-    directory, _ = snapshot([
-        row("earlier", "AMZNMKTPL CA AB12CD34"), row("pending", "DIGITALBILL CA Z9YXW8V7"),
-    ], private=True)
+    directory, _ = snapshot(
+        [
+            row("earlier", "AMZNMKTPL CA AB12CD34"),
+            row("pending", "DIGITALBILL CA Z9YXW8V7"),
+        ],
+        private=True,
+    )
     first = collector.read_rows(directory / "queries.jsonl")[0]
-    record = {**first, "outcome": "no_match", "merchant_context": None, "cached": False,
-              "retrieval_provenance": {"network_attempted": True}}
+    record = {
+        **first,
+        "outcome": "no_match",
+        "merchant_context": None,
+        "cached": False,
+        "retrieval_provenance": {"network_attempted": True},
+    }
     path = collector.record_path(directory, first)
     collector.write_json(path, record, immutable=True)
     original = path.read_bytes()
@@ -421,3 +533,248 @@ def test_private_guard_source_version_and_effective_candidates_are_frozen(snapsh
     with pytest.raises(ValueError, match="Frozen private query guard/candidates changed"):
         collector.collect(directory, 1, 60, search, clock)
     assert not search.calls
+
+
+def make_legacy_collection(snapshot, monkeypatch):
+    """Offline v1-policy records produced through the real collector/handle."""
+    directory, source = snapshot(
+        [
+            row("past-mobi", "PRESTO MOBI ABCDEFGHIJ"),
+            row("past-appl", "PRESTO APPL KLMNOPQRST TORONTO ON"),
+            row("old-rejected", "Fictional Shop AB12CD34"),
+            row("pending-mobi", "PRESTO MOBI UVWXYZABCD"),
+            row("ordinary", "Fictional Cafe"),
+        ],
+        private=True,
+    )
+    manifest, _, queries = collector.load(directory)
+    candidates = collector.candidate_rows(
+        queries, collector.private_training_query_guard.legacy_private_query_rejection
+    )
+    contents = collector.candidate_text(candidates)
+    guard = {
+        "version": collector.LEGACY_GUARD,
+        "source_sha256": collector.sha256(
+            Path(collector.private_training_query_guard.__file__).read_bytes()
+        ),
+        "frozen_queries_sha256": manifest["queries_sha256"],
+        "effective_queries_sha256": collector.sha256(contents.encode()),
+        "policy": collector.GUARD_POLICY,
+    }
+    collector.atomic_text(directory / "private-effective-queries.jsonl", contents)
+    collector.write_json(directory / "private-query-guard.json", guard)
+    clock = Clock()
+    search = Search(clock, ("no_match", "no_match"))
+    with monkeypatch.context() as old_policy:
+        old_policy.setattr(
+            collector.private_training_query_guard, "VERSION", collector.LEGACY_GUARD
+        )
+        old_policy.setattr(
+            collector,
+            "private_query_rejection",
+            collector.private_training_query_guard.legacy_private_query_rejection,
+        )
+        result = collector.collect(directory, 2, 100, search, clock)
+    assert result["completed"] == 3
+    assert len(search.calls) == 2
+    return directory, source, manifest, queries
+
+
+@pytest.mark.parametrize("prefix", ["MOBI", "APPL"])
+def test_v2_rejects_alphabetic_fare_references_only_under_provider_prefix(prefix):
+    query = {"merchant": f"PRESTO {prefix} ABCDEFGHIJ TORONTO ON", "locality": ""}
+    before = dict(query)
+    assert collector.private_training_query_guard.legacy_private_query_rejection(query) is None
+    assert collector.private_query_rejection(query) == "mobile_transit_alphabetic_reference"
+    assert query == before
+    assert (
+        collector.private_query_rejection(
+            {"merchant": "Fictional ABCDEFGHIJ Market", "locality": ""}
+        )
+        is None
+    )
+
+
+def test_migration_preserves_actual_old_record_bytes_and_never_retries_rejected_queries(
+    snapshot, monkeypatch
+):
+    directory, source, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    frozen_before = {
+        path: path.read_bytes()
+        for path in (
+            source,
+            directory / "manifest.json",
+            directory / "input.jsonl",
+            directory / "queries.jsonl",
+        )
+    }
+    old_records = {path: path.read_bytes() for path in (directory / "records").glob("*.json")}
+    old_guard = (directory / "private-query-guard.json").read_bytes()
+    old_candidates = (directory / "private-effective-queries.jsonl").read_bytes()
+    with pytest.raises(ValueError, match="explicit migration"):
+        collector.status(directory)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    archive = directory / "private-query-guard-history" / collector.LEGACY_GUARD
+    assert (archive / "private-query-guard.json").read_bytes() == old_guard
+    assert (archive / "private-effective-queries.jsonl").read_bytes() == old_candidates
+    assert all(path.read_bytes() == value for path, value in old_records.items())
+    summary = collector.status(directory)
+    assert summary["historical_network_attempts_now_privacy_rejected"] == 2
+    assert summary["privacy_rejected_rows"] == 4
+    clock, search_clock = Clock(), Clock()
+    search = Search(search_clock)
+    result = collector.collect(directory, 1, 100, search, clock)
+    assert result["completed"] == 5
+    assert [call[0] for call in search.calls] == ["Fictional Cafe"]
+    pending_record = json.loads(
+        collector.record_path(directory, {"id": "pending-mobi"}).read_text()
+    )
+    assert (
+        pending_record["private_query_guard"]["version"]
+        == collector.private_training_query_guard.VERSION
+    )
+    assert pending_record["effective_query"] is None
+    assert pending_record["retrieval_provenance"]["network_attempted"] is False
+    assert all(path.read_bytes() == value for path, value in old_records.items())
+    assert all(path.read_bytes() == value for path, value in frozen_before.items())
+    assert collector.collect(directory, 1, 100, search, clock)["lookups_this_run"] == 0
+    before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert all(p.read_bytes() == content for p, content in before.items())
+
+
+@pytest.mark.parametrize(
+    "stage",
+    [
+        "archive_guard",
+        "archive_candidates",
+        "record_hashes",
+        "journal",
+        "active_candidates",
+        "active_guard",
+    ],
+)
+def test_interrupted_private_guard_migration_recovers_only_explicitly(snapshot, monkeypatch, stage):
+    directory, _, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    archive = directory / "private-query-guard-history" / collector.LEGACY_GUARD
+    target = {
+        "archive_guard": archive / "private-query-guard.json",
+        "archive_candidates": archive / "private-effective-queries.jsonl",
+        "record_hashes": archive / "record-hashes.json",
+        "journal": directory / collector.MIGRATION_FILE,
+        "active_candidates": directory / "private-effective-queries.jsonl",
+        "active_guard": directory / "private-query-guard.json",
+    }[stage]
+    original = collector.atomic_text
+    triggered = []
+
+    def interrupt(path, text, immutable=False):
+        original(path, text, immutable)
+        if Path(path) == target and not triggered:
+            triggered.append(True)
+            raise RuntimeError("fictional interrupted atomic step")
+
+    monkeypatch.setattr(collector, "atomic_text", interrupt)
+    with pytest.raises(RuntimeError, match="interrupted atomic"):
+        collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert triggered
+    monkeypatch.setattr(collector, "atomic_text", original)
+    if stage != "active_guard":
+        with pytest.raises(ValueError, match="explicit migration"):
+            collector.status(directory)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert (
+        collector.status(directory)["private_query_guard_version"]
+        == collector.private_training_query_guard.VERSION
+    )
+    assert collector.status(directory)["historical_network_attempts_now_privacy_rejected"] == 2
+
+
+def test_migration_refuses_old_effective_query_widening_even_with_self_consistent_hash(
+    snapshot, monkeypatch
+):
+    directory, _, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    path = directory / "private-effective-queries.jsonl"
+    rows = collector.read_rows(path)
+    rows[0]["effective_query"] = {"merchant": "A changed public-looking query", "locality": ""}
+    contents = "".join(collector.canonical(r) + "\n" for r in rows)
+    collector.atomic_text(path, contents)
+    guard = json.loads((directory / "private-query-guard.json").read_text())
+    guard["effective_queries_sha256"] = collector.sha256(contents.encode())
+    collector.write_json(directory / "private-query-guard.json", guard)
+    with pytest.raises(ValueError, match="corrupt or widen"):
+        collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert not (directory / collector.MIGRATION_FILE).exists()
+
+
+@pytest.mark.parametrize("corruption", ["archive", "historical_record", "journal"])
+def test_migrated_archive_and_historical_records_cannot_be_rewritten(
+    snapshot, monkeypatch, corruption
+):
+    directory, _, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    archive = directory / "private-query-guard-history" / collector.LEGACY_GUARD
+    if corruption == "archive":
+        path = archive / "private-query-guard.json"
+    elif corruption == "historical_record":
+        path = collector.record_path(directory, {"id": "past-mobi"})
+    else:
+        path = directory / collector.MIGRATION_FILE
+    with path.open("a") as stream:
+        stream.write(" ")
+    # JSON whitespace still changes immutable byte identity in guard/record data.
+    if corruption == "journal":
+        value = json.loads(path.read_text())
+        value["old_guard_sha256"] = "0" * 64
+        collector.write_json(path, value)
+    clock = Clock()
+    search = Search(clock)
+    with pytest.raises(ValueError, match="changed"):
+        collector.collect(directory, 1, 100, search, clock)
+    assert not search.calls
+
+
+def test_historical_archive_is_loaded_once_per_validation_pass(snapshot, monkeypatch):
+    directory, _, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    candidates, guard = collector.private_candidates(directory, manifest, queries)
+    done = collector.completed(directory, queries)
+    calls, original = [], collector.legacy_bundle
+
+    def counted(*args):
+        calls.append(args[0])
+        return original(*args)
+
+    monkeypatch.setattr(collector, "legacy_bundle", counted)
+    collector.validate_private_records(done, candidates, guard, directory)
+    assert len(calls) == 1
+
+
+def test_migration_cannot_remove_old_rejections(snapshot, monkeypatch):
+    directory, _, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    before = (directory / "private-query-guard.json").read_bytes()
+    monkeypatch.setattr(collector, "private_query_rejection", lambda query: None)
+    with pytest.raises(ValueError, match="may only add rejections"):
+        collector.private_candidates(directory, manifest, queries, migrate=True)
+    assert (directory / "private-query-guard.json").read_bytes() == before
+    assert not (directory / collector.MIGRATION_FILE).exists()
+
+
+def test_new_record_cannot_impersonate_pre_migration_guard_version(snapshot, monkeypatch):
+    directory, _, manifest, queries = make_legacy_collection(snapshot, monkeypatch)
+    collector.private_candidates(directory, manifest, queries, migrate=True)
+    archive = directory / "private-query-guard-history" / collector.LEGACY_GUARD
+    guard, candidates = collector.legacy_bundle(archive, manifest, queries)
+    query = next(q for q in queries if q["id"] == "pending-mobi")
+    record = {
+        **query,
+        "outcome": "no_match",
+        "merchant_context": None,
+        "cached": False,
+        "private_query_guard": {**guard, "rejection": candidates[query["id"]]["rejection"]},
+        "effective_query": query["query"],
+        "retrieval_provenance": {"network_attempted": True},
+    }
+    collector.write_json(collector.record_path(directory, query), record, immutable=True)
+    with pytest.raises(ValueError, match="Unregistered historical private guard record"):
+        collector.status(directory)

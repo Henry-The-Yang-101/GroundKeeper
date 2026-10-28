@@ -7,14 +7,14 @@ never a transaction, note, receipt, amount, account, or classifier label.
 
 import re
 
-VERSION = "private-training-query-v1"
+VERSION = "private-training-query-v2"
 # A narrow public-name exception; short names such as 3M are below the reference
 # threshold. Other ambiguous long mixed names remain conservatively rejected.
 PUBLIC_DIGIT_NAMES = frozenset({"7eleven"})
 
 
-def private_query_rejection(query):
-    """Return a fixed rejection reason, or None; inspect only query.merchant."""
+def legacy_private_query_rejection(query):
+    """Pinned v1 policy, used only to verify historical migration artifacts."""
     if query is None:
         return None
     merchant = query.get("merchant") if isinstance(query, dict) else None
@@ -32,4 +32,17 @@ def private_query_rejection(query):
         # suffixes when their shape strongly resembles an identifier.
         if letters and digits and (len(compact) >= 6 or (index > 0 and len(compact) >= 4)):
             return "mixed_alphanumeric_reference"
+    return None
+
+
+def private_query_rejection(query):
+    """Reject the whole candidate; v2 only adds to the pinned v1 rejections."""
+    rejection = legacy_private_query_rejection(query)
+    if rejection or query is None:
+        return rejection
+    merchant = query["merchant"]
+    # Mobile fare descriptors also use ten-letter references with no digits.
+    # The provider prefix disambiguates these from ordinary long business names.
+    if re.search(r"\bPRESTO\s+(?:MOBI|APPL)\s+[A-Z]{10}\b", merchant, flags=re.IGNORECASE):
+        return "mobile_transit_alphabetic_reference"
     return None
