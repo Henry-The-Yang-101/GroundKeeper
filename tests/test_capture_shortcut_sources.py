@@ -385,12 +385,14 @@ def test_location_is_sampled_once_before_prompts_and_uses_numeric_coordinates():
         if a["WFWorkflowActionParameters"].get("WFDictionaryKey") == "location_status"
     ]
     assert statuses == ["not_requested", "unavailable", "available"]
-    # The opt-out branches around the native action, so it never requests GPS.
+    # GPS requires an explicit opt-in. Missing, off and unrecognized flags take
+    # the bypass branch, so older automation dictionaries can still save.
     opt_out = next(
         i
         for i, a in enumerate(actions)
-        if a["WFWorkflowActionParameters"].get("WFConditionalActionString") == "off"
+        if a["WFWorkflowActionParameters"].get("WFConditionalActionString") == "on"
     )
+    assert actions[opt_out]["WFWorkflowActionParameters"]["WFCondition"] == 4
     group = actions[opt_out]["WFWorkflowActionParameters"]["GroupingIdentifier"]
     end = next(
         i
@@ -399,13 +401,18 @@ def test_location_is_sampled_once_before_prompts_and_uses_numeric_coordinates():
         and actions[i]["WFWorkflowActionParameters"].get("WFControlFlowMode") == 2
     )
     assert opt_out < samples[0] < end < first_menu
+    assert not any(
+        a["WFWorkflowActionParameters"].get("GroupingIdentifier") == group
+        and a["WFWorkflowActionParameters"].get("WFControlFlowMode") == 1
+        for a in actions[opt_out:end]
+    )
     for kind in ("Wallet", "CIBC"):
         adapter = plistlib.loads((ROOT / f"GroundKeeper {kind} Automation.plist").read_bytes())
         fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"][
             "WFDictionaryFieldValueItems"
         ]
         setting = next(f for f in fields if f["WFKey"]["Value"]["string"] == "capture_location")
-        assert setting["WFValue"]["Value"]["string"] == "on"
+        assert setting["WFValue"]["Value"]["string"] == "off"
     for name in ("GroundKeeper Add Receipt", "GroundKeeper Attach Receipt Later", "GK Receipt OCR"):
         assert (
             "is.workflow.actions.getcurrentlocation" not in (ROOT / (name + ".plist")).read_text()

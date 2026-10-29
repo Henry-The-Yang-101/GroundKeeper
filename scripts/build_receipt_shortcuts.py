@@ -322,16 +322,15 @@ def location_capture(workflow):
     """Sample once before interactive details, preserving existing action IDs.
 
     The native action can stop Shortcuts on permission/GPS errors; Shortcuts has
-    no catch action. The adapter's capture_location=off setting bypasses it.
+    no catch action. Only capture_location=on opts into that blocking action;
+    missing or other values must never prevent a payment from being saved.
     A returned empty sample falls through with an explicit unavailable status.
     """
     w = Workflow("GroundKeeper Location Capture", workflow)
     saved = variable("Saved Event")
     setting = w.get(saved, "capture_location")
     w.setvar("Saved Event", w.put(saved, "location_status", "not_requested"))
-    disabled = condition(w, setting, 4, "off")
-    w.add("nothing")
-    w.add("conditional", GroupingIdentifier=disabled, WFControlFlowMode=1)
+    enabled = condition(w, setting, 4, "on")
     w.setvar("Saved Event", w.put(saved, "location_status", "unavailable"))
     sample = w.add("getcurrentlocation")
     available = condition(w, sample)
@@ -355,7 +354,7 @@ def location_capture(workflow):
     w.setvar("Saved Event", w.put(saved, "location", location))
     w.setvar("Saved Event", w.put(saved, "location_status", "available"))
     endif(w, available)
-    endif(w, disabled)
+    endif(w, enabled)
 
     actions = workflow["WFWorkflowActions"]
     first_menu = next(
@@ -634,10 +633,18 @@ def main():
         fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"][
             "WFDictionaryFieldValueItems"
         ]
-        if not any(field["WFKey"]["Value"]["string"] == "capture_location" for field in fields):
+        location = next(
+            (field for field in fields if field["WFKey"]["Value"]["string"] == "capture_location"),
+            None,
+        )
+        if location is None:
             fields.append(
-                {"WFItemType": 0, "WFKey": text("capture_location"), "WFValue": text("on")}
+                {"WFItemType": 0, "WFKey": text("capture_location"), "WFValue": text("off")}
             )
+        else:
+            # Distributed automations must not wait for an unbounded GPS fix.
+            # Users can explicitly opt in after checking their receiving phone.
+            location["WFValue"] = text("off")
         for key, value in (
             ("wallet_priority_currency", "CAD"),
             ("wallet_priority_group", "default"),

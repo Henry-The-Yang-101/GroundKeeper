@@ -73,8 +73,8 @@ Transaction; Attach Receipt Later → Add Receipt. Select the installed helper e
    JSON to the inbox; the earlier image Save File action belongs in `inbox/assets`.
    The installer initially asks where to save; configure both destinations and
    turn off **Ask Where to Save**. The writer adds the schema version, event ID
-   and capture time, samples location, collects optional details, then saves the
-   completed envelope. Run it once while unlocked to grant location access.
+   and capture time, optionally samples location, collects optional details, then saves the
+   completed envelope. Location capture is off by default; see the opt-in below.
 3. Open **GroundKeeper Wallet Automation**. Check that its **Run Shortcut**
    action targets the shared capture writer. Its dictionary uses
    `source: wallet_transaction`, `app: Wallet`, and the trigger's card/pass,
@@ -185,22 +185,35 @@ a receiving-device check.
 
 ## Location at capture
 
-The shared writer uses **Get Current Location** once before the receipt/note
-menus, for both Wallet and CIBC payments. It writes latitude, longitude, a sample
+Location capture is **off by default** for both Wallet and CIBC. The native
+**Get Current Location** action has no bounded timeout or error recovery and can
+stop either automation before its menu appears or its payment is saved.
+
+To opt in, change **capture_location** from `off` to `on` in the adapter's
+Dictionary, grant Shortcuts location access while the phone is unlocked, and
+check a run on the receiving phone. The writer then samples once before the receipt/note
+menus. It writes latitude, longitude, a sample
 time and `location_status: available` into the same schema 4 JSON saved to the
 inbox. It does not use receipt-photo GPS or the Mac's location. The sample time
 records when the location action returns; it is separate from the event's
 `captured_at`. Accuracy is omitted because the inspected action exposes no
 measured horizontal accuracy.
 
-In either adapter's Dictionary, change **capture_location** from `on` to `off`
-to opt out. The writer then records `not_requested` without asking for location.
+Leave **capture_location** set to `off` to avoid that blocking request. The writer
+records `not_requested` without asking for location. A missing or unrecognized
+setting also skips location; only the literal `on` enables it.
 No-output location results record `unavailable` and continue. Shortcuts can stop
 the run on a location permission or GPS error before the file is saved; its native
 actions do not provide a catch mechanism. Grant Shortcuts location access on the
 iPhone before using location capture, or set the adapter's flag to `off` and rerun.
 If you copied the adapter actions directly into a personal automation, add this
-field to that dictionary to control the setting; an absent field defaults to on.
+field to that dictionary to control the setting.
+
+Timeout recovery checked on 2026-10-28: the production location gate completed
+in native macOS Shortcuts for `off`, absent, empty and unrecognized flags without
+requesting GPS. Explicit `on` reached a fictional sample in that isolated check.
+The 49 portable capture, schema and Shortcut-provider checks also passed. These
+checks do not establish real iPhone GPS or locked-phone behavior.
 
 The Mac's transaction map shows **Phone location at capture** and the sample time.
 Bank notifications may arrive after you leave the shop. Location stays outside
@@ -212,6 +225,21 @@ Reimport the writer and both adapters to upgrade; check Run Shortcut targets and
 the writer's two Save File destinations again. Existing captures remain readable.
 Real iPhone GPS, denied permissions, locked-phone execution and iCloud delivery
 still need verification on the receiving phone.
+
+### Recovering from automation timeouts
+
+In both installed automations, set **capture_location** to `off`. Re-select the
+current **GroundKeeper Capture Transaction** in each **Run Shortcut** action
+after replacing the writer; an old internal reference can remain even when its
+name looks correct. In the writer, set the final JSON **Save File** destination
+to the connected inbox and its optional image destination to `inbox/assets`, with
+**Ask Where to Save** off and overwrite off for both.
+
+The receipt/note menus still require a response before the capture is saved.
+Unlock the phone and choose an option when prompted; an unanswered menu can also
+time out. This configuration does not provide unattended capture. If a run still
+times out with location off, record the failing action shown by Shortcuts so a
+location error is not confused with a prompt, folder-access, or iCloud failure.
 
 Verification on 2026-10-26: native Mac Shortcuts confirmed the location action,
 latitude/longitude properties and numeric Dictionary fields. A disposable copy

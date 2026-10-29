@@ -230,7 +230,7 @@
 									<key>Value</key>
 									<dict>
 										<key>string</key>
-										<string>on</string>
+										<string>off</string>
 									</dict>
 									<key>WFSerializationType</key>
 									<string>WFTextTokenString</string>

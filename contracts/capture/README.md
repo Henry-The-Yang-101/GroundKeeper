@@ -126,14 +126,16 @@ when coordinates exist, otherwise `not_requested`, preserving older producers.
 The resolved status is stored in `raw_events.location_status`. Schema 1/2 do not
 accept location details or status.
 
-The bundled writer requests one current location before any receipt/note menus,
+With explicit opt-in, the bundled writer requests one current location before any receipt/note menus,
 then emits numeric coordinates and an ISO 8601 `measured_at` recording when the
 action returned. It omits accuracy because the inspected native location details
 action does not expose measured horizontal accuracy. The Wallet and CIBC adapters
-default `capture_location` to `on`; set it to `off` to skip the request. Receipt
+default `capture_location` to `off`; only the literal `on` enables the request.
+Missing or unrecognized flags skip location with `not_requested`. Receipt
 attachments do not sample a new location for an earlier payment. Empty location
 output records `unavailable` and continues. Native Shortcuts permission/GPS errors
-can stop the workflow before saving; they cannot be caught by these actions.
+can stop the workflow before saving; they cannot be caught or given a bounded
+timeout by these actions. The safe automation defaults avoid the request.
 Grant Shortcuts location access on the phone before enabling capture, or opt out.
 
 The Mac does not infer locations from merchants, receipt metadata, or its own
