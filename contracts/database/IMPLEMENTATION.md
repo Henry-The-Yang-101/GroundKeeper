@@ -199,8 +199,26 @@ and optional reliable posted-record IDs. Money uses checked integer arithmetic.
 The preview validates the entire file; users can skip rows, including all
 invalid rows. An invalid unskipped row rolls back the entire import. File hash
 plus source/account prevents reimporting a committed batch. Different exports
-use reliable record IDs when supplied; rows without them stay separate. A
-merchant/amount hash is never a purchase ID.
+use reliable record IDs when supplied, retaining conflict review for changed
+amounts/currencies. Without IDs, the importer links one longest consecutive,
+same-order matching block per earlier committed CSV for that account. A block
+may be anywhere in either file, may contain just one row, and requires exact
+parsed date, description (case-sensitive), signed amount, currency, account,
+and mapped bank ID equality. It does not collect scattered equal rows or reverse
+their order. Equal-length blocks use the first match in earlier-file row order;
+longer blocks take precedence across files, with earlier imports breaking ties.
+Skipped/unresolved/deleted/moved rows break earlier-file blocks; skipped or invalid
+incoming rows also break blocks. Each saved transaction covers at most one
+incoming row, preserving repeated-purchase counts. Conflicting blocks are left
+as separate records rather than split into individual matches.
+
+Overlap matching uses the linked statement observations, preserving saved edits
+and categories. Each overlapping row retains its own raw event, observation, and
+link to the existing transaction; its import-row status is `duplicate`. The
+returned processed-source count includes these linked rows. Same-file replay,
+skipped-row resume, mapping-correction review, and atomic rollback still apply.
+Existing duplicate transactions are not retroactively merged. A merchant/amount
+hash is never a purchase ID.
 
 Wallet and bank captures require an explicitly chosen account, either for that
 capture alone or through a remembered card mapping. Sync's **Remember this card

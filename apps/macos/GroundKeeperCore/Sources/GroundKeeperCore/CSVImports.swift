@@ -28,6 +28,7 @@ extension LedgerStore {
                 try db.query("INSERT INTO import_batches(id,source_id,account_scope_id,file_sha256,original_filename,mapping_snapshot_json,status,created_at_ms) VALUES (?,?,?,?,?,?,'preview',?)",
                     [.text(batch), .text(sourceID), .text(mapping.accountID), .text(document.hash), .text(document.filename), .text(try json(mapping)), .integer(nowMS())])
             }
+            let overlaps = try csvOverlapTargets(document, mapping: mapping, skipped: skipped, batchID: batch)
             var count = 0
             for (index, cells) in document.rows.enumerated() {
                 let number = index + 2
@@ -60,7 +61,15 @@ extension LedgerStore {
                 try db.query("INSERT INTO raw_event_payloads(event_id,payload_json) VALUES (?,?)", [.text(eventID), .text(payload)])
                 try db.query("INSERT INTO import_rows(id,batch_id,row_number,event_id,status,row_json) VALUES (?,?,?,?,'accepted',?) ON CONFLICT(batch_id,row_number) DO UPDATE SET event_id=excluded.event_id,status='accepted'",
                     [.text(identifier()), .text(batch), .integer(Int64(number)), .text(eventID), .text(payload)])
-                try process(observation, eventID: eventID, sourceID: sourceID, kind: "csv")
+                if let target = overlaps[number], observation.externalID == nil {
+                    let observationID = try recordObservation(observation, eventID: eventID)
+                    try link(eventID: eventID, observationID: observationID, transactionID: target, kind: "csv", actor: "system")
+                    try db.query("UPDATE import_rows SET status='duplicate' WHERE batch_id=? AND row_number=?", [.text(batch), .integer(Int64(number))])
+                } else {
+                    // Reliable bank IDs retain their existing identity/conflict
+                    // handling, independently of consecutive overlap matching.
+                    try process(observation, eventID: eventID, sourceID: sourceID, kind: "csv")
+                }
                 count += 1
             }
             try db.query("UPDATE import_batches SET status='committed',committed_at_ms=?,mapping_snapshot_json=? WHERE id=?", [.integer(nowMS()), .text(try json(mapping)), .text(batch)])
