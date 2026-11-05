@@ -109,10 +109,13 @@ func csvOverlapPreservesRepeatedPurchaseCounts(example: (String, String, Int)) a
     try await store.importCSV(csv("AB"), mapping: mapping)
     let saved = try #require(try await store.snapshot().transactions.first { $0.description == "FICTIONAL A" })
     try await store.save(.init(id: saved.id, revision: saved.revision, description: "My edited description", amountMinor: -1300, currency: "CAD", occurredOn: "2026-10-16", accountID: mapping.accountID, type: "expense", category: "dining", needsReview: false, notes: "Keep my note"))
+    // A later approved correction can also have changed the statement date.
+    _ = try await store.testRows("UPDATE transactions SET posted_on='2026-10-18' WHERE id='\(saved.id)'")
     try await store.importCSV(csv("ABC"), mapping: mapping)
     let edited = try #require(try await store.transaction(id: saved.id))
     #expect(edited.description == "My edited description" && edited.amountMinor == -1300 && edited.occurredOn == "2026-10-16")
     #expect(edited.notes == "Keep my note" && edited.category == "dining" && !edited.categoryNeedsReview)
+    #expect(edited.postedOn == "2026-10-18")
     #expect(try await store.snapshot().totalTransactions == 3)
     #expect(try await store.integrityCheck())
     await store.close()

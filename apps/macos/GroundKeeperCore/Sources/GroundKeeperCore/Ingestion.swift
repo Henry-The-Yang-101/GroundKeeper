@@ -138,11 +138,11 @@ extension LedgerStore {
         try Self.resolveMerchant(db: db, transactionID: id, description: observation.description)
         return id
     }
-    func link(eventID: String, observationID: String, transactionID: String, kind: String, actor: String) throws {
+    func link(eventID: String, observationID: String, transactionID: String, kind: String, actor: String, updateStatement: Bool = true) throws {
         let decisionID = identifier()
         try db.query("INSERT INTO reconciliation_decisions(id,event_id,left_transaction_id,action,actor,algorithm_version,evidence_json,created_at_ms) VALUES (?,?,?,'link',?,'swift-v1','{}',?)", [.text(decisionID), .text(eventID), .text(transactionID), .text(actor), .integer(nowMS())])
         try db.query("INSERT INTO transaction_event_links(id,transaction_id,event_id,observation_id,role,decision_id,linked_at_ms) VALUES (?,?,?,?,?,?,?)", [.text(identifier()), .text(transactionID), .text(eventID), .text(observationID), .text(kind == "csv" ? "posted" : "capture"), .text(decisionID), .integer(nowMS())])
-        if kind == "csv" {
+        if kind == "csv", updateStatement {
             let observation = try db.query("SELECT posted_on FROM event_observations WHERE id=?", [.text(observationID)]).first!
             try db.query("UPDATE transactions SET lifecycle='posted',posted_on=?,revision=revision+1,updated_at_ms=? WHERE id=?", [.optional(observation["posted_on"]?.string), .integer(nowMS()), .text(transactionID)])
         }

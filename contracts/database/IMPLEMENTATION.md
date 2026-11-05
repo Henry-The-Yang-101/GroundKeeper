@@ -212,9 +212,10 @@ incoming rows also break blocks. Each saved transaction covers at most one
 incoming row, preserving repeated-purchase counts. Conflicting blocks are left
 as separate records rather than split into individual matches.
 
-Overlap matching uses the linked statement observations, preserving saved edits
-and categories. Each overlapping row retains its own raw event, observation, and
-link to the existing transaction; its import-row status is `duplicate`. The
+Overlap matching uses the linked statement observations, preserving saved edits,
+statement dates, and categories. Each overlapping row retains its own raw event,
+observation, and link to the existing transaction; its import-row status is
+`duplicate`. The
 returned processed-source count includes these linked rows. Same-file replay,
 skipped-row resume, mapping-correction review, and atomic rollback still apply.
 Existing duplicate transactions are not retroactively merged. A merchant/amount

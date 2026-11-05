@@ -63,7 +63,7 @@ extension LedgerStore {
                     [.text(identifier()), .text(batch), .integer(Int64(number)), .text(eventID), .text(payload)])
                 if let target = overlaps[number], observation.externalID == nil {
                     let observationID = try recordObservation(observation, eventID: eventID)
-                    try link(eventID: eventID, observationID: observationID, transactionID: target, kind: "csv", actor: "system")
+                    try link(eventID: eventID, observationID: observationID, transactionID: target, kind: "csv", actor: "system", updateStatement: false)
                     try db.query("UPDATE import_rows SET status='duplicate' WHERE batch_id=? AND row_number=?", [.text(batch), .integer(Int64(number))])
                 } else {
                     // Reliable bank IDs retain their existing identity/conflict
