@@ -8,7 +8,8 @@ Mac. Local Qwen and Laya classification do not require Shortcuts.
 
 | File | Purpose |
 | --- | --- |
-| [GroundKeeper Capture Transaction.shortcut](GroundKeeper%20Capture%20Transaction.shortcut) | Shared iPhone capture writer |
+| [GroundKeeper Capture Automatically.shortcut](GroundKeeper%20Capture%20Automatically.shortcut) | Shared automatic writer; no optional prompts |
+| [GroundKeeper Capture Transaction.shortcut](GroundKeeper%20Capture%20Transaction.shortcut) | Legacy interactive writer and receipt-helper support |
 | [GroundKeeper Wallet Automation.shortcut](GroundKeeper%20Wallet%20Automation.shortcut) | Wallet transaction adapter; pass automation input |
 | [GK Receipt OCR.shortcut](GK%20Receipt%20OCR.shortcut) | Local Apple Extract Text from Image action |
 | [GroundKeeper Add Receipt.shortcut](GroundKeeper%20Add%20Receipt.shortcut) | Attach a receipt to an existing payment |
@@ -54,29 +55,30 @@ See the [benchmark report](https://github.com/Henry-The-Yang-101/GroundKeeper/bl
 
 The app’s first-launch assistant and Settings include install/share buttons for
 the signed capture writer, receipt helpers, Wallet adapter, and Cloud classifier. Use Shortcuts
-iCloud sync or AirDrop to get them onto your iPhone. Install the shared writer
-before the adapters. The CIBC adapter is available separately as an experiment.
+iCloud sync or AirDrop to get them onto your iPhone. Install **GroundKeeper Capture
+Automatically** before the adapters. It saves payments without receipt/note menus
+or GPS requests. Add optional details later using **Notes & receipts…** in
+GroundKeeper. Keep Capture Transaction installed if you use the receipt helpers.
+The CIBC adapter is available separately as an experiment.
 
 The distributable sources contain no personal folder bookmarks, card selections,
 or device-specific automation references. Adapters read **Shortcut Input**;
 create the personal automation on your phone and pass its transaction or
 notification input to the adapter. If the shared writer is not resolved by name,
 reselect it in the adapter’s **Run Shortcut** action.
-Check every Run Shortcut target after importing: Wallet/CIBC → Capture Transaction;
+Check every Run Shortcut target after importing: Wallet/CIBC → Capture Automatically;
 Capture Transaction → GK Receipt OCR; Add Receipt → GK Receipt OCR and Capture
 Transaction; Attach Receipt Later → Add Receipt. Select the installed helper explicitly if necessary.
 
 1. Enable iCloud Drive and Shortcuts sync on both devices. Reuse
    `iCloud Drive/Shortcuts/Groundkeeper/inbox` as the capture destination.
-2. Open **GroundKeeper Capture Transaction** on the iPhone. Check its Save File
-   destination and grant access to that folder. The final Save File action writes
-   JSON to the inbox; the earlier image Save File action belongs in `inbox/assets`.
-   The installer initially asks where to save; configure both destinations and
-   turn off **Ask Where to Save**. The writer adds the schema version, event ID
-   and capture time, optionally samples location, collects optional details, then saves the
-   completed envelope. Location capture is off by default; see the opt-in below.
+2. Open **GroundKeeper Capture Automatically** on the iPhone. Set its JSON Save
+   File destination to the inbox and grant folder access. Turn off **Ask Where to
+   Save** and overwrite. The writer adds the schema version, event ID and capture
+   time, records location as `not_requested`, and saves without optional prompts.
+   Legacy receipt helpers have separate inbox/assets destinations to configure.
 3. Open **GroundKeeper Wallet Automation**. Check that its **Run Shortcut**
-   action targets the shared capture writer. Its dictionary uses
+   action targets **GroundKeeper Capture Automatically**. Its dictionary uses
    `source: wallet_transaction`, `app: Wallet`, and the trigger's card/pass,
    merchant, amount, name, and transaction values. Re-select those variables
    on the receiving phone if needed.
@@ -119,14 +121,20 @@ Shortcut too when using the Apple Shortcut provider so it includes these rules.
 
 ## Wallet priority when both automations fire
 
+The adapters now call **GroundKeeper Capture Automatically**. Its Wallet marker
+is written only after the JSON Save File action succeeds. A failed or cancelled
+Wallet save cannot suppress the bank fallback. Its separate `wallet-saved-v1`
+storage namespace ignores the legacy writer's started-only reservations. No
+receipt, note, photo, OCR, or location action runs during automatic capture.
+
 The current shared writer uses the native **Store Content** and **Get Stored
 Content** actions, available in [iOS 27 and macOS 27](https://support.apple.com/en-tm/149045).
 Both system triggers can still fire. The writer makes Wallet proceed immediately
-and makes a recognizable CIBC purchase wait **15 seconds** before requesting
-location or showing any receipt/note menus. If it finds a matching Wallet run
+and makes a recognizable CIBC purchase wait **15 seconds** before saving. If it
+finds a matching successfully saved Wallet run
 whose original capture time is **less than 90 seconds** apart, CIBC stops with
-no saved file, receipt prompts or success notification. A bank-only purchase
-continues normally after the delay. This also covers CIBC starting first when
+no second file or success notification. A bank-only purchase saves after the
+delay. This also covers CIBC starting first when
 Wallet reaches the writer during that 15-second grace period.
 
 Matching requires the same merchant after trimming/collapsing whitespace and
@@ -147,19 +155,17 @@ Both adapter dictionaries include two matching hints:
 
 These hints do not rewrite payment amounts, currencies or account mappings on
 the Mac. Older adapters that omit them use the same defaults. Reimport **GroundKeeper
-Capture Transaction** to enable the check, and reimport the adapters to expose
-the settings. Recheck the writer's existing inbox/assets Save File destinations
+Capture Automatically** to enable the check, and reimport the adapters to expose
+the settings. Recheck the writer's inbox Save File destination
 and the adapters' Run Shortcut targets after replacement.
 
-The marker is written before Wallet's location request and menus, so CIBC can
-recognize a Wallet capture that is still open. Cancelling or failing that Wallet
-run does not resume an already skipped CIBC run: retry the Wallet capture or
-capture the payment manually. Separate same-price purchases at the same merchant
+The marker proves the Wallet file was saved, not that iCloud uploaded it or the
+Mac imported it. Separate same-price purchases at the same merchant
 within the window cannot be distinguished without a shared transaction ID.
 If Wallet arrives after CIBC's grace period, both flows can proceed; the Mac's
 existing duplicate review remains available.
 
-Storage is scoped to the shared writer. At most 256 slots retain a SHA-256
+Storage is scoped to the automatic writer. At most 256 slots retain a SHA-256
 fingerprint and original capture time, without storing merchant/amount text in
 the marker. Each lookup checks the full fingerprint, so a slot collision can
 only let a duplicate through. Stored values can sync through Shortcuts iCloud
@@ -174,7 +180,7 @@ For native verification without real payments, location, menus or inbox writes:
 .venv/bin/python scripts/check_wallet_priority_shortcuts.py --run
 ```
 
-The harness executes the production priority actions with fictional inputs and
+The harness executes the legacy writer's priority matching actions with fictional inputs and
 separate Shortcut storage, including simultaneous runs with CIBC starting first.
 On 2026-10-27, all 16 native macOS scenarios and 48 Python capture/classifier/
 schema checks passed. Native checks included matching captures, both trigger
@@ -184,6 +190,10 @@ Real iPhone automation scheduling, locked-phone execution and sync still require
 a receiving-device check.
 
 ## Location at capture
+
+Automatic capture never requests GPS, including when an older adapter passes
+`capture_location: on`. The opt-in behavior below applies only to the legacy
+**GroundKeeper Capture Transaction** interactive writer.
 
 Location capture is **off by default** for both Wallet and CIBC. The native
 **Get Current Location** action has no bounded timeout or error recovery and can
@@ -228,6 +238,11 @@ still need verification on the receiving phone.
 
 ### Recovering from automation timeouts
 
+Use **GroundKeeper Capture Automatically** as both adapters' Run Shortcut target.
+Set its Save File destination to the connected inbox, with Ask Where to Save and
+overwrite off. It saves without optional prompts; add notes and receipts later
+in GroundKeeper. The legacy configuration below still waits for menu responses.
+
 In both installed automations, set **capture_location** to `off`. Re-select the
 current **GroundKeeper Capture Transaction** in each **Run Shortcut** action
 after replacing the writer; an old internal reference can remain even when its
@@ -267,6 +282,10 @@ Shortcuts and **GroundKeeper Capture Transaction**, then check the writer's
 inbox/assets destinations and each adapter's Run Shortcut target again.
 
 ## Optional receipts and notes
+
+The automatic writer saves the payment immediately and does not show these
+menus. Use **Notes & receipts…** in GroundKeeper to add details later. The menus
+described below belong to the legacy **GroundKeeper Capture Transaction** writer.
 
 The capture menus and note prompt show the transaction context above the choices.
 Wallet shows the merchant, supplied amount, source app and card/pass label. CIBC

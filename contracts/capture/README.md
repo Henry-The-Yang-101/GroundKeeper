@@ -157,12 +157,15 @@ the original payload and continues to derive currency/account data using the
 existing capture parser and user mappings; no schema version or database change
 is required.
 
-A recognizable bank purchase waits 15 seconds, then stops if the writer's
+A recognizable bank purchase waits 15 seconds, then stops if the automatic writer's
 Shortcuts storage contains the same normalized merchant, positive amount,
 currency and group from Wallet less than 90 seconds apart by original capture
-time. The marker is a bounded-slot hash and timestamp, written before Wallet's
-menus; it does not prove the payment JSON was saved. A suppressed bank run emits
-no capture envelope. Wallet cancellation/failure does not restart that bank run.
+time. The marker is a bounded-slot hash and timestamp, published only after the
+Wallet JSON Save File action returns a saved file. Failure or cancellation before
+that point leaves no marker. The automatic writer uses a separate saved-marker
+namespace and ignores the legacy interactive writer's started-only reservations.
+A suppressed bank run emits no second capture envelope. Automatic capture has no
+receipt/note, photo, OCR or GPS prompts; optional details are added later in the app.
 See [Wallet priority setup and limitations](../../shortcuts/README.md#wallet-priority-when-both-automations-fire).
 
 ## Viewing transactions and adding images on Mac

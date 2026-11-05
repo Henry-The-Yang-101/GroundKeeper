@@ -74,7 +74,7 @@ def test_adapters_use_one_writer_and_receipts_remain_optional():
             for a in workflow["WFWorkflowActions"]
             if a["WFWorkflowActionIdentifier"].endswith(".runworkflow")
         ]
-        assert calls == ["GroundKeeper Capture Transaction"]
+        assert calls == ["GroundKeeper Capture Automatically"]
     ocr = plistlib.loads((ROOT / "GK Receipt OCR.plist").read_bytes())
     assert (
         ocr["WFWorkflowActions"][0]["WFWorkflowActionIdentifier"]
@@ -321,6 +321,49 @@ def test_success_notification_requires_saved_result_and_description():
     )
     assert stop["WFWorkflowActionIdentifier"].endswith(".exit")
     assert result["WFWorkflowActionIdentifier"].endswith(".output")
+
+
+def test_automatic_capture_saves_without_optional_ui_and_only_then_commits_marker():
+    actions = plistlib.loads((ROOT / "GroundKeeper Capture Automatically.plist").read_bytes())[
+        "WFWorkflowActions"
+    ]
+    identifiers = [a["WFWorkflowActionIdentifier"].rsplit(".", 1)[-1] for a in actions]
+    assert not (
+        {"choosefrommenu", "ask", "getcurrentlocation", "takephoto", "selectphotos", "runworkflow"}
+        & set(identifiers)
+    )
+    saves = [i for i, name in enumerate(identifiers) if name == "save"]
+    assert len(saves) == 1
+    save = saves[0]
+    assert identifiers.count("setstoredcontent") == 1
+    commit = identifiers.index("setstoredcontent")
+    lookup = identifiers.index("getstoredcontent")
+    assert lookup < save < commit < len(actions) - 1
+    # Save cancellation exits before a marker or successful result is possible.
+    guard = actions[save + 1]["WFWorkflowActionParameters"]
+    assert guard["WFCondition"] == 101
+    assert (
+        guard["WFInput"]["Variable"]["Value"]["OutputUUID"]
+        == (actions[save]["WFWorkflowActionParameters"]["UUID"])
+    )
+    assert identifiers[save + 2] == "exit"
+    assert actions[commit - 1]["WFWorkflowActionParameters"]["WFCondition"] == 100
+    assert (
+        actions[commit]["WFWorkflowActionParameters"]["WFInput"]["Value"]["attachmentsByRange"][
+            "{0, 1}"
+        ]["VariableName"]
+        == "Pending Wallet Marker"
+    )
+    assert identifiers[-1] == "output"
+    # No started-only marker from the old interactive writer can suppress this flow.
+    assert "groundkeeper-wallet-saved-v1-" in str(actions)
+    assert "groundkeeper-wallet-priority-v2-" not in str(actions)
+    assert any(
+        a["WFWorkflowActionParameters"].get("WFDictionaryKey") == "location_status"
+        and a["WFWorkflowActionParameters"]["WFDictionaryValue"]["Value"]["string"]
+        == "not_requested"
+        for a in actions
+    )
 
 
 def test_wallet_category_slot_does_not_guess_an_unsupported_property():

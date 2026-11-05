@@ -527,6 +527,101 @@ def save_image(w):
     endif(w, group)
 
 
+def automatic_capture(workflow):
+    """Save payments without UI and publish Wallet markers only after Save File.
+
+    Derive this before the legacy writer's location/context insertions. The
+    separate legacy writer remains available to existing receipt helpers.
+    """
+    automatic = Workflow("GroundKeeper Capture Automatically", workflow)
+    actions = copy.deepcopy(workflow["WFWorkflowActions"])
+    first_menu = next(
+        i
+        for i, a in enumerate(actions)
+        if a["WFWorkflowActionIdentifier"].endswith(".choosefrommenu")
+    )
+    menu_group = actions[first_menu]["WFWorkflowActionParameters"]["GroupingIdentifier"]
+    menu_end = next(
+        i
+        for i in range(first_menu + 1, len(actions))
+        if actions[i]["WFWorkflowActionParameters"].get("GroupingIdentifier") == menu_group
+        and actions[i]["WFWorkflowActionParameters"].get("WFControlFlowMode") == 2
+    )
+    del actions[first_menu : menu_end + 1]
+    image_guard = next(
+        i
+        for i, a in enumerate(actions)
+        if a["WFWorkflowActionIdentifier"].endswith(".conditional")
+        and a["WFWorkflowActionParameters"].get("WFControlFlowMode") == 0
+        and a["WFWorkflowActionParameters"]
+        .get("WFInput", {})
+        .get("Variable", {})
+        .get("Value", {})
+        .get("VariableName")
+        == "Receipt JPEG"
+    )
+    image_group = actions[image_guard]["WFWorkflowActionParameters"]["GroupingIdentifier"]
+    image_end = next(
+        i
+        for i in range(image_guard + 1, len(actions))
+        if actions[i]["WFWorkflowActionParameters"].get("GroupingIdentifier") == image_group
+        and actions[i]["WFWorkflowActionParameters"].get("WFControlFlowMode") == 2
+    )
+    del actions[image_guard : image_end + 1]
+
+    # Clear per-invocation pending state even for bank-only or unrecognised
+    # amounts. These variables are local to a run, never shared storage.
+    init = Workflow("GroundKeeper Automatic Capture Init", workflow)
+    empty = init.add("nothing")
+    init.setvar("Pending Wallet Marker", empty)
+    init.setvar("Pending Wallet Marker Key", empty)
+    init.setvar(
+        "Saved Event", init.put(variable("Saved Event"), "location_status", "not_requested")
+    )
+    saved_event = next(
+        i
+        for i, a in enumerate(actions)
+        if a["WFWorkflowActionIdentifier"].endswith(".setvariable")
+        and a["WFWorkflowActionParameters"].get("WFVariableName") == "Saved Event"
+    )
+    actions[saved_event + 1 : saved_event + 1] = init.actions
+
+    marker_index = next(
+        i
+        for i, a in enumerate(actions)
+        if a["WFWorkflowActionIdentifier"].endswith(".setstoredcontent")
+    )
+    old_marker = actions[marker_index]["WFWorkflowActionParameters"]
+    marker_value = next(iter(old_marker["WFInput"]["Value"]["attachmentsByRange"].values()))
+    marker_key = next(
+        iter(old_marker["WFStoredContentKey"]["Value"]["attachmentsByRange"].values())
+    )
+    pending = Workflow("GroundKeeper Automatic Capture Pending", workflow)
+    pending.setvar("Pending Wallet Marker", marker_value)
+    pending.setvar("Pending Wallet Marker Key", marker_key)
+    actions[marker_index : marker_index + 1] = pending.actions
+    for action in actions:
+        value = action["WFWorkflowActionParameters"].get("WFTextActionText")
+        if isinstance(value, dict):
+            value["Value"]["string"] = value["Value"]["string"].replace(
+                "groundkeeper-wallet-priority-v2-", "groundkeeper-wallet-saved-v1-"
+            )
+
+    # The existing final Save File + empty-output guard precede this block.
+    # A cancelled/failed save cannot publish a marker or return success.
+    committed = Workflow("GroundKeeper Automatic Capture Commit", workflow)
+    wallet_saved = condition(committed, variable("Pending Wallet Marker"))
+    committed.add(
+        "setstoredcontent",
+        WFStoredContentKey=text(variable("Pending Wallet Marker Key")),
+        WFInput=text(variable("Pending Wallet Marker")),
+    )
+    endif(committed, wallet_saved)
+    actions[-1:-1] = committed.actions
+    automatic.actions.extend(actions)
+    automatic.save()
+
+
 def filename(w, description, app, date):
     # Restrict each descriptive component to a bounded filesystem-safe subset.
     # Whitespace, path separators and punctuation become underscores.
@@ -621,6 +716,7 @@ def main():
     wallet_priority(
         w.data, captured_date=output(actions[11]["WFWorkflowActionParameters"]["UUID"], "Date")
     )
+    automatic_capture(w.data)
     location_capture(w.data)
     transaction_context(w.data)
     w.save()
@@ -630,6 +726,12 @@ def main():
         path = ROOT / (name + ".plist")
         adapter = plistlib.loads(path.read_bytes())
         adapter["WFWorkflowActions"] = adapter["WFWorkflowActions"][:2]
+        target = adapter["WFWorkflowActions"][1]["WFWorkflowActionParameters"]
+        target["WFWorkflowName"] = "GroundKeeper Capture Automatically"
+        target["WFWorkflow"] = {
+            "isSelf": False,
+            "workflowName": "GroundKeeper Capture Automatically",
+        }
         fields = adapter["WFWorkflowActions"][0]["WFWorkflowActionParameters"]["WFItems"]["Value"][
             "WFDictionaryFieldValueItems"
         ]
